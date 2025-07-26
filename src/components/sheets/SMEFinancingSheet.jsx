@@ -2,17 +2,46 @@ import React from 'react';
 import FinancialTable from '../common/FinancialTable';
 import { formatNumber } from '../../utils/formatters';
 
-const REFinancingSheet = ({ assumptions, results }) => {
+const SMEFinancingSheet = ({ assumptions, results }) => {
   // Helper function to create formula explanations
   const createFormula = (year, formula, details) => ({
     formula,
     details: details.map(d => typeof d === 'function' ? d(year) : d)
   });
 
+  // Filter only SME products
+  const smeProductResults = Object.fromEntries(
+    Object.entries(results.productResults).filter(([key]) => key.startsWith('sme'))
+  );
+
+  // Use SME division-specific results
+  const smeResults = {
+    ...results,
+    bs: {
+      ...results.bs,
+      performingAssets: results.divisions.sme.bs.performingAssets,
+      nonPerformingAssets: results.divisions.sme.bs.nonPerformingAssets,
+    },
+    pnl: {
+      ...results.pnl,
+      interestIncome: results.divisions.sme.pnl.interestIncome,
+      commissionIncome: results.divisions.sme.pnl.commissionIncome,
+      totalLLP: results.divisions.sme.pnl.totalLLP,
+    },
+    capital: {
+      ...results.capital,
+      rwaCreditRisk: results.divisions.sme.capital.rwaCreditRisk,
+    },
+    kpi: {
+      ...results.kpi,
+      fte: results.kpi.smeFte,
+    }
+  };
+
   const pnlRows = [
     { 
       label: 'Interest Income', 
-      data: results.pnl.interestIncome, 
+      data: smeResults.pnl.interestIncome, 
       decimals: 2, 
       isTotal: true,
       formula: results.pnl.interestIncome.map((val, i) => createFormula(i, 
@@ -23,7 +52,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.interestIncome, 
       decimals: 2, 
@@ -53,7 +82,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.interestExpense, 
       decimals: 2, 
@@ -90,14 +119,14 @@ const REFinancingSheet = ({ assumptions, results }) => {
       formula: results.pnl.commissionIncome.map((val, i) => createFormula(i,
         'Sum of Fees per Product',
         [
-          ...Object.entries(results.productResults).map(([key, p], idx) => 
+          ...Object.entries(smeProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.commissionIncome[i], 2)} €M`
           ),
           `Total: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.commissionIncome, 
       decimals: 2, 
@@ -129,7 +158,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.commissionExpense, 
       decimals: 2, 
@@ -267,14 +296,14 @@ const REFinancingSheet = ({ assumptions, results }) => {
       formula: results.pnl.totalLLP.map((val, i) => createFormula(i,
         'Somma LLP per Product',
         [
-          ...Object.entries(results.productResults).map(([key, p], idx) => 
+          ...Object.entries(smeProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.llp[i], 2)} €M`
           ),
           `Total LLP: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.llp, 
       decimals: 2, 
@@ -360,14 +389,14 @@ const REFinancingSheet = ({ assumptions, results }) => {
       formula: results.bs.performingAssets.map((val, i) => createFormula(i,
         'Somma Stock Performing per Product',
         [
-          ...Object.entries(results.productResults).map(([key, p], idx) => 
+          ...Object.entries(smeProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.performingAssets[i], 0)} €M`
           ),
           `Total: ${formatNumber(val, 0)} €M`
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.performingAssets, 
       decimals: 0, 
@@ -390,7 +419,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
       formula: results.bs.nonPerformingAssets.map((val, i) => createFormula(i,
         'Somma NPL per Product',
         [
-          ...Object.entries(results.productResults).map(([key, p], idx) => 
+          ...Object.entries(smeProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.nonPerformingAssets[i], 0)} €M`
           ),
           `Total NPL: ${formatNumber(val, 0)} €M`
@@ -502,7 +531,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.rwa, 
       decimals: 0, 
@@ -531,7 +560,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
       ))
     },
     { label: 'Equity (CET1)', data: results.bs.equity, decimals: 0, isHeader: true },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.allocatedEquity, 
       decimals: 0, 
@@ -578,7 +607,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.cet1Ratio, 
       decimals: 1, 
@@ -602,7 +631,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
       formula: results.capital.rwaCreditRisk.map((val, i) => createFormula(i,
         'Sum of RWA from all Products',
         [
-          ...Object.entries(results.productResults).map(([key, p], idx) => 
+          ...Object.entries(smeProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.rwa[i], 0)} €M`
           ),
           `Total Credit RWA: ${formatNumber(val, 0)} €M`
@@ -684,7 +713,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
       label: `o/w ${assumptions.products[key].name}`, 
       data: p.numberOfLoans, 
       decimals: 0, 
@@ -728,4 +757,4 @@ const REFinancingSheet = ({ assumptions, results }) => {
   );
 };
 
-export default REFinancingSheet;
+export default SMEFinancingSheet;

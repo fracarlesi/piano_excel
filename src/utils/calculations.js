@@ -54,6 +54,10 @@ export const calculateResults = (assumptions) => {
       const expectedLossOnNewBusiness = volumes5Y.map(v => -v * (product.dangerRate / 100) * lgd);
       const lossOnStockDefaults = newNPLs.map(v => -v * lgd);
 
+      // Calculate number of loans granted per year
+      const avgLoanSize = product.avgLoanSize || 1.0;
+      const numberOfLoans = volumes5Y.map(v => Math.round(v / avgLoanSize));
+
       productResults[key] = {
           performingAssets: grossPerformingStock,
           nonPerformingAssets: nplStock,
@@ -61,28 +65,70 @@ export const calculateResults = (assumptions) => {
           commissionIncome: volumes5Y.map(v => v * product.commissionRate / 100),
           llp: years.map(i => lossOnStockDefaults[i] + expectedLossOnNewBusiness[i]),
           rwa: grossPerformingStock.map(v => v * product.rwaDensity / 100),
+          numberOfLoans: numberOfLoans,
       };
   }
   
-  // Aggregate results
-  results.bs.performingAssets = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.performingAssets[i], 0));
-  results.bs.nonPerformingAssets = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.nonPerformingAssets[i], 0));
+  // Create division-specific results
+  const reProductResults = Object.fromEntries(Object.entries(productResults).filter(([key]) => key.startsWith('re')));
+  const smeProductResults = Object.fromEntries(Object.entries(productResults).filter(([key]) => key.startsWith('sme')));
+
+  // Calculate division-specific aggregates
+  results.divisions = {
+    re: {
+      bs: {},
+      pnl: {},
+      capital: {},
+      kpi: {}
+    },
+    sme: {
+      bs: {},
+      pnl: {},
+      capital: {},
+      kpi: {}
+    }
+  };
+
+  // RE Division aggregates
+  results.divisions.re.bs.performingAssets = years.map(i => Object.values(reProductResults).reduce((sum, p) => sum + p.performingAssets[i], 0));
+  results.divisions.re.bs.nonPerformingAssets = years.map(i => Object.values(reProductResults).reduce((sum, p) => sum + p.nonPerformingAssets[i], 0));
+  results.divisions.re.pnl.interestIncome = years.map(i => Object.values(reProductResults).reduce((sum, p) => sum + p.interestIncome[i], 0));
+  results.divisions.re.pnl.commissionIncome = years.map(i => Object.values(reProductResults).reduce((sum, p) => sum + p.commissionIncome[i], 0));
+  results.divisions.re.pnl.totalLLP = years.map(i => Object.values(reProductResults).reduce((sum, p) => sum + p.llp[i], 0));
+  results.divisions.re.capital.rwaCreditRisk = years.map(i => Object.values(reProductResults).reduce((sum, p) => sum + p.rwa[i], 0));
+
+  // SME Division aggregates
+  results.divisions.sme.bs.performingAssets = years.map(i => Object.values(smeProductResults).reduce((sum, p) => sum + p.performingAssets[i], 0));
+  results.divisions.sme.bs.nonPerformingAssets = years.map(i => Object.values(smeProductResults).reduce((sum, p) => sum + p.nonPerformingAssets[i], 0));
+  results.divisions.sme.pnl.interestIncome = years.map(i => Object.values(smeProductResults).reduce((sum, p) => sum + p.interestIncome[i], 0));
+  results.divisions.sme.pnl.commissionIncome = years.map(i => Object.values(smeProductResults).reduce((sum, p) => sum + p.commissionIncome[i], 0));
+  results.divisions.sme.pnl.totalLLP = years.map(i => Object.values(smeProductResults).reduce((sum, p) => sum + p.llp[i], 0));
+  results.divisions.sme.capital.rwaCreditRisk = years.map(i => Object.values(smeProductResults).reduce((sum, p) => sum + p.rwa[i], 0));
+
+  // Total aggregates (RE + SME)
+  results.bs.performingAssets = years.map(i => results.divisions.re.bs.performingAssets[i] + results.divisions.sme.bs.performingAssets[i]);
+  results.bs.nonPerformingAssets = years.map(i => results.divisions.re.bs.nonPerformingAssets[i] + results.divisions.sme.bs.nonPerformingAssets[i]);
   const totalLoans = years.map(i => results.bs.performingAssets[i] + results.bs.nonPerformingAssets[i]);
   results.bs.operatingAssets = totalLoans.map(v => v * (assumptions.operatingAssetsRatio / 100));
   results.bs.totalAssets = years.map(i => totalLoans[i] + results.bs.operatingAssets[i]);
 
-  results.pnl.interestIncome = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.interestIncome[i], 0));
+  results.pnl.interestIncome = years.map(i => results.divisions.re.pnl.interestIncome[i] + results.divisions.sme.pnl.interestIncome[i]);
   results.pnl.interestExpenses = results.bs.totalAssets.map(assets => -assets * assumptions.costOfFundsRate / 100);
   results.pnl.netInterestIncome = years.map(i => results.pnl.interestIncome[i] + results.pnl.interestExpenses[i]);
   
-  results.pnl.commissionIncome = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.commissionIncome[i], 0));
+  results.pnl.commissionIncome = years.map(i => results.divisions.re.pnl.commissionIncome[i] + results.divisions.sme.pnl.commissionIncome[i]);
   results.pnl.commissionExpenses = results.pnl.commissionIncome.map(c => -c * assumptions.commissionExpenseRate / 100);
   results.pnl.netCommissions = years.map(i => results.pnl.commissionIncome[i] + results.pnl.commissionExpenses[i]);
   
   results.pnl.totalRevenues = years.map(i => results.pnl.netInterestIncome[i] + results.pnl.netCommissions[i]);
 
-  const fteGrowth = (assumptions.realEstateDivision.fteY5 - assumptions.realEstateDivision.fteY1) / 4;
-  results.kpi.fte = years.map(i => assumptions.realEstateDivision.fteY1 + (fteGrowth * i));
+  // Calculate FTE for all divisions
+  const reFteGrowth = (assumptions.realEstateDivision.fteY5 - assumptions.realEstateDivision.fteY1) / 4;
+  const smeFteGrowth = (assumptions.smeDivision.fteY5 - assumptions.smeDivision.fteY1) / 4;
+  
+  results.kpi.reFte = years.map(i => assumptions.realEstateDivision.fteY1 + (reFteGrowth * i));
+  results.kpi.smeFte = years.map(i => assumptions.smeDivision.fteY1 + (smeFteGrowth * i));
+  results.kpi.fte = years.map(i => results.kpi.reFte[i] + results.kpi.smeFte[i]);
   
   results.pnl.personnelCostsTotal = results.kpi.fte.map(fte => - (fte * assumptions.avgCostPerFte) / 1000);
 
@@ -96,7 +142,7 @@ export const calculateResults = (assumptions) => {
 
   results.pnl.otherCosts = years.map(i => -assumptions.otherCostsY1 * costGrowth[i]);
   results.pnl.provisions = years.map(i => -assumptions.provisionsY1 * costGrowth[i]);
-  results.pnl.totalLLP = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.llp[i], 0));
+  results.pnl.totalLLP = years.map(i => results.divisions.re.pnl.totalLLP[i] + results.divisions.sme.pnl.totalLLP[i]);
   results.pnl.preTaxProfit = years.map(i => results.pnl.totalRevenues[i] + results.pnl.totalOpex[i] + results.pnl.totalLLP[i] + results.pnl.otherCosts[i]);
   results.pnl.taxes = years.map(i => results.pnl.preTaxProfit[i] > 0 ? -results.pnl.preTaxProfit[i] * (assumptions.taxRate / 100) : 0);
   results.pnl.netProfit = years.map(i => results.pnl.preTaxProfit[i] + results.pnl.taxes[i]);
@@ -108,7 +154,7 @@ export const calculateResults = (assumptions) => {
   results.bs.termDeposits = results.bs.totalLiabilities.map(tl => tl * (assumptions.fundingMix.termDeposits / 100));
   results.bs.groupFunding = results.bs.totalLiabilities.map(tl => tl * (assumptions.fundingMix.groupFunding / 100));
 
-  results.capital.rwaCreditRisk = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.rwa[i], 0));
+  results.capital.rwaCreditRisk = years.map(i => results.divisions.re.capital.rwaCreditRisk[i] + results.divisions.sme.capital.rwaCreditRisk[i]);
   results.capital.rwaOperationalRisk = results.bs.totalAssets.map(assets => assets * 0.1);
   results.capital.rwaMarketRisk = years.map(() => 0);
   results.capital.rwaOperatingAssets = results.bs.operatingAssets.map(oa => oa * 1.0); // 100% risk weight for operating assets
@@ -160,6 +206,22 @@ export const calculateResults = (assumptions) => {
           results.bs.performingAssets[i];
       return avgPerformingAssets > 0 ? (-results.pnl.totalLLP[i] / avgPerformingAssets) * 10000 : 0;
   });
+
+  // Calculate total number of loans granted
+  results.kpi.totalNumberOfLoans = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.numberOfLoans[i], 0));
+  
+  // Calculate division-level number of loans
+  results.kpi.reNumberOfLoans = years.map(i => 
+    Object.entries(productResults)
+      .filter(([key]) => key.startsWith('re'))
+      .reduce((sum, [key, p]) => sum + p.numberOfLoans[i], 0)
+  );
+  
+  results.kpi.smeNumberOfLoans = years.map(i => 
+    Object.entries(productResults)
+      .filter(([key]) => key.startsWith('sme'))
+      .reduce((sum, [key, p]) => sum + p.numberOfLoans[i], 0)
+  );
 
   results.productResults = productResults;
 

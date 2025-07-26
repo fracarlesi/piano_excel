@@ -9,6 +9,7 @@ import Header from './components/layout/Header';
 import Navigation from './components/layout/Navigation';
 import AssumptionsSheet from './components/sheets/AssumptionsSheet';
 import REFinancingSheet from './components/sheets/REFinancingSheet';
+import SMEFinancingSheet from './components/sheets/SMEFinancingSheet';
 
 // Utils
 import { calculateResults } from './utils/calculations';
@@ -36,6 +37,13 @@ const ExcelLikeBankPlan = () => {
       case 'reFinancing': 
         return (
           <REFinancingSheet 
+            assumptions={assumptions} 
+            results={results} 
+          />
+        );
+      case 'smeFinancing': 
+        return (
+          <SMEFinancingSheet 
             assumptions={assumptions} 
             results={results} 
           />

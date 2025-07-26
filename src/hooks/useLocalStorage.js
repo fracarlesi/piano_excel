@@ -15,11 +15,24 @@ export const useLocalStorage = () => {
           return defaultAssumptions;
         }
         
-        // Check if the saved data has the expected structure for single Real Estate Division
-        if (!parsedData.products || !parsedData.realEstateDivision || parsedData.divisions) {
+        // Check if the saved data has the expected structure
+        if (!parsedData.products || !parsedData.realEstateDivision) {
           console.warn('Saved data structure is incompatible with current version, using defaults');
           localStorage.removeItem('bankPlanAssumptions'); // Clear incompatible data
           return defaultAssumptions;
+        }
+        
+        // Migrate to include SME Division if missing
+        if (!parsedData.smeDivision) {
+          console.warn('Adding SME Division to existing data');
+          parsedData.smeDivision = defaultAssumptions.smeDivision;
+          
+          // Add SME products if missing
+          Object.keys(defaultAssumptions.products).forEach(key => {
+            if (key.startsWith('sme') && !parsedData.products[key]) {
+              parsedData.products[key] = defaultAssumptions.products[key];
+            }
+          });
         }
         
         // Migrate from tasso to spread if needed
