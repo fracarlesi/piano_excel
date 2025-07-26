@@ -2,49 +2,49 @@ import React from 'react';
 import FinancialTable from '../common/FinancialTable';
 import { formatNumber } from '../../utils/formatters';
 
-const SMEFinancingSheet = ({ assumptions, results }) => {
+const AutomotiveFinancingSheet = ({ assumptions, results }) => {
   // Helper function to create formula explanations
   const createFormula = (year, formula, details) => ({
     formula,
     details: details.map(d => typeof d === 'function' ? d(year) : d)
   });
 
-  // Filter only SME products
-  const smeProductResults = Object.fromEntries(
-    Object.entries(results.productResults).filter(([key]) => key.startsWith('sme'))
+  // Filter only Automotive products
+  const autoProductResults = Object.fromEntries(
+    Object.entries(results.productResults).filter(([key]) => key.startsWith('auto'))
   );
 
-  // Use SME division-specific results
-  const smeResults = {
+  // Use Automotive division-specific results
+  const autoResults = {
     ...results,
     bs: {
       ...results.bs,
-      performingAssets: results.divisions.sme.bs.performingAssets,
-      nonPerformingAssets: results.divisions.sme.bs.nonPerformingAssets,
-      equity: results.divisions.sme.bs.allocatedEquity,
+      performingAssets: results.divisions.automotive.bs.performingAssets,
+      nonPerformingAssets: results.divisions.automotive.bs.nonPerformingAssets,
+      equity: results.divisions.automotive.bs.allocatedEquity,
     },
     pnl: {
       ...results.pnl,
-      interestIncome: results.divisions.sme.pnl.interestIncome,
-      commissionIncome: results.divisions.sme.pnl.commissionIncome,
-      totalLLP: results.divisions.sme.pnl.totalLLP,
+      interestIncome: results.divisions.automotive.pnl.interestIncome,
+      commissionIncome: results.divisions.automotive.pnl.commissionIncome,
+      totalLLP: results.divisions.automotive.pnl.totalLLP,
     },
     capital: {
       ...results.capital,
-      rwaCreditRisk: results.divisions.sme.capital.rwaCreditRisk,
-      totalRWA: results.divisions.sme.capital.totalRWA,
+      rwaCreditRisk: results.divisions.automotive.capital.rwaCreditRisk,
+      totalRWA: results.divisions.automotive.capital.totalRWA,
     },
     kpi: {
       ...results.kpi,
-      fte: results.kpi.smeFte,
-      cet1Ratio: results.divisions.sme.capital.cet1Ratio,
+      fte: results.kpi.autoFte,
+      cet1Ratio: results.divisions.automotive.capital.cet1Ratio,
     }
   };
 
   const pnlRows = [
     { 
       label: 'Interest Income', 
-      data: smeResults.pnl.interestIncome, 
+      data: autoResults.pnl.interestIncome, 
       decimals: 2, 
       isTotal: true,
       formula: results.pnl.interestIncome.map((val, i) => createFormula(i, 
@@ -55,7 +55,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.interestIncome, 
       decimals: 2, 
@@ -85,7 +85,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.interestExpense, 
       decimals: 2, 
@@ -122,14 +122,14 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       formula: results.pnl.commissionIncome.map((val, i) => createFormula(i,
         'Sum of Fees per Product',
         [
-          ...Object.entries(smeProductResults).map(([key, p], idx) => 
+          ...Object.entries(autoProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.commissionIncome[i], 2)} €M`
           ),
           `Total: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.commissionIncome, 
       decimals: 2, 
@@ -161,7 +161,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.commissionExpense, 
       decimals: 2, 
@@ -299,14 +299,14 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       formula: results.pnl.totalLLP.map((val, i) => createFormula(i,
         'Somma LLP per Product',
         [
-          ...Object.entries(smeProductResults).map(([key, p], idx) => 
+          ...Object.entries(autoProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.llp[i], 2)} €M`
           ),
           `Total LLP: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.llp, 
       decimals: 2, 
@@ -392,14 +392,14 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       formula: results.bs.performingAssets.map((val, i) => createFormula(i,
         'Somma Stock Performing per Product',
         [
-          ...Object.entries(smeProductResults).map(([key, p], idx) => 
+          ...Object.entries(autoProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.performingAssets[i], 0)} €M`
           ),
           `Total: ${formatNumber(val, 0)} €M`
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.performingAssets, 
       decimals: 0, 
@@ -422,7 +422,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       formula: results.bs.nonPerformingAssets.map((val, i) => createFormula(i,
         'Somma NPL per Product',
         [
-          ...Object.entries(smeProductResults).map(([key, p], idx) => 
+          ...Object.entries(autoProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.nonPerformingAssets[i], 0)} €M`
           ),
           `Total NPL: ${formatNumber(val, 0)} €M`
@@ -502,15 +502,15 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       ))
     },
     { 
-      label: 'Allocated Equity (SME Division)', 
-      data: smeResults.bs.equity, 
+      label: 'Allocated Equity (Automotive Division)', 
+      data: autoResults.bs.equity, 
       decimals: 0, 
       indent: true,
-      formula: smeResults.bs.equity.map((val, i) => createFormula(i,
+      formula: autoResults.bs.equity.map((val, i) => createFormula(i,
         'Total Equity × RWA Weight',
         [
           `Total Bank Equity: ${formatNumber(results.bs.equity[i], 0)} €M`,
-          `SME RWA: ${formatNumber(results.divisions.sme.capital.totalRWA[i], 0)} €M`,
+          `Automotive RWA: ${formatNumber(results.divisions.automotive.capital.totalRWA[i], 0)} €M`,
           `Total RWA: ${formatNumber(results.capital.totalRWA[i], 0)} €M`,
           `Allocated Equity: ${formatNumber(val, 0)} €M`
         ]
@@ -535,7 +535,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.rwa, 
       decimals: 0, 
@@ -563,8 +563,8 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    { label: 'Allocated Equity (CET1)', data: smeResults.bs.equity, decimals: 0, isHeader: true },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    { label: 'Allocated Equity (CET1)', data: autoResults.bs.equity, decimals: 0, isHeader: true },
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.allocatedEquity, 
       decimals: 0, 
@@ -596,22 +596,22 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       ))
     },
     { 
-      label: 'CET1 Ratio (%) - SME Division', 
-      data: smeResults.kpi.cet1Ratio, 
+      label: 'CET1 Ratio (%) - Automotive Division', 
+      data: autoResults.kpi.cet1Ratio, 
       decimals: 1, 
       unit: '%', 
       isHeader: true,
-      formula: smeResults.kpi.cet1Ratio.map((val, i) => createFormula(i,
-        'SME Allocated Equity / SME RWA × 100',
+      formula: autoResults.kpi.cet1Ratio.map((val, i) => createFormula(i,
+        'Automotive Allocated Equity / Automotive RWA × 100',
         [
-          `SME Allocated Equity: ${formatNumber(smeResults.bs.equity[i], 0)} €M`,
-          `SME RWA: ${formatNumber(smeResults.capital.totalRWA[i], 0)} €M`,
-          `SME CET1 Ratio: ${formatNumber(val, 1)}%`,
+          `Automotive Allocated Equity: ${formatNumber(autoResults.bs.equity[i], 0)} €M`,
+          `Automotive RWA: ${formatNumber(autoResults.capital.totalRWA[i], 0)} €M`,
+          `Automotive CET1 Ratio: ${formatNumber(val, 1)}%`,
           `Minimo regolamentare: 4.5% + buffer`
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
       data: p.cet1Ratio, 
       decimals: 1, 
@@ -635,7 +635,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       formula: results.capital.rwaCreditRisk.map((val, i) => createFormula(i,
         'Sum of RWA from all Products',
         [
-          ...Object.entries(smeProductResults).map(([key, p], idx) => 
+          ...Object.entries(autoProductResults).map(([key, p], idx) => 
             `Product ${idx + 1}: ${formatNumber(p.rwa[i], 0)} €M`
           ),
           `Total Credit RWA: ${formatNumber(val, 0)} €M`
@@ -717,7 +717,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(smeProductResults).map(([key, p], index) => ({ 
+    ...Object.entries(autoProductResults).map(([key, p], index) => ({ 
       label: `o/w ${assumptions.products[key].name}`, 
       data: p.numberOfLoans, 
       decimals: 0, 
@@ -753,11 +753,11 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
 
   return (
     <div className="p-4 md:p-6 space-y-8">
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold text-orange-800 mb-2">🏭 SME Division - Specialized Financing</h3>
-        <p className="text-orange-700 text-sm">
-          Small and Medium Enterprise financing with diverse products: refinancing, bridge loans, special situations, 
-          restructuring, and alternative finance. Higher risk-return profile with specialized underwriting expertise.
+      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+        <h3 className="text-lg font-semibold text-emerald-800 mb-2">🚗 Automotive Division - Green & Sustainable</h3>
+        <p className="text-emerald-700 text-sm">
+          ESG-focused automotive financing including electric vehicle leasing and charging infrastructure. 
+          Supporting the green transition with competitive rates and subsidized products for sustainable mobility.
         </p>
       </div>
       
@@ -769,4 +769,4 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
   );
 };
 
-export default SMEFinancingSheet;
+export default AutomotiveFinancingSheet;

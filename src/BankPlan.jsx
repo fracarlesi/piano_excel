@@ -10,6 +10,8 @@ import Navigation from './components/layout/Navigation';
 import AssumptionsSheet from './components/sheets/AssumptionsSheet';
 import REFinancingSheet from './components/sheets/REFinancingSheet';
 import SMEFinancingSheet from './components/sheets/SMEFinancingSheet';
+import AutomotiveFinancingSheet from './components/sheets/AutomotiveFinancingSheet';
+import DigitalBankingSheet from './components/sheets/DigitalBankingSheet';
 
 // Utils
 import { calculateResults } from './utils/calculations';
@@ -44,6 +46,20 @@ const ExcelLikeBankPlan = () => {
       case 'smeFinancing': 
         return (
           <SMEFinancingSheet 
+            assumptions={assumptions} 
+            results={results} 
+          />
+        );
+      case 'automotiveFinancing': 
+        return (
+          <AutomotiveFinancingSheet 
+            assumptions={assumptions} 
+            results={results} 
+          />
+        );
+      case 'digitalBankingFinancing': 
+        return (
+          <DigitalBankingSheet 
             assumptions={assumptions} 
             results={results} 
           />

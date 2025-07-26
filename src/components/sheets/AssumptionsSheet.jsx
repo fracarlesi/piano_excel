@@ -142,6 +142,185 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode }) => (
                 </div>
             ))}
         </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-bold text-gray-800 mb-6">Automotive Division Assumptions</h3>
+            <div className="mb-8 border-b pb-8">
+                 <h4 className="text-lg font-semibold text-gray-900 mb-4">Division Personnel</h4>
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <EditableNumberField label="FTE Anno 1" value={assumptions.automotiveDivision?.fteY1 || 0} onChange={val => setAssumptions(prev => ({...prev, automotiveDivision: {...prev.automotiveDivision, fteY1: val}}))} disabled={!editMode} isInteger/>
+                    <EditableNumberField label="FTE Anno 5" value={assumptions.automotiveDivision?.fteY5 || 0} onChange={val => setAssumptions(prev => ({...prev, automotiveDivision: {...prev.automotiveDivision, fteY5: val}}))} disabled={!editMode} isInteger/>
+                 </div>
+            </div>
+            
+            {/* Automotive Products */}
+            {Object.entries(assumptions.products).filter(([key]) => key.startsWith('auto')).map(([key, product], index) => (
+                <div key={key} className="mb-8 border-b pb-8 last:border-b-0 last:pb-0">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">{`Auto Product ${index + 1}: ${product.name}`}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                         <EditableNumberField label="Nuovi Impieghi Anno 1" value={product.volumes.y1} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], volumes: {...product.volumes, y1: val}}}}))} unit="€M" disabled={!editMode} isInteger/>
+                         <EditableNumberField label="Nuovi Impieghi Anno 5" value={product.volumes.y5} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], volumes: {...product.volumes, y5: val}}}}))} unit="€M" disabled={!editMode} isInteger/>
+                         <EditableNumberField label="Finanziamento Medio" value={product.avgLoanSize || 1.0} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], avgLoanSize: val}}}))} unit="€M" disabled={!editMode}/>
+                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Parametri Finanziari</h5>
+                            <EditableNumberField label="Spread" value={product.spread} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], spread: val}}}))} unit="% over EURIBOR" disabled={!editMode} isPercentage/>
+                            <EditableNumberField label="Fees" value={product.commissionRate} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], commissionRate: val}}}))} unit="% su nuovo" disabled={!editMode} isPercentage/>
+                            {product.isGreen && <span className="text-green-600 text-xs font-medium">✓ ESG Green Product</span>}
+                        </div>
+                        <div>
+                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Parametri Strutturali</h5>
+                            <EditableNumberField label="Durata" value={product.durata} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], durata: val}}}))} unit="anni" disabled={!editMode}/>
+                            <div className="mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Modalità Ammortamento</label>
+                                <select 
+                                    value={product.type || 'amortizing'}
+                                    onChange={e => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], type: e.target.value}}}))}
+                                    disabled={!editMode}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                >
+                                    <option value="amortizing">Ammortamento alla Francese</option>
+                                    <option value="bullet">Bullet (pagamento finale)</option>
+                                </select>
+                            </div>
+                            <EditableNumberField label="RWA Density" value={product.rwaDensity} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], rwaDensity: val}}}))} unit="%" disabled={!editMode} isPercentage/>
+                        </div>
+                         <div>
+                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Risk Parameters</h5>
+                            <EditableNumberField label="Tasso di Default (Danger Rate)" value={product.dangerRate} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], dangerRate: val}}}))} unit="%" disabled={!editMode} isPercentage/>
+                            <EditableNumberField label="Loan-to-Value (LTV)" value={product.ltv} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], ltv: val}}}))} unit="%" disabled={!editMode} isPercentage/>
+                            <EditableNumberField label="Recovery Costs" value={product.recoveryCosts} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], recoveryCosts: val}}}))} unit="% su Collaterale" disabled={!editMode} isPercentage/>
+                            <EditableNumberField label="Haircut su Collaterale" value={product.collateralHaircut} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], collateralHaircut: val}}}))} unit="%" disabled={!editMode} isPercentage/>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+
+        {/* Digital Banking Division */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-bold text-gray-800 mb-6">Digital Banking Division Assumptions</h3>
+            <div className="mb-8 border-b pb-8">
+                 <h4 className="text-lg font-semibold text-gray-900 mb-4">Division Personnel (Tech-Focused Team)</h4>
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <EditableNumberField label="FTE Anno 1" value={assumptions.digitalBankingDivision?.fteY1 || 0} onChange={val => setAssumptions(prev => ({...prev, digitalBankingDivision: {...prev.digitalBankingDivision, fteY1: val}}))} disabled={!editMode} isInteger/>
+                    <EditableNumberField label="FTE Anno 5" value={assumptions.digitalBankingDivision?.fteY5 || 0} onChange={val => setAssumptions(prev => ({...prev, digitalBankingDivision: {...prev.digitalBankingDivision, fteY5: val}}))} disabled={!editMode} isInteger/>
+                 </div>
+            </div>
+            
+            {/* Digital Banking Products */}
+            {Object.entries(assumptions.products).filter(([key]) => key.startsWith('digital')).map(([key, product], index) => (
+                <div key={key} className="mb-8 border-b pb-8 last:border-b-0 last:pb-0">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">{`Digital Service ${index + 1}: ${product.name}`}</h4>
+                    
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                        <p className="text-blue-700 text-sm">
+                            <strong>📱 Digital Service Model:</strong> This is a fee-based service with minimal credit risk. 
+                            "Volume" represents the service capacity/revenue potential, not traditional loan volumes.
+                            {product.isDigital && <span className="ml-2 text-blue-600 font-medium">✓ Digital Native Service</span>}
+                        </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                         <EditableNumberField 
+                            label="Service Revenue Anno 1" 
+                            value={product.volumes.y1} 
+                            onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], volumes: {...product.volumes, y1: val}}}}))} 
+                            unit="€M" 
+                            disabled={!editMode} 
+                            isInteger
+                         />
+                         <EditableNumberField 
+                            label="Service Revenue Anno 5" 
+                            value={product.volumes.y5} 
+                            onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], volumes: {...product.volumes, y5: val}}}}))} 
+                            unit="€M" 
+                            disabled={!editMode} 
+                            isInteger
+                         />
+                         <EditableNumberField 
+                            label="Avg Service Size" 
+                            value={product.avgLoanSize || 0.001} 
+                            onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], avgLoanSize: val}}}))} 
+                            unit="€M" 
+                            disabled={!editMode}
+                         />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Revenue Parameters</h5>
+                            <EditableNumberField 
+                                label="Interest Spread" 
+                                value={product.spread} 
+                                onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], spread: val}}}))} 
+                                unit="% (for payment services)" 
+                                disabled={!editMode} 
+                                isPercentage
+                            />
+                            <EditableNumberField 
+                                label="Commission Rate" 
+                                value={product.commissionRate} 
+                                onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], commissionRate: val}}}))} 
+                                unit="% (main revenue)" 
+                                disabled={!editMode} 
+                                isPercentage
+                            />
+                        </div>
+                        <div>
+                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Service Parameters</h5>
+                            <EditableNumberField 
+                                label="Service Cycle" 
+                                value={product.durata} 
+                                onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], durata: val}}}))} 
+                                unit="anni (contract length)" 
+                                disabled={!editMode}
+                            />
+                            <div className="mb-3">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
+                                <select 
+                                    value={product.type || 'services'}
+                                    onChange={e => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], type: e.target.value}}}))}
+                                    disabled={!editMode}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                >
+                                    <option value="services">Digital Services</option>
+                                    <option value="saas">SaaS Platform</option>
+                                    <option value="marketplace">Marketplace</option>
+                                    <option value="payments">Payment Services</option>
+                                </select>
+                            </div>
+                            <EditableNumberField 
+                                label="RWA Density" 
+                                value={product.rwaDensity} 
+                                onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], rwaDensity: val}}}))} 
+                                unit="% (very low for services)" 
+                                disabled={!editMode} 
+                                isPercentage
+                            />
+                        </div>
+                        <div>
+                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Risk Parameters (Minimal)</h5>
+                            <EditableNumberField 
+                                label="Operational Risk Rate" 
+                                value={product.dangerRate} 
+                                onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], dangerRate: val}}}))} 
+                                unit="% (operational/counterparty)" 
+                                disabled={!editMode} 
+                                isPercentage
+                            />
+                            <div className="text-xs text-gray-500 mt-2">
+                                <p>• LTV: N/A (service-based)</p>
+                                <p>• Recovery: N/A (no collateral)</p>
+                                <p>• Haircut: N/A (no assets)</p>
+                                <p className="text-green-600 font-medium">✓ Minimal credit risk model</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
     </div>
 );
 

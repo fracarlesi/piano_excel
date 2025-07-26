@@ -34,6 +34,32 @@ export const useLocalStorage = () => {
             }
           });
         }
+
+        // Migrate to include Automotive Division if missing
+        if (!parsedData.automotiveDivision) {
+          console.warn('Adding Automotive Division to existing data');
+          parsedData.automotiveDivision = defaultAssumptions.automotiveDivision;
+          
+          // Add Automotive products if missing
+          Object.keys(defaultAssumptions.products).forEach(key => {
+            if (key.startsWith('auto') && !parsedData.products[key]) {
+              parsedData.products[key] = defaultAssumptions.products[key];
+            }
+          });
+        }
+
+        // Migrate to include Digital Banking Division if missing
+        if (!parsedData.digitalBankingDivision) {
+          console.warn('Adding Digital Banking Division to existing data');
+          parsedData.digitalBankingDivision = defaultAssumptions.digitalBankingDivision;
+          
+          // Add Digital Banking products if missing
+          Object.keys(defaultAssumptions.products).forEach(key => {
+            if (key.startsWith('digital') && !parsedData.products[key]) {
+              parsedData.products[key] = defaultAssumptions.products[key];
+            }
+          });
+        }
         
         // Migrate from tasso to spread if needed
         if (!parsedData.euribor) {

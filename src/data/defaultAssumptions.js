@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '2.4', // Version for SME Division separation
+  version: '2.6', // Version for Digital Banking Division addition
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -27,6 +27,14 @@ export const defaultAssumptions = {
   smeDivision: {
     fteY1: 80,
     fteY5: 120,
+  },
+  automotiveDivision: {
+    fteY1: 60,
+    fteY5: 100,
+  },
+  digitalBankingDivision: {
+    fteY1: 40,
+    fteY5: 80,
   },
   products: {
     reNoGaranzia: {
@@ -137,6 +145,120 @@ export const defaultAssumptions = {
       quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Bullet repayment
       equityUpside: 2.5 // 2.5% equity upside
+    },
+    // Automotive Division Products
+    autoGreenLeasing: {
+      name: 'Leasing Auto Green',
+      volumes: { y1: 25, y5: 120 },
+      avgLoanSize: 30.0, // Average lease amount in €k for electric cars
+      spread: 2.8, // Lower spread for green products (subsidized)
+      rwaDensity: 60, // Lower RWA for secured leasing
+      durata: 4, // 4 years typical lease term
+      commissionRate: 1.5, // Upfront fee
+      dangerRate: 0.8, // Very low default rate for leasing
+      ltv: 85.0, // High LTV as car is collateral
+      recoveryCosts: 8.0, // Lower recovery costs for cars
+      collateralHaircut: 15.0, // Lower haircut for new cars
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'amortizing', // Monthly leasing payments
+      isGreen: true // ESG product
+    },
+    autoChargingStations: {
+      name: 'Leasing Colonnine Ricarica',
+      volumes: { y1: 12, y5: 80 },
+      avgLoanSize: 8.0, // Average home charging station lease in €k
+      spread: 3.2, // Slightly higher spread for infrastructure
+      rwaDensity: 75, // Higher RWA for infrastructure financing
+      durata: 6, // Longer term for infrastructure
+      commissionRate: 2.0, // Installation and setup fees
+      dangerRate: 1.2, // Low default rate for home installations
+      ltv: 90.0, // Very high LTV as equipment is collateral
+      recoveryCosts: 12.0, // Higher recovery costs for installed equipment
+      collateralHaircut: 25.0, // Higher haircut for technology depreciation
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'amortizing', // Monthly payments
+      isGreen: true // ESG product
+    },
+    // Digital Banking Division Products - Starling Bank Model
+    digitalPersonalAccount: {
+      name: 'Digital Personal Account',
+      volumes: { y1: 50, y5: 200 }, // Volume represents fee income in €M
+      avgLoanSize: 0.003, // Average fee per customer (€3k average balance)
+      spread: 0.0, // No traditional spread - fee-based model
+      rwaDensity: 0, // Current accounts have 0% RWA
+      durata: 1, // Annual fee cycle
+      commissionRate: 0.0, // Base account is free
+      dangerRate: 0.0, // No credit risk on current accounts
+      ltv: 0.0,
+      recoveryCosts: 0.0,
+      collateralHaircut: 0.0,
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'services', // Service-based revenue
+      isDigital: true
+    },
+    digitalBusinessAccount: {
+      name: 'Digital Business Account',
+      volumes: { y1: 30, y5: 120 }, // Volume represents fee income in €M
+      avgLoanSize: 0.015, // Average fee per business customer (€15k average balance)
+      spread: 0.0, // No traditional spread - fee-based model
+      rwaDensity: 0, // Current accounts have 0% RWA
+      durata: 1, // Annual fee cycle
+      commissionRate: 2.5, // Business toolkit and premium services
+      dangerRate: 0.0, // No credit risk on current accounts
+      ltv: 0.0,
+      recoveryCosts: 0.0,
+      collateralHaircut: 0.0,
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'services', // Service-based revenue
+      isDigital: true
+    },
+    digitalPaymentServices: {
+      name: 'Payment & Card Services',
+      volumes: { y1: 20, y5: 80 }, // Volume represents transaction fee income
+      avgLoanSize: 0.001, // Average fee per transaction
+      spread: 0.4, // International transfer spread (like Starling's 0.4%)
+      rwaDensity: 5, // Low RWA for payment services
+      durata: 1, // Annual cycle
+      commissionRate: 1.5, // Interchange fees and payment processing
+      dangerRate: 0.2, // Very low operational risk
+      ltv: 0.0,
+      recoveryCosts: 0.0,
+      collateralHaircut: 0.0,
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'services',
+      isDigital: true
+    },
+    digitalMarketplace: {
+      name: 'Marketplace & Third-Party Services',
+      volumes: { y1: 10, y5: 50 }, // Volume represents commission income
+      avgLoanSize: 0.05, // Average commission per service sold
+      spread: 0.0, // No spread on marketplace
+      rwaDensity: 0, // No RWA for commission-based services
+      durata: 1, // Annual cycle
+      commissionRate: 4.0, // Commission from third-party services (2-5% range)
+      dangerRate: 0.0, // No credit risk
+      ltv: 0.0,
+      recoveryCosts: 0.0,
+      collateralHaircut: 0.0,
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'services',
+      isDigital: true
+    },
+    digitalBankingPlatform: {
+      name: 'Banking-as-a-Service Platform',
+      volumes: { y1: 5, y5: 40 }, // Volume represents SaaS revenue
+      avgLoanSize: 0.1, // Average annual fee per client
+      spread: 0.0, // No traditional spread
+      rwaDensity: 0, // No RWA for SaaS services
+      durata: 3, // Multi-year SaaS contracts
+      commissionRate: 15.0, // High-margin SaaS business (setup fees + recurring)
+      dangerRate: 0.1, // Low counterparty risk
+      ltv: 0.0,
+      recoveryCosts: 0.0,
+      collateralHaircut: 0.0,
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'services',
+      isDigital: true
     }
   }
 };

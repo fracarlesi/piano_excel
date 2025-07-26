@@ -4,8 +4,10 @@ import { Settings, TrendingUp } from 'lucide-react';
 const Navigation = ({ activeSheet, setActiveSheet }) => {
   const sheets = {
     assumptions: { name: 'Assumptions', icon: Settings },
-    reFinancing: { name: 'RE Division Details', icon: TrendingUp },
-    smeFinancing: { name: 'SME Division Details', icon: TrendingUp }
+    reFinancing: { name: 'RE Division', icon: TrendingUp },
+    smeFinancing: { name: 'SME Division', icon: TrendingUp },
+    automotiveFinancing: { name: 'Automotive Division', icon: TrendingUp },
+    digitalBankingFinancing: { name: 'Digital Banking Division', icon: TrendingUp }
   };
 
   return (
