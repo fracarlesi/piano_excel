@@ -761,21 +761,6 @@ const REFinancingSheet = ({ assumptions, results }) => {
         ]
       ))
     },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
-      label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
-      data: p.roe, 
-      decimals: 1, 
-      unit: '%', 
-      indent: true,
-      formula: p.roe.map((val, i) => createFormula(i,
-        'Net Profit Product / Equity Medio Allocato × 100',
-        [
-          `Net Profit Product: ${formatNumber(p.netProfit[i], 2)} €M`,
-          `Equity Allocato: ${formatNumber(p.allocatedEquity[i], 0)} €M`,
-          `ROE: ${formatNumber(val, 1)}%`
-        ]
-      ))
-    })),
   ];
 
   return (
