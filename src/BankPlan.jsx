@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, BarChart3, TrendingUp } from 'lucide-react';
+import { Settings, TrendingUp, Save, Download, Upload } from 'lucide-react';
 
 // A smarter input field that handles numeric formatting for better UX.
 const EditableNumberField = ({ label, value, onChange, unit = "", disabled, isPercentage = false, isInteger = false }) => {
@@ -57,9 +57,10 @@ const EditableNumberField = ({ label, value, onChange, unit = "", disabled, isPe
 const ExcelLikeBankPlan = () => {
   const [activeSheet, setActiveSheet] = useState('reFinancing');
   const [editMode, setEditMode] = useState(true);
+  const [lastSaved, setLastSaved] = useState(null);
 
-  // Centralized state for all assumptions
-  const [assumptions, setAssumptions] = useState({
+  // Default assumptions
+  const defaultAssumptions = {
     initialEquity: 200, taxRate: 28, costOfFundsRate: 3.0, operatingAssetsRatio: 2.0,
     avgCostPerFte: 100, 
     backOfficeCostsY1: 2, adminCostsY1: 1.5,
@@ -90,7 +91,60 @@ const ExcelLikeBankPlan = () => {
         quarterlyDist: [25, 25, 25, 25], type: 'amortizing'
       }
     }
-  });
+  };
+
+  // Load saved data from localStorage or use defaults
+  const loadSavedData = () => {
+    const saved = localStorage.getItem('bankPlanAssumptions');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error loading saved data:', e);
+        return defaultAssumptions;
+      }
+    }
+    return defaultAssumptions;
+  };
+
+  // Initialize state with saved data
+  const [assumptions, setAssumptions] = useState(loadSavedData);
+
+  // Auto-save to localStorage whenever assumptions change
+  useEffect(() => {
+    localStorage.setItem('bankPlanAssumptions', JSON.stringify(assumptions));
+    setLastSaved(new Date());
+  }, [assumptions]);
+
+  // Export data as JSON file
+  const exportData = () => {
+    const dataStr = JSON.stringify(assumptions, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `piano_industriale_${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  // Import data from JSON file
+  const importData = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          setAssumptions(imported);
+          alert('Dati importati con successo!');
+        } catch (error) {
+          alert('Errore nell\'importazione del file. Assicurati che sia un file JSON valido.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
 
   // Sheet definitions
   const sheets = {
@@ -451,10 +505,25 @@ const ExcelLikeBankPlan = () => {
               <h1 className="text-xl font-bold text-gray-900">Piano Industriale Interattivo</h1>
               <p className="text-xs text-gray-600">Nuova Banca S.p.A. | Modello Finanziario</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {lastSaved && (
+                <span className="text-xs text-gray-500">
+                  <Save className="w-3 h-3 inline mr-1" />
+                  Salvato: {lastSaved.toLocaleTimeString('it-IT')}
+                </span>
+              )}
               <button onClick={() => setEditMode(!editMode)} className={`flex items-center gap-2 px-3 py-2 rounded-md text-white text-sm transition-colors ${editMode ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-600 hover:bg-gray-700'}`}>
                 {editMode ? 'Blocca Modifiche' : 'Abilita Modifiche'}
               </button>
+              <button onClick={exportData} className="flex items-center gap-2 px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors">
+                <Download className="w-4 h-4" />
+                Esporta
+              </button>
+              <label className="flex items-center gap-2 px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm transition-colors cursor-pointer">
+                <Upload className="w-4 h-4" />
+                Importa
+                <input type="file" accept=".json" onChange={importData} className="hidden" />
+              </label>
             </div>
           </div>
         </div>
