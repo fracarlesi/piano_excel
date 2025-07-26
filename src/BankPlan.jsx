@@ -511,7 +511,20 @@ const ExcelLikeBankPlan = () => {
             ]
           ))
         },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.interestIncome, decimals: 2, indent: true })),
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.interestIncome, 
+          decimals: 2, 
+          indent: true,
+          formula: p.interestIncome.map((val, i) => createFormula(i,
+            'Stock Medio Performing Prodotto × Tasso Prodotto',
+            [
+              `Stock Medio Performing: ${formatNumber(p.performingAssets[i], 0)} €M`,
+              `Tasso Prodotto: ${assumptions.products[key].tasso}%`,
+              `Interessi: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        })),
         { 
           label: 'Interessi Passivi', 
           data: results.pnl.interestExpenses, 
@@ -526,7 +539,21 @@ const ExcelLikeBankPlan = () => {
             ]
           ))
         },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.interestExpense, decimals: 2, indent: true })),
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.interestExpense, 
+          decimals: 2, 
+          indent: true,
+          formula: p.interestExpense.map((val, i) => createFormula(i,
+            'Interessi Passivi Totali × Peso Asset Prodotto',
+            [
+              `Interessi Passivi Totali: ${formatNumber(results.pnl.interestExpenses[i], 2)} €M`,
+              `Asset Prodotto: ${formatNumber(p.performingAssets[i] + p.nonPerformingAssets[i], 0)} €M`,
+              `Asset Totali: ${formatNumber(results.bs.totalAssets[i], 0)} €M`,
+              `Peso: ${((p.performingAssets[i] + p.nonPerformingAssets[i]) / results.bs.totalAssets[i] * 100).toFixed(1)}%`
+            ]
+          ))
+        })),
         { 
           label: 'Margine di Interesse (NII)', 
           data: results.pnl.netInterestIncome, 
@@ -541,45 +568,499 @@ const ExcelLikeBankPlan = () => {
             ]
           ))
         },
-        { label: 'Commissioni Attive', data: results.pnl.commissionIncome, decimals: 2, isTotal: true },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.commissionIncome, decimals: 2, indent: true })),
-        { label: 'Commissioni Passive', data: results.pnl.commissionExpenses, decimals: 2, isTotal: true },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.commissionExpense, decimals: 2, indent: true })),
-        { label: 'Commissioni Nette', data: results.pnl.netCommissions, decimals: 2, isHeader: true },
-        { label: 'Ricavi Totali', data: results.pnl.totalRevenues, decimals: 2, isHeader: true },
-        { label: 'Costi del Personale', data: results.pnl.personnelCostsTotal, decimals: 2, isTotal: true },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.personnelCosts, decimals: 2, indent: true })),
+        { 
+          label: 'Commissioni Attive', 
+          data: results.pnl.commissionIncome, 
+          decimals: 2, 
+          isTotal: true,
+          formula: results.pnl.commissionIncome.map((val, i) => createFormula(i,
+            'Somma Commissioni per Prodotto',
+            [
+              ...Object.entries(results.productResults).map(([key, p], idx) => 
+                `Prodotto ${idx + 1}: ${formatNumber(p.commissionIncome[i], 2)} €M`
+              ),
+              `Totale: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.commissionIncome, 
+          decimals: 2, 
+          indent: true,
+          formula: p.commissionIncome.map((val, i) => {
+            const annualGrowth = (assumptions.products[key].volumes.y5 - assumptions.products[key].volumes.y1) / 4;
+            const newVolume = assumptions.products[key].volumes.y1 + (annualGrowth * i);
+            return createFormula(i,
+              'Nuovi Volumi × Tasso Commissione',
+              [
+                `Nuovi Volumi Anno ${i+1}: ${formatNumber(newVolume, 0)} €M`,
+                `Tasso Commissione: ${assumptions.products[key].commissionRate}%`,
+                `Commissioni: ${formatNumber(val, 2)} €M`
+              ]
+            );
+          })
+        })),
+        { 
+          label: 'Commissioni Passive', 
+          data: results.pnl.commissionExpenses, 
+          decimals: 2, 
+          isTotal: true,
+          formula: results.pnl.commissionExpenses.map((val, i) => createFormula(i,
+            'Commissioni Attive × Tasso Commissioni Passive',
+            [
+              `Commissioni Attive: ${formatNumber(results.pnl.commissionIncome[i], 2)} €M`,
+              `Tasso Commissioni Passive: ${assumptions.commissionExpenseRate}%`,
+              `Commissioni Passive: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.commissionExpense, 
+          decimals: 2, 
+          indent: true,
+          formula: p.commissionExpense.map((val, i) => createFormula(i,
+            'Commissioni Passive Totali × Peso Asset',
+            [
+              `Commissioni Passive Totali: ${formatNumber(results.pnl.commissionExpenses[i], 2)} €M`,
+              `Peso Asset Prodotto: ${((p.performingAssets[i] + p.nonPerformingAssets[i]) / results.bs.totalAssets[i] * 100).toFixed(1)}%`,
+              `Allocato: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        })),
+        { 
+          label: 'Commissioni Nette', 
+          data: results.pnl.netCommissions, 
+          decimals: 2, 
+          isHeader: true,
+          formula: results.pnl.netCommissions.map((val, i) => createFormula(i,
+            'Commissioni Attive - Commissioni Passive',
+            [
+              `Commissioni Attive: ${formatNumber(results.pnl.commissionIncome[i], 2)} €M`,
+              `Commissioni Passive: ${formatNumber(results.pnl.commissionExpenses[i], 2)} €M`,
+              `Netto: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Ricavi Totali', 
+          data: results.pnl.totalRevenues, 
+          decimals: 2, 
+          isHeader: true,
+          formula: results.pnl.totalRevenues.map((val, i) => createFormula(i,
+            'Margine Interesse + Commissioni Nette',
+            [
+              `Margine Interesse: ${formatNumber(results.pnl.netInterestIncome[i], 2)} €M`,
+              `Commissioni Nette: ${formatNumber(results.pnl.netCommissions[i], 2)} €M`,
+              `Totale: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Costi del Personale', 
+          data: results.pnl.personnelCostsTotal, 
+          decimals: 2, 
+          isTotal: true,
+          formula: results.pnl.personnelCostsTotal.map((val, i) => createFormula(i,
+            'FTE × Costo Medio per FTE',
+            [
+              `FTE: ${formatNumber(results.kpi.fte[i], 0)}`,
+              `Costo Medio: ${assumptions.avgCostPerFte}k€`,
+              `Totale: ${formatNumber(-val, 2)} €M`
+            ]
+          ))
+        },
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.personnelCosts, 
+          decimals: 2, 
+          indent: true,
+          formula: p.personnelCosts.map((val, i) => createFormula(i,
+            'Costi Personale Totali × Peso RWA',
+            [
+              `Costi Personale Totali: ${formatNumber(results.pnl.personnelCostsTotal[i], 2)} €M`,
+              `RWA Prodotto: ${formatNumber(p.rwa[i], 0)} €M`,
+              `RWA Totali: ${formatNumber(results.capital.totalRWA[i], 0)} €M`,
+              `Peso RWA: ${(p.rwa[i] / results.capital.totalRWA[i] * 100).toFixed(1)}%`
+            ]
+          ))
+        })),
         { label: 'Altri Costi Operativi', data: [null,null,null,null,null], decimals: 2, isHeader: false },
-        { label: 'Back office', data: results.pnl.backOfficeCosts, decimals: 2, indent: true },
-        { label: 'Costi Amministrativi', data: results.pnl.adminCosts, decimals: 2, indent: true },
-        { label: 'Marketing', data: results.pnl.marketingCosts, decimals: 2, indent: true },
-        { label: 'Allocazione Costi Centrali', data: results.pnl.hqAllocation, decimals: 2, indent: true },
-        { label: 'Costi IT', data: results.pnl.itCosts, decimals: 2, indent: true },
-        { label: 'Costi Operativi Totali', data: results.pnl.totalOpex, decimals: 2, isHeader: true },
-        { label: 'Accantonamenti a Fondi Rischi e Oneri', data: results.pnl.provisions, decimals: 2 },
-        { label: 'Rettifiche di Valore su Crediti (LLP)', data: results.pnl.totalLLP, decimals: 2, isTotal: true },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.llp, decimals: 2, indent: true })),
-        { label: 'Utile Lordo (PBT)', data: results.pnl.preTaxProfit, decimals: 2, isHeader: true },
+        { 
+          label: 'Back office', 
+          data: results.pnl.backOfficeCosts, 
+          decimals: 2, 
+          indent: true,
+          formula: results.pnl.backOfficeCosts.map((val, i) => createFormula(i,
+            'Costo Base × (1 + Tasso Crescita)^Anno',
+            [
+              `Costo Base Anno 1: ${assumptions.backOfficeCostsY1} €M`,
+              `Tasso Crescita: ${assumptions.costGrowthRate}%`,
+              `Anni dalla base: ${i}`,
+              `Costo Anno ${i+1}: ${formatNumber(-val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Costi Amministrativi', 
+          data: results.pnl.adminCosts, 
+          decimals: 2, 
+          indent: true,
+          formula: results.pnl.adminCosts.map((val, i) => createFormula(i,
+            'Costo Base × (1 + Tasso Crescita)^Anno',
+            [
+              `Costo Base Anno 1: ${assumptions.adminCostsY1} €M`,
+              `Tasso Crescita: ${assumptions.costGrowthRate}%`,
+              `Costo Anno ${i+1}: ${formatNumber(-val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Marketing', 
+          data: results.pnl.marketingCosts, 
+          decimals: 2, 
+          indent: true,
+          formula: results.pnl.marketingCosts.map((val, i) => createFormula(i,
+            'Costo Base × (1 + Tasso Crescita)^Anno',
+            [
+              `Costo Base Anno 1: ${assumptions.marketingCostsY1} €M`,
+              `Tasso Crescita: ${assumptions.costGrowthRate}%`,
+              `Costo Anno ${i+1}: ${formatNumber(-val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Allocazione Costi Centrali', 
+          data: results.pnl.hqAllocation, 
+          decimals: 2, 
+          indent: true,
+          formula: results.pnl.hqAllocation.map((val, i) => createFormula(i,
+            'Costo Base × (1 + Tasso Crescita)^Anno',
+            [
+              `Costo Base Anno 1: ${assumptions.hqAllocationY1} €M`,
+              `Tasso Crescita: ${assumptions.costGrowthRate}%`,
+              `Costo Anno ${i+1}: ${formatNumber(-val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Costi IT', 
+          data: results.pnl.itCosts, 
+          decimals: 2, 
+          indent: true,
+          formula: results.pnl.itCosts.map((val, i) => createFormula(i,
+            'Costo Base × (1 + Tasso Crescita)^Anno',
+            [
+              `Costo Base Anno 1: ${assumptions.itCostsY1} €M`,
+              `Tasso Crescita: ${assumptions.costGrowthRate}%`,
+              `Costo Anno ${i+1}: ${formatNumber(-val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Costi Operativi Totali', 
+          data: results.pnl.totalOpex, 
+          decimals: 2, 
+          isHeader: true,
+          formula: results.pnl.totalOpex.map((val, i) => createFormula(i,
+            'Costi Personale + Altri Costi Operativi',
+            [
+              `Costi Personale: ${formatNumber(results.pnl.personnelCostsTotal[i], 2)} €M`,
+              `Back Office: ${formatNumber(results.pnl.backOfficeCosts[i], 2)} €M`,
+              `Amministrativi: ${formatNumber(results.pnl.adminCosts[i], 2)} €M`,
+              `Marketing: ${formatNumber(results.pnl.marketingCosts[i], 2)} €M`,
+              `HQ Allocation: ${formatNumber(results.pnl.hqAllocation[i], 2)} €M`,
+              `IT: ${formatNumber(results.pnl.itCosts[i], 2)} €M`,
+              `Totale: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Accantonamenti a Fondi Rischi e Oneri', 
+          data: results.pnl.provisions, 
+          decimals: 2,
+          formula: results.pnl.provisions.map((val, i) => createFormula(i,
+            'Provisioni Base × (1 + Tasso Crescita)^Anno',
+            [
+              `Provisioni Base Anno 1: ${assumptions.provisionsY1} €M`,
+              `Tasso Crescita: ${assumptions.costGrowthRate}%`,
+              `Provisioni Anno ${i+1}: ${formatNumber(-val, 2)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Rettifiche di Valore su Crediti (LLP)', 
+          data: results.pnl.totalLLP, 
+          decimals: 2, 
+          isTotal: true,
+          formula: results.pnl.totalLLP.map((val, i) => createFormula(i,
+            'Somma LLP per Prodotto',
+            [
+              ...Object.entries(results.productResults).map(([key, p], idx) => 
+                `Prodotto ${idx + 1}: ${formatNumber(p.llp[i], 2)} €M`
+              ),
+              `Totale LLP: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.llp, 
+          decimals: 2, 
+          indent: true,
+          formula: p.llp.map((val, i) => createFormula(i,
+            'Expected Loss su Nuovo Business + Loss su Default Stock',
+            [
+              `Danger Rate: ${assumptions.products[key].dangerRate}%`,
+              `LGD (Loss Given Default): basato su LTV ${assumptions.products[key].ltv}%`,
+              `Recovery netto di costi: ${100 - assumptions.products[key].recoveryCosts}%`,
+              `Haircut collaterale: ${assumptions.products[key].collateralHaircut}%`,
+              `LLP Anno ${i+1}: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        })),
+        { 
+          label: 'Utile Lordo (PBT)', 
+          data: results.pnl.preTaxProfit, 
+          decimals: 2, 
+          isHeader: true,
+          formula: results.pnl.preTaxProfit.map((val, i) => createFormula(i,
+            'Ricavi - Costi Operativi - LLP - Altri Costi',
+            [
+              `Ricavi Totali: ${formatNumber(results.pnl.totalRevenues[i], 2)} €M`,
+              `Costi Operativi: ${formatNumber(results.pnl.totalOpex[i], 2)} €M`,
+              `LLP: ${formatNumber(results.pnl.totalLLP[i], 2)} €M`,
+              `Altri Costi: ${formatNumber(results.pnl.otherCosts[i], 2)} €M`,
+              `Provisioni: ${formatNumber(results.pnl.provisions[i], 2)} €M`,
+              `PBT: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
     ];
     const bsRows = [
-        { label: 'Net Performing Assets', data: results.bs.performingAssets, decimals: 0, isTotal: true },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.performingAssets, decimals: 0, indent: true })),
-        { label: 'Non-Performing Assets', data: results.bs.nonPerformingAssets, decimals: 0, isTotal: false },
-        { label: 'Operating Assets', data: results.bs.operatingAssets, decimals: 0, isTotal: false },
-        { label: 'Totale Attività', data: results.bs.totalAssets, decimals: 0, isHeader: true },
-        { label: 'Totale Passività', data: results.bs.totalLiabilities, decimals: 0, isHeader: true },
-        { label: 'o/w Depositi a Vista', data: results.bs.sightDeposits, decimals: 0, indent: true },
-        { label: 'o/w Depositi Vincolati', data: results.bs.termDeposits, decimals: 0, indent: true },
-        { label: 'o/w Finanziamento Intergruppo', data: results.bs.groupFunding, decimals: 0, indent: true },
-        { label: 'Patrimonio Netto', data: results.bs.equity, decimals: 0, isHeader: true },
+        { 
+          label: 'Net Performing Assets', 
+          data: results.bs.performingAssets, 
+          decimals: 0, 
+          isTotal: true,
+          formula: results.bs.performingAssets.map((val, i) => createFormula(i,
+            'Somma Stock Performing per Prodotto',
+            [
+              ...Object.entries(results.productResults).map(([key, p], idx) => 
+                `Prodotto ${idx + 1}: ${formatNumber(p.performingAssets[i], 0)} €M`
+              ),
+              `Totale: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.performingAssets, 
+          decimals: 0, 
+          indent: true,
+          formula: p.performingAssets.map((val, i) => createFormula(i,
+            'Stock Precedente + Nuovi Volumi - Rimborsi - Default',
+            [
+              `Stock Anno Precedente: ${i > 0 ? formatNumber(p.performingAssets[i-1], 0) : '0'} €M`,
+              `Nuovi Volumi: vedi tabella assumptions`,
+              `Tipo ammortamento: ${assumptions.products[key].type === 'bullet' ? 'Bullet' : 'Francese'}`,
+              `Stock Fine Anno: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        })),
+        { 
+          label: 'Non-Performing Assets', 
+          data: results.bs.nonPerformingAssets, 
+          decimals: 0, 
+          isTotal: false,
+          formula: results.bs.nonPerformingAssets.map((val, i) => createFormula(i,
+            'Somma NPL per Prodotto',
+            [
+              ...Object.entries(results.productResults).map(([key, p], idx) => 
+                `Prodotto ${idx + 1}: ${formatNumber(p.nonPerformingAssets[i], 0)} €M`
+              ),
+              `Totale NPL: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Operating Assets', 
+          data: results.bs.operatingAssets, 
+          decimals: 0, 
+          isTotal: false,
+          formula: results.bs.operatingAssets.map((val, i) => createFormula(i,
+            'Totale Crediti × Operating Assets Ratio',
+            [
+              `Totale Crediti: ${formatNumber(results.bs.performingAssets[i] + results.bs.nonPerformingAssets[i], 0)} €M`,
+              `Operating Assets Ratio: ${assumptions.operatingAssetsRatio}%`,
+              `Operating Assets: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Totale Attività', 
+          data: results.bs.totalAssets, 
+          decimals: 0, 
+          isHeader: true,
+          formula: results.bs.totalAssets.map((val, i) => createFormula(i,
+            'Performing + NPL + Operating Assets',
+            [
+              `Performing Assets: ${formatNumber(results.bs.performingAssets[i], 0)} €M`,
+              `Non-Performing: ${formatNumber(results.bs.nonPerformingAssets[i], 0)} €M`,
+              `Operating Assets: ${formatNumber(results.bs.operatingAssets[i], 0)} €M`,
+              `Totale: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Totale Passività', 
+          data: results.bs.totalLiabilities, 
+          decimals: 0, 
+          isHeader: true,
+          formula: results.bs.totalLiabilities.map((val, i) => createFormula(i,
+            'Totale Attività - Patrimonio Netto',
+            [
+              `Totale Attività: ${formatNumber(results.bs.totalAssets[i], 0)} €M`,
+              `Patrimonio Netto: ${formatNumber(results.bs.equity[i], 0)} €M`,
+              `Passività: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'o/w Depositi a Vista', 
+          data: results.bs.sightDeposits, 
+          decimals: 0, 
+          indent: true,
+          formula: results.bs.sightDeposits.map((val, i) => createFormula(i,
+            'Totale Passività × % Depositi a Vista',
+            [
+              `Totale Passività: ${formatNumber(results.bs.totalLiabilities[i], 0)} €M`,
+              `% Depositi a Vista: ${assumptions.fundingMix.sightDeposits}%`,
+              `Depositi a Vista: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'o/w Depositi Vincolati', 
+          data: results.bs.termDeposits, 
+          decimals: 0, 
+          indent: true,
+          formula: results.bs.termDeposits.map((val, i) => createFormula(i,
+            'Totale Passività × % Depositi Vincolati',
+            [
+              `Totale Passività: ${formatNumber(results.bs.totalLiabilities[i], 0)} €M`,
+              `% Depositi Vincolati: ${assumptions.fundingMix.termDeposits}%`,
+              `Depositi Vincolati: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'o/w Finanziamento Intergruppo', 
+          data: results.bs.groupFunding, 
+          decimals: 0, 
+          indent: true,
+          formula: results.bs.groupFunding.map((val, i) => createFormula(i,
+            'Totale Passività × % Finanziamento Gruppo',
+            [
+              `Totale Passività: ${formatNumber(results.bs.totalLiabilities[i], 0)} €M`,
+              `% Finanziamento Gruppo: ${assumptions.fundingMix.groupFunding}%`,
+              `Finanziamento Gruppo: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Patrimonio Netto', 
+          data: results.bs.equity, 
+          decimals: 0, 
+          isHeader: true,
+          formula: results.bs.equity.map((val, i) => createFormula(i,
+            'Equity Iniziale + Somma Utili Netti',
+            [
+              `Equity Iniziale: ${assumptions.initialEquity} €M`,
+              `Utili Cumulati fino Anno ${i+1}: ${formatNumber(val - assumptions.initialEquity, 0)} €M`,
+              `Patrimonio Netto: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
     ];
     const capitalRows = [
-        { label: 'RWA', data: results.capital.totalRWA, decimals: 0, isHeader: true },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.rwa, decimals: 0, indent: true })),
-        { label: 'o/w Operating Assets', data: results.capital.rwaOperatingAssets, decimals: 0, indent: true},
+        { 
+          label: 'RWA', 
+          data: results.capital.totalRWA, 
+          decimals: 0, 
+          isHeader: true,
+          formula: results.capital.totalRWA.map((val, i) => createFormula(i,
+            'RWA Credito + RWA Operativo + RWA Mercato + RWA Operating Assets',
+            [
+              `RWA Credito: ${formatNumber(results.capital.rwaCreditRisk[i], 0)} €M`,
+              `RWA Operativo: ${formatNumber(results.capital.rwaOperationalRisk[i], 0)} €M`,
+              `RWA Mercato: ${formatNumber(results.capital.rwaMarketRisk[i], 0)} €M`,
+              `RWA Operating Assets: ${formatNumber(results.capital.rwaOperatingAssets[i], 0)} €M`,
+              `Totale: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.rwa, 
+          decimals: 0, 
+          indent: true,
+          formula: p.rwa.map((val, i) => createFormula(i,
+            'Stock Performing × RWA Density',
+            [
+              `Stock Performing: ${formatNumber(p.performingAssets[i], 0)} €M`,
+              `RWA Density: ${assumptions.products[key].rwaDensity}%`,
+              `RWA Prodotto: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        })),
+        { 
+          label: 'o/w Operating Assets', 
+          data: results.capital.rwaOperatingAssets, 
+          decimals: 0, 
+          indent: true,
+          formula: results.capital.rwaOperatingAssets.map((val, i) => createFormula(i,
+            'Operating Assets × 100% (Risk Weight)',
+            [
+              `Operating Assets: ${formatNumber(results.bs.operatingAssets[i], 0)} €M`,
+              `Risk Weight: 100%`,
+              `RWA: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
         { label: 'Equity (CET1)', data: results.bs.equity, decimals: 0, isHeader: true },
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.allocatedEquity, decimals: 0, indent: true })),
-        { label: 'o/w Operating Assets', data: results.capital.allocatedEquityOperatingAssets, decimals: 0, indent: true},
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.allocatedEquity, 
+          decimals: 0, 
+          indent: true,
+          formula: p.allocatedEquity.map((val, i) => createFormula(i,
+            'Equity Totale × (RWA Prodotto / RWA Totale)',
+            [
+              `Equity Totale: ${formatNumber(results.bs.equity[i], 0)} €M`,
+              `RWA Prodotto: ${formatNumber(p.rwa[i], 0)} €M`,
+              `RWA Totale: ${formatNumber(results.capital.totalRWA[i], 0)} €M`,
+              `Peso: ${(p.rwa[i] / results.capital.totalRWA[i] * 100).toFixed(1)}%`,
+              `Equity Allocato: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        })),
+        { 
+          label: 'o/w Operating Assets', 
+          data: results.capital.allocatedEquityOperatingAssets, 
+          decimals: 0, 
+          indent: true,
+          formula: results.capital.allocatedEquityOperatingAssets.map((val, i) => createFormula(i,
+            'Equity Totale × (RWA Operating / RWA Totale)',
+            [
+              `Equity Totale: ${formatNumber(results.bs.equity[i], 0)} €M`,
+              `RWA Operating Assets: ${formatNumber(results.capital.rwaOperatingAssets[i], 0)} €M`,
+              `RWA Totale: ${formatNumber(results.capital.totalRWA[i], 0)} €M`,
+              `Equity Allocato: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
         { 
           label: 'CET1 Ratio (%)', 
           data: results.kpi.cet1Ratio, 
@@ -596,11 +1077,65 @@ const ExcelLikeBankPlan = () => {
             ]
           ))
         },
-         ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.cet1Ratio, decimals: 1, unit: '%', indent: true })),
+         ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.cet1Ratio, 
+          decimals: 1, 
+          unit: '%', 
+          indent: true,
+          formula: p.cet1Ratio.map((val, i) => createFormula(i,
+            'Equity Allocato Prodotto / RWA Prodotto × 100',
+            [
+              `Equity Allocato: ${formatNumber(p.allocatedEquity[i], 0)} €M`,
+              `RWA Prodotto: ${formatNumber(p.rwa[i], 0)} €M`,
+              `CET1 Ratio: ${formatNumber(val, 1)}%`
+            ]
+          ))
+        })),
         { label: 'RWA per tipologia di rischio', data: [null,null,null,null,null], decimals: 0, isHeader: true },
-        { label: 'Rischio di Credito', data: results.capital.rwaCreditRisk, decimals: 0, indent: true },
-        { label: 'Rischio Operativo', data: results.capital.rwaOperationalRisk, decimals: 0, indent: true },
-        { label: 'Rischio di Mercato', data: results.capital.rwaMarketRisk, decimals: 0, indent: true },
+        { 
+          label: 'Rischio di Credito', 
+          data: results.capital.rwaCreditRisk, 
+          decimals: 0, 
+          indent: true,
+          formula: results.capital.rwaCreditRisk.map((val, i) => createFormula(i,
+            'Somma RWA di tutti i Prodotti',
+            [
+              ...Object.entries(results.productResults).map(([key, p], idx) => 
+                `Prodotto ${idx + 1}: ${formatNumber(p.rwa[i], 0)} €M`
+              ),
+              `Totale RWA Credito: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Rischio Operativo', 
+          data: results.capital.rwaOperationalRisk, 
+          decimals: 0, 
+          indent: true,
+          formula: results.capital.rwaOperationalRisk.map((val, i) => createFormula(i,
+            'Totale Attivi × 10% (Stima Basilea)',
+            [
+              `Totale Attivi: ${formatNumber(results.bs.totalAssets[i], 0)} €M`,
+              `Percentuale Rischio Op: 10%`,
+              `RWA Operativo: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
+          label: 'Rischio di Mercato', 
+          data: results.capital.rwaMarketRisk, 
+          decimals: 0, 
+          indent: true,
+          formula: results.capital.rwaMarketRisk.map((val, i) => createFormula(i,
+            'Non applicabile per banking book',
+            [
+              `Divisione Real Estate: solo banking book`,
+              `Trading book: non presente`,
+              `RWA Mercato: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
     ];
     const kpiRows = [
         { 
