@@ -1,31 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { Settings, TrendingUp, Save, Download, Upload, Info } from 'lucide-react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { Settings, TrendingUp, Save, Download, Upload, Info, X } from 'lucide-react';
+
+// Context for managing tooltip state globally
+const TooltipContext = createContext();
+
+// Tooltip Provider to ensure only one tooltip is open at a time
+const TooltipProvider = ({ children }) => {
+  const [activeTooltip, setActiveTooltip] = useState(null);
+  const [tooltipData, setTooltipData] = useState(null);
+
+  const openTooltip = (id, data) => {
+    setActiveTooltip(id);
+    setTooltipData(data);
+  };
+
+  const closeTooltip = () => {
+    setActiveTooltip(null);
+    setTooltipData(null);
+  };
+
+  // Close tooltip when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // Check if click is not on a tooltip or tooltip trigger
+      if (!e.target.closest('.cursor-help') && !e.target.closest('.z-50')) {
+        closeTooltip();
+      }
+    };
+
+    if (activeTooltip) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [activeTooltip]);
+
+  return (
+    <TooltipContext.Provider value={{ activeTooltip, tooltipData, openTooltip, closeTooltip }}>
+      {children}
+    </TooltipContext.Provider>
+  );
+};
 
 // Tooltip component for showing calculation details
-const CalculationTooltip = ({ children, formula, details }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
+const CalculationTooltip = ({ children, formula, details, id }) => {
+  const { activeTooltip, tooltipData, openTooltip, closeTooltip } = useContext(TooltipContext);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const isActive = activeTooltip === id;
 
   const handleClick = (e) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
-    setPosition({
-      x: rect.left + window.scrollX,
-      y: rect.top + window.scrollY - 10
-    });
-    setShowTooltip(!showTooltip);
-  };
-
-  const handleClickOutside = () => {
-    setShowTooltip(false);
-  };
-
-  useEffect(() => {
-    if (showTooltip) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Calculate position to keep tooltip visible
+    let x = rect.left + rect.width / 2;
+    let y = rect.bottom + 5; // Default: below the element
+    let transformY = '0'; // Default: no vertical transform
+    
+    // If tooltip would go off bottom of screen, show above
+    if (rect.bottom + 300 > viewportHeight) {
+      y = rect.top - 5;
+      transformY = '-100%'; // Position above the element
     }
-  }, [showTooltip]);
+    
+    // Keep tooltip within horizontal bounds
+    x = Math.max(200, Math.min(viewportWidth - 200, x));
+    
+    if (isActive) {
+      closeTooltip();
+    } else {
+      openTooltip(id, { formula, details });
+      setPosition({ x, y, transformY });
+    }
+  };
 
   return (
     <>
@@ -35,26 +83,39 @@ const CalculationTooltip = ({ children, formula, details }) => {
       >
         {children}
       </span>
-      {showTooltip && formula && (
+      {isActive && tooltipData && (
         <div 
           className="fixed z-50 bg-white border-2 border-blue-200 rounded-lg shadow-xl p-4 max-w-md"
           style={{
             left: `${position.x}px`,
-            top: `${position.y - 150}px`,
-            transform: 'translateX(-50%)'
+            top: `${position.y}px`,
+            transform: `translateX(-50%) translateY(${position.transformY})`,
+            maxHeight: '400px',
+            overflowY: 'auto'
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-start gap-2">
             <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
-            <div>
-              <h4 className="font-semibold text-gray-800 mb-2">Formula di Calcolo</h4>
-              <div className="bg-gray-50 px-3 py-2 rounded font-mono text-sm mb-2">
-                {formula}
+            <div className="flex-1">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-semibold text-gray-800">Formula di Calcolo</h4>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeTooltip();
+                  }}
+                  className="text-gray-400 hover:text-gray-600 ml-2"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              {details && (
+              <div className="bg-gray-50 px-3 py-2 rounded font-mono text-sm mb-2">
+                {tooltipData.formula}
+              </div>
+              {tooltipData.details && (
                 <div className="text-sm text-gray-600 space-y-1">
-                  {details.map((detail, idx) => (
+                  {tooltipData.details.map((detail, idx) => (
                     <div key={idx}>• {detail}</div>
                   ))}
                 </div>
@@ -400,7 +461,11 @@ const ExcelLikeBankPlan = () => {
                 {row.data && row.data.map((value, i) => (
                   <td key={i} className={`px-4 py-2 text-right ${value < 0 ? 'text-red-600' : 'text-gray-900'}`}>
                     {row.formula && row.formula[i] ? (
-                      <CalculationTooltip formula={row.formula[i].formula} details={row.formula[i].details}>
+                      <CalculationTooltip 
+                        id={`${title}-${index}-${i}`}
+                        formula={row.formula[i].formula} 
+                        details={row.formula[i].details}
+                      >
                         {formatNumber(value, row.decimals, row.unit)}
                       </CalculationTooltip>
                     ) : (
@@ -1190,8 +1255,9 @@ const ExcelLikeBankPlan = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-200 font-sans">
-      <div className="bg-white shadow-sm sticky top-0 z-10">
+    <TooltipProvider>
+      <div className="min-h-screen bg-gray-200 font-sans">
+        <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-3">
             <div>
@@ -1244,6 +1310,7 @@ const ExcelLikeBankPlan = () => {
         {renderCurrentSheet()}
       </main>
     </div>
+    </TooltipProvider>
   );
 };
 
