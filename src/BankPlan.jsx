@@ -201,6 +201,7 @@ const ExcelLikeBankPlan = () => {
     realEstateDivision: {
         fteY1: 100,
         fteY5: 150,
+        frontOfficeRatio: 70, // % of FTE in front office
     },
     products: {
       reNoGaranzia: {
@@ -369,10 +370,16 @@ const ExcelLikeBankPlan = () => {
 
     const fteGrowth = (assumptions.realEstateDivision.fteY5 - assumptions.realEstateDivision.fteY1) / 4;
     results.kpi.fte = years.map(i => assumptions.realEstateDivision.fteY1 + (fteGrowth * i));
+    
+    // Calculate FTE breakdown first
+    results.kpi.fteFrontOffice = results.kpi.fte.map(fte => fte * assumptions.realEstateDivision.frontOfficeRatio / 100);
+    results.kpi.fteBackOffice = results.kpi.fte.map((fte, i) => fte - results.kpi.fteFrontOffice[i]);
+    
     results.pnl.personnelCostsTotal = results.kpi.fte.map(fte => - (fte * assumptions.avgCostPerFte) / 1000);
 
     const costGrowth = years.map(i => Math.pow(1 + assumptions.costGrowthRate / 100, i));
-    results.pnl.backOfficeCosts = years.map(i => -assumptions.backOfficeCostsY1 * costGrowth[i]);
+    // Back office costs now based on back office FTE
+    results.pnl.backOfficeCosts = results.kpi.fteBackOffice.map((fteBO, i) => - (fteBO * assumptions.avgCostPerFte / 1000) * costGrowth[i]);
     results.pnl.adminCosts = years.map(i => -assumptions.adminCostsY1 * costGrowth[i]);
     results.pnl.marketingCosts = years.map(i => -assumptions.marketingCostsY1 * costGrowth[i]);
     results.pnl.hqAllocation = years.map(i => -assumptions.hqAllocationY1 * costGrowth[i]);
@@ -437,6 +444,14 @@ const ExcelLikeBankPlan = () => {
         const endEquity = results.bs.equity[i];
         const avgEquity = (startEquity + endEquity) / 2;
         return avgEquity > 0 ? (results.pnl.netProfit[i] / avgEquity) * 100 : 0;
+    });
+
+    // Calculate Cost of Risk (basis points)
+    results.kpi.costOfRisk = years.map(i => {
+        const avgPerformingAssets = i > 0 ? 
+            (results.bs.performingAssets[i] + results.bs.performingAssets[i-1]) / 2 : 
+            results.bs.performingAssets[i];
+        return avgPerformingAssets > 0 ? (-results.pnl.totalLLP[i] / avgPerformingAssets) * 10000 : 0;
     });
 
     results.productResults = productResults;
@@ -528,6 +543,7 @@ const ExcelLikeBankPlan = () => {
                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <EditableNumberField label="FTE Anno 1" value={assumptions.realEstateDivision.fteY1} onChange={val => setAssumptions(prev => ({...prev, realEstateDivision: {...prev.realEstateDivision, fteY1: val}}))} disabled={!editMode} isInteger/>
                     <EditableNumberField label="FTE Anno 5" value={assumptions.realEstateDivision.fteY5} onChange={val => setAssumptions(prev => ({...prev, realEstateDivision: {...prev.realEstateDivision, fteY5: val}}))} disabled={!editMode} isInteger/>
+                    <EditableNumberField label="% Front Office" value={assumptions.realEstateDivision.frontOfficeRatio} onChange={val => setAssumptions(prev => ({...prev, realEstateDivision: {...prev.realEstateDivision, frontOfficeRatio: val}}))} unit="%" disabled={!editMode} isPercentage/>
                  </div>
             </div>
             {Object.entries(assumptions.products).map(([key, product], index) => (
@@ -766,12 +782,13 @@ const ExcelLikeBankPlan = () => {
           decimals: 2, 
           indent: true,
           formula: results.pnl.backOfficeCosts.map((val, i) => createFormula(i,
-            'Costo Base × (1 + Tasso Crescita)^Anno',
+            'FTE Back Office × Costo Medio × (1 + Tasso Crescita)^Anno',
             [
-              `Costo Base Anno 1: ${assumptions.backOfficeCostsY1} €M`,
+              `FTE Back Office: ${formatNumber(results.kpi.fteBackOffice[i], 0)}`,
+              `Costo Medio per FTE: ${assumptions.avgCostPerFte}k€`,
               `Tasso Crescita: ${assumptions.costGrowthRate}%`,
-              `Anni dalla base: ${i}`,
-              `Costo Anno ${i+1}: ${formatNumber(-val, 2)} €M`
+              `Fattore Crescita: ${Math.pow(1 + assumptions.costGrowthRate / 100, i).toFixed(2)}`,
+              `Costo Back Office: ${formatNumber(-val, 2)} €M`
             ]
           ))
         },
@@ -1253,7 +1270,52 @@ const ExcelLikeBankPlan = () => {
             ]
           ))
         },
+        { 
+          label: 'Cost of Risk', 
+          data: results.kpi.costOfRisk, 
+          decimals: 0, 
+          unit: ' bps',
+          formula: results.kpi.costOfRisk.map((val, i) => createFormula(i,
+            'LLP / Stock Medio Performing × 10.000',
+            [
+              `LLP (Rettifiche): ${formatNumber(-results.pnl.totalLLP[i], 2)} €M`,
+              `Stock Performing Inizio: ${i > 0 ? formatNumber(results.bs.performingAssets[i-1], 0) : '0'} €M`,
+              `Stock Performing Fine: ${formatNumber(results.bs.performingAssets[i], 0)} €M`,
+              `Stock Medio: ${formatNumber(i > 0 ? (results.bs.performingAssets[i] + results.bs.performingAssets[i-1]) / 2 : results.bs.performingAssets[i], 0)} €M`,
+              `Cost of Risk: ${formatNumber(val, 0)} basis points`
+            ]
+          ))
+        },
         { label: 'Numero Personale (FTE)', data: results.kpi.fte, decimals: 0 },
+        { 
+          label: 'o/w Front Office', 
+          data: results.kpi.fteFrontOffice, 
+          decimals: 0, 
+          indent: true,
+          formula: results.kpi.fteFrontOffice.map((val, i) => createFormula(i,
+            'FTE Totali × % Front Office',
+            [
+              `FTE Totali: ${formatNumber(results.kpi.fte[i], 0)}`,
+              `% Front Office: ${assumptions.realEstateDivision.frontOfficeRatio}%`,
+              `FTE Front Office: ${formatNumber(val, 0)}`
+            ]
+          ))
+        },
+        { 
+          label: 'o/w Back Office', 
+          data: results.kpi.fteBackOffice, 
+          decimals: 0, 
+          indent: true,
+          formula: results.kpi.fteBackOffice.map((val, i) => createFormula(i,
+            'FTE Totali - FTE Front Office',
+            [
+              `FTE Totali: ${formatNumber(results.kpi.fte[i], 0)}`,
+              `FTE Front Office: ${formatNumber(results.kpi.fteFrontOffice[i], 0)}`,
+              `FTE Back Office: ${formatNumber(val, 0)}`,
+              `% Back Office: ${(100 - assumptions.realEstateDivision.frontOfficeRatio).toFixed(0)}%`
+            ]
+          ))
+        },
         { 
           label: 'Return on Equity (ROE)', 
           data: results.kpi.roe, 
