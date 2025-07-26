@@ -1,4 +1,5 @@
 export const defaultAssumptions = {
+  version: '2.1', // Version for data migration
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -22,11 +23,10 @@ export const defaultAssumptions = {
   realEstateDivision: {
     fteY1: 100,
     fteY5: 150,
-    frontOfficeRatio: 70, // % of FTE in front office
   },
   products: {
     reNoGaranzia: {
-      name: 'Senza Garanzia Pubblica',
+      name: 'Finanziamento Senza Garanzia Pubblica',
       volumes: { y1: 100, y5: 650 },
       spread: 5.0, // Spread over EURIBOR (was tasso: 8.5, now 3.5 + 5.0)
       rwaDensity: 100, 
@@ -40,7 +40,7 @@ export const defaultAssumptions = {
       type: 'bullet'
     },
     reConGaranzia: {
-      name: 'Con Garanzia Pubblica',
+      name: 'Finanziamento Con Garanzia Pubblica',
       volumes: { y1: 50, y5: 550 },
       spread: 3.0, // Spread over EURIBOR (was tasso: 6.5, now 3.5 + 3.0)
       rwaDensity: 20, 

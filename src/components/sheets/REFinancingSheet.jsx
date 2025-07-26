@@ -176,44 +176,13 @@ const REFinancingSheet = ({ assumptions, results }) => {
       data: results.pnl.personnelCostsTotal, 
       decimals: 2, 
       isTotal: true,
+      bgColor: 'white',
       formula: results.pnl.personnelCostsTotal.map((val, i) => createFormula(i,
         'FTE × Costo Medio per FTE',
         [
           `FTE: ${formatNumber(results.kpi.fte[i], 0)}`,
           `Costo Medio: ${assumptions.avgCostPerFte}k€`,
           `Total: ${formatNumber(-val, 2)} €M`
-        ]
-      ))
-    },
-    ...Object.entries(results.productResults).map(([key, p], index) => ({ 
-      label: `o/w Product ${index + 1}: ${assumptions.products[key].name}`, 
-      data: p.personnelCosts, 
-      decimals: 2, 
-      indent: true,
-      formula: p.personnelCosts.map((val, i) => createFormula(i,
-        'Total Personnel Costs × RWA Weight',
-        [
-          `Total Personnel Costs: ${formatNumber(results.pnl.personnelCostsTotal[i], 2)} €M`,
-          `RWA Product: ${formatNumber(p.rwa[i], 0)} €M`,
-          `RWA Totali: ${formatNumber(results.capital.totalRWA[i], 0)} €M`,
-          `Peso RWA: ${(p.rwa[i] / results.capital.totalRWA[i] * 100).toFixed(1)}%`
-        ]
-      ))
-    })),
-    { label: 'Other Operating Costs', data: [null,null,null,null,null], decimals: 2, isHeader: false },
-    { 
-      label: 'Back Office Costs', 
-      data: results.pnl.backOfficeCosts, 
-      decimals: 2, 
-      indent: true,
-      formula: results.pnl.backOfficeCosts.map((val, i) => createFormula(i,
-        'FTE Back Office × Costo Medio × (1 + Tasso Crescita)^Anno',
-        [
-          `FTE Back Office: ${formatNumber(results.kpi.fteBackOffice[i], 0)}`,
-          `Costo Medio per FTE: ${assumptions.avgCostPerFte}k€`,
-          `Tasso Crescita: ${assumptions.costGrowthRate}%`,
-          `Fattore Crescita: ${Math.pow(1 + assumptions.costGrowthRate / 100, i).toFixed(2)}`,
-          `Costo Back Office: ${formatNumber(-val, 2)} €M`
         ]
       ))
     },
@@ -279,28 +248,14 @@ const REFinancingSheet = ({ assumptions, results }) => {
       decimals: 2, 
       isHeader: true,
       formula: results.pnl.totalOpex.map((val, i) => createFormula(i,
-        'Personnel Costs + Other Operating Costs',
+        'Personnel Costs + Administrative + Marketing + HQ Allocation + IT',
         [
           `Personnel Costs: ${formatNumber(results.pnl.personnelCostsTotal[i], 2)} €M`,
-          `Back Office: ${formatNumber(results.pnl.backOfficeCosts[i], 2)} €M`,
           `Amministrativi: ${formatNumber(results.pnl.adminCosts[i], 2)} €M`,
           `Marketing: ${formatNumber(results.pnl.marketingCosts[i], 2)} €M`,
           `HQ Allocation: ${formatNumber(results.pnl.hqAllocation[i], 2)} €M`,
           `IT: ${formatNumber(results.pnl.itCosts[i], 2)} €M`,
           `Total: ${formatNumber(val, 2)} €M`
-        ]
-      ))
-    },
-    { 
-      label: 'Provisions', 
-      data: results.pnl.provisions, 
-      decimals: 2,
-      formula: results.pnl.provisions.map((val, i) => createFormula(i,
-        'Provisioni Base × (1 + Tasso Crescita)^Anno',
-        [
-          `Provisioni Base Anno 1: ${assumptions.provisionsY1} €M`,
-          `Tasso Crescita: ${assumptions.costGrowthRate}%`,
-          `Provisioni Anno ${i+1}: ${formatNumber(-val, 2)} €M`
         ]
       ))
     },
@@ -347,7 +302,6 @@ const REFinancingSheet = ({ assumptions, results }) => {
           `Operating Costs: ${formatNumber(results.pnl.totalOpex[i], 2)} €M`,
           `LLP: ${formatNumber(results.pnl.totalLLP[i], 2)} €M`,
           `Other Costs: ${formatNumber(results.pnl.otherCosts[i], 2)} €M`,
-          `Provisioni: ${formatNumber(results.pnl.provisions[i], 2)} €M`,
           `PBT: ${formatNumber(val, 2)} €M`
         ]
       ))
@@ -717,35 +671,6 @@ const REFinancingSheet = ({ assumptions, results }) => {
       ))
     },
     { label: 'Headcount (FTE)', data: results.kpi.fte, decimals: 0 },
-    { 
-      label: 'o/w Front Office', 
-      data: results.kpi.fteFrontOffice, 
-      decimals: 0, 
-      indent: true,
-      formula: results.kpi.fteFrontOffice.map((val, i) => createFormula(i,
-        'FTE Totali × % Front Office',
-        [
-          `FTE Totali: ${formatNumber(results.kpi.fte[i], 0)}`,
-          `% Front Office: ${assumptions.realEstateDivision.frontOfficeRatio}%`,
-          `FTE Front Office: ${formatNumber(val, 0)}`
-        ]
-      ))
-    },
-    { 
-      label: 'o/w Back Office', 
-      data: results.kpi.fteBackOffice, 
-      decimals: 0, 
-      indent: true,
-      formula: results.kpi.fteBackOffice.map((val, i) => createFormula(i,
-        'FTE Totali - FTE Front Office',
-        [
-          `FTE Totali: ${formatNumber(results.kpi.fte[i], 0)}`,
-          `FTE Front Office: ${formatNumber(results.kpi.fteFrontOffice[i], 0)}`,
-          `FTE Back Office: ${formatNumber(val, 0)}`,
-          `% Back Office: ${(100 - assumptions.realEstateDivision.frontOfficeRatio).toFixed(0)}%`
-        ]
-      ))
-    },
     { 
       label: 'Return on Equity (ROE)', 
       data: results.kpi.roe, 

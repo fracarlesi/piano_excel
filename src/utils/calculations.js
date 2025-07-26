@@ -84,26 +84,20 @@ export const calculateResults = (assumptions) => {
   const fteGrowth = (assumptions.realEstateDivision.fteY5 - assumptions.realEstateDivision.fteY1) / 4;
   results.kpi.fte = years.map(i => assumptions.realEstateDivision.fteY1 + (fteGrowth * i));
   
-  // Calculate FTE breakdown first
-  results.kpi.fteFrontOffice = results.kpi.fte.map(fte => fte * assumptions.realEstateDivision.frontOfficeRatio / 100);
-  results.kpi.fteBackOffice = results.kpi.fte.map((fte, i) => fte - results.kpi.fteFrontOffice[i]);
-  
   results.pnl.personnelCostsTotal = results.kpi.fte.map(fte => - (fte * assumptions.avgCostPerFte) / 1000);
 
   const costGrowth = years.map(i => Math.pow(1 + assumptions.costGrowthRate / 100, i));
-  // Back office costs now based on back office FTE
-  results.pnl.backOfficeCosts = results.kpi.fteBackOffice.map((fteBO, i) => - (fteBO * assumptions.avgCostPerFte / 1000) * costGrowth[i]);
   results.pnl.adminCosts = years.map(i => -assumptions.adminCostsY1 * costGrowth[i]);
   results.pnl.marketingCosts = years.map(i => -assumptions.marketingCostsY1 * costGrowth[i]);
   results.pnl.hqAllocation = years.map(i => -assumptions.hqAllocationY1 * costGrowth[i]);
   results.pnl.itCosts = years.map(i => -assumptions.itCostsY1 * costGrowth[i]);
-  const otherOpex = years.map(i => results.pnl.backOfficeCosts[i] + results.pnl.adminCosts[i] + results.pnl.marketingCosts[i] + results.pnl.hqAllocation[i] + results.pnl.itCosts[i]);
+  const otherOpex = years.map(i => results.pnl.adminCosts[i] + results.pnl.marketingCosts[i] + results.pnl.hqAllocation[i] + results.pnl.itCosts[i]);
   results.pnl.totalOpex = years.map(i => results.pnl.personnelCostsTotal[i] + otherOpex[i]);
 
   results.pnl.otherCosts = years.map(i => -assumptions.otherCostsY1 * costGrowth[i]);
   results.pnl.provisions = years.map(i => -assumptions.provisionsY1 * costGrowth[i]);
   results.pnl.totalLLP = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.llp[i], 0));
-  results.pnl.preTaxProfit = years.map(i => results.pnl.totalRevenues[i] + results.pnl.totalOpex[i] + results.pnl.totalLLP[i] + results.pnl.otherCosts[i] + results.pnl.provisions[i]);
+  results.pnl.preTaxProfit = years.map(i => results.pnl.totalRevenues[i] + results.pnl.totalOpex[i] + results.pnl.totalLLP[i] + results.pnl.otherCosts[i]);
   results.pnl.taxes = years.map(i => results.pnl.preTaxProfit[i] > 0 ? -results.pnl.preTaxProfit[i] * (assumptions.taxRate / 100) : 0);
   results.pnl.netProfit = years.map(i => results.pnl.preTaxProfit[i] + results.pnl.taxes[i]);
 

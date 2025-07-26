@@ -8,6 +8,13 @@ export const useLocalStorage = () => {
     if (saved) {
       try {
         const parsedData = JSON.parse(saved);
+        // Check version and force reset if needed
+        if (!parsedData.version || parsedData.version !== defaultAssumptions.version) {
+          console.warn(`Data version mismatch (saved: ${parsedData.version}, expected: ${defaultAssumptions.version}), using defaults`);
+          localStorage.removeItem('bankPlanAssumptions'); // Clear incompatible data
+          return defaultAssumptions;
+        }
+        
         // Check if the saved data has the expected structure for single Real Estate Division
         if (!parsedData.products || !parsedData.realEstateDivision || parsedData.divisions) {
           console.warn('Saved data structure is incompatible with current version, using defaults');
@@ -27,6 +34,28 @@ export const useLocalStorage = () => {
               delete parsedData.products[key].tasso;
             }
           });
+        }
+        
+        // Force update product names to latest version
+        let needsUpdate = false;
+        if (parsedData.products) {
+          Object.keys(defaultAssumptions.products).forEach(key => {
+            if (parsedData.products[key] && defaultAssumptions.products[key]) {
+              const currentName = parsedData.products[key].name;
+              const expectedName = defaultAssumptions.products[key].name;
+              
+              if (currentName !== expectedName) {
+                console.warn(`Force updating product name from "${currentName}" to "${expectedName}"`);
+                parsedData.products[key].name = expectedName;
+                needsUpdate = true;
+              }
+            }
+          });
+        }
+        
+        // Force save if names were updated
+        if (needsUpdate) {
+          localStorage.setItem('bankPlanAssumptions', JSON.stringify(parsedData));
         }
         
         return parsedData;
