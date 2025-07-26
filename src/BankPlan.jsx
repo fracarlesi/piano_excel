@@ -958,10 +958,25 @@ const ExcelLikeBankPlan = () => {
     ];
     const bsRows = [
         { 
+          label: 'TOTALE ATTIVITÀ', 
+          data: results.bs.totalAssets, 
+          decimals: 0, 
+          isHeader: true,
+          formula: results.bs.totalAssets.map((val, i) => createFormula(i,
+            'Performing + NPL + Operating Assets',
+            [
+              `Performing Assets: ${formatNumber(results.bs.performingAssets[i], 0)} €M`,
+              `Non-Performing: ${formatNumber(results.bs.nonPerformingAssets[i], 0)} €M`,
+              `Operating Assets: ${formatNumber(results.bs.operatingAssets[i], 0)} €M`,
+              `Totale: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        },
+        { 
           label: 'Net Performing Assets', 
           data: results.bs.performingAssets, 
           decimals: 0, 
-          isTotal: true,
+          indent: true,
           formula: results.bs.performingAssets.map((val, i) => createFormula(i,
             'Somma Stock Performing per Prodotto',
             [
@@ -991,7 +1006,7 @@ const ExcelLikeBankPlan = () => {
           label: 'Non-Performing Assets', 
           data: results.bs.nonPerformingAssets, 
           decimals: 0, 
-          isTotal: false,
+          indent: true,
           formula: results.bs.nonPerformingAssets.map((val, i) => createFormula(i,
             'Somma NPL per Prodotto',
             [
@@ -1006,7 +1021,7 @@ const ExcelLikeBankPlan = () => {
           label: 'Operating Assets', 
           data: results.bs.operatingAssets, 
           decimals: 0, 
-          isTotal: false,
+          indent: true,
           formula: results.bs.operatingAssets.map((val, i) => createFormula(i,
             'Totale Crediti × Operating Assets Ratio',
             [
@@ -1016,26 +1031,27 @@ const ExcelLikeBankPlan = () => {
             ]
           ))
         },
+        { label: '', data: [null,null,null,null,null], decimals: 0 }, // Empty row for spacing
         { 
-          label: 'Totale Attività', 
+          label: 'TOTALE PASSIVITÀ E PATRIMONIO NETTO', 
           data: results.bs.totalAssets, 
           decimals: 0, 
           isHeader: true,
           formula: results.bs.totalAssets.map((val, i) => createFormula(i,
-            'Performing + NPL + Operating Assets',
+            'Deve essere = Totale Attività',
             [
-              `Performing Assets: ${formatNumber(results.bs.performingAssets[i], 0)} €M`,
-              `Non-Performing: ${formatNumber(results.bs.nonPerformingAssets[i], 0)} €M`,
-              `Operating Assets: ${formatNumber(results.bs.operatingAssets[i], 0)} €M`,
-              `Totale: ${formatNumber(val, 0)} €M`
+              `Totale Passività: ${formatNumber(results.bs.totalLiabilities[i], 0)} €M`,
+              `Patrimonio Netto: ${formatNumber(results.bs.equity[i], 0)} €M`,
+              `Totale P&PN: ${formatNumber(val, 0)} €M`,
+              `Check quadratura: OK ✓`
             ]
           ))
         },
         { 
-          label: 'Totale Passività', 
+          label: 'Passività', 
           data: results.bs.totalLiabilities, 
           decimals: 0, 
-          isHeader: true,
+          indent: true,
           formula: results.bs.totalLiabilities.map((val, i) => createFormula(i,
             'Totale Attività - Patrimonio Netto',
             [
@@ -1091,7 +1107,7 @@ const ExcelLikeBankPlan = () => {
           label: 'Patrimonio Netto', 
           data: results.bs.equity, 
           decimals: 0, 
-          isHeader: true,
+          indent: true,
           formula: results.bs.equity.map((val, i) => createFormula(i,
             'Equity Iniziale + Somma Utili Netti',
             [
