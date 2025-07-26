@@ -1,0 +1,67 @@
+import React, { useState, useEffect } from 'react';
+
+// A smarter input field that handles numeric formatting for better UX.
+const EditableNumberField = ({ 
+  label, 
+  value, 
+  onChange, 
+  unit = "", 
+  disabled, 
+  isPercentage = false, 
+  isInteger = false 
+}) => {
+  const [inputValue, setInputValue] = useState(value.toString());
+  const [isFocused, setIsFocused] = useState(false);
+
+  const formatOptions = {
+    minimumFractionDigits: isInteger ? 0 : 2,
+    maximumFractionDigits: isInteger ? 0 : 2,
+  };
+
+  useEffect(() => {
+    if (!isFocused) {
+      setInputValue(value.toLocaleString('it-IT', formatOptions));
+    }
+  }, [value, isFocused, formatOptions]);
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    setInputValue(value.toString());
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    const numericValue = parseFloat(inputValue.replace(/,/g, '.')) || 0;
+    onChange(numericValue);
+  };
+
+  const handleChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  return (
+    <div className="mb-2">
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {unit && <span className="text-gray-500">({unit})</span>}
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={isFocused ? inputValue : value.toLocaleString('it-IT', formatOptions)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          disabled={disabled}
+        />
+        {isPercentage && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-500">
+            %
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default EditableNumberField;
