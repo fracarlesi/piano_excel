@@ -1,5 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, TrendingUp, Save, Download, Upload } from 'lucide-react';
+import { Settings, TrendingUp, Save, Download, Upload, Info } from 'lucide-react';
+
+// Tooltip component for showing calculation details
+const CalculationTooltip = ({ children, formula, details }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  const handleClick = (e) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPosition({
+      x: rect.left + window.scrollX,
+      y: rect.top + window.scrollY - 10
+    });
+    setShowTooltip(!showTooltip);
+  };
+
+  const handleClickOutside = () => {
+    setShowTooltip(false);
+  };
+
+  useEffect(() => {
+    if (showTooltip) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showTooltip]);
+
+  return (
+    <>
+      <span 
+        onClick={handleClick}
+        className="cursor-help hover:bg-blue-50 hover:text-blue-700 px-1 rounded transition-colors"
+      >
+        {children}
+      </span>
+      {showTooltip && formula && (
+        <div 
+          className="fixed z-50 bg-white border-2 border-blue-200 rounded-lg shadow-xl p-4 max-w-md"
+          style={{
+            left: `${position.x}px`,
+            top: `${position.y - 150}px`,
+            transform: 'translateX(-50%)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-start gap-2">
+            <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-2">Formula di Calcolo</h4>
+              <div className="bg-gray-50 px-3 py-2 rounded font-mono text-sm mb-2">
+                {formula}
+              </div>
+              {details && (
+                <div className="text-sm text-gray-600 space-y-1">
+                  {details.map((detail, idx) => (
+                    <div key={idx}>• {detail}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 // A smarter input field that handles numeric formatting for better UX.
 const EditableNumberField = ({ label, value, onChange, unit = "", disabled, isPercentage = false, isInteger = false }) => {
@@ -164,7 +230,7 @@ const ExcelLikeBankPlan = () => {
 
   // Advanced calculation engine
   const calculateResults = () => {
-    const results = { pnl: {}, bs: {}, capital: {}, kpi: {} };
+    const results = { pnl: {}, bs: {}, capital: {}, kpi: {}, formulas: {} };
     const years = [0, 1, 2, 3, 4];
 
     const productResults = {};
@@ -333,7 +399,13 @@ const ExcelLikeBankPlan = () => {
                 </td>
                 {row.data && row.data.map((value, i) => (
                   <td key={i} className={`px-4 py-2 text-right ${value < 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                    {formatNumber(value, row.decimals, row.unit)}
+                    {row.formula && row.formula[i] ? (
+                      <CalculationTooltip formula={row.formula[i].formula} details={row.formula[i].details}>
+                        {formatNumber(value, row.decimals, row.unit)}
+                      </CalculationTooltip>
+                    ) : (
+                      formatNumber(value, row.decimals, row.unit)
+                    )}
                   </td>
                 ))}
               </tr>
@@ -419,12 +491,56 @@ const ExcelLikeBankPlan = () => {
 
   // Render Real Estate Financing Sheet with the new 4-table layout
   const renderREFinancingSheet = () => {
+    // Helper function to create formula explanations
+    const createFormula = (year, formula, details) => ({
+      formula,
+      details: details.map(d => typeof d === 'function' ? d(year) : d)
+    });
+
     const pnlRows = [
-        { label: 'Interessi Attivi', data: results.pnl.interestIncome, decimals: 2, isTotal: true },
+        { 
+          label: 'Interessi Attivi', 
+          data: results.pnl.interestIncome, 
+          decimals: 2, 
+          isTotal: true,
+          formula: results.pnl.interestIncome.map((val, i) => createFormula(i, 
+            'Stock Medio Performing × Tasso Interesse',
+            [
+              `Stock Medio Performing: ${formatNumber(results.bs.performingAssets[i], 0)} €M`,
+              `Tasso Interesse Medio Ponderato: ~${(val / results.bs.performingAssets[i] * 100).toFixed(2)}%`
+            ]
+          ))
+        },
         ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.interestIncome, decimals: 2, indent: true })),
-        { label: 'Interessi Passivi', data: results.pnl.interestExpenses, decimals: 2, isTotal: true },
+        { 
+          label: 'Interessi Passivi', 
+          data: results.pnl.interestExpenses, 
+          decimals: 2, 
+          isTotal: true,
+          formula: results.pnl.interestExpenses.map((val, i) => createFormula(i,
+            'Totale Attivi × Costo del Funding',
+            [
+              `Totale Attivi: ${formatNumber(results.bs.totalAssets[i], 0)} €M`,
+              `Costo del Funding: ${assumptions.costOfFundsRate}%`,
+              `Calcolo: ${formatNumber(results.bs.totalAssets[i], 0)} × ${assumptions.costOfFundsRate}% = ${formatNumber(-val, 2)} €M`
+            ]
+          ))
+        },
         ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.interestExpense, decimals: 2, indent: true })),
-        { label: 'Margine di Interesse (NII)', data: results.pnl.netInterestIncome, decimals: 2, isHeader: true },
+        { 
+          label: 'Margine di Interesse (NII)', 
+          data: results.pnl.netInterestIncome, 
+          decimals: 2, 
+          isHeader: true,
+          formula: results.pnl.netInterestIncome.map((val, i) => createFormula(i,
+            'Interessi Attivi - Interessi Passivi',
+            [
+              `Interessi Attivi: ${formatNumber(results.pnl.interestIncome[i], 2)} €M`,
+              `Interessi Passivi: ${formatNumber(results.pnl.interestExpenses[i], 2)} €M`,
+              `NII: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
         { label: 'Commissioni Attive', data: results.pnl.commissionIncome, decimals: 2, isTotal: true },
         ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.commissionIncome, decimals: 2, indent: true })),
         { label: 'Commissioni Passive', data: results.pnl.commissionExpenses, decimals: 2, isTotal: true },
@@ -464,7 +580,22 @@ const ExcelLikeBankPlan = () => {
         { label: 'Equity (CET1)', data: results.bs.equity, decimals: 0, isHeader: true },
         ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.allocatedEquity, decimals: 0, indent: true })),
         { label: 'o/w Operating Assets', data: results.capital.allocatedEquityOperatingAssets, decimals: 0, indent: true},
-        { label: 'CET1 Ratio (%)', data: results.kpi.cet1Ratio, decimals: 1, unit: '%', isHeader: true },
+        { 
+          label: 'CET1 Ratio (%)', 
+          data: results.kpi.cet1Ratio, 
+          decimals: 1, 
+          unit: '%', 
+          isHeader: true,
+          formula: results.kpi.cet1Ratio.map((val, i) => createFormula(i,
+            'Patrimonio Netto (CET1) / RWA Totali × 100',
+            [
+              `Patrimonio Netto: ${formatNumber(results.bs.equity[i], 0)} €M`,
+              `RWA Totali: ${formatNumber(results.capital.totalRWA[i], 0)} €M`,
+              `CET1 Ratio: ${formatNumber(val, 1)}%`,
+              `Minimo regolamentare: 4.5% + buffer`
+            ]
+          ))
+        },
          ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.cet1Ratio, decimals: 1, unit: '%', indent: true })),
         { label: 'RWA per tipologia di rischio', data: [null,null,null,null,null], decimals: 0, isHeader: true },
         { label: 'Rischio di Credito', data: results.capital.rwaCreditRisk, decimals: 0, indent: true },
@@ -472,10 +603,37 @@ const ExcelLikeBankPlan = () => {
         { label: 'Rischio di Mercato', data: results.capital.rwaMarketRisk, decimals: 0, indent: true },
     ];
     const kpiRows = [
-        { label: 'Cost / Income', data: results.kpi.costIncome, decimals: 1, unit: '%' },
+        { 
+          label: 'Cost / Income', 
+          data: results.kpi.costIncome, 
+          decimals: 1, 
+          unit: '%',
+          formula: results.kpi.costIncome.map((val, i) => createFormula(i,
+            'Costi Operativi / Ricavi Totali × 100',
+            [
+              `Costi Operativi: ${formatNumber(-results.pnl.totalOpex[i], 2)} €M`,
+              `Ricavi Totali: ${formatNumber(results.pnl.totalRevenues[i], 2)} €M`,
+              `Cost/Income: ${formatNumber(val, 1)}%`
+            ]
+          ))
+        },
         { label: 'Numero Personale (FTE)', data: results.kpi.fte, decimals: 0 },
         { label: 'Return on Equity (ROE)', data: [], decimals: 1, unit: '%', isTotal: true},
-        ...Object.entries(results.productResults).map(([key, p], index) => ({ label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, data: p.roe, decimals: 1, unit: '%', indent: true })),
+        ...Object.entries(results.productResults).map(([key, p], index) => ({ 
+          label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
+          data: p.roe, 
+          decimals: 1, 
+          unit: '%', 
+          indent: true,
+          formula: p.roe.map((val, i) => createFormula(i,
+            'Net Profit Prodotto / Equity Medio Allocato × 100',
+            [
+              `Net Profit Prodotto: ${formatNumber(p.netProfit[i], 2)} €M`,
+              `Equity Allocato: ${formatNumber(p.allocatedEquity[i], 0)} €M`,
+              `ROE: ${formatNumber(val, 1)}%`
+            ]
+          ))
+        })),
     ];
 
     return (
