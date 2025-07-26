@@ -29,10 +29,12 @@ const REFinancingSheet = ({ assumptions, results }) => {
       decimals: 2, 
       indent: true,
       formula: p.interestIncome.map((val, i) => createFormula(i,
-        'Stock Medio Performing Product × Tasso Product',
+        'Average Performing Stock Product × (EURIBOR + Spread)',
         [
-          `Stock Medio Performing: ${formatNumber(p.performingAssets[i], 0)} €M`,
-          `Tasso Product: ${assumptions.products[key].tasso}%`,
+          `Average Performing Stock: ${formatNumber(p.performingAssets[i], 0)} €M`,
+          `EURIBOR: ${assumptions.euribor}%`,
+          `Spread: ${assumptions.products[key].spread}%`,
+          `Total Rate: ${(assumptions.euribor + assumptions.products[key].spread).toFixed(2)}%`,
           `Interest: ${formatNumber(val, 2)} €M`
         ]
       ))

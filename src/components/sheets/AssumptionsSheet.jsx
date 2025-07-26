@@ -7,11 +7,12 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode }) => (
             <h3 className="text-xl font-bold text-gray-800 mb-6">Assunzioni Generali e di Costo</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                 <div>
-                    <h4 className="font-semibold text-gray-700 mb-2">Parametri Generali</h4>
+                    <h4 className="font-semibold text-gray-700 mb-2">General Parameters</h4>
                     <EditableNumberField label="Initial Equity" value={assumptions.initialEquity} onChange={val => setAssumptions({...assumptions, initialEquity: val})} unit="€M" disabled={!editMode} isInteger/>
-                    <EditableNumberField label="Aliquota Fiscale" value={assumptions.taxRate} onChange={val => setAssumptions({...assumptions, taxRate: val})} unit="%" disabled={!editMode} isPercentage/>
-                    <EditableNumberField label="Costo del Funding" value={assumptions.costOfFundsRate} onChange={val => setAssumptions({...assumptions, costOfFundsRate: val})} unit="% su Attivi" disabled={!editMode} isPercentage/>
-                    <EditableNumberField label="Operating Assets Ratio" value={assumptions.operatingAssetsRatio} onChange={val => setAssumptions({...assumptions, operatingAssetsRatio: val})} unit="% su Crediti" disabled={!editMode} isPercentage/>
+                    <EditableNumberField label="Tax Rate" value={assumptions.taxRate} onChange={val => setAssumptions({...assumptions, taxRate: val})} unit="%" disabled={!editMode} isPercentage/>
+                    <EditableNumberField label="EURIBOR" value={assumptions.euribor} onChange={val => setAssumptions({...assumptions, euribor: val})} unit="%" disabled={!editMode} isPercentage/>
+                    <EditableNumberField label="Cost of Funding" value={assumptions.costOfFundsRate} onChange={val => setAssumptions({...assumptions, costOfFundsRate: val})} unit="% on Assets" disabled={!editMode} isPercentage/>
+                    <EditableNumberField label="Operating Assets Ratio" value={assumptions.operatingAssetsRatio} onChange={val => setAssumptions({...assumptions, operatingAssetsRatio: val})} unit="% on Loans" disabled={!editMode} isPercentage/>
                 </div>
                 <div>
                     <h4 className="font-semibold text-gray-700 mb-2">Average Personnel Cost</h4>
@@ -52,7 +53,7 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode }) => (
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                         <div>
                             <h5 className="font-semibold text-gray-600 text-sm mb-2">Parametri Finanziari</h5>
-                            <EditableNumberField label="Tasso Interesse" value={product.tasso} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], tasso: val}}}))} unit="%" disabled={!editMode} isPercentage/>
+                            <EditableNumberField label="Spread" value={product.spread} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], spread: val}}}))} unit="% over EURIBOR" disabled={!editMode} isPercentage/>
                             <EditableNumberField label="Fees" value={product.commissionRate} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], commissionRate: val}}}))} unit="% su nuovo" disabled={!editMode} isPercentage/>
                         </div>
                         <div>

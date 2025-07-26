@@ -57,7 +57,7 @@ export const calculateResults = (assumptions) => {
       productResults[key] = {
           performingAssets: grossPerformingStock,
           nonPerformingAssets: nplStock,
-          interestIncome: averagePerformingStock.map(v => v * product.tasso / 100),
+          interestIncome: averagePerformingStock.map(v => v * (assumptions.euribor + product.spread) / 100),
           commissionIncome: volumes5Y.map(v => v * product.commissionRate / 100),
           llp: years.map(i => lossOnStockDefaults[i] + expectedLossOnNewBusiness[i]),
           rwa: grossPerformingStock.map(v => v * product.rwaDensity / 100),

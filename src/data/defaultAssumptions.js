@@ -3,6 +3,7 @@ export const defaultAssumptions = {
   taxRate: 28, 
   costOfFundsRate: 3.0, 
   operatingAssetsRatio: 2.0,
+  euribor: 3.5, // EURIBOR base rate
   avgCostPerFte: 100, 
   backOfficeCostsY1: 2, 
   adminCostsY1: 1.5,
@@ -27,7 +28,7 @@ export const defaultAssumptions = {
     reNoGaranzia: {
       name: 'Senza Garanzia Pubblica',
       volumes: { y1: 100, y5: 650 },
-      tasso: 8.5, 
+      spread: 5.0, // Spread over EURIBOR (was tasso: 8.5, now 3.5 + 5.0)
       rwaDensity: 100, 
       durata: 3, 
       commissionRate: 1.0,
@@ -41,7 +42,7 @@ export const defaultAssumptions = {
     reConGaranzia: {
       name: 'Con Garanzia Pubblica',
       volumes: { y1: 50, y5: 550 },
-      tasso: 6.5, 
+      spread: 3.0, // Spread over EURIBOR (was tasso: 6.5, now 3.5 + 3.0)
       rwaDensity: 20, 
       durata: 5, 
       commissionRate: 0.5,

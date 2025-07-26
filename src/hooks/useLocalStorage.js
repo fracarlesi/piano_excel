@@ -14,6 +14,21 @@ export const useLocalStorage = () => {
           localStorage.removeItem('bankPlanAssumptions'); // Clear incompatible data
           return defaultAssumptions;
         }
+        
+        // Migrate from tasso to spread if needed
+        if (!parsedData.euribor) {
+          console.warn('Migrating to EURIBOR + Spread structure');
+          parsedData.euribor = defaultAssumptions.euribor;
+          
+          // Convert product tasso to spread
+          Object.keys(parsedData.products).forEach(key => {
+            if (parsedData.products[key].tasso && !parsedData.products[key].spread) {
+              parsedData.products[key].spread = Math.max(0, parsedData.products[key].tasso - parsedData.euribor);
+              delete parsedData.products[key].tasso;
+            }
+          });
+        }
+        
         return parsedData;
       } catch (e) {
         console.error('Error loading saved data:', e);
