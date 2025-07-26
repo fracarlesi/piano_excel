@@ -431,6 +431,14 @@ const ExcelLikeBankPlan = () => {
     const operatingAssetsRwaWeight = years.map(i => results.capital.totalRWA[i] > 0 ? results.capital.rwaOperatingAssets[i] / results.capital.totalRWA[i] : 0);
     results.capital.allocatedEquityOperatingAssets = years.map(i => results.bs.equity[i] * operatingAssetsRwaWeight[i]);
 
+    // Calculate total ROE
+    results.kpi.roe = years.map(i => {
+        const startEquity = i > 0 ? results.bs.equity[i-1] : assumptions.initialEquity;
+        const endEquity = results.bs.equity[i];
+        const avgEquity = (startEquity + endEquity) / 2;
+        return avgEquity > 0 ? (results.pnl.netProfit[i] / avgEquity) * 100 : 0;
+    });
+
     results.productResults = productResults;
 
     return results;
@@ -902,6 +910,34 @@ const ExcelLikeBankPlan = () => {
             ]
           ))
         },
+        { 
+          label: 'Imposte', 
+          data: results.pnl.taxes, 
+          decimals: 2,
+          formula: results.pnl.taxes.map((val, i) => createFormula(i,
+            'PBT × Aliquota Fiscale (se PBT > 0)',
+            [
+              `Utile Lordo (PBT): ${formatNumber(results.pnl.preTaxProfit[i], 2)} €M`,
+              `Aliquota Fiscale: ${assumptions.taxRate}%`,
+              `Imposte: ${formatNumber(val, 2)} €M`,
+              results.pnl.preTaxProfit[i] <= 0 ? `Nessuna imposta su perdite` : ''
+            ].filter(Boolean)
+          ))
+        },
+        { 
+          label: 'Utile Netto', 
+          data: results.pnl.netProfit, 
+          decimals: 2, 
+          isHeader: true,
+          formula: results.pnl.netProfit.map((val, i) => createFormula(i,
+            'Utile Lordo - Imposte',
+            [
+              `Utile Lordo: ${formatNumber(results.pnl.preTaxProfit[i], 2)} €M`,
+              `Imposte: ${formatNumber(results.pnl.taxes[i], 2)} €M`,
+              `Utile Netto: ${formatNumber(val, 2)} €M`
+            ]
+          ))
+        },
     ];
     const bsRows = [
         { 
@@ -1218,7 +1254,23 @@ const ExcelLikeBankPlan = () => {
           ))
         },
         { label: 'Numero Personale (FTE)', data: results.kpi.fte, decimals: 0 },
-        { label: 'Return on Equity (ROE)', data: [], decimals: 1, unit: '%', isTotal: true},
+        { 
+          label: 'Return on Equity (ROE)', 
+          data: results.kpi.roe, 
+          decimals: 1, 
+          unit: '%', 
+          isTotal: true,
+          formula: results.kpi.roe.map((val, i) => createFormula(i,
+            'Net Profit / Equity Medio × 100',
+            [
+              `Net Profit Anno ${i+1}: ${formatNumber(results.pnl.netProfit[i], 2)} €M`,
+              `Equity Inizio: ${i > 0 ? formatNumber(results.bs.equity[i-1], 0) : formatNumber(assumptions.initialEquity, 0)} €M`,
+              `Equity Fine: ${formatNumber(results.bs.equity[i], 0)} €M`,
+              `Equity Medio: ${formatNumber(((i > 0 ? results.bs.equity[i-1] : assumptions.initialEquity) + results.bs.equity[i]) / 2, 0)} €M`,
+              `ROE Totale: ${formatNumber(val, 1)}%`
+            ]
+          ))
+        },
         ...Object.entries(results.productResults).map(([key, p], index) => ({ 
           label: `o/w Prodotto ${index + 1}: ${assumptions.products[key].name}`, 
           data: p.roe, 
