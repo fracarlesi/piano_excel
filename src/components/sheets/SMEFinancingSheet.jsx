@@ -502,7 +502,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       ))
     },
     { 
-      label: 'Allocated Equity (SME Division)', 
+      label: 'Allocated Equity (PMI in Difficoltà)', 
       data: smeResults.bs.equity, 
       decimals: 0, 
       indent: true,
@@ -596,7 +596,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
       ))
     },
     { 
-      label: 'CET1 Ratio (%) - SME Division', 
+      label: 'CET1 Ratio (%) - PMI in Difficoltà', 
       data: smeResults.kpi.cet1Ratio, 
       decimals: 1, 
       unit: '%', 
@@ -712,7 +712,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
         'Somma Finanziamenti per Divisione',
         [
           `RE Division: ${formatNumber(results.kpi.reNumberOfLoans[i], 0)} loans`,
-          `SME Division: ${formatNumber(results.kpi.smeNumberOfLoans[i], 0)} loans`,
+          `PMI in Difficoltà: ${formatNumber(results.kpi.smeNumberOfLoans[i], 0)} loans`,
           `Total: ${formatNumber(val, 0)} loans`
         ]
       ))
@@ -754,7 +754,7 @@ const SMEFinancingSheet = ({ assumptions, results }) => {
   return (
     <div className="p-4 md:p-6 space-y-8">
       <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold text-orange-800 mb-2">🏭 SME Division - Specialized Financing</h3>
+        <h3 className="text-lg font-semibold text-orange-800 mb-2">🏭 PMI in Difficoltà - Specialized Financing</h3>
         <p className="text-orange-700 text-sm">
           Small and Medium Enterprise financing with diverse products: refinancing, bridge loans, special situations, 
           restructuring, and alternative finance. Higher risk-return profile with specialized underwriting expertise.

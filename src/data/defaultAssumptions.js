@@ -28,10 +28,6 @@ export const defaultAssumptions = {
     fteY1: 80,
     fteY5: 120,
   },
-  automotiveDivision: {
-    fteY1: 60,
-    fteY5: 100,
-  },
   digitalBankingDivision: {
     fteY1: 40,
     fteY5: 80,
@@ -145,39 +141,6 @@ export const defaultAssumptions = {
       quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Bullet repayment
       equityUpside: 2.5 // 2.5% equity upside
-    },
-    // Automotive Division Products
-    autoGreenLeasing: {
-      name: 'Leasing Auto Green',
-      volumes: { y1: 25, y5: 120 },
-      avgLoanSize: 30.0, // Average lease amount in €k for electric cars
-      spread: 2.8, // Lower spread for green products (subsidized)
-      rwaDensity: 60, // Lower RWA for secured leasing
-      durata: 4, // 4 years typical lease term
-      commissionRate: 1.5, // Upfront fee
-      dangerRate: 0.8, // Very low default rate for leasing
-      ltv: 85.0, // High LTV as car is collateral
-      recoveryCosts: 8.0, // Lower recovery costs for cars
-      collateralHaircut: 15.0, // Lower haircut for new cars
-      quarterlyDist: [25, 25, 25, 25],
-      type: 'amortizing', // Monthly leasing payments
-      isGreen: true // ESG product
-    },
-    autoChargingStations: {
-      name: 'Leasing Colonnine Ricarica',
-      volumes: { y1: 12, y5: 80 },
-      avgLoanSize: 8.0, // Average home charging station lease in €k
-      spread: 3.2, // Slightly higher spread for infrastructure
-      rwaDensity: 75, // Higher RWA for infrastructure financing
-      durata: 6, // Longer term for infrastructure
-      commissionRate: 2.0, // Installation and setup fees
-      dangerRate: 1.2, // Low default rate for home installations
-      ltv: 90.0, // Very high LTV as equipment is collateral
-      recoveryCosts: 12.0, // Higher recovery costs for installed equipment
-      collateralHaircut: 25.0, // Higher haircut for technology depreciation
-      quarterlyDist: [25, 25, 25, 25],
-      type: 'amortizing', // Monthly payments
-      isGreen: true // ESG product
     },
     // Digital Banking Division Products - Starling Bank Model
     digitalPersonalAccount: {

@@ -48,10 +48,13 @@ const REFinancingSheet = ({ assumptions, results }) => {
       decimals: 2, 
       isTotal: true,
       formula: reResults.pnl.interestIncome.map((val, i) => createFormula(i, 
-        'Stock Medio Performing × Tasso Interesse',
+        'Stock Medio Performing × (EURIBOR + Spread)',
         [
-          `Stock Medio Performing: ${formatNumber(reResults.bs.performingAssets[i], 0)} €M`,
-          `Tasso Interesse Medio Ponderato: ~${reResults.bs.performingAssets[i] > 0 ? (val / reResults.bs.performingAssets[i] * 100).toFixed(2) : '0'}%`
+          'Interest Income calculation by product:',
+          ...Object.entries(reProductResults).map(([key, product]) => 
+            year => `${product.name}: ${formatNumber(product.averagePerformingAssets[year], 2)} €M × ${formatNumber(product.assumptions.interestRate * 100, 2)}% = ${formatNumber(product.interestIncome[year], 2)} €M`
+          ),
+          year => `Total Interest Income: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
@@ -63,7 +66,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
       formula: p.interestIncome.map((val, i) => createFormula(i,
         'Average Performing Stock Product × (EURIBOR + Spread)',
         [
-          `Average Performing Stock: ${formatNumber(p.performingAssets[i], 0)} €M`,
+          `Average Performing Stock: ${formatNumber(p.averagePerformingAssets[i], 0)} €M`,
           `EURIBOR: ${assumptions.euribor}%`,
           `Spread: ${assumptions.products[key].spread}%`,
           `Total Rate: ${(assumptions.euribor + assumptions.products[key].spread).toFixed(2)}%`,
@@ -663,7 +666,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
       formula: results.capital.rwaMarketRisk.map((val, i) => createFormula(i,
         'Non applicabile per banking book',
         [
-          `Real Estate Division: solo banking book`,
+          `Real Estate Financing: solo banking book`,
           `Trading book: non presente`,
           `RWA Mercato: ${formatNumber(val, 0)} €M`
         ]
@@ -710,7 +713,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
       formula: results.kpi.totalNumberOfLoans.map((val, i) => createFormula(i,
         'Somma Finanziamenti per Divisione',
         [
-          `RE Division: ${formatNumber(results.kpi.reNumberOfLoans[i], 0)} loans`,
+          `Real Estate Financing: ${formatNumber(results.kpi.reNumberOfLoans[i], 0)} loans`,
           `SME Division: ${formatNumber(results.kpi.smeNumberOfLoans[i], 0)} loans`,
           `Total: ${formatNumber(val, 0)} loans`
         ]
@@ -753,7 +756,7 @@ const REFinancingSheet = ({ assumptions, results }) => {
   return (
     <div className="p-4 md:p-6 space-y-8">
       <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-semibold text-green-800 mb-2">🏢 Real Estate Division - Core Business</h3>
+        <h3 className="text-lg font-semibold text-green-800 mb-2">🏢 Real Estate Financing - Core Business</h3>
         <p className="text-green-700 text-sm">
           Traditional real estate financing with secured collateral. Focus on residential and commercial property loans 
           with public guarantees available. Higher margins compensate for elevated RWA and credit risk exposure.

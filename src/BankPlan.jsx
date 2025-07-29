@@ -10,7 +10,9 @@ import Navigation from './components/layout/Navigation';
 import AssumptionsSheet from './components/sheets/AssumptionsSheet';
 import REFinancingSheet from './components/sheets/REFinancingSheet';
 import SMEFinancingSheet from './components/sheets/SMEFinancingSheet';
-import AutomotiveFinancingSheet from './components/sheets/AutomotiveFinancingSheet';
+import WealthManagementSheet from './components/sheets/WealthManagementSheet';
+import TechPlatformSheet from './components/sheets/TechPlatformSheet';
+import SubsidizedFinanceSheet from './components/sheets/SubsidizedFinanceSheet';
 import DigitalBankingSheet from './components/sheets/DigitalBankingSheet';
 
 // Utils
@@ -50,9 +52,23 @@ const ExcelLikeBankPlan = () => {
             results={results} 
           />
         );
-      case 'automotiveFinancing': 
+      case 'wealthManagement': 
         return (
-          <AutomotiveFinancingSheet 
+          <WealthManagementSheet 
+            assumptions={assumptions} 
+            results={results} 
+          />
+        );
+      case 'techPlatform': 
+        return (
+          <TechPlatformSheet 
+            assumptions={assumptions} 
+            results={results} 
+          />
+        );
+      case 'subsidizedFinance': 
+        return (
+          <SubsidizedFinanceSheet 
             assumptions={assumptions} 
             results={results} 
           />

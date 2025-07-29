@@ -143,60 +143,6 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode }) => (
             ))}
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-bold text-gray-800 mb-6">Automotive Division Assumptions</h3>
-            <div className="mb-8 border-b pb-8">
-                 <h4 className="text-lg font-semibold text-gray-900 mb-4">Division Personnel</h4>
-                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <EditableNumberField label="FTE Anno 1" value={assumptions.automotiveDivision?.fteY1 || 0} onChange={val => setAssumptions(prev => ({...prev, automotiveDivision: {...prev.automotiveDivision, fteY1: val}}))} disabled={!editMode} isInteger/>
-                    <EditableNumberField label="FTE Anno 5" value={assumptions.automotiveDivision?.fteY5 || 0} onChange={val => setAssumptions(prev => ({...prev, automotiveDivision: {...prev.automotiveDivision, fteY5: val}}))} disabled={!editMode} isInteger/>
-                 </div>
-            </div>
-            
-            {/* Automotive Products */}
-            {Object.entries(assumptions.products).filter(([key]) => key.startsWith('auto')).map(([key, product], index) => (
-                <div key={key} className="mb-8 border-b pb-8 last:border-b-0 last:pb-0">
-                    <h4 className="text-lg font-semibold text-gray-900 mb-4">{`Auto Product ${index + 1}: ${product.name}`}</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                         <EditableNumberField label="Nuovi Impieghi Anno 1" value={product.volumes.y1} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], volumes: {...product.volumes, y1: val}}}}))} unit="€M" disabled={!editMode} isInteger/>
-                         <EditableNumberField label="Nuovi Impieghi Anno 5" value={product.volumes.y5} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], volumes: {...product.volumes, y5: val}}}}))} unit="€M" disabled={!editMode} isInteger/>
-                         <EditableNumberField label="Finanziamento Medio" value={product.avgLoanSize || 1.0} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], avgLoanSize: val}}}))} unit="€M" disabled={!editMode}/>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                        <div>
-                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Parametri Finanziari</h5>
-                            <EditableNumberField label="Spread" value={product.spread} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], spread: val}}}))} unit="% over EURIBOR" disabled={!editMode} isPercentage/>
-                            <EditableNumberField label="Fees" value={product.commissionRate} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], commissionRate: val}}}))} unit="% su nuovo" disabled={!editMode} isPercentage/>
-                            {product.isGreen && <span className="text-green-600 text-xs font-medium">✓ ESG Green Product</span>}
-                        </div>
-                        <div>
-                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Parametri Strutturali</h5>
-                            <EditableNumberField label="Durata" value={product.durata} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], durata: val}}}))} unit="anni" disabled={!editMode}/>
-                            <div className="mb-3">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Modalità Ammortamento</label>
-                                <select 
-                                    value={product.type || 'amortizing'}
-                                    onChange={e => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], type: e.target.value}}}))}
-                                    disabled={!editMode}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                >
-                                    <option value="amortizing">Ammortamento alla Francese</option>
-                                    <option value="bullet">Bullet (pagamento finale)</option>
-                                </select>
-                            </div>
-                            <EditableNumberField label="RWA Density" value={product.rwaDensity} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], rwaDensity: val}}}))} unit="%" disabled={!editMode} isPercentage/>
-                        </div>
-                         <div>
-                            <h5 className="font-semibold text-gray-600 text-sm mb-2">Risk Parameters</h5>
-                            <EditableNumberField label="Tasso di Default (Danger Rate)" value={product.dangerRate} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], dangerRate: val}}}))} unit="%" disabled={!editMode} isPercentage/>
-                            <EditableNumberField label="Loan-to-Value (LTV)" value={product.ltv} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], ltv: val}}}))} unit="%" disabled={!editMode} isPercentage/>
-                            <EditableNumberField label="Recovery Costs" value={product.recoveryCosts} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], recoveryCosts: val}}}))} unit="% su Collaterale" disabled={!editMode} isPercentage/>
-                            <EditableNumberField label="Haircut su Collaterale" value={product.collateralHaircut} onChange={val => setAssumptions(prev => ({...prev, products: {...prev.products, [key]: {...prev.products[key], collateralHaircut: val}}}))} unit="%" disabled={!editMode} isPercentage/>
-                        </div>
-                    </div>
-                </div>
-            ))}
-        </div>
 
         {/* Digital Banking Division */}
         <div className="bg-white p-6 rounded-lg shadow-md">

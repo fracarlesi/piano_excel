@@ -4,9 +4,11 @@ import { Settings, TrendingUp } from 'lucide-react';
 const Navigation = ({ activeSheet, setActiveSheet }) => {
   const sheets = {
     assumptions: { name: 'Assumptions', icon: Settings },
-    reFinancing: { name: 'RE Division', icon: TrendingUp },
-    smeFinancing: { name: 'SME Division', icon: TrendingUp },
-    automotiveFinancing: { name: 'Automotive Division', icon: TrendingUp },
+    reFinancing: { name: 'Real Estate Financing', icon: TrendingUp },
+    smeFinancing: { name: 'PMI in Difficoltà', icon: TrendingUp },
+    wealthManagement: { name: 'Wealth Management', icon: TrendingUp },
+    techPlatform: { name: 'Piattaforma Tecnologica', icon: TrendingUp },
+    subsidizedFinance: { name: 'Finanza Agevolata PMI', icon: TrendingUp },
     digitalBankingFinancing: { name: 'Digital Banking Division', icon: TrendingUp }
   };
 

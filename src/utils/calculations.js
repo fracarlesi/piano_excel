@@ -59,20 +59,29 @@ export const calculateResults = (assumptions) => {
       const numberOfLoans = volumes5Y.map(v => Math.round(v / avgLoanSize));
 
       productResults[key] = {
+          name: product.name,
           performingAssets: grossPerformingStock,
+          averagePerformingAssets: averagePerformingStock,
           nonPerformingAssets: nplStock,
           interestIncome: averagePerformingStock.map(v => v * (assumptions.euribor + product.spread) / 100),
           commissionIncome: volumes5Y.map(v => v * product.commissionRate / 100),
           llp: years.map(i => lossOnStockDefaults[i] + expectedLossOnNewBusiness[i]),
           rwa: grossPerformingStock.map(v => v * product.rwaDensity / 100),
           numberOfLoans: numberOfLoans,
+          newBusiness: volumes5Y,
+          assumptions: {
+              interestRate: (assumptions.euribor + product.spread) / 100,
+              commissionRate: product.commissionRate / 100,
+              pd: product.dangerRate / 100,
+              lgd: lgd,
+              riskWeight: product.rwaDensity / 100
+          }
       };
   }
   
   // Create division-specific results
   const reProductResults = Object.fromEntries(Object.entries(productResults).filter(([key]) => key.startsWith('re')));
   const smeProductResults = Object.fromEntries(Object.entries(productResults).filter(([key]) => key.startsWith('sme')));
-  const autoProductResults = Object.fromEntries(Object.entries(productResults).filter(([key]) => key.startsWith('auto')));
   const digitalProductResults = Object.fromEntries(Object.entries(productResults).filter(([key]) => key.startsWith('digital')));
 
   // Calculate division-specific aggregates
@@ -84,12 +93,6 @@ export const calculateResults = (assumptions) => {
       kpi: {}
     },
     sme: {
-      bs: {},
-      pnl: {},
-      capital: {},
-      kpi: {}
-    },
-    automotive: {
       bs: {},
       pnl: {},
       capital: {},
@@ -119,13 +122,6 @@ export const calculateResults = (assumptions) => {
   results.divisions.sme.pnl.totalLLP = years.map(i => Object.values(smeProductResults).reduce((sum, p) => sum + p.llp[i], 0));
   results.divisions.sme.capital.rwaCreditRisk = years.map(i => Object.values(smeProductResults).reduce((sum, p) => sum + p.rwa[i], 0));
 
-  // Automotive Division aggregates
-  results.divisions.automotive.bs.performingAssets = years.map(i => Object.values(autoProductResults).reduce((sum, p) => sum + p.performingAssets[i], 0));
-  results.divisions.automotive.bs.nonPerformingAssets = years.map(i => Object.values(autoProductResults).reduce((sum, p) => sum + p.nonPerformingAssets[i], 0));
-  results.divisions.automotive.pnl.interestIncome = years.map(i => Object.values(autoProductResults).reduce((sum, p) => sum + p.interestIncome[i], 0));
-  results.divisions.automotive.pnl.commissionIncome = years.map(i => Object.values(autoProductResults).reduce((sum, p) => sum + p.commissionIncome[i], 0));
-  results.divisions.automotive.pnl.totalLLP = years.map(i => Object.values(autoProductResults).reduce((sum, p) => sum + p.llp[i], 0));
-  results.divisions.automotive.capital.rwaCreditRisk = years.map(i => Object.values(autoProductResults).reduce((sum, p) => sum + p.rwa[i], 0));
 
   // Digital Banking Division aggregates
   results.divisions.digital.bs.performingAssets = years.map(i => Object.values(digitalProductResults).reduce((sum, p) => sum + p.performingAssets[i], 0));
@@ -136,25 +132,25 @@ export const calculateResults = (assumptions) => {
   results.divisions.digital.capital.rwaCreditRisk = years.map(i => Object.values(digitalProductResults).reduce((sum, p) => sum + p.rwa[i], 0));
 
   // First calculate total balance sheet items to get accurate weights
-  results.bs.performingAssets = years.map(i => results.divisions.re.bs.performingAssets[i] + results.divisions.sme.bs.performingAssets[i] + results.divisions.automotive.bs.performingAssets[i] + results.divisions.digital.bs.performingAssets[i]);
-  results.bs.nonPerformingAssets = years.map(i => results.divisions.re.bs.nonPerformingAssets[i] + results.divisions.sme.bs.nonPerformingAssets[i] + results.divisions.automotive.bs.nonPerformingAssets[i] + results.divisions.digital.bs.nonPerformingAssets[i]);
+  results.bs.performingAssets = years.map(i => results.divisions.re.bs.performingAssets[i] + results.divisions.sme.bs.performingAssets[i] + results.divisions.digital.bs.performingAssets[i]);
+  results.bs.nonPerformingAssets = years.map(i => results.divisions.re.bs.nonPerformingAssets[i] + results.divisions.sme.bs.nonPerformingAssets[i] + results.divisions.digital.bs.nonPerformingAssets[i]);
   const totalLoans = years.map(i => results.bs.performingAssets[i] + results.bs.nonPerformingAssets[i]);
   results.bs.operatingAssets = totalLoans.map(v => v * (assumptions.operatingAssetsRatio / 100));
   results.bs.totalAssets = years.map(i => totalLoans[i] + results.bs.operatingAssets[i]);
   
   // Calculate total RWA components first
-  results.capital.rwaCreditRisk = years.map(i => results.divisions.re.capital.rwaCreditRisk[i] + results.divisions.sme.capital.rwaCreditRisk[i] + results.divisions.automotive.capital.rwaCreditRisk[i] + results.divisions.digital.capital.rwaCreditRisk[i]);
+  results.capital.rwaCreditRisk = years.map(i => results.divisions.re.capital.rwaCreditRisk[i] + results.divisions.sme.capital.rwaCreditRisk[i] + results.divisions.digital.capital.rwaCreditRisk[i]);
   results.capital.rwaOperationalRisk = results.bs.totalAssets.map(assets => assets * 0.1);
   results.capital.rwaMarketRisk = years.map(() => 0);
   results.capital.rwaOperatingAssets = results.bs.operatingAssets.map(oa => oa * 1.0); // 100% risk weight for operating assets
   results.capital.totalRWA = years.map(i => results.capital.rwaCreditRisk[i] + results.capital.rwaOperationalRisk[i] + results.capital.rwaMarketRisk[i] + results.capital.rwaOperatingAssets[i]);
 
   // Calculate P&L first to get net profit for equity calculation
-  results.pnl.interestIncome = years.map(i => results.divisions.re.pnl.interestIncome[i] + results.divisions.sme.pnl.interestIncome[i] + results.divisions.automotive.pnl.interestIncome[i] + results.divisions.digital.pnl.interestIncome[i]);
+  results.pnl.interestIncome = years.map(i => results.divisions.re.pnl.interestIncome[i] + results.divisions.sme.pnl.interestIncome[i] + results.divisions.digital.pnl.interestIncome[i]);
   results.pnl.interestExpenses = results.bs.totalAssets.map(assets => -assets * assumptions.costOfFundsRate / 100);
   results.pnl.netInterestIncome = years.map(i => results.pnl.interestIncome[i] + results.pnl.interestExpenses[i]);
   
-  results.pnl.commissionIncome = years.map(i => results.divisions.re.pnl.commissionIncome[i] + results.divisions.sme.pnl.commissionIncome[i] + results.divisions.automotive.pnl.commissionIncome[i] + results.divisions.digital.pnl.commissionIncome[i]);
+  results.pnl.commissionIncome = years.map(i => results.divisions.re.pnl.commissionIncome[i] + results.divisions.sme.pnl.commissionIncome[i] + results.divisions.digital.pnl.commissionIncome[i]);
   results.pnl.commissionExpenses = results.pnl.commissionIncome.map(c => -c * assumptions.commissionExpenseRate / 100);
   results.pnl.netCommissions = years.map(i => results.pnl.commissionIncome[i] + results.pnl.commissionExpenses[i]);
   
@@ -163,14 +159,12 @@ export const calculateResults = (assumptions) => {
   // Calculate FTE for all divisions
   const reFteGrowth = (assumptions.realEstateDivision.fteY5 - assumptions.realEstateDivision.fteY1) / 4;
   const smeFteGrowth = (assumptions.smeDivision.fteY5 - assumptions.smeDivision.fteY1) / 4;
-  const autoFteGrowth = (assumptions.automotiveDivision.fteY5 - assumptions.automotiveDivision.fteY1) / 4;
   const digitalFteGrowth = (assumptions.digitalBankingDivision.fteY5 - assumptions.digitalBankingDivision.fteY1) / 4;
   
   results.kpi.reFte = years.map(i => assumptions.realEstateDivision.fteY1 + (reFteGrowth * i));
   results.kpi.smeFte = years.map(i => assumptions.smeDivision.fteY1 + (smeFteGrowth * i));
-  results.kpi.autoFte = years.map(i => assumptions.automotiveDivision.fteY1 + (autoFteGrowth * i));
   results.kpi.digitalFte = years.map(i => assumptions.digitalBankingDivision.fteY1 + (digitalFteGrowth * i));
-  results.kpi.fte = years.map(i => results.kpi.reFte[i] + results.kpi.smeFte[i] + results.kpi.autoFte[i] + results.kpi.digitalFte[i]);
+  results.kpi.fte = years.map(i => results.kpi.reFte[i] + results.kpi.smeFte[i] + results.kpi.digitalFte[i]);
   
   results.pnl.personnelCostsTotal = results.kpi.fte.map(fte => - (fte * assumptions.avgCostPerFte) / 1000);
 
@@ -184,7 +178,7 @@ export const calculateResults = (assumptions) => {
 
   results.pnl.otherCosts = years.map(i => -assumptions.otherCostsY1 * costGrowth[i]);
   results.pnl.provisions = years.map(i => -assumptions.provisionsY1 * costGrowth[i]);
-  results.pnl.totalLLP = years.map(i => results.divisions.re.pnl.totalLLP[i] + results.divisions.sme.pnl.totalLLP[i] + results.divisions.automotive.pnl.totalLLP[i] + results.divisions.digital.pnl.totalLLP[i]);
+  results.pnl.totalLLP = years.map(i => results.divisions.re.pnl.totalLLP[i] + results.divisions.sme.pnl.totalLLP[i] + results.divisions.digital.pnl.totalLLP[i]);
   results.pnl.preTaxProfit = years.map(i => results.pnl.totalRevenues[i] + results.pnl.totalOpex[i] + results.pnl.totalLLP[i] + results.pnl.otherCosts[i]);
   results.pnl.taxes = years.map(i => results.pnl.preTaxProfit[i] > 0 ? -results.pnl.preTaxProfit[i] * (assumptions.taxRate / 100) : 0);
   results.pnl.netProfit = years.map(i => results.pnl.preTaxProfit[i] + results.pnl.taxes[i]);
@@ -214,13 +208,6 @@ export const calculateResults = (assumptions) => {
            (results.capital.rwaOperatingAssets[i] * smeAssetWeight);
   });
 
-  results.divisions.automotive.capital.totalRWA = years.map(i => {
-    const autoAssetWeight = results.bs.totalAssets[i] > 0 ? 
-      (results.divisions.automotive.bs.performingAssets[i] + results.divisions.automotive.bs.nonPerformingAssets[i]) / results.bs.totalAssets[i] : 0;
-    return results.divisions.automotive.capital.rwaCreditRisk[i] + 
-           (results.capital.rwaOperationalRisk[i] * autoAssetWeight) +
-           (results.capital.rwaOperatingAssets[i] * autoAssetWeight);
-  });
 
   results.divisions.digital.capital.totalRWA = years.map(i => {
     const digitalAssetWeight = results.bs.totalAssets[i] > 0 ? 
@@ -243,11 +230,6 @@ export const calculateResults = (assumptions) => {
     return results.bs.equity[i] * smeRWAWeight;
   });
 
-  results.divisions.automotive.bs.allocatedEquity = years.map(i => {
-    const totalRWA = results.capital.totalRWA[i];
-    const autoRWAWeight = totalRWA > 0 ? results.divisions.automotive.capital.totalRWA[i] / totalRWA : 0;
-    return results.bs.equity[i] * autoRWAWeight;
-  });
 
   results.divisions.digital.bs.allocatedEquity = years.map(i => {
     const totalRWA = results.capital.totalRWA[i];
@@ -266,10 +248,6 @@ export const calculateResults = (assumptions) => {
     (results.divisions.sme.bs.allocatedEquity[i] / results.divisions.sme.capital.totalRWA[i]) * 100 : 0
   );
 
-  results.divisions.automotive.capital.cet1Ratio = years.map(i => 
-    results.divisions.automotive.capital.totalRWA[i] > 0 ? 
-    (results.divisions.automotive.bs.allocatedEquity[i] / results.divisions.automotive.capital.totalRWA[i]) * 100 : 0
-  );
 
   results.divisions.digital.capital.cet1Ratio = years.map(i => 
     results.divisions.digital.capital.totalRWA[i] > 0 ? 
@@ -341,11 +319,6 @@ export const calculateResults = (assumptions) => {
       .reduce((sum, [key, p]) => sum + p.numberOfLoans[i], 0)
   );
   
-  results.kpi.autoNumberOfLoans = years.map(i => 
-    Object.entries(productResults)
-      .filter(([key]) => key.startsWith('auto'))
-      .reduce((sum, [key, p]) => sum + p.numberOfLoans[i], 0)
-  );
   
   results.kpi.digitalNumberOfLoans = years.map(i => 
     Object.entries(productResults)
