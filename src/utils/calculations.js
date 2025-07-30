@@ -151,6 +151,11 @@ const calculateCommissionProduct = (product, assumptions, years) => {
  */
 const calculateDigitalServiceProduct = (product, assumptions, years, ftpRate) => {
   const customers = years.map(i => {
+    // First check if there's a customerArray
+    if (product.customerArray && Array.isArray(product.customerArray) && product.customerArray.length === 10) {
+      return product.customerArray[i] || 0;
+    }
+    // Otherwise use customers object
     if (product.customers) {
       if (product.customers[`y${i + 1}`] !== undefined) {
         return product.customers[`y${i + 1}`];

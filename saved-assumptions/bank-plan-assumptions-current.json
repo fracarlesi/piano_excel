@@ -1,9 +1,11 @@
 {
-  "version": "2.9",
+  "version": "4.0",
   "initialEquity": 200,
   "taxRate": 28,
   "costOfFundsRate": 3,
-  "euribor": 0,
+  "euribor": 3.5,
+  "ftpSpread": 1.5,
+  "depositRate": 0.5,
   "avgCostPerFte": 100,
   "backOfficeCostsY1": 2,
   "adminCostsY1": 1.5,
@@ -33,61 +35,79 @@
   },
   "products": {
     "reSecuritization": {
-      "name": "Cartolarizzazioni Immobiliari",
-      "productType": "Credit",
+      "name": "Finanziamenti alle Cartolarizzazioni Immobiliari (Note Senior)",
       "volumes": {
-        "y1": 100,
-        "y10": 0,
-        "y2": 0,
-        "y3": 0,
-        "y4": 0,
-        "y5": 0,
-        "y6": 0,
-        "y7": 0,
-        "y8": 0,
-        "y9": 0
+        "y1": 150,
+        "y10": 800
       },
-      "spread": 8,
-      "costOfFunding": 4,
-      "totalDuration": 5,
-      "durata": 3,
-      "gracePeriod": 0,
-      "rwaDensity": 100,
-      "dangerRate": 10,
-      "lgd": 100,
-      "ltv": 75,
-      "recoveryCosts": 15,
-      "collateralHaircut": 25,
-      "avgLoanSize": 10,
-      "creditClassification": "Bonis",
-      "isFixedRate": false,
-      "type": "bullet",
-      "commissionRate": 1,
-      "equityUpside": 0,
+      "avgLoanSize": 25,
+      "spread": 2.8,
+      "rwaDensity": 35,
+      "durata": 7,
+      "commissionRate": 0.3,
+      "dangerRate": 0.8,
+      "ltv": 65,
+      "recoveryCosts": 8,
+      "collateralHaircut": 15,
       "quarterlyDist": [
         25,
         25,
         25,
         25
       ],
-      "volumeArray": [
-        100,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ]
+      "type": "amortizing"
+    },
+    "reMortgage": {
+      "name": "Finanziamenti Ipotecari",
+      "volumes": {
+        "y1": 200,
+        "y10": 1200
+      },
+      "avgLoanSize": 0.8,
+      "spread": 2.2,
+      "rwaDensity": 45,
+      "durata": 25,
+      "commissionRate": 0.8,
+      "dangerRate": 1.2,
+      "ltv": 80,
+      "recoveryCosts": 12,
+      "collateralHaircut": 20,
+      "quarterlyDist": [
+        25,
+        25,
+        25,
+        25
+      ],
+      "type": "french"
+    },
+    "reBridge": {
+      "name": "Finanziamenti Corporate Bridge Loan",
+      "volumes": {
+        "y1": 80,
+        "y10": 400
+      },
+      "avgLoanSize": 15,
+      "spread": 4.2,
+      "rwaDensity": 85,
+      "durata": 2,
+      "commissionRate": 2.5,
+      "dangerRate": 3.5,
+      "ltv": 70,
+      "recoveryCosts": 18,
+      "collateralHaircut": 25,
+      "quarterlyDist": [
+        25,
+        25,
+        25,
+        25
+      ],
+      "type": "bullet"
     },
     "smeRefinancing": {
       "name": "Refinancing (Rifinanziamento)",
       "volumes": {
         "y1": 15,
-        "y5": 75
+        "y10": 75
       },
       "avgLoanSize": 15,
       "spread": 3.5,
@@ -111,7 +131,7 @@
       "name": "Bridge (Ponte)",
       "volumes": {
         "y1": 15,
-        "y5": 60
+        "y10": 60
       },
       "avgLoanSize": 15,
       "spread": 4.5,
@@ -134,7 +154,7 @@
       "name": "Special Situation",
       "volumes": {
         "y1": 20,
-        "y5": 80
+        "y10": 80
       },
       "avgLoanSize": 20,
       "spread": 5.5,
@@ -157,7 +177,7 @@
       "name": "Nuova Finanza",
       "volumes": {
         "y1": 10,
-        "y5": 40
+        "y10": 40
       },
       "avgLoanSize": 10,
       "spread": 8.5,
@@ -181,7 +201,7 @@
       "name": "Restructuring (Ristrutturazione)",
       "volumes": {
         "y1": 8,
-        "y5": 35
+        "y10": 35
       },
       "avgLoanSize": 8,
       "spread": 11.5,
@@ -203,174 +223,90 @@
     },
     "digitalPersonalAccount": {
       "name": "Digital Personal Account",
-      "volumes": {
-        "y1": 50,
-        "y5": 200
+      "productType": "DigitalService",
+      "isDigital": true,
+      "customers": {
+        "y1": 5000,
+        "y5": 25000
       },
-      "avgLoanSize": 0.003,
-      "spread": 0,
-      "rwaDensity": 0,
-      "durata": 1,
-      "commissionRate": 0,
-      "dangerRate": 0,
-      "ltv": 0,
-      "recoveryCosts": 0,
-      "collateralHaircut": 0,
-      "quarterlyDist": [
-        25,
-        25,
-        25,
-        25
-      ],
-      "type": "services",
-      "isDigital": true
+      "cac": 250,
+      "avgDeposit": 35000,
+      "churnRate": 5,
+      "monthlyFee": 0,
+      "annualServiceRevenue": 15,
+      "depositInterestRate": 0.5,
+      "customerArray": [
+        5000,
+        10000,
+        15000,
+        20000,
+        25000,
+        25000,
+        30000,
+        35000,
+        40000,
+        45000
+      ]
     },
     "digitalBusinessAccount": {
       "name": "Digital Business Account",
-      "volumes": {
-        "y1": 30,
-        "y5": 120
+      "productType": "DigitalService",
+      "isDigital": true,
+      "customers": {
+        "y1": 15000,
+        "y5": 75000
       },
-      "avgLoanSize": 0.015,
-      "spread": 0,
-      "rwaDensity": 0,
-      "durata": 1,
-      "commissionRate": 2.5,
-      "dangerRate": 0,
-      "ltv": 0,
-      "recoveryCosts": 0,
-      "collateralHaircut": 0,
-      "quarterlyDist": [
-        25,
-        25,
-        25,
-        25
-      ],
-      "type": "services",
-      "isDigital": true
+      "cac": 120,
+      "avgDeposit": 25000,
+      "churnRate": 8,
+      "monthlyFee": 15,
+      "annualServiceRevenue": 150,
+      "depositInterestRate": 0.8
     },
     "digitalPaymentServices": {
       "name": "Payment & Card Services",
-      "volumes": {
-        "y1": 20,
-        "y5": 80
+      "productType": "DigitalService",
+      "isDigital": true,
+      "customers": {
+        "y1": 80000,
+        "y5": 400000
       },
-      "avgLoanSize": 0.001,
-      "spread": 0.4,
-      "rwaDensity": 5,
-      "durata": 1,
-      "commissionRate": 1.5,
-      "dangerRate": 0.2,
-      "ltv": 0,
-      "recoveryCosts": 0,
-      "collateralHaircut": 0,
-      "quarterlyDist": [
-        25,
-        25,
-        25,
-        25
-      ],
-      "type": "services",
-      "isDigital": true
+      "cac": 15,
+      "avgDeposit": 1500,
+      "churnRate": 12,
+      "monthlyFee": 0,
+      "annualServiceRevenue": 45,
+      "depositInterestRate": 0.3
     },
     "digitalMarketplace": {
       "name": "Marketplace & Third-Party Services",
-      "volumes": {
-        "y1": 10,
-        "y5": 50
+      "productType": "DigitalService",
+      "isDigital": true,
+      "customers": {
+        "y1": 25000,
+        "y5": 150000
       },
-      "avgLoanSize": 0.05,
-      "spread": 0,
-      "rwaDensity": 0,
-      "durata": 1,
-      "commissionRate": 4,
-      "dangerRate": 0,
-      "ltv": 0,
-      "recoveryCosts": 0,
-      "collateralHaircut": 0,
-      "quarterlyDist": [
-        25,
-        25,
-        25,
-        25
-      ],
-      "type": "services",
-      "isDigital": true
+      "cac": 45,
+      "avgDeposit": 2000,
+      "churnRate": 15,
+      "monthlyFee": 0,
+      "annualServiceRevenue": 120,
+      "depositInterestRate": 0.4
     },
     "digitalBankingPlatform": {
       "name": "Banking-as-a-Service Platform",
-      "volumes": {
-        "y1": 5,
-        "y5": 40
+      "productType": "DigitalService",
+      "isDigital": true,
+      "customers": {
+        "y1": 200,
+        "y5": 1500
       },
-      "avgLoanSize": 0.1,
-      "spread": 0,
-      "rwaDensity": 0,
-      "durata": 3,
-      "commissionRate": 15,
-      "dangerRate": 0.1,
-      "ltv": 0,
-      "recoveryCosts": 0,
-      "collateralHaircut": 0,
-      "quarterlyDist": [
-        25,
-        25,
-        25,
-        25
-      ],
-      "type": "services",
-      "isDigital": true
-    },
-    "reFinanziamentoIpotecari": {
-      "name": "Finanziamento Ipotecario",
-      "productType": "Credit",
-      "volumes": {
-        "y1": 100,
-        "y10": 0,
-        "y2": 0,
-        "y3": 0,
-        "y4": 0,
-        "y5": 0,
-        "y6": 0,
-        "y7": 0,
-        "y8": 0,
-        "y9": 0
-      },
-      "spread": 8,
-      "costOfFunding": 4,
-      "totalDuration": 5,
-      "durata": 5,
-      "gracePeriod": 0,
-      "rwaDensity": 75,
-      "dangerRate": 1.5,
-      "lgd": 45,
-      "ltv": 80,
-      "recoveryCosts": 10,
-      "collateralHaircut": 15,
-      "avgLoanSize": 1,
-      "creditClassification": "Bonis",
-      "isFixedRate": false,
-      "type": "french",
-      "commissionRate": 0.5,
-      "equityUpside": 0,
-      "quarterlyDist": [
-        25,
-        25,
-        25,
-        25
-      ],
-      "volumeArray": [
-        100,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ]
+      "cac": 5000,
+      "avgDeposit": 0,
+      "churnRate": 3,
+      "monthlyFee": 2500,
+      "annualServiceRevenue": 15000,
+      "depositInterestRate": 0
     }
   }
 }

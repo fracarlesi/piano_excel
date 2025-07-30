@@ -24,7 +24,9 @@ const VolumeInputGrid = ({
 
   const handleCellChange = (index, newValue) => {
     const updatedValues = [...normalizedValues];
-    updatedValues[index] = parseFloat(newValue) || 0;
+    // Remove thousand separators before parsing
+    const cleanValue = newValue.replace(/,/g, '');
+    updatedValues[index] = parseFloat(cleanValue) || 0;
     onChange(updatedValues);
   };
 
@@ -101,6 +103,10 @@ const VolumeInputGrid = ({
 
   const formatValue = (value) => {
     if (value === 0) return '';
+    // Add thousand separators for customer units
+    if (unit === 'customers' || unit === 'units') {
+      return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
     return value.toString();
   };
 
@@ -121,8 +127,14 @@ const VolumeInputGrid = ({
           {label} ({unit})
         </label>
         <div className="text-xs text-gray-500">
-          Total: {calculateSum().toFixed(1)} {unit} | 
-          Avg: {calculateAverage().toFixed(1)} {unit}/year
+          Total: {unit === 'customers' || unit === 'units' 
+            ? calculateSum().toLocaleString('en-US', { maximumFractionDigits: 0 })
+            : calculateSum().toFixed(1)
+          } {unit} | 
+          Avg: {unit === 'customers' || unit === 'units'
+            ? calculateAverage().toLocaleString('en-US', { maximumFractionDigits: 0 })
+            : calculateAverage().toFixed(1)
+          } {unit}/year
         </div>
       </div>
 

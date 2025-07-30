@@ -317,6 +317,11 @@ const DivisionAssumptions = ({
     const getInputArray = () => {
       // For DigitalService products, use customers data
       if (productType === 'DigitalService') {
+        // First check if there's a customerArray
+        if (product.customerArray && Array.isArray(product.customerArray) && product.customerArray.length === 10) {
+          return product.customerArray;
+        }
+        // Otherwise use customers object with interpolation
         if (product.customers) {
           // Convert customers object to array format
           const y1 = product.customers.y1 || 0;
@@ -441,9 +446,11 @@ const DivisionAssumptions = ({
                         values={productAssumption.inputArray || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
                         onChange={(newArray) => {
                           if (productAssumption.isDigitalService) {
-                            // For DigitalService products, update customers object
+                            // For DigitalService products, save the full customer array
+                            onAssumptionChange(`products.${productKey}.customerArray`, newArray);
+                            // Also update y1 and y5 for backward compatibility
                             const y1 = newArray[0] || 0;
-                            const y5 = newArray[4] || 0; // Year 5 (index 4)
+                            const y5 = newArray[4] || 0;
                             onAssumptionChange(`products.${productKey}.customers`, { y1, y5 });
                           } else {
                             // For other products, update volumeArray
