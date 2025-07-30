@@ -16,10 +16,11 @@ const StandardPnL = ({
   customRowTransformations = {}
 }) => {
   
-  // Helper function to create formula explanations
-  const createFormula = (year, formula, details) => ({
+  // Helper function to create formula explanations with numerical calculations
+  const createFormula = (year, formula, details, calculation = null) => ({
     formula,
-    details: details.map(d => typeof d === 'function' ? d(year) : d)
+    details: details.map(d => typeof d === 'function' ? d(year) : d),
+    calculation: typeof calculation === 'function' ? calculation(year) : calculation
   });
 
   // Calculate derived values
@@ -33,7 +34,13 @@ const StandardPnL = ({
     return income + expenses; // expenses are negative
   });
 
-  const totalRevenues = netInterestIncome.map((nii, i) => nii + netCommissionIncome[i]);
+  // Calculate other income (equity upside)
+  const otherIncome = Object.values(productResults).reduce((acc, product) => {
+    const equityUpside = product.equityUpsideIncome || [0,0,0,0,0];
+    return acc.map((val, i) => val + equityUpside[i]);
+  }, [0,0,0,0,0]);
+
+  const totalRevenues = netInterestIncome.map((nii, i) => nii + netCommissionIncome[i] + otherIncome[i]);
 
   // Calculate total operating expenses
   const personnelCosts = divisionResults.pnl.personnelCosts || 
@@ -94,8 +101,15 @@ const StandardPnL = ({
         'Average Performing Stock × Interest Rate',
         [
           `Product: ${product.name}`,
+          year => `Average Stock: ${formatNumber((product.averagePerformingAssets || [0,0,0,0,0])[year], 0)} €M`,
+          year => `Interest Rate: ${((product.assumptions?.interestRate || 0) * 100).toFixed(2)}%`,
           year => `Interest Income: ${formatNumber(val, 2)} €M`
-        ]
+        ],
+        year => {
+          const avgStock = (product.averagePerformingAssets || [0,0,0,0,0])[year] || 0;
+          const rate = (product.assumptions?.interestRate || 0) * 100;
+          return `${formatNumber(avgStock, 0)} × ${rate.toFixed(2)}% = ${formatNumber(val, 2)} €M`;
+        }
       ))
     })) : []),
 
@@ -134,7 +148,12 @@ const StandardPnL = ({
           year => `Interest Income: ${formatNumber((divisionResults.pnl.interestIncome || [0,0,0,0,0])[year], 2)} €M`,
           year => `Interest Expenses: ${formatNumber((divisionResults.pnl.interestExpenses || [0,0,0,0,0])[year], 2)} €M`,
           year => `NII: ${formatNumber(val, 2)} €M`
-        ]
+        ],
+        year => {
+          const income = (divisionResults.pnl.interestIncome || [0,0,0,0,0])[year] || 0;
+          const expenses = (divisionResults.pnl.interestExpenses || [0,0,0,0,0])[year] || 0;
+          return `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expenses), 2)}) = ${formatNumber(val, 2)} €M`;
+        }
       ))
     },
 
@@ -198,7 +217,12 @@ const StandardPnL = ({
           year => `Commission Income: ${formatNumber((divisionResults.pnl.commissionIncome || [0,0,0,0,0])[year], 2)} €M`,
           year => `Commission Expenses: ${formatNumber((divisionResults.pnl.commissionExpenses || [0,0,0,0,0])[year], 2)} €M`,
           year => `NCI: ${formatNumber(val, 2)} €M`
-        ]
+        ],
+        year => {
+          const income = (divisionResults.pnl.commissionIncome || [0,0,0,0,0])[year] || 0;
+          const expenses = (divisionResults.pnl.commissionExpenses || [0,0,0,0,0])[year] || 0;
+          return `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expenses), 2)}) = ${formatNumber(val, 2)} €M`;
+        }
       ))
     },
 
@@ -212,7 +236,36 @@ const StandardPnL = ({
       indent: true
     })) : []),
 
-    // ========== TRADING INCOME ==========
+    // ========== OTHER INCOME ==========
+    {
+      label: 'Other Income',
+      data: Object.values(productResults).reduce((acc, product) => {
+        const equityUpside = product.equityUpsideIncome || [0,0,0,0,0];
+        return acc.map((val, i) => val + equityUpside[i]);
+      }, [0,0,0,0,0]),
+      decimals: 2,
+      isTotal: true,
+      formula: Object.values(productResults).reduce((acc, product) => {
+        const equityUpside = product.equityUpsideIncome || [0,0,0,0,0];
+        return acc.map((val, i) => val + equityUpside[i]);
+      }, [0,0,0,0,0]).map((val, i) => createFormula(i,
+        'Equity Upside Income from products',
+        [
+          year => `Other Income: ${formatNumber(val, 2)} €M`
+        ]
+      ))
+    },
+
+    // Product breakdown for Other Income (Equity Upside)
+    ...(showProductDetail ? Object.entries(productResults)
+      .filter(([key, product]) => product.equityUpsideIncome && product.equityUpsideIncome.some(val => val > 0))
+      .map(([key, product], index) => ({
+        label: `- o/w ${product.name} (Equity Upside)`,
+        data: product.equityUpsideIncome || [0,0,0,0,0],
+        decimals: 2,
+        indent: true
+      })) : []),
+
     {
       label: 'Trading Income',
       data: [0,0,0,0,0],
@@ -227,13 +280,15 @@ const StandardPnL = ({
       isHeader: true,
       bgColor: 'gray',
       formula: totalRevenues.map((val, i) => createFormula(i,
-        'NII + NCI + Trading Income',
+        'NII + NCI + Other Income + Trading Income',
         [
           year => `NII: ${formatNumber(netInterestIncome[year], 2)} €M`,
           year => `NCI: ${formatNumber(netCommissionIncome[year], 2)} €M`,
+          year => `Other Income: ${formatNumber(otherIncome[year], 2)} €M`,
           year => `Trading: 0 €M`,
           year => `Total: ${formatNumber(val, 2)} €M`
-        ]
+        ],
+        year => `${formatNumber(netInterestIncome[year], 2)} + ${formatNumber(netCommissionIncome[year], 2)} + ${formatNumber(otherIncome[year], 2)} + 0 = ${formatNumber(val, 2)} €M`
       ))
     },
 
@@ -316,7 +371,8 @@ const StandardPnL = ({
           year => `Personnel: ${formatNumber(personnelCosts[year], 2)} €M`,
           year => `Other OPEX: ${formatNumber(otherOpex[year], 2)} €M`,
           year => `Total: ${formatNumber(val, 2)} €M`
-        ]
+        ],
+        year => `${formatNumber(personnelCosts[year], 2)} + ${formatNumber(otherOpex[year], 2)} = ${formatNumber(val, 2)} €M`
       ))
     },
 
@@ -370,7 +426,11 @@ const StandardPnL = ({
           year => `OPEX: ${formatNumber(totalOpex[year], 2)} €M`,
           year => `LLP: ${formatNumber((divisionResults.pnl.totalLLP || [0,0,0,0,0])[year], 2)} €M`,
           year => `PBT: ${formatNumber(val, 2)} €M`
-        ]
+        ],
+        year => {
+          const llp = (divisionResults.pnl.totalLLP || [0,0,0,0,0])[year] || 0;
+          return `${formatNumber(totalRevenues[year], 2)} - ${formatNumber(Math.abs(totalOpex[year]), 2)} - ${formatNumber(Math.abs(llp), 2)} = ${formatNumber(val, 2)} €M`;
+        }
       ))
     }
   ];

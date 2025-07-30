@@ -48,6 +48,7 @@ const FinancialTable = ({ title, rows }) => (
                       id={`${title}-${index}-${i}`}
                       formula={row.formula[i].formula} 
                       details={row.formula[i].details}
+                      calculation={row.formula[i].calculation}
                     >
                       {formatNumber(value, row.decimals, row.unit)}
                     </CalculationTooltip>

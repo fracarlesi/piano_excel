@@ -40,6 +40,59 @@ const ExcelLikeBankPlan = () => {
             exportToFile={exportToFile}
           />
         );
+
+      // ========== BANK CONSOLIDATED VIEW ==========
+      case 'bankConsolidated':
+        return (
+          <div className="p-4 md:p-6">
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+                <span className="text-4xl">🏦</span>
+                Bank Consolidated View
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Comprehensive financial overview aggregating all division results
+              </p>
+            </div>
+
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🚧</div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                  Consolidated View Coming Soon
+                </h2>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  This section will display the aggregated financial statements combining all division data:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-800 mb-2">📊 Consolidated P&L</h3>
+                    <p className="text-sm text-blue-700">Sum of all division revenues, costs, and profits</p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-green-800 mb-2">💰 Consolidated Balance Sheet</h3>
+                    <p className="text-sm text-green-700">Aggregated assets, liabilities, and equity</p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-purple-800 mb-2">🛡️ Capital Requirements</h3>
+                    <p className="text-sm text-purple-700">Total bank RWA and capital ratios</p>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-orange-800 mb-2">📈 Key Performance Indicators</h3>
+                    <p className="text-sm text-orange-700">Bank-wide ROE, Cost/Income, CET1 ratio</p>
+                  </div>
+                </div>
+                <div className="mt-8">
+                  <p className="text-sm text-gray-500">
+                    💡 This view will automatically aggregate data from: Real Estate, SME, Digital Banking, Wealth Management, Tech Platform, and Subsidized Finance divisions
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      // ========== DIVISION FINANCIAL VIEWS ==========
       case 'reFinancing': 
         return (
           <REFinancingSheet 
@@ -82,6 +135,75 @@ const ExcelLikeBankPlan = () => {
             results={results} 
           />
         );
+
+      // ========== DIVISION ASSUMPTIONS VIEWS ==========
+      case 'reAssumptions':
+        return (
+          <AssumptionsSheet 
+            assumptions={assumptions} 
+            setAssumptions={setAssumptions} 
+            editMode={editMode}
+            resetToDefaults={resetToDefaults}
+            exportToFile={exportToFile}
+            initialTab="re"
+          />
+        );
+      case 'smeAssumptions':
+        return (
+          <AssumptionsSheet 
+            assumptions={assumptions} 
+            setAssumptions={setAssumptions} 
+            editMode={editMode}
+            resetToDefaults={resetToDefaults}
+            exportToFile={exportToFile}
+            initialTab="sme"
+          />
+        );
+      case 'digitalAssumptions':
+        return (
+          <AssumptionsSheet 
+            assumptions={assumptions} 
+            setAssumptions={setAssumptions} 
+            editMode={editMode}
+            resetToDefaults={resetToDefaults}
+            exportToFile={exportToFile}
+            initialTab="digital"
+          />
+        );
+      case 'wealthAssumptions':
+        return (
+          <AssumptionsSheet 
+            assumptions={assumptions} 
+            setAssumptions={setAssumptions} 
+            editMode={editMode}
+            resetToDefaults={resetToDefaults}
+            exportToFile={exportToFile}
+            initialTab="wealth"
+          />
+        );
+      case 'techAssumptions':
+        return (
+          <AssumptionsSheet 
+            assumptions={assumptions} 
+            setAssumptions={setAssumptions} 
+            editMode={editMode}
+            resetToDefaults={resetToDefaults}
+            exportToFile={exportToFile}
+            initialTab="tech"
+          />
+        );
+      case 'subsidizedAssumptions':
+        return (
+          <AssumptionsSheet 
+            assumptions={assumptions} 
+            setAssumptions={setAssumptions} 
+            editMode={editMode}
+            resetToDefaults={resetToDefaults}
+            exportToFile={exportToFile}
+            initialTab="subsidized"
+          />
+        );
+
       default: 
         return <div>Sheet not found</div>;
     }

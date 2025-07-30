@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EditableNumberField from '../common/EditableNumberField';
 import REAssumptions from '../assumptions/REAssumptions';
 import SMEAssumptions from '../assumptions/SMEAssumptions';
@@ -7,8 +7,13 @@ import WealthAssumptions from '../assumptions/WealthAssumptions';
 import SubsidizedAssumptions from '../assumptions/SubsidizedAssumptions';
 import TechAssumptions from '../assumptions/TechAssumptions';
 
-const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, resetToDefaults, exportToFile }) => {
-  const [activeTab, setActiveTab] = useState('general');
+const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, resetToDefaults, exportToFile, initialTab = 'general' }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Update activeTab when initialTab changes (for navigation between assumption pages)
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   // Helper function to handle assumption changes
   const handleAssumptionChange = (key, value) => {
@@ -219,26 +224,32 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, resetToDefaul
 
   return (
     <div className="p-4 md:p-6">
-      {/* Tab Navigation */}
-      <div className="bg-white shadow rounded-lg mb-6">
-        <div className="border-b border-gray-200">
-          <nav id="Division tabs for filters" className="flex space-x-8 px-6" aria-label="Tabs">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center space-x-2 ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
+
+      {/* Page Title */}
+      <div className="mb-6">
+        {initialTab === 'general' ? (
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+              <span className="text-4xl">⚙️</span>
+              General Assumptions
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Configure global parameters, costs, funding mix, and bank-wide settings that apply to all divisions.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <span className="text-3xl">
+                {tabs.find(tab => tab.id === initialTab)?.icon}
+              </span>
+              {tabs.find(tab => tab.id === initialTab)?.label} - Assumptions
+            </h1>
+            <p className="text-gray-600 mt-2">
+              Configure products and parameters for the {tabs.find(tab => tab.id === initialTab)?.label} division.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Tab Content */}

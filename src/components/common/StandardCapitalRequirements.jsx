@@ -16,10 +16,11 @@ const StandardCapitalRequirements = ({
   customRowTransformations = {}
 }) => {
   
-  // Helper function to create formula explanations
-  const createFormula = (year, formula, details) => ({
+  // Helper function to create formula explanations with numerical calculations
+  const createFormula = (year, formula, details, calculation = null) => ({
     formula,
-    details: details.map(d => typeof d === 'function' ? d(year) : d)
+    details: details.map(d => typeof d === 'function' ? d(year) : d),
+    calculation: typeof calculation === 'function' ? calculation(year) : calculation
   });
 
   // Calculate derived values
@@ -57,7 +58,7 @@ const StandardCapitalRequirements = ({
 
     // Product breakdown for RWA
     ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `- o/w product ${index + 1}`,
+      label: `- o/w ${product.name}`,
       data: product.rwa || [0,0,0,0,0],
       decimals: 0,
       indent: true,
@@ -66,18 +67,16 @@ const StandardCapitalRequirements = ({
         [
           `Product: ${product.name}`,
           year => `Performing Assets: ${formatNumber((product.performingAssets || [0,0,0,0,0])[year], 0)} €M`,
-          year => `RWA Density: ${((product.assumptions?.rwaDensity || 0.75) * 100).toFixed(0)}%`,
+          year => `RWA Density: ${((product.assumptions?.riskWeight || 0.75) * 100).toFixed(0)}%`,
           year => `Product RWA: ${formatNumber(val, 0)} €M`
-        ]
+        ],
+        year => {
+          const assets = (product.performingAssets || [0,0,0,0,0])[year] || 0;
+          const density = (product.assumptions?.riskWeight || 0.75) * 100;
+          return `${formatNumber(assets, 0)} × ${density.toFixed(0)}% = ${formatNumber(val, 0)} €M`;
+        }
       ))
     })) : []),
-
-    {
-      label: '- o/w etc',
-      data: [0,0,0,0,0],
-      decimals: 0,
-      indent: true
-    },
 
     // ========== EQUITY SECTION ==========
     {
@@ -89,7 +88,7 @@ const StandardCapitalRequirements = ({
 
     // Product breakdown for Equity
     ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `- o/w product ${index + 1}`,
+      label: `- o/w ${product.name}`,
       data: product.allocatedEquity || [0,0,0,0,0],
       decimals: 0,
       indent: true,
@@ -104,13 +103,6 @@ const StandardCapitalRequirements = ({
         ]
       ))
     })) : []),
-
-    {
-      label: '- o/w etc',
-      data: [0,0,0,0,0],
-      decimals: 0,
-      indent: true
-    },
 
     {
       label: '- o/w operating assets',
@@ -146,13 +138,14 @@ const StandardCapitalRequirements = ({
           year => `Total RWA: ${formatNumber(totalRWA[year], 0)} €M`,
           year => `CET1 Ratio: ${formatNumber(val, 1)}%`,
           'Regulatory minimum: 4.5% + buffers'
-        ]
+        ],
+        year => totalRWA[year] > 0 ? `${formatNumber(allocatedEquity[year], 0)} ÷ ${formatNumber(totalRWA[year], 0)} × 100 = ${formatNumber(val, 1)}%` : '0 ÷ 0 = 0%'
       ))
     },
 
     // Product breakdown for CET1
     ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `- o/w product ${index + 1}`,
+      label: `- o/w ${product.name}`,
       data: (product.allocatedEquity || [0,0,0,0,0]).map((equity, i) => {
         const productRWA = (product.rwa || [0,0,0,0,0])[i];
         return productRWA > 0 ? (equity / productRWA) * 100 : 0;
@@ -170,14 +163,6 @@ const StandardCapitalRequirements = ({
         ]
       ))
     })) : []),
-
-    {
-      label: '- o/w etc',
-      data: [0,0,0,0,0],
-      decimals: 1,
-      unit: '%',
-      indent: true
-    },
 
     // ========== RWA BY RISK TYPE SECTION ==========
     {

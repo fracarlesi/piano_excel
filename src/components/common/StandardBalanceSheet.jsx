@@ -16,10 +16,11 @@ const StandardBalanceSheet = ({
   customRowTransformations = {}
 }) => {
   
-  // Helper function to create formula explanations
-  const createFormula = (year, formula, details) => ({
+  // Helper function to create formula explanations with numerical calculations
+  const createFormula = (year, formula, details, calculation = null) => ({
     formula,
-    details: details.map(d => typeof d === 'function' ? d(year) : d)
+    details: details.map(d => typeof d === 'function' ? d(year) : d),
+    calculation: typeof calculation === 'function' ? calculation(year) : calculation
   });
 
   // Calculate derived values
@@ -57,7 +58,8 @@ const StandardBalanceSheet = ({
           year => `Non-Performing: ${formatNumber(nonPerformingAssets[year], 0)} €M`,
           year => `Operating Assets: ${formatNumber(operatingAssets[year], 0)} €M`,
           year => `Total: ${formatNumber(val, 0)} €M`
-        ]
+        ],
+        year => `${formatNumber(performingAssets[year], 0)} + ${formatNumber(nonPerformingAssets[year], 0)} + ${formatNumber(operatingAssets[year], 0)} = ${formatNumber(val, 0)} €M`
       ))
     },
 
@@ -84,8 +86,15 @@ const StandardBalanceSheet = ({
         'Stock evolution: Previous + New - Repayments - Defaults',
         [
           `Product: ${product.name}`,
+          year => `Previous Stock: ${i > 0 ? formatNumber((product.performingAssets || [0,0,0,0,0])[year-1], 0) : '0'} €M`,
+          year => `New Business: ${formatNumber((product.newBusiness || [0,0,0,0,0])[year], 0)} €M`,
           year => `Performing Stock: ${formatNumber(val, 0)} €M`
-        ]
+        ],
+        year => {
+          const prev = i > 0 ? (product.performingAssets || [0,0,0,0,0])[year-1] || 0 : 0;
+          const newBusiness = (product.newBusiness || [0,0,0,0,0])[year] || 0;
+          return `${formatNumber(prev, 0)} + ${formatNumber(newBusiness, 0)} - Repayments - Defaults = ${formatNumber(val, 0)} €M`;
+        }
       ))
     })) : []),
 

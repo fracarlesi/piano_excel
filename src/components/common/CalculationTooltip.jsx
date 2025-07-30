@@ -3,7 +3,7 @@ import { Info, X } from 'lucide-react';
 import { TooltipContext } from '../../hooks/useTooltip';
 
 // Tooltip component for showing calculation details
-const CalculationTooltip = ({ children, formula, details, id }) => {
+const CalculationTooltip = ({ children, formula, details, calculation, id }) => {
   const { activeTooltip, tooltipData, openTooltip, closeTooltip } = useContext(TooltipContext);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const isActive = activeTooltip === id;
@@ -31,7 +31,7 @@ const CalculationTooltip = ({ children, formula, details, id }) => {
     if (isActive) {
       closeTooltip();
     } else {
-      openTooltip(id, { formula, details });
+      openTooltip(id, { formula, details, calculation });
       setPosition({ x, y, transformY });
     }
   };
@@ -74,8 +74,20 @@ const CalculationTooltip = ({ children, formula, details, id }) => {
               <div className="bg-gray-50 px-3 py-2 rounded font-mono text-sm mb-2">
                 {tooltipData.formula}
               </div>
+              
+              {/* Show numerical calculation if available */}
+              {tooltipData.calculation && (
+                <div className="bg-blue-50 px-3 py-2 rounded text-sm mb-2">
+                  <div className="font-semibold text-blue-800 mb-1">Numerical Calculation:</div>
+                  <div className="font-mono text-blue-700">
+                    {tooltipData.calculation}
+                  </div>
+                </div>
+              )}
+              
               {tooltipData.details && (
                 <div className="text-sm text-gray-600 space-y-1">
+                  <div className="font-semibold text-gray-700 mb-1">Details:</div>
                   {tooltipData.details.map((detail, idx) => (
                     <div key={idx}>• {detail}</div>
                   ))}
