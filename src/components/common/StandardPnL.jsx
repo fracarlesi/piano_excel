@@ -75,7 +75,7 @@ const StandardPnL = ({
       label: 'Interest Income (IC)',
       data: divisionResults.pnl.interestIncome || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      isTotal: true,
+      isHeader: true,
       formula: (divisionResults.pnl.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
         createAggregateFormula(
           i,
@@ -94,7 +94,7 @@ const StandardPnL = ({
       label: `${product.name}`,
       data: product.interestIncome || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: (product.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
         // Extract the product key to get the original product data with spread
         const productKey = Object.keys(assumptions.products || {}).find(k => 
@@ -118,7 +118,7 @@ const StandardPnL = ({
       label: 'Interest Expenses (IE)',
       data: divisionResults.pnl.interestExpenses || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      isTotal: true,
+      isHeader: true,
       formula: (divisionResults.pnl.interestExpenses || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
         'Division Liabilities × Cost of Funding',
         [
@@ -133,7 +133,7 @@ const StandardPnL = ({
       label: `${product.name}`,
       data: product.interestExpense || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: (product.interestExpense || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
         const productKey = Object.keys(assumptions.products || {}).find(k => 
           assumptions.products[k].name === product.name
@@ -171,7 +171,7 @@ const StandardPnL = ({
       label: 'Net Interest Income (NII)',
       data: netInterestIncome,
       decimals: 2,
-      isHeader: true,
+      isSubTotal: true,
       formula: netInterestIncome.map((val, i) => createFormula(
         i,
         'Interest Income - Interest Expenses',
@@ -204,7 +204,7 @@ const StandardPnL = ({
         income + (product.interestExpense || [0,0,0,0,0,0,0,0,0,0])[i]
       ),
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: (product.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
         const expense = (product.interestExpense || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
         const nii = income + expense;
@@ -236,7 +236,7 @@ const StandardPnL = ({
       label: 'Commission Income (CI)',
       data: divisionResults.pnl.commissionIncome || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      isTotal: true,
+      isHeader: true,
       formula: (divisionResults.pnl.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
         createAggregateFormula(
           i,
@@ -264,7 +264,7 @@ const StandardPnL = ({
       label: `${product.name}`,
       data: product.commissionIncome || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
         const productKey = Object.keys(assumptions.products || {}).find(k => 
           assumptions.products[k].name === product.name
@@ -284,7 +284,7 @@ const StandardPnL = ({
       label: 'Commission Expenses (CE)',
       data: divisionResults.pnl.commissionExpenses || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      isTotal: true,
+      isHeader: true,
       formula: (divisionResults.pnl.commissionExpenses || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
         createFormula(
           i,
@@ -317,7 +317,7 @@ const StandardPnL = ({
       label: `${product.name}`,
       data: product.commissionExpense || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
         createFormula(
           i,
@@ -350,7 +350,7 @@ const StandardPnL = ({
       label: 'Net Commission Income (NCI)',
       data: netCommissionIncome,
       decimals: 2,
-      isHeader: true,
+      isSubTotal: true,
       formula: netCommissionIncome.map((val, i) => createFormula(i,
         'Commission Income - Commission Expenses',
         [
@@ -373,7 +373,7 @@ const StandardPnL = ({
         income + (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0])[i]
       ),
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
         const expense = (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
         const nci = income + expense;
@@ -408,7 +408,7 @@ const StandardPnL = ({
         return acc.map((val, i) => val + equityUpside[i]);
       }, [0,0,0,0,0,0,0,0,0,0]),
       decimals: 2,
-      isTotal: true,
+      isHeader: true,
       formula: Object.values(productResults).reduce((acc, product) => {
         const equityUpside = product.equityUpsideIncome || [0,0,0,0,0,0,0,0,0,0];
         return acc.map((val, i) => val + equityUpside[i]);
@@ -427,7 +427,7 @@ const StandardPnL = ({
         label: `${product.name} (Equity Upside)`,
         data: product.equityUpsideIncome || [0,0,0,0,0,0,0,0,0,0],
         decimals: 2,
-        indent: true,
+        isSubItem: true,
         formula: (product.equityUpsideIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
           const productKey = Object.keys(assumptions.products || {}).find(k => 
             assumptions.products[k].name === product.name
@@ -471,7 +471,7 @@ const StandardPnL = ({
       label: 'Total Revenues',
       data: totalRevenues,
       decimals: 2,
-      isHeader: true,
+      isTotal: true,
       bgColor: 'gray',
       formula: totalRevenues.map((val, i) => createFormula(i,
         'NII + NCI + Other Income + Trading Income',
@@ -491,7 +491,7 @@ const StandardPnL = ({
       label: 'Personnel cost',
       data: personnelCosts,
       decimals: 2,
-      isTotal: true,
+      isHeader: true,
       formula: personnelCosts.map((val, i) => createFormula(i,
         'FTE × Average Cost per FTE',
         [
@@ -506,7 +506,7 @@ const StandardPnL = ({
       label: `${product.name}`,
       data: product.personnelCosts || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: (product.personnelCosts || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
         createFormula(
           i,
@@ -541,7 +541,7 @@ const StandardPnL = ({
       label: 'Other OPEX',
       data: otherOpex,
       decimals: 2,
-      isTotal: true,
+      isHeader: true,
       formula: otherOpex.map((val, i) => createFormula(i,
         'Admin + Marketing + IT + HQ Allocation',
         [
@@ -555,7 +555,7 @@ const StandardPnL = ({
       label: 'Back-office and other admin costs',
       data: otherOpex.map(o => o * 0.4), // Approximate split
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: otherOpex.map((val, i) => createFormula(
         i,
         'Total Other OPEX × 40%',
@@ -575,7 +575,7 @@ const StandardPnL = ({
       label: 'IT costs',
       data: otherOpex.map(o => o * 0.3), // Approximate split
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: otherOpex.map((val, i) => createFormula(
         i,
         'Total Other OPEX × 30%',
@@ -595,7 +595,7 @@ const StandardPnL = ({
       label: 'HQ Allocation',
       data: otherOpex.map(o => o * 0.2), // Approximate split
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: otherOpex.map((val, i) => createFormula(
         i,
         'Total Other OPEX × 20%',
@@ -615,7 +615,7 @@ const StandardPnL = ({
       label: 'Other Costs',
       data: otherOpex.map(o => o * 0.1), // Approximate split
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: otherOpex.map((val, i) => createFormula(
         i,
         'Total Other OPEX × 10%',
@@ -636,7 +636,7 @@ const StandardPnL = ({
       label: 'Total OPEX',
       data: totalOpex,
       decimals: 2,
-      isHeader: true,
+      isSubTotal: true,
       bgColor: 'gray',
       formula: totalOpex.map((val, i) => createFormula(i,
         'Personnel Costs + Other OPEX',
@@ -660,7 +660,7 @@ const StandardPnL = ({
       label: 'Loan loss provisions',
       data: divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: (divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
         'Expected Loss on New Business + NPL Provisions',
         [
@@ -674,15 +674,14 @@ const StandardPnL = ({
       label: `  ${product.name}`,
       data: product.llp || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      indent: true,
-      subIndent: true
+      isSubItem: true
     })) : []),
 
     {
       label: 'Provisions for liabilities and charges (TFR)',
       data: [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      indent: true,
+      isSubItem: true,
       formula: [0,0,0,0,0,0,0,0,0,0].map((val, i) => createFormula(
         i,
         'Employee termination provisions',
@@ -703,7 +702,7 @@ const StandardPnL = ({
       label: 'Pre-tax profit',
       data: preTaxProfit,
       decimals: 2,
-      isHeader: true,
+      isTotal: true,
       bgColor: 'gray',
       formula: preTaxProfit.map((val, i) => createFormula(i,
         'Total Revenues - Total OPEX - Other Costs',

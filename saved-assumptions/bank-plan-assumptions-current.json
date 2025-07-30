@@ -62,7 +62,7 @@
       "creditClassification": "Bonis",
       "isFixedRate": false,
       "type": "bullet",
-      "commissionRate": 0.5,
+      "commissionRate": 1,
       "equityUpside": 0,
       "quarterlyDist": [
         25,

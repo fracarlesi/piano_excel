@@ -48,6 +48,13 @@ const DivisionAssumptions = ({
         key: `products.${productKey}.spread`
       },
       {
+        parameter: 'Commission Rate',
+        description: 'Upfront commission on new business volume',
+        value: product.commissionRate || 0,
+        unit: '%',
+        key: `products.${productKey}.commissionRate`
+      },
+      {
         parameter: 'Cost of Funding',
         description: 'Cost of funding for this product',
         value: product.costOfFunding || assumptions.costOfFundsRate || 3.0,
@@ -383,7 +390,7 @@ const DivisionAssumptions = ({
                         </h4>
                         <div className="space-y-4">
                           {productAssumption.rows.filter(row => 
-                            ['Interest Rate Spread', 'Cost of Funding', 'Commission Rate', 'Fee Income Rate', 
+                            ['Interest Rate Spread', 'Commission Rate', 'Cost of Funding', 'Fee Income Rate', 
                              'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside'].includes(row.parameter)
                           ).map((row, rowIndex) => (
                             <div key={rowIndex}>
