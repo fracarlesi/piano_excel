@@ -234,6 +234,17 @@ const DivisionAssumptions = ({
       }
     ];
 
+    // Adoption rate for dependent products
+    const adoptionRows = product.requiresBaseProduct ? [
+      {
+        parameter: 'Adoption Rate',
+        description: 'Percentage of base account customers who activate this product',
+        value: product.adoptionRate || 0,
+        unit: '%',
+        key: `products.${productKey}.adoptionRate`
+      }
+    ] : [];
+    
     // Digital Service-specific assumptions
     const digitalServiceRows = [
       {
@@ -280,43 +291,87 @@ const DivisionAssumptions = ({
       }
     ];
 
-    // Deposit and Service-specific assumptions (simplified model)
-    const depositAndServiceRows = [
+    // Deposit and Service-specific assumptions (modular model)
+    const isModularDepositService = product.acquisition && product.currentAccount;
+    
+    // Acquisition module rows
+    const acquisitionRows = [
       {
         parameter: 'Customer Acquisition Cost (CAC)',
         description: 'Cost to acquire each new customer',
-        value: product.cac || 30,
+        value: isModularDepositService ? (product.acquisition.cac || 30) : (product.cac || 30),
         unit: '€',
-        key: `products.${productKey}.cac`
+        key: isModularDepositService ? `products.${productKey}.acquisition.cac` : `products.${productKey}.cac`
       },
       {
         parameter: 'Annual Churn Rate',
         description: 'Percentage of customers lost annually',
-        value: product.churnRate || 5,
+        value: isModularDepositService ? (product.acquisition.churnRate || 5) : (product.churnRate || 5),
         unit: '%',
-        key: `products.${productKey}.churnRate`
-      },
+        key: isModularDepositService ? `products.${productKey}.acquisition.churnRate` : `products.${productKey}.churnRate`
+      }
+    ];
+    
+    // Current Account module rows
+    const currentAccountRows = [
       {
         parameter: 'Average Deposit per Customer',
-        description: 'Average deposit amount per customer',
-        value: product.avgDeposit || 3000,
+        description: 'Average deposit amount in current account',
+        value: isModularDepositService ? (product.currentAccount.avgDeposit || 1500) : (product.avgDeposit || 3000),
         unit: '€',
-        key: `products.${productKey}.avgDeposit`
+        key: isModularDepositService ? `products.${productKey}.currentAccount.avgDeposit` : `products.${productKey}.avgDeposit`
       },
       {
-        parameter: 'Deposit Interest Rate',
-        description: 'Interest rate paid to customers on deposits',
-        value: product.depositInterestRate || 0.5,
+        parameter: 'Current Account Interest Rate',
+        description: 'Interest rate paid on current accounts',
+        value: isModularDepositService ? (product.currentAccount.interestRate || 0.1) : (product.depositInterestRate || 0.5),
         unit: '%',
-        key: `products.${productKey}.depositInterestRate`
+        key: isModularDepositService ? `products.${productKey}.currentAccount.interestRate` : `products.${productKey}.depositInterestRate`
       },
       {
         parameter: 'Monthly Fee',
-        description: 'Monthly subscription/account fee per customer',
-        value: product.monthlyFee || 1,
+        description: 'Monthly account fee per customer',
+        value: isModularDepositService ? (product.currentAccount.monthlyFee || 1) : (product.monthlyFee || 1),
         unit: '€',
-        key: `products.${productKey}.monthlyFee`
+        key: isModularDepositService ? `products.${productKey}.currentAccount.monthlyFee` : `products.${productKey}.monthlyFee`
+      }
+    ];
+    
+    // Savings module rows
+    const savingsRows = isModularDepositService ? [
+      {
+        parameter: 'Adoption Rate',
+        description: 'Percentage of customers who activate savings accounts',
+        value: product.savingsModule?.adoptionRate || 30,
+        unit: '%',
+        key: `products.${productKey}.savingsModule.adoptionRate`
       },
+      {
+        parameter: 'Average Additional Deposit',
+        description: 'Average additional deposit in savings accounts',
+        value: product.savingsModule?.avgAdditionalDeposit || 5000,
+        unit: '€',
+        key: `products.${productKey}.savingsModule.avgAdditionalDeposit`
+      }
+    ] : [];
+    
+    // Service module rows
+    const serviceRows = isModularDepositService ? [
+      {
+        parameter: 'Service Adoption Rate',
+        description: 'Percentage of customers who activate value-added services',
+        value: product.servicesModule?.adoptionRate || 40,
+        unit: '%',
+        key: `products.${productKey}.servicesModule.adoptionRate`
+      },
+      {
+        parameter: 'Average Annual Revenue',
+        description: 'Average annual revenue per customer with active services',
+        value: product.servicesModule?.avgAnnualRevenue || 50,
+        unit: '€',
+        key: `products.${productKey}.servicesModule.avgAnnualRevenue`
+      }
+    ] : [
       {
         parameter: 'Annual Service Revenue per Customer',
         description: 'Additional service revenue per customer per year',
@@ -325,18 +380,57 @@ const DivisionAssumptions = ({
         key: `products.${productKey}.annualServiceRevenue`
       }
     ];
+    
+    // Combine all rows for legacy compatibility
+    const depositAndServiceRows = [...acquisitionRows, ...currentAccountRows, ...savingsRows, ...serviceRows];
 
     // Determine which rows to show based on product type
     const productType = product.productType || 'Credit';
     let specificRows;
     if (productType === 'DepositAndService') {
-      specificRows = depositAndServiceRows;
+      specificRows = [...adoptionRows, ...depositAndServiceRows];
     } else if (productType === 'DigitalService') {
       specificRows = digitalServiceRows;
     } else if (productType === 'Credit') {
       specificRows = creditRows;
     } else {
-      specificRows = commissionRows;
+      // Commission products
+      if (product.requiresBaseProduct) {
+        // Digital commission products have specific fields
+        const digitalCommissionRows = [
+          ...adoptionRows,
+          {
+            parameter: 'Monthly Fee',
+            description: 'Monthly subscription fee per customer',
+            value: product.monthlyFee || 0,
+            unit: '€',
+            key: `products.${productKey}.monthlyFee`
+          },
+          {
+            parameter: 'Annual Service Revenue',
+            description: 'Additional annual revenue per customer',
+            value: product.annualServiceRevenue || 0,
+            unit: '€',
+            key: `products.${productKey}.annualServiceRevenue`
+          }
+        ];
+        
+        if (product.avgAUM !== undefined) {
+          digitalCommissionRows.push({
+            parameter: 'Average AUM per Customer',
+            description: 'Average assets under management per customer',
+            value: product.avgAUM || 0,
+            unit: '€',
+            key: `products.${productKey}.avgAUM`
+          });
+        }
+        
+        specificRows = [...digitalCommissionRows, ...commissionRows.filter(r => 
+          !['Commission Rate', 'Fee Income Rate', 'Average Transaction Size'].includes(r.parameter)
+        )];
+      } else {
+        specificRows = commissionRows;
+      }
     }
     
     // Common rows that apply to both types
@@ -369,11 +463,17 @@ const DivisionAssumptions = ({
         if (product.customerArray && Array.isArray(product.customerArray) && product.customerArray.length === 10) {
           return product.customerArray;
         }
-        // Otherwise use customers object with interpolation
-        if (product.customers) {
+        
+        // Check if it's modular structure
+        const isModular = product.acquisition && product.currentAccount;
+        
+        // Get customers object from appropriate location
+        const customers = isModular ? product.acquisition.customers : product.customers;
+        
+        if (customers) {
           // Convert customers object to array format
-          const y1 = product.customers.y1 || 0;
-          const y5 = product.customers.y5 || 0;
+          const y1 = customers.y1 || 0;
+          const y5 = customers.y5 || 0;
           
           // Create 10-year array with linear interpolation to y5, then maintain y5
           return Array.from({ length: 10 }, (_, i) => {
@@ -419,7 +519,8 @@ const DivisionAssumptions = ({
       volumes: product.volumes || { y1: 0, y10: 0 }, // Keep for backward compatibility
       inputArray: getInputArray(),
       isDigitalService: productType === 'DigitalService',
-      isDepositAndService: productType === 'DepositAndService'
+      isDepositAndService: productType === 'DepositAndService',
+      isModular: isModularDepositService
     };
   });
 
@@ -491,18 +592,30 @@ const DivisionAssumptions = ({
                 {/* Accordion Content */}
                 {isOpen && (
                   <div className="p-6 border-t bg-white">
-                    {/* Volume/Customer Input Grid */}
+                    {/* Volume/Customer Input Grid - Only for products without dependencies */}
+                    {!product.requiresBaseProduct && (
                     <div className="mb-6">
                       <VolumeInputGrid
                         values={productAssumption.inputArray || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
                         onChange={(newArray) => {
                           if (productAssumption.isDigitalService || productAssumption.isDepositAndService) {
+                            // Check if it's modular structure
+                            const isModular = product.acquisition && product.currentAccount;
+                            
                             // For DigitalService and DepositAndService products, save the full customer array
                             onAssumptionChange(`products.${productKey}.customerArray`, newArray);
-                            // Also update y1 and y5 for backward compatibility
+                            
+                            // Update appropriate structure based on whether it's modular or not
                             const y1 = newArray[0] || 0;
                             const y5 = newArray[4] || 0;
-                            onAssumptionChange(`products.${productKey}.customers`, { y1, y5 });
+                            
+                            if (isModular) {
+                              // For modular structure, update acquisition.customers
+                              onAssumptionChange(`products.${productKey}.acquisition.customers`, { y1, y5 });
+                            } else {
+                              // For legacy structure, update customers directly
+                              onAssumptionChange(`products.${productKey}.customers`, { y1, y5 });
+                            }
                           } else {
                             // For other products, update volumeArray
                             onAssumptionChange(`products.${productKey}.volumeArray`, newArray);
@@ -513,9 +626,190 @@ const DivisionAssumptions = ({
                         disabled={false}
                       />
                     </div>
+                    )}
                     
                     {/* Organized Cards Layout */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Check if this is a modular DepositAndService product */}
+                    {productAssumption.isDepositAndService && productAssumption.isModular ? (
+                      // Modular DepositAndService Layout - 4 cards
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        
+                        {/* Card 1: Acquisizione e Churn */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                          <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                            Acquisizione e Churn
+                          </h4>
+                          <div className="space-y-4">
+                            {productAssumption.rows.filter(row => 
+                              ['Customer Acquisition Cost (CAC)', 'Annual Churn Rate'].includes(row.parameter)
+                            ).map((row, rowIndex) => (
+                              <EditableNumberField
+                                key={rowIndex}
+                                label={row.parameter}
+                                value={row.value}
+                                onChange={(value) => {
+                                  if (row.key) {
+                                    onAssumptionChange(row.key, value);
+                                  }
+                                }}
+                                unit={row.unit === 'text' ? '' : row.unit}
+                                disabled={false}
+                                isPercentage={row.unit === '%'}
+                                isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
+                                tooltip={row.description}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Card 2: Conto Corrente Base */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                          <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            Conto Corrente Base
+                          </h4>
+                          <div className="space-y-4">
+                            {productAssumption.rows.filter(row => 
+                              ['Average Deposit per Customer', 'Current Account Interest Rate', 'Monthly Fee'].includes(row.parameter)
+                            ).map((row, rowIndex) => (
+                              <EditableNumberField
+                                key={rowIndex}
+                                label={row.parameter}
+                                value={row.value}
+                                onChange={(value) => {
+                                  if (row.key) {
+                                    onAssumptionChange(row.key, value);
+                                  }
+                                }}
+                                unit={row.unit === 'text' ? '' : row.unit}
+                                disabled={false}
+                                isPercentage={row.unit === '%'}
+                                isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
+                                tooltip={row.description}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Card 3: Modulo Conto Deposito */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                          <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                            <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+                            Modulo Conto Deposito
+                          </h4>
+                          <div className="space-y-4">
+                            {productAssumption.rows.filter(row => 
+                              ['Adoption Rate', 'Average Additional Deposit'].includes(row.parameter)
+                            ).map((row, rowIndex) => (
+                              <EditableNumberField
+                                key={rowIndex}
+                                label={row.parameter}
+                                value={row.value}
+                                onChange={(value) => {
+                                  if (row.key) {
+                                    onAssumptionChange(row.key, value);
+                                  }
+                                }}
+                                unit={row.unit === 'text' ? '' : row.unit}
+                                disabled={false}
+                                isPercentage={row.unit === '%'}
+                                isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
+                                tooltip={row.description}
+                              />
+                            ))}
+                            
+                            {/* Deposit Mix Table */}
+                            <div className="mt-4">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Mix Depositi (Totale deve essere 100%)
+                              </label>
+                              <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                  <thead className="bg-gray-50">
+                                    <tr>
+                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">%</th>
+                                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasso</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="bg-white divide-y divide-gray-200">
+                                    {(product.savingsModule?.depositMix || [
+                                      { name: 'Svincolato', percentage: 40, interestRate: 2.5 },
+                                      { name: 'Vincolato 12M', percentage: 60, interestRate: 3.5 }
+                                    ]).map((deposit, idx) => (
+                                      <tr key={idx}>
+                                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                          {deposit.name}
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap">
+                                          <input
+                                            type="number"
+                                            value={deposit.percentage}
+                                            onChange={(e) => {
+                                              const newMix = [...(product.savingsModule?.depositMix || [])];
+                                              newMix[idx] = { ...newMix[idx], percentage: parseFloat(e.target.value) || 0 };
+                                              onAssumptionChange(`products.${productKey}.savingsModule.depositMix`, newMix);
+                                            }}
+                                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                          />
+                                          <span className="ml-1 text-sm text-gray-500">%</span>
+                                        </td>
+                                        <td className="px-3 py-2 whitespace-nowrap">
+                                          <input
+                                            type="number"
+                                            value={deposit.interestRate}
+                                            step="0.1"
+                                            onChange={(e) => {
+                                              const newMix = [...(product.savingsModule?.depositMix || [])];
+                                              newMix[idx] = { ...newMix[idx], interestRate: parseFloat(e.target.value) || 0 };
+                                              onAssumptionChange(`products.${productKey}.savingsModule.depositMix`, newMix);
+                                            }}
+                                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                          />
+                                          <span className="ml-1 text-sm text-gray-500">%</span>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Card 4: Modulo Servizi a Valore Aggiunto */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                          <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                            <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                            Modulo Servizi a Valore Aggiunto
+                          </h4>
+                          <div className="space-y-4">
+                            {productAssumption.rows.filter(row => 
+                              ['Service Adoption Rate', 'Average Annual Revenue'].includes(row.parameter)
+                            ).map((row, rowIndex) => (
+                              <EditableNumberField
+                                key={rowIndex}
+                                label={row.parameter}
+                                value={row.value}
+                                onChange={(value) => {
+                                  if (row.key) {
+                                    onAssumptionChange(row.key, value);
+                                  }
+                                }}
+                                unit={row.unit === 'text' ? '' : row.unit}
+                                disabled={false}
+                                isPercentage={row.unit === '%'}
+                                isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
+                                tooltip={row.description}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      // Standard Layout - 3 cards
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       
                       {/* First Card - varies by product type */}
                       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -749,6 +1043,7 @@ const DivisionAssumptions = ({
                       )}
                       
                     </div>
+                    )}
                   </div>
                 )}
               </div>

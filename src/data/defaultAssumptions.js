@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.0', // Digital Banking simplified to single Deposit & Service product model
+  version: '5.3', // Digital Banking with separate products for visibility - force update
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -158,23 +158,75 @@ export const defaultAssumptions = {
       type: 'bullet', // Bullet repayment
       equityUpside: 2.5 // 2.5% equity upside
     },
-    // Digital Banking Division - Single Deposit & Service Product
-    digitalRetailAccount: {
-      name: 'Conto Corrente Retail',
+    // Digital Banking Division - Base Current Account (enabler for other products)
+    digitalBaseAccount: {
+      name: 'Conto Corrente Base',
       productType: 'DepositAndService',
       isDigital: true,
-      // DRIVER DI ACQUISIZIONE
-      customers: { y1: 50000, y5: 250000 }, // Nuovi clienti/anno
-      cac: 30, // Costo Acquisizione Cliente in €
-      churnRate: 5, // % annua di clienti persi
+      isBaseProduct: true, // Marks this as the enabler product
       
-      // DRIVER DI STATO PATRIMONIALE (FUNDING)
-      avgDeposit: 3000, // Deposito medio per cliente in €
-      depositInterestRate: 0.5, // Tasso passivo pagato sui depositi in %
+      // Customer acquisition
+      customers: { y1: 50000, y5: 250000 }, // New customers per year
+      cac: 30, // Customer Acquisition Cost in €
+      churnRate: 5, // Annual churn rate %
       
-      // DRIVER DI CONTO ECONOMICO (RICAVI)
-      monthlyFee: 1, // Canone mensile in €
-      annualServiceRevenue: 25 // Ricavi medi da servizi extra per cliente all'anno in €
+      // Account economics
+      avgDeposit: 1000, // Average deposit per customer in €
+      depositInterestRate: 0.1, // Interest rate paid on deposits %
+      monthlyFee: 0, // Free basic account
+      annualServiceRevenue: 0 // No additional services in base
+    },
+    
+    // Digital Banking - Savings Account (requires base account)
+    digitalSavingsAccount: {
+      name: 'Conto Deposito Digitale',
+      productType: 'DepositAndService',
+      isDigital: true,
+      requiresBaseProduct: 'digitalBaseAccount', // Dependency
+      
+      // Adoption from base customers
+      adoptionRate: 30, // % of base customers who activate this
+      
+      // Savings account economics
+      avgDeposit: 5000, // Additional average deposit in €
+      depositInterestRate: 3.0, // Higher rate for savings %
+      monthlyFee: 0, // No monthly fee
+      annualServiceRevenue: 0 // Revenue from deposits only
+    },
+    
+    // Digital Banking - Premium Services (requires base account)
+    digitalPremiumServices: {
+      name: 'Servizi Premium',
+      productType: 'Commission', // Pure commission product
+      isDigital: true,
+      requiresBaseProduct: 'digitalBaseAccount', // Dependency
+      
+      // Adoption from base customers
+      adoptionRate: 20, // % of base customers who activate this
+      
+      // Service economics
+      commissionRate: 0, // No upfront commission
+      monthlyFee: 5, // Monthly subscription fee in €
+      annualServiceRevenue: 100, // Additional services revenue per customer/year in €
+      operationalRiskWeight: 10 // Low operational risk
+    },
+    
+    // Digital Banking - Investment Platform (requires base account)
+    digitalInvestmentPlatform: {
+      name: 'Piattaforma Investimenti',
+      productType: 'Commission',
+      isDigital: true,
+      requiresBaseProduct: 'digitalBaseAccount', // Dependency
+      
+      // Adoption from base customers
+      adoptionRate: 15, // % of base customers who use investment services
+      
+      // Platform economics
+      avgAUM: 15000, // Average assets under management per customer in €
+      managementFeeRate: 1.2, // Annual management fee %
+      performanceFeeRate: 10, // Performance fee on gains %
+      avgAnnualGains: 8, // Expected annual gains %
+      operationalRiskWeight: 15 // Standard operational risk
     }
   }
 };

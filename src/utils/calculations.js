@@ -248,103 +248,173 @@ const calculateDigitalServiceProduct = (product, assumptions, years, ftpRate) =>
 };
 
 /**
- * Calculate Deposit and Service Product results (simplified Digital Banking model)
- * Single product combining deposit collection and service revenues
+ * Calculate Deposit and Service Product results (Digital Banking model)
+ * Handles products with customer-based metrics and deposit funding
  */
-const calculateDepositAndServiceProduct = (product, assumptions, years, ftpRate) => {
-  // Get new customers per year
-  const newCustomers = years.map(i => {
-    // First check if there's a customerArray
-    if (product.customerArray && Array.isArray(product.customerArray) && product.customerArray.length === 10) {
-      return product.customerArray[i] || 0;
-    }
-    // Otherwise use customers object
-    if (product.customers) {
-      if (product.customers[`y${i + 1}`] !== undefined) {
-        return product.customers[`y${i + 1}`];
-      } else {
-        // Linear interpolation between y1 and y5
-        const y1 = product.customers.y1 || 0;
-        const y5 = product.customers.y5 || 0;
-        if (i < 5) {
-          return y1 + ((y5 - y1) * i / 4);
+const calculateDepositAndServiceProduct = (product, assumptions, years, ftpRate, baseProductResults = null) => {
+  // Handle dependency on base product
+  let effectiveCustomers = [];
+  let newCustomers = [];
+  
+  if (product.requiresBaseProduct && baseProductResults) {
+    // This product depends on another product's customer base
+    const adoptionRate = (product.adoptionRate || 0) / 100;
+    effectiveCustomers = baseProductResults.totalCustomers.map(baseCustomers => 
+      baseCustomers * adoptionRate
+    );
+    // For dependent products, new customers are derived from base product growth
+    newCustomers = effectiveCustomers;
+  } else {
+    // This is a base product with its own customer acquisition
+    // Get new customers per year
+    newCustomers = years.map(i => {
+      // First check if there's a customerArray
+      if (product.customerArray && Array.isArray(product.customerArray) && product.customerArray.length === 10) {
+        return product.customerArray[i] || 0;
+      }
+      
+      // Standard customer structure
+      if (product.customers) {
+        if (product.customers[`y${i + 1}`] !== undefined) {
+          return product.customers[`y${i + 1}`];
         } else {
-          // Beyond year 5, maintain y5 level
-          return y5;
+          const y1 = product.customers.y1 || 0;
+          const y5 = product.customers.y5 || 0;
+          if (i < 5) {
+            return y1 + ((y5 - y1) * i / 4);
+          } else {
+            return y5;
+          }
         }
       }
-    }
-    return 0;
-  });
+      return 0;
+    });
 
-  // Calculate total customer stock evolution
-  const totalCustomers = [];
-  const churnRate = (product.churnRate || 5) / 100;
-  
-  for (let i = 0; i < years.length; i++) {
-    if (i === 0) {
-      totalCustomers[i] = newCustomers[i];
-    } else {
-      // Previous year customers * (1 - churn) + new customers
-      totalCustomers[i] = totalCustomers[i-1] * (1 - churnRate) + newCustomers[i];
+    // Calculate total customer stock evolution
+    const totalCustomers = [];
+    const churnRate = (product.churnRate || 5) / 100;
+    
+    for (let i = 0; i < years.length; i++) {
+      if (i === 0) {
+        totalCustomers[i] = newCustomers[i];
+      } else {
+        totalCustomers[i] = totalCustomers[i-1] * (1 - churnRate) + newCustomers[i];
+      }
     }
+    
+    effectiveCustomers = totalCustomers;
   }
 
   // Calculate average customers for revenue calculations
-  const avgCustomers = totalCustomers.map((current, i) => {
-    if (i === 0) return current / 2; // Half year for first year
-    return (totalCustomers[i-1] + current) / 2;
+  const avgCustomers = effectiveCustomers.map((current, i) => {
+    if (i === 0) return current / 2;
+    return (effectiveCustomers[i-1] + current) / 2;
   });
 
   // Calculate deposit stock (funding generated)
   const avgDeposit = (product.avgDeposit || 0) / 1000000; // Convert to millions
-  const depositStock = totalCustomers.map(customers => customers * avgDeposit);
-
-  // Calculate revenues from fees and services
-  const monthlyFee = product.monthlyFee || 0;
-  const annualServiceRevenue = product.annualServiceRevenue || 0;
-  const commissionIncome = avgCustomers.map(customers => 
-    (customers * monthlyFee * 12 + customers * annualServiceRevenue) / 1000000 // Convert to millions
-  );
-
-  // Calculate direct operating costs (customer acquisition)
-  const cac = product.cac || 0;
-  const marketingCosts = newCustomers.map(customers => 
-    -(customers * cac) / 1000000 // Convert to millions, negative as cost
-  );
-
+  const depositStock = effectiveCustomers.map(customers => customers * avgDeposit);
+  
   // Calculate interest expense on deposits
   const depositInterestRate = (product.depositInterestRate || 0) / 100;
   const interestExpense = depositStock.map(stock => -stock * depositInterestRate);
-
+  
   // Calculate FTP income (funds transfer pricing to Treasury)
   const ftpIncome = depositStock.map(stock => stock * ftpRate);
+  
+  // Calculate revenues from fees and services
+  let commissionIncome;
+  
+  if (false) { // Remove old modular logic
+    // Modular structure calculations
+    
+    // Current account deposits
+    const caAvgDeposit = (product.currentAccount.avgDeposit || 0) / 1000000;
+    currentAccountDeposits = totalCustomers.map(customers => customers * caAvgDeposit);
+    
+    // Savings deposits (based on adoption rate)
+    const savingsAdoptionRate = (product.savingsModule.adoptionRate || 0) / 100;
+    const savingsAvgDeposit = (product.savingsModule.avgAdditionalDeposit || 0) / 1000000;
+    savingsDeposits = totalCustomers.map(customers => 
+      customers * savingsAdoptionRate * savingsAvgDeposit
+    );
+    
+    // Total deposits
+    totalDepositStock = currentAccountDeposits.map((ca, i) => ca + savingsDeposits[i]);
+    
+    // Interest expenses
+    const caInterestRate = (product.currentAccount.interestRate || 0) / 100;
+    currentAccountInterestExpense = currentAccountDeposits.map(stock => -stock * caInterestRate);
+    
+    // Calculate weighted average interest rate for savings deposits
+    let weightedSavingsRate = 0;
+    if (product.savingsModule.depositMix && Array.isArray(product.savingsModule.depositMix)) {
+      product.savingsModule.depositMix.forEach(deposit => {
+        const percentage = (deposit.percentage || 0) / 100;
+        const rate = (deposit.interestRate || 0) / 100;
+        weightedSavingsRate += percentage * rate;
+      });
+    }
+    savingsInterestExpense = savingsDeposits.map(stock => -stock * weightedSavingsRate);
+    
+    totalInterestExpense = currentAccountInterestExpense.map((ca, i) => 
+      ca + savingsInterestExpense[i]
+    );
+  } else {
+    // Standard fee calculation
+    const monthlyFee = product.monthlyFee || 0;
+    const annualServiceRevenue = product.annualServiceRevenue || 0;
+    commissionIncome = avgCustomers.map(customers => 
+      (customers * monthlyFee * 12 + customers * annualServiceRevenue) / 1000000 // Convert to millions
+    );
+  }
+
+  // Calculate costs
+  let marketingCosts;
+  
+  if (product.requiresBaseProduct) {
+    // No acquisition costs for dependent products
+    marketingCosts = years.map(() => 0);
+  } else {
+    // Acquisition costs only for base products
+    const cac = product.cac || 0;
+    const newCustomers = years.map((_, i) => {
+      if (i === 0) return effectiveCustomers[0];
+      return effectiveCustomers[i] - effectiveCustomers[i-1] * (1 - (product.churnRate || 5) / 100);
+    });
+    marketingCosts = newCustomers.map(customers => 
+      -(Math.max(0, customers) * cac) / 1000000 // Convert to millions, negative as cost
+    );
+  }
+
 
   return {
     name: product.name,
-    volumes: newCustomers, // New customers per year
-    totalCustomers: totalCustomers,
+    volumes: product.requiresBaseProduct ? effectiveCustomers : newCustomers,
+    totalCustomers: effectiveCustomers,
     avgCustomers: avgCustomers,
-    depositStock: depositStock, // Total deposit liability (funding)
-    performingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No credit assets
+    depositStock: depositStock,
+    performingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     averagePerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     nonPerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    interestIncome: ftpIncome, // Revenue from Treasury FTP
-    interestExpense: interestExpense, // Cost of deposit interest
-    commissionIncome: commissionIncome, // Service fees and monthly fees
-    commissionExpense: marketingCosts, // Customer acquisition costs
-    llp: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No credit losses
-    rwa: depositStock.map(stock => stock * 0.15), // Operational risk RWA (15% of deposits)
-    newBusiness: newCustomers,
-    numberOfLoans: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Not a lending product
+    interestIncome: ftpIncome,
+    interestExpense: interestExpense,
+    commissionIncome: commissionIncome,
+    commissionExpense: marketingCosts,
+    llp: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    rwa: depositStock.map(stock => stock * 0.15),
+    newBusiness: product.requiresBaseProduct ? effectiveCustomers : newCustomers,
+    numberOfLoans: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     assumptions: {
-      cac: cac,
+      cac: product.cac || 0,
       avgDeposit: product.avgDeposit || 0,
-      churnRate: churnRate * 100,
-      monthlyFee: monthlyFee,
-      annualServiceRevenue: annualServiceRevenue,
-      depositInterestRate: depositInterestRate * 100,
-      ftpRate: ftpRate * 100
+      churnRate: (product.churnRate || 5),
+      monthlyFee: product.monthlyFee || 0,
+      annualServiceRevenue: product.annualServiceRevenue || 0,
+      depositInterestRate: product.depositInterestRate || 0,
+      ftpRate: ftpRate * 100,
+      adoptionRate: product.adoptionRate || 0,
+      requiresBaseProduct: product.requiresBaseProduct || null
     }
   };
 };
@@ -378,7 +448,12 @@ export const calculateResults = (assumptions) => {
         continue;
       }
       
-      // Handle Deposit and Service products (simplified Digital Banking model)
+      // Skip products that depend on others for first pass
+      if (product.requiresBaseProduct) {
+        continue;
+      }
+      
+      // Handle Deposit and Service products (Digital Banking model)
       if (product.productType === 'DepositAndService') {
         productResults[key] = calculateDepositAndServiceProduct(product, assumptions, years, ftpRate);
         continue;
@@ -577,6 +652,43 @@ export const calculateResults = (assumptions) => {
               equityUpside: (product.equityUpside || 0) / 100
           }
       };
+  }
+  
+  // Second pass: Calculate dependent products
+  for (const [key, product] of Object.entries(assumptions.products)) {
+    if (product.requiresBaseProduct && productResults[product.requiresBaseProduct]) {
+      const baseProductResults = productResults[product.requiresBaseProduct];
+      
+      if (product.productType === 'DepositAndService') {
+        productResults[key] = calculateDepositAndServiceProduct(product, assumptions, years, ftpRate, baseProductResults);
+      } else if (product.productType === 'Commission') {
+        // Handle commission products that depend on base customers
+        const adoptionRate = (product.adoptionRate || 0) / 100;
+        const baseCustomers = baseProductResults.totalCustomers || years.map(() => 0);
+        const effectiveCustomers = baseCustomers.map(customers => customers * adoptionRate);
+        
+        // Create a modified product with effective volumes
+        const modifiedProduct = {
+          ...product,
+          volumes: years.map((_, i) => {
+            // For commission products, use customer count as volume
+            if (product.avgAUM) {
+              // Investment platform: volume = customers * avgAUM
+              return effectiveCustomers[i] * (product.avgAUM / 1000000); // Convert to millions
+            } else {
+              // Service products: volume = number of customers (in thousands)
+              return effectiveCustomers[i] / 1000;
+            }
+          })
+        };
+        
+        productResults[key] = calculateCommissionProduct(modifiedProduct, assumptions, years);
+        
+        // Add customer tracking for reporting
+        productResults[key].totalCustomers = effectiveCustomers;
+        productResults[key].requiresBaseProduct = product.requiresBaseProduct;
+      }
+    }
   }
   
   // Define all available divisions dynamically based on product prefixes

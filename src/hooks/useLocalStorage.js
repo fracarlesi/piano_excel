@@ -1,18 +1,98 @@
 import { useState, useEffect } from 'react';
 import { defaultAssumptions } from '../data/defaultAssumptions';
 
+// Helper function to create automatic backups
+const createBackup = (data) => {
+  const backupKey = 'bankPlanAssumptions_backup';
+  const backupData = {
+    data: data,
+    timestamp: new Date().toISOString(),
+    version: data.version
+  };
+  localStorage.setItem(backupKey, JSON.stringify(backupData));
+};
+
+// Helper function to extract user-modified values
+const extractUserValues = (data) => {
+  const userValues = {};
+  
+  // Extract product-specific values
+  if (data.products) {
+    Object.keys(data.products).forEach(productKey => {
+      const product = data.products[productKey];
+      userValues[productKey] = {};
+      
+      // For modular products
+      if (product.acquisition) {
+        userValues[productKey].customers = product.acquisition.customers;
+        userValues[productKey].customerArray = product.customerArray;
+      } else if (product.customers) {
+        userValues[productKey].customers = product.customers;
+        userValues[productKey].customerArray = product.customerArray;
+      }
+      
+      // For volume-based products
+      if (product.volumeArray) {
+        userValues[productKey].volumeArray = product.volumeArray;
+      }
+      if (product.volumes) {
+        userValues[productKey].volumes = product.volumes;
+      }
+    });
+  }
+  
+  return userValues;
+};
+
+// Helper function to merge user values back into data
+const mergeUserValues = (baseData, userValues) => {
+  if (!userValues || !baseData.products) return baseData;
+  
+  const mergedData = JSON.parse(JSON.stringify(baseData)); // Deep clone
+  
+  Object.keys(userValues).forEach(productKey => {
+    if (mergedData.products[productKey] && userValues[productKey]) {
+      const product = mergedData.products[productKey];
+      const savedValues = userValues[productKey];
+      
+      // Merge customer data for modular products
+      if (product.acquisition && savedValues.customers) {
+        product.acquisition.customers = savedValues.customers;
+      } else if (savedValues.customers) {
+        product.customers = savedValues.customers;
+      }
+      
+      // Merge array data
+      if (savedValues.customerArray) {
+        product.customerArray = savedValues.customerArray;
+      }
+      if (savedValues.volumeArray) {
+        product.volumeArray = savedValues.volumeArray;
+      }
+      if (savedValues.volumes) {
+        product.volumes = savedValues.volumes;
+      }
+    }
+  });
+  
+  return mergedData;
+};
+
 export const useLocalStorage = () => {
   // Load data from server first, fallback to localStorage, then defaults
   const loadSavedData = async () => {
     // Try to load from server first
     try {
-      const response = await fetch('http://localhost:3001/api/load-assumptions');
-      if (response.ok) {
-        const serverData = await response.json();
-        console.log('Loaded data from server');
-        // Cache in localStorage for immediate use
-        localStorage.setItem('bankPlanAssumptions', JSON.stringify(serverData));
-        return serverData;
+      // TEMPORARILY DISABLED TO FORCE LOADING NEW VERSION
+      if (false) {
+        const response = await fetch('http://localhost:3001/api/load-assumptions');
+        if (response.ok) {
+          const serverData = await response.json();
+          console.log('Loaded data from server');
+          // Cache in localStorage for immediate use
+          localStorage.setItem('bankPlanAssumptions', JSON.stringify(serverData));
+          return serverData;
+        }
       }
     } catch (error) {
       console.warn('Could not load from server, trying localStorage:', error);
@@ -23,11 +103,25 @@ export const useLocalStorage = () => {
     if (saved) {
       try {
         const parsedData = JSON.parse(saved);
-        // Check version and force reset if needed
+        
+        // Before any version check, create a backup of current data
+        createBackup(parsedData);
+        
+        // Check version and handle updates
         if (!parsedData.version || parsedData.version !== defaultAssumptions.version) {
-          console.warn(`Data version mismatch (saved: ${parsedData.version}, expected: ${defaultAssumptions.version}), using defaults`);
-          localStorage.removeItem('bankPlanAssumptions'); // Clear incompatible data
-          return defaultAssumptions;
+          console.warn(`Data version mismatch (saved: ${parsedData.version}, expected: ${defaultAssumptions.version})`);
+          
+          // Extract user values before reset
+          const userValues = extractUserValues(parsedData);
+          console.log('Preserving user values:', userValues);
+          
+          // Get fresh defaults and merge user values
+          const updatedData = mergeUserValues(defaultAssumptions, userValues);
+          
+          // Save the merged data
+          localStorage.setItem('bankPlanAssumptions', JSON.stringify(updatedData));
+          
+          return updatedData;
         }
         
         // Force reset for version 2.7 to ensure new RE products are loaded
@@ -76,6 +170,61 @@ export const useLocalStorage = () => {
               parsedData.products[key] = defaultAssumptions.products[key];
             }
           });
+        }
+        
+        // Migrate Digital Banking to modular structure (version 5.1)
+        if (parsedData.products && parsedData.products.digitalRetailAccount) {
+          const digitalProduct = parsedData.products.digitalRetailAccount;
+          
+          // Check if it's still using the old flat structure
+          if (digitalProduct.customers && !digitalProduct.acquisition) {
+            console.warn('Migrating Digital Banking product to modular structure');
+            console.log('Preserving existing values:', {
+              customers: digitalProduct.customers,
+              cac: digitalProduct.cac,
+              avgDeposit: digitalProduct.avgDeposit
+            });
+            
+            // Create the new modular structure
+            parsedData.products.digitalRetailAccount = {
+              name: digitalProduct.name || 'Conto Corrente Retail',
+              productType: 'DepositAndService',
+              isDigital: true,
+              
+              acquisition: {
+                customers: digitalProduct.customers || { y1: 50000, y5: 250000 },
+                cac: digitalProduct.cac || 30,
+                churnRate: digitalProduct.churnRate || 5
+              },
+              
+              currentAccount: {
+                avgDeposit: (digitalProduct.avgDeposit || 3000) / 2, // Split the deposit
+                interestRate: digitalProduct.depositInterestRate || 0.1,
+                monthlyFee: digitalProduct.monthlyFee || 1
+              },
+              
+              savingsModule: {
+                adoptionRate: 30,
+                avgAdditionalDeposit: (digitalProduct.avgDeposit || 3000) * 1.5, // Use remaining deposit
+                depositMix: [
+                  { name: 'Svincolato', percentage: 40, interestRate: 2.5 },
+                  { name: 'Vincolato 12M', percentage: 60, interestRate: 3.5 }
+                ]
+              },
+              
+              servicesModule: {
+                adoptionRate: 40,
+                avgAnnualRevenue: digitalProduct.annualServiceRevenue || 50
+              }
+            };
+            
+            // Preserve customerArray if it exists
+            if (digitalProduct.customerArray) {
+              parsedData.products.digitalRetailAccount.customerArray = digitalProduct.customerArray;
+            }
+            
+            needsUpdate = true;
+          }
         }
         
         // Migrate from tasso to spread if needed
@@ -141,10 +290,40 @@ export const useLocalStorage = () => {
         return parsedData;
       } catch (e) {
         console.error('Error loading saved data:', e);
+        
+        // Try to recover user values before clearing
+        try {
+          const savedUserValues = localStorage.getItem('bankPlanAssumptions_userValues');
+          if (savedUserValues) {
+            const { values } = JSON.parse(savedUserValues);
+            console.log('Recovering user values from backup:', values);
+            const recoveredData = mergeUserValues(defaultAssumptions, values);
+            
+            // Save the recovered data
+            localStorage.setItem('bankPlanAssumptions', JSON.stringify(recoveredData));
+            return recoveredData;
+          }
+        } catch (recoveryError) {
+          console.error('Could not recover user values:', recoveryError);
+        }
+        
         localStorage.removeItem('bankPlanAssumptions'); // Clear corrupted data
         return defaultAssumptions;
       }
     }
+    
+    // No saved data, but check if we have user values to restore
+    try {
+      const savedUserValues = localStorage.getItem('bankPlanAssumptions_userValues');
+      if (savedUserValues) {
+        const { values } = JSON.parse(savedUserValues);
+        console.log('Restoring user values to fresh defaults:', values);
+        return mergeUserValues(defaultAssumptions, values);
+      }
+    } catch (error) {
+      console.error('Error restoring user values:', error);
+    }
+    
     return defaultAssumptions;
   };
 
@@ -180,12 +359,23 @@ export const useLocalStorage = () => {
     setHasUnsavedChanges(true); // Mark as having unsaved changes
   };
 
-  // Auto-save to localStorage effect
+  // Auto-save to localStorage effect with backup
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       try {
+        // Create backup before saving
+        createBackup(assumptions);
+        
+        // Save current data
         localStorage.setItem('bankPlanAssumptions', JSON.stringify(assumptions));
         setLastSaved(new Date());
+        
+        // Also save user values separately for extra safety
+        const userValues = extractUserValues(assumptions);
+        localStorage.setItem('bankPlanAssumptions_userValues', JSON.stringify({
+          values: userValues,
+          timestamp: new Date().toISOString()
+        }));
       } catch (error) {
         console.error('Error saving to localStorage:', error);
       }
