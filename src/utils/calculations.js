@@ -146,6 +146,103 @@ const calculateCommissionProduct = (product, assumptions, years) => {
 };
 
 /**
+ * Calculate Digital Service Product results (for Digital Banking division)
+ * These products are based on customer acquisition and service revenue
+ */
+const calculateDigitalServiceProduct = (product, assumptions, years, ftpRate) => {
+  const customers = years.map(i => {
+    if (product.customers) {
+      if (product.customers[`y${i + 1}`] !== undefined) {
+        return product.customers[`y${i + 1}`];
+      } else {
+        // Linear interpolation between y1 and y5
+        const y1 = product.customers.y1 || 0;
+        const y5 = product.customers.y5 || 0;
+        if (i < 5) {
+          return y1 + ((y5 - y1) * i / 4);
+        } else {
+          // Beyond year 5, maintain y5 level
+          return y5;
+        }
+      }
+    }
+    return 0;
+  });
+
+  // Calculate total customers: previous year customers * (1 - churn) + new customers
+  const totalCustomers = [];
+  const churnRate = (product.churnRate || 5) / 100;
+  
+  for (let i = 0; i < years.length; i++) {
+    if (i === 0) {
+      totalCustomers[i] = customers[i];
+    } else {
+      totalCustomers[i] = totalCustomers[i-1] * (1 - churnRate) + customers[i];
+    }
+  }
+
+  // Calculate average customers for the year (for revenue calculations)
+  const avgCustomers = totalCustomers.map((current, i) => {
+    if (i === 0) return current / 2; // Half year for first year
+    return (totalCustomers[i-1] + current) / 2;
+  });
+
+  // Calculate deposit stock: Total Customers * Average Deposit
+  const avgDeposit = (product.avgDeposit || 0) / 1000000; // Convert to millions
+  const depositStock = totalCustomers.map(customers => customers * avgDeposit);
+
+  // Calculate revenues
+  const monthlyFee = product.monthlyFee || 0;
+  const annualServiceRevenue = product.annualServiceRevenue || 0;
+  
+  // Fee Income = Average Customers * Monthly Fee * 12 + Average Customers * Annual Service Revenue
+  const feeIncome = avgCustomers.map(customers => 
+    (customers * monthlyFee * 12 + customers * annualServiceRevenue) / 1000000 // Convert to millions
+  );
+
+  // Calculate costs
+  const cac = product.cac || 0;
+  const marketingCosts = customers.map(newCustomers => 
+    -(newCustomers * cac) / 1000000 // Convert to millions, negative as cost
+  );
+
+  // Interest Expense = Deposit Stock * Deposit Interest Rate
+  const depositInterestRate = (product.depositInterestRate || 0) / 100;
+  const interestExpense = depositStock.map(stock => -stock * depositInterestRate);
+
+  // Interest Income from Treasury (FTP): Deposit Stock * FTP Rate
+  const interestIncome = depositStock.map(stock => stock * ftpRate);
+
+  return {
+    name: product.name,
+    volumes: customers, // New customers per year
+    totalCustomers: totalCustomers,
+    avgCustomers: avgCustomers,
+    depositStock: depositStock, // Total deposit liability
+    performingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Digital services don't create credit assets
+    averagePerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    nonPerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    interestIncome: interestIncome, // Revenue from Treasury FTP
+    interestExpense: interestExpense, // Cost of deposit interest
+    commissionIncome: feeIncome, // Service fees and monthly fees
+    commissionExpense: marketingCosts, // Customer acquisition costs
+    llp: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No credit losses
+    rwa: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Minimal operational RWA for digital services
+    newBusiness: customers,
+    numberOfLoans: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Digital services are not loans
+    assumptions: {
+      cac: cac,
+      avgDeposit: product.avgDeposit || 0,
+      churnRate: churnRate * 100,
+      monthlyFee: monthlyFee,
+      annualServiceRevenue: annualServiceRevenue,
+      depositInterestRate: depositInterestRate * 100,
+      ftpRate: ftpRate * 100
+    }
+  };
+};
+
+/**
  * Advanced calculation engine for bank business plan
  * 
  * @param {Object} assumptions - The financial assumptions object
@@ -168,7 +265,13 @@ export const calculateResults = (assumptions) => {
         continue;
       }
       
-      // Handle Digital Banking products as deposits (liabilities)
+      // Handle Digital Service products (new customer-based model)
+      if (product.productType === 'DigitalService') {
+        productResults[key] = calculateDigitalServiceProduct(product, assumptions, years, ftpRate);
+        continue;
+      }
+      
+      // Handle Digital Banking products as deposits (liabilities) - legacy support
       if (product.productType === 'Deposit' || key.startsWith('digitalBanking')) {
         productResults[key] = calculateDepositProduct(product, assumptions, years, ftpRate, depositRate);
         continue;
@@ -495,9 +598,19 @@ export const calculateResults = (assumptions) => {
   results.pnl.taxes = years.map(i => results.pnl.preTaxProfit[i] > 0 ? -results.pnl.preTaxProfit[i] * (assumptions.taxRate / 100) : 0);
   results.pnl.netProfit = years.map(i => results.pnl.preTaxProfit[i] + results.pnl.taxes[i]);
 
+  // Calculate digital service deposits (from DigitalService products)
+  results.bs.digitalServiceDeposits = years.map(i => 
+    Object.values(productResults)
+      .filter(product => product.depositStock) // Only products with deposit stock
+      .reduce((sum, product) => sum + (product.depositStock[i] || 0), 0)
+  );
+
   // Calculate total equity first
   results.bs.equity = years.map(i => assumptions.initialEquity + results.pnl.netProfit.slice(0, i + 1).reduce((a, b) => a + b, 0));
-  results.bs.totalLiabilities = years.map(i => results.bs.totalAssets[i] - results.bs.equity[i]);
+  
+  // Total liabilities = Total Assets - Equity + Digital Service Deposits
+  // (Digital service deposits are additional liabilities beyond what's needed to fund assets)
+  results.bs.totalLiabilities = years.map(i => results.bs.totalAssets[i] - results.bs.equity[i] + results.bs.digitalServiceDeposits[i]);
   
   results.bs.sightDeposits = results.bs.totalLiabilities.map(tl => tl * (assumptions.fundingMix.sightDeposits / 100));
   results.bs.termDeposits = results.bs.totalLiabilities.map(tl => tl * (assumptions.fundingMix.termDeposits / 100));

@@ -234,9 +234,62 @@ const DivisionAssumptions = ({
       }
     ];
 
+    // Digital Service-specific assumptions
+    const digitalServiceRows = [
+      {
+        parameter: 'Customer Acquisition Cost (CAC)',
+        description: 'Cost to acquire each new customer',
+        value: product.cac || 30,
+        unit: '€',
+        key: `products.${productKey}.cac`
+      },
+      {
+        parameter: 'Average Deposit per Customer',
+        description: 'Average deposit amount per customer',
+        value: product.avgDeposit || 3000,
+        unit: '€',
+        key: `products.${productKey}.avgDeposit`
+      },
+      {
+        parameter: 'Annual Churn Rate',
+        description: 'Percentage of customers lost annually',
+        value: product.churnRate || 5,
+        unit: '%',
+        key: `products.${productKey}.churnRate`
+      },
+      {
+        parameter: 'Monthly Fee',
+        description: 'Monthly subscription/account fee per customer',
+        value: product.monthlyFee || 0,
+        unit: '€',
+        key: `products.${productKey}.monthlyFee`
+      },
+      {
+        parameter: 'Annual Service Revenue per Customer',
+        description: 'Additional service revenue per customer per year',
+        value: product.annualServiceRevenue || 15,
+        unit: '€',
+        key: `products.${productKey}.annualServiceRevenue`
+      },
+      {
+        parameter: 'Deposit Interest Rate',
+        description: 'Interest rate paid to customers on deposits',
+        value: product.depositInterestRate || 0.5,
+        unit: '%',
+        key: `products.${productKey}.depositInterestRate`
+      }
+    ];
+
     // Determine which rows to show based on product type
     const productType = product.productType || 'Credit';
-    const specificRows = productType === 'Credit' ? creditRows : commissionRows;
+    let specificRows;
+    if (productType === 'DigitalService') {
+      specificRows = digitalServiceRows;
+    } else if (productType === 'Credit') {
+      specificRows = creditRows;
+    } else {
+      specificRows = commissionRows;
+    }
     
     // Common rows that apply to both types
     const sharedRows = [
@@ -260,8 +313,28 @@ const DivisionAssumptions = ({
       }
     ] : [];
     
-    // Convert volumes to volumeArray if needed
-    const getVolumeArray = () => {
+    // Convert volumes or customers to array format
+    const getInputArray = () => {
+      // For DigitalService products, use customers data
+      if (productType === 'DigitalService') {
+        if (product.customers) {
+          // Convert customers object to array format
+          const y1 = product.customers.y1 || 0;
+          const y5 = product.customers.y5 || 0;
+          
+          // Create 10-year array with linear interpolation to y5, then maintain y5
+          return Array.from({ length: 10 }, (_, i) => {
+            if (i < 5) {
+              return y1 + ((y5 - y1) * i / 4);
+            } else {
+              return y5; // Beyond year 5, maintain y5 level
+            }
+          });
+        }
+        return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      }
+      
+      // For other product types, use volumes
       // If volumeArray already exists, use it
       if (product.volumeArray && Array.isArray(product.volumeArray) && product.volumeArray.length === 10) {
         return product.volumeArray;
@@ -291,7 +364,8 @@ const DivisionAssumptions = ({
       productKey: productKey,
       productName: product.name,
       volumes: product.volumes || { y1: 0, y10: 0 }, // Keep for backward compatibility
-      volumeArray: getVolumeArray()
+      inputArray: getInputArray(),
+      isDigitalService: productType === 'DigitalService'
     };
   });
 
@@ -341,6 +415,8 @@ const DivisionAssumptions = ({
                       <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
                         productAssumption.productType === 'Credit' 
                           ? 'bg-green-100 text-green-800 border border-green-300' 
+                          : productAssumption.productType === 'DigitalService'
+                          ? 'bg-purple-100 text-purple-800 border border-purple-300'
                           : 'bg-blue-100 text-blue-800 border border-blue-300'
                       }`}>
                         {productAssumption.productType}
@@ -359,15 +435,23 @@ const DivisionAssumptions = ({
                 {/* Accordion Content */}
                 {isOpen && (
                   <div className="p-6 border-t bg-white">
-                    {/* Volume Input Grid */}
+                    {/* Volume/Customer Input Grid */}
                     <div className="mb-6">
                       <VolumeInputGrid
-                        values={productAssumption.volumeArray || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
-                        onChange={(newVolumeArray) => {
-                          onAssumptionChange(`products.${productKey}.volumeArray`, newVolumeArray);
+                        values={productAssumption.inputArray || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+                        onChange={(newArray) => {
+                          if (productAssumption.isDigitalService) {
+                            // For DigitalService products, update customers object
+                            const y1 = newArray[0] || 0;
+                            const y5 = newArray[4] || 0; // Year 5 (index 4)
+                            onAssumptionChange(`products.${productKey}.customers`, { y1, y5 });
+                          } else {
+                            // For other products, update volumeArray
+                            onAssumptionChange(`products.${productKey}.volumeArray`, newArray);
+                          }
                         }}
-                        label={`${product.name} - Volume Projections`}
-                        unit="€M"
+                        label={`${product.name} - ${productAssumption.isDigitalService ? 'New Customer Acquisitions' : 'Volume Projections'}`}
+                        unit={productAssumption.isDigitalService ? 'customers' : '€M'}
                         disabled={false}
                       />
                     </div>
@@ -375,17 +459,21 @@ const DivisionAssumptions = ({
                     {/* Organized Cards Layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       
-                      {/* Pricing & Profitability Card */}
+                      {/* First Card - varies by product type */}
                       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
                           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                          Pricing & Profitability
+                          {productAssumption.isDigitalService ? 'Customer Acquisition' : 'Pricing & Profitability'}
                         </h4>
                         <div className="space-y-4">
-                          {productAssumption.rows.filter(row => 
-                            ['Interest Rate Spread', 'Commission Rate', 'Fee Income Rate', 
-                             'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside'].includes(row.parameter)
-                          ).map((row, rowIndex) => (
+                          {productAssumption.rows.filter(row => {
+                            if (productAssumption.isDigitalService) {
+                              return ['Customer Acquisition Cost (CAC)'].includes(row.parameter);
+                            } else {
+                              return ['Interest Rate Spread', 'Commission Rate', 'Fee Income Rate', 
+                                     'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside'].includes(row.parameter);
+                            }
+                          }).map((row, rowIndex) => (
                             <div key={rowIndex}>
                               {row.options ? (
                                 <div>
@@ -431,17 +519,21 @@ const DivisionAssumptions = ({
                         </div>
                       </div>
 
-                      {/* Risk & RWA Card */}
+                      {/* Second Card - varies by product type */}
                       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
                           <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                          Risk & RWA
+                          {productAssumption.isDigitalService ? 'Customer Metrics' : 'Risk & RWA'}
                         </h4>
                         <div className="space-y-4">
-                          {productAssumption.rows.filter(row => 
-                            ['RWA Density', 'Default Rate', 'Loan-to-Value (LTV)', 
-                             'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight', 'State Guarantee Coverage'].includes(row.parameter)
-                          ).map((row, rowIndex) => (
+                          {productAssumption.rows.filter(row => {
+                            if (productAssumption.isDigitalService) {
+                              return ['Average Deposit per Customer', 'Annual Churn Rate'].includes(row.parameter);
+                            } else {
+                              return ['RWA Density', 'Default Rate', 'Loan-to-Value (LTV)', 
+                                     'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight', 'State Guarantee Coverage'].includes(row.parameter);
+                            }
+                          }).map((row, rowIndex) => (
                             <div key={rowIndex}>
                               {row.options ? (
                                 <div>
@@ -528,19 +620,25 @@ const DivisionAssumptions = ({
                         </div>
                       </div>
 
-                      {/* Structure & Operations Card */}
+                      {/* Third Card - varies by product type */}
                       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
                           <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                          Structure & Operations
+                          {productAssumption.isDigitalService ? 'Monetization' : 'Structure & Operations'}
                         </h4>
                         <div className="space-y-4">
-                          {productAssumption.rows.filter(row => 
-                            !['Interest Rate Spread', 'Commission Rate', 'Fee Income Rate', 
-                              'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside',
-                              'RWA Density', 'Default Rate', 'Loan-to-Value (LTV)', 
-                              'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight', 'State Guarantee Coverage'].includes(row.parameter)
-                          ).map((row, rowIndex) => (
+                          {productAssumption.rows.filter(row => {
+                            if (productAssumption.isDigitalService) {
+                              return ['Monthly Fee', 'Annual Service Revenue per Customer', 'Deposit Interest Rate'].includes(row.parameter);
+                            } else {
+                              return !['Interest Rate Spread', 'Commission Rate', 'Fee Income Rate', 
+                                      'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside',
+                                      'RWA Density', 'Default Rate', 'Loan-to-Value (LTV)', 
+                                      'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight', 'State Guarantee Coverage',
+                                      'Customer Acquisition Cost (CAC)', 'Average Deposit per Customer', 'Annual Churn Rate',
+                                      'Monthly Fee', 'Annual Service Revenue per Customer', 'Deposit Interest Rate'].includes(row.parameter);
+                            }
+                          }).map((row, rowIndex) => (
                             <div key={rowIndex}>
                               {row.options ? (
                                 <div>

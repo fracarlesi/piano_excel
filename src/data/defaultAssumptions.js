@@ -161,85 +161,63 @@ export const defaultAssumptions = {
     // Digital Banking Division Products - Deposit Collection Model
     digitalPersonalAccount: {
       name: 'Digital Personal Account',
-      productType: 'Deposit', // NEW: Treat as deposit liability
-      volumes: { y1: 100, y10: 500 }, // Volume represents deposit stock in €M
-      avgLoanSize: 0.005, // Average deposit per customer
-      spread: 0.0, // No traditional spread for deposits
-      rwaDensity: 20, // 20% operational risk weight
-      durata: 1, // Deposits are liquid
-      commissionRate: 1.0, // Account maintenance and transaction fees
-      dangerRate: 0.0, // No credit risk on deposits
-      ltv: 0.0,
-      recoveryCosts: 0.0,
-      collateralHaircut: 0.0,
-      quarterlyDist: [25, 25, 25, 25],
-      type: 'services', // Service-based fees on top of deposit margins
-      isDigital: true
+      productType: 'DigitalService',
+      isDigital: true,
+      customers: { y1: 50000, y5: 250000 }, // Numero di nuovi clienti
+      cac: 30, // Costo Acquisizione Cliente in €
+      avgDeposit: 3000, // Deposito medio per cliente in €
+      churnRate: 5, // % annua
+      monthlyFee: 0, // €
+      annualServiceRevenue: 15, // Ricavi da servizi extra per cliente in €
+      depositInterestRate: 0.5 // Tasso pagato sui depositi in %
     },
     digitalBusinessAccount: {
       name: 'Digital Business Account',
-      productType: 'Deposit', // NEW: Treat as deposit liability
-      volumes: { y1: 75, y10: 300 }, // Volume represents deposit stock in €M
-      avgLoanSize: 0.025, // Average deposit per business customer
-      spread: 0.0, // No traditional spread for deposits
-      rwaDensity: 20, // 20% operational risk weight
-      durata: 1, // Deposits are liquid
-      commissionRate: 2.5, // Business toolkit and premium services
-      dangerRate: 0.0, // No credit risk on deposits
-      ltv: 0.0,
-      recoveryCosts: 0.0,
-      collateralHaircut: 0.0,
-      quarterlyDist: [25, 25, 25, 25],
-      type: 'services', // Service-based fees on top of deposit margins
-      isDigital: true
+      productType: 'DigitalService',
+      isDigital: true,
+      customers: { y1: 15000, y5: 75000 }, // Numero di nuovi clienti business
+      cac: 120, // Costo Acquisizione Cliente business in €
+      avgDeposit: 25000, // Deposito medio per cliente business in €
+      churnRate: 8, // % annua (più alta per business)
+      monthlyFee: 15, // € canone mensile
+      annualServiceRevenue: 150, // Ricavi da servizi business per cliente in €
+      depositInterestRate: 0.8 // Tasso pagato sui depositi business in %
     },
     digitalPaymentServices: {
       name: 'Payment & Card Services',
-      volumes: { y1: 20, y10: 80 }, // Volume represents transaction fee income
-      avgLoanSize: 0.001, // Average fee per transaction
-      spread: 0.4, // International transfer spread (like Starling's 0.4%)
-      rwaDensity: 5, // Low RWA for payment services
-      durata: 1, // Annual cycle
-      commissionRate: 1.5, // Interchange fees and payment processing
-      dangerRate: 0.2, // Very low operational risk
-      ltv: 0.0,
-      recoveryCosts: 0.0,
-      collateralHaircut: 0.0,
-      quarterlyDist: [25, 25, 25, 25],
-      type: 'services',
-      isDigital: true
+      productType: 'DigitalService',
+      isDigital: true,
+      customers: { y1: 80000, y5: 400000 }, // Clienti che usano servizi di pagamento
+      cac: 15, // Costo acquisizione più basso (cross-selling)
+      avgDeposit: 1500, // Deposito medio più basso per payment users
+      churnRate: 12, // % annua più alta per servizi specifici
+      monthlyFee: 0, // Gratuito base
+      annualServiceRevenue: 45, // Ricavi da commissioni pagamenti per cliente
+      depositInterestRate: 0.3 // Tasso più basso per conti transazionali
     },
     digitalMarketplace: {
       name: 'Marketplace & Third-Party Services',
-      volumes: { y1: 10, y10: 50 }, // Volume represents commission income
-      avgLoanSize: 0.05, // Average commission per service sold
-      spread: 0.0, // No spread on marketplace
-      rwaDensity: 0, // No RWA for commission-based services
-      durata: 1, // Annual cycle
-      commissionRate: 4.0, // Commission from third-party services (2-5% range)
-      dangerRate: 0.0, // No credit risk
-      ltv: 0.0,
-      recoveryCosts: 0.0,
-      collateralHaircut: 0.0,
-      quarterlyDist: [25, 25, 25, 25],
-      type: 'services',
-      isDigital: true
+      productType: 'DigitalService',
+      isDigital: true,
+      customers: { y1: 25000, y5: 150000 }, // Clienti attivi marketplace
+      cac: 45, // Costo acquisizione marketplace
+      avgDeposit: 2000, // Deposito medio per utenti marketplace
+      churnRate: 15, // % annua alta per marketplace
+      monthlyFee: 0, // Gratuito
+      annualServiceRevenue: 120, // Ricavi elevati da commissioni marketplace
+      depositInterestRate: 0.4 // Tasso standard
     },
     digitalBankingPlatform: {
       name: 'Banking-as-a-Service Platform',
-      volumes: { y1: 5, y10: 40 }, // Volume represents SaaS revenue
-      avgLoanSize: 0.1, // Average annual fee per client
-      spread: 0.0, // No traditional spread
-      rwaDensity: 0, // No RWA for SaaS services
-      durata: 3, // Multi-year SaaS contracts
-      commissionRate: 15.0, // High-margin SaaS business (setup fees + recurring)
-      dangerRate: 0.1, // Low counterparty risk
-      ltv: 0.0,
-      recoveryCosts: 0.0,
-      collateralHaircut: 0.0,
-      quarterlyDist: [25, 25, 25, 25],
-      type: 'services',
-      isDigital: true
+      productType: 'DigitalService',
+      isDigital: true,
+      customers: { y1: 200, y5: 1500 }, // Clienti BaaS (B2B)
+      cac: 5000, // Costo acquisizione B2B elevato
+      avgDeposit: 0, // Nessun deposito per BaaS
+      churnRate: 3, // % annua bassa per contratti enterprise
+      monthlyFee: 2500, // € canone mensile enterprise
+      annualServiceRevenue: 15000, // Ricavi elevati da servizi enterprise
+      depositInterestRate: 0 // Nessun interesse sui depositi
     }
   }
 };
