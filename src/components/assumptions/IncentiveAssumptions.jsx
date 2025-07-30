@@ -1,10 +1,10 @@
 import React from 'react';
 import DivisionAssumptions from './DivisionAssumptions';
 
-const SubsidizedAssumptions = ({ assumptions, onAssumptionChange }) => {
+const IncentiveAssumptions = ({ assumptions, onAssumptionChange }) => {
   return (
     <DivisionAssumptions
-      divisionKey="subsidized"
+      divisionKey="incentive"
       divisionName="Finanza Agevolata"
       divisionIcon="🌱"
       assumptions={assumptions}
@@ -13,4 +13,4 @@ const SubsidizedAssumptions = ({ assumptions, onAssumptionChange }) => {
   );
 };
 
-export default SubsidizedAssumptions;
+export default IncentiveAssumptions;

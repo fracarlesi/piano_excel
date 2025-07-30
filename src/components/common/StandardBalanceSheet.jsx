@@ -1,6 +1,7 @@
 import React from 'react';
 import FinancialTable from './FinancialTable';
 import { formatNumber } from '../../utils/formatters';
+import { createFormula } from '../../utils/formulaHelpers';
 
 /**
  * Standardized Balance Sheet structure for all divisions
@@ -24,18 +25,14 @@ const StandardBalanceSheet = ({
   });
 
   // Calculate derived values
-  const performingAssets = divisionResults.bs.performingAssets || [0,0,0,0,0];
-  const nonPerformingAssets = divisionResults.bs.nonPerformingAssets || [0,0,0,0,0];
-  const operatingAssets = performingAssets.map((pa, i) => {
-    const totalLoans = pa + nonPerformingAssets[i];
-    return totalLoans * (assumptions.operatingAssetsRatio || 0.1);
-  });
+  const performingAssets = divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0];
+  const nonPerformingAssets = divisionResults.bs.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0];
   
   const totalAssets = performingAssets.map((pa, i) => 
-    pa + nonPerformingAssets[i] + operatingAssets[i]
+    pa + nonPerformingAssets[i]
   );
 
-  const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0];
+  const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0,0,0,0,0,0];
   const totalLiabilities = totalAssets.map((ta, i) => ta - allocatedEquity[i]);
 
   // Breakdown of liabilities
@@ -52,14 +49,13 @@ const StandardBalanceSheet = ({
       decimals: 0,
       isTotal: true,
       formula: totalAssets.map((val, i) => createFormula(i,
-        'Net Performing + Non-Performing + Operating Assets',
+        'Net Performing + Non-Performing Assets',
         [
           year => `Performing Assets: ${formatNumber(performingAssets[year], 0)} €M`,
           year => `Non-Performing: ${formatNumber(nonPerformingAssets[year], 0)} €M`,
-          year => `Operating Assets: ${formatNumber(operatingAssets[year], 0)} €M`,
           year => `Total: ${formatNumber(val, 0)} €M`
         ],
-        year => `${formatNumber(performingAssets[year], 0)} + ${formatNumber(nonPerformingAssets[year], 0)} + ${formatNumber(operatingAssets[year], 0)} = ${formatNumber(val, 0)} €M`
+        year => `${formatNumber(performingAssets[year], 0)} + ${formatNumber(nonPerformingAssets[year], 0)} = ${formatNumber(val, 0)} €M`
       ))
     },
 
@@ -78,21 +74,21 @@ const StandardBalanceSheet = ({
 
     // Product breakdown for Performing Assets
     ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `- o/w ${product.name}`,
-      data: product.performingAssets || [0,0,0,0,0],
+      label: `${product.name}`,
+      data: product.performingAssets || [0,0,0,0,0,0,0,0,0,0],
       decimals: 0,
       indent: true,
-      formula: (product.performingAssets || [0,0,0,0,0]).map((val, i) => createFormula(i,
+      formula: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
         'Stock evolution: Previous + New - Repayments - Defaults',
         [
           `Product: ${product.name}`,
-          year => `Previous Stock: ${i > 0 ? formatNumber((product.performingAssets || [0,0,0,0,0])[year-1], 0) : '0'} €M`,
-          year => `New Business: ${formatNumber((product.newBusiness || [0,0,0,0,0])[year], 0)} €M`,
+          year => `Previous Stock: ${i > 0 ? formatNumber((product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1], 0) : '0'} €M`,
+          year => `New Business: ${formatNumber((product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
           year => `Performing Stock: ${formatNumber(val, 0)} €M`
         ],
         year => {
-          const prev = i > 0 ? (product.performingAssets || [0,0,0,0,0])[year-1] || 0 : 0;
-          const newBusiness = (product.newBusiness || [0,0,0,0,0])[year] || 0;
+          const prev = i > 0 ? (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1] || 0 : 0;
+          const newBusiness = (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
           return `${formatNumber(prev, 0)} + ${formatNumber(newBusiness, 0)} - Repayments - Defaults = ${formatNumber(val, 0)} €M`;
         }
       ))
@@ -113,25 +109,27 @@ const StandardBalanceSheet = ({
 
     // Product breakdown for NPL
     ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `- o/w ${product.name}`,
-      data: product.nonPerformingAssets || [0,0,0,0,0],
+      label: `${product.name}`,
+      data: product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0],
       decimals: 0,
-      indent: true
+      indent: true,
+      formula: (product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
+        createFormula(
+          i,
+          'Cumulative defaults from loan portfolio',
+          [
+            {
+              name: 'NPL Stock',
+              value: val,
+              unit: '€M',
+              calculation: 'Accumulated non-performing loans'
+            }
+          ],
+          year => `Cumulative NPL stock: ${formatNumber(val, 0)} €M`
+        )
+      )
     })) : []),
 
-    {
-      label: 'Operating assets',
-      data: operatingAssets,
-      decimals: 0,
-      formula: operatingAssets.map((val, i) => createFormula(i,
-        'Total Loans × Operating Assets Ratio',
-        [
-          year => `Total Loans: ${formatNumber(performingAssets[year] + nonPerformingAssets[year], 0)} €M`,
-          year => `Operating Assets Ratio: ${(assumptions.operatingAssetsRatio || 0.1) * 100}%`,
-          year => `Operating Assets: ${formatNumber(val, 0)} €M`
-        ]
-      ))
-    },
 
     // ========== TOTAL ASSETS SUMMARY ==========
     {
@@ -164,9 +162,9 @@ const StandardBalanceSheet = ({
       formula: allocatedEquity.map((val, i) => createFormula(i,
         'Equity allocated based on RWA contribution',
         [
-          year => `Division RWA: ${formatNumber((divisionResults.capital.totalRWA || [0,0,0,0,0])[year], 0)} €M`,
+          year => `Division RWA: ${formatNumber((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
           year => `Total Bank RWA: ${formatNumber(globalResults.capital.totalRWA[year], 0)} €M`,
-          year => `RWA Weight: ${(((divisionResults.capital.totalRWA || [0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) * 100).toFixed(1)}%`,
+          year => `RWA Weight: ${(((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) * 100).toFixed(1)}%`,
           year => `Allocated Equity: ${formatNumber(val, 0)} €M`
         ]
       ))

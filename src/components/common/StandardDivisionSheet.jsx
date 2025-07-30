@@ -27,9 +27,9 @@ const StandardDivisionSheet = ({
   
   // Get division-specific results
   const divisionResults = results.divisions[divisionKey] || {
-    bs: { performingAssets: [0,0,0,0,0], nonPerformingAssets: [0,0,0,0,0], equity: [0,0,0,0,0] },
-    pnl: { interestIncome: [0,0,0,0,0], commissionIncome: [0,0,0,0,0], totalLLP: [0,0,0,0,0] },
-    capital: { rwaCreditRisk: [0,0,0,0,0], totalRWA: [0,0,0,0,0], cet1Ratio: [0,0,0,0,0] }
+    bs: { performingAssets: [0,0,0,0,0,0,0,0,0,0], nonPerformingAssets: [0,0,0,0,0,0,0,0,0,0], equity: [0,0,0,0,0,0,0,0,0,0] },
+    pnl: { interestIncome: [0,0,0,0,0,0,0,0,0,0], commissionIncome: [0,0,0,0,0,0,0,0,0,0], totalLLP: [0,0,0,0,0,0,0,0,0,0] },
+    capital: { rwaCreditRisk: [0,0,0,0,0,0,0,0,0,0], totalRWA: [0,0,0,0,0,0,0,0,0,0], cet1Ratio: [0,0,0,0,0,0,0,0,0,0] }
   };
 
   // Filter products for this division

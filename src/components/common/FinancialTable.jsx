@@ -13,7 +13,7 @@ const FinancialTable = ({ title, rows }) => (
         <thead className="bg-gray-100">
           <tr>
             <th className="px-6 py-3 text-left font-semibold text-gray-700 w-2/5">Item</th>
-            {[0, 1, 2, 3, 4].map(y => (
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(y => (
               <th key={y} className="px-4 py-3 text-right font-semibold text-gray-700">
                 Year {y + 1}
               </th>
@@ -25,9 +25,9 @@ const FinancialTable = ({ title, rows }) => (
             <tr 
               key={index} 
               className={`${
-                row.isTotal ? 'font-bold bg-cyan-100 border-cyan-200' : ''
+                row.isTotal ? 'font-semibold bg-cyan-50 border-cyan-100' : ''
               } ${
-                row.isHeader ? 'font-semibold bg-cyan-50 border-cyan-100' : 'hover:bg-gray-50'
+                row.isHeader ? 'font-bold bg-cyan-100 border-cyan-200' : 'hover:bg-gray-50'
               }`}
             >
               <td 
@@ -49,6 +49,8 @@ const FinancialTable = ({ title, rows }) => (
                       formula={row.formula[i].formula} 
                       details={row.formula[i].details}
                       calculation={row.formula[i].calculation}
+                      precedents={row.formula[i].precedents}
+                      year={row.formula[i].year}
                     >
                       {formatNumber(value, row.decimals, row.unit)}
                     </CalculationTooltip>

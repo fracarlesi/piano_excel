@@ -1,6 +1,8 @@
 import React from 'react';
 import EditableNumberField from '../common/EditableNumberField';
 import ProductManager from '../common/ProductManager';
+import VolumeTable from '../common/VolumeTable';
+import VolumeInputGrid from '../common/VolumeInputGrid';
 
 /**
  * Base component for division-specific assumptions
@@ -21,50 +23,13 @@ const DivisionAssumptions = ({
     )
   );
 
-  // General division assumptions
-  const generalAssumptions = [
-    {
-      category: `${divisionName} - General Parameters`,
-      rows: [
-        {
-          parameter: 'Operating Assets Ratio',
-          description: 'Operating assets as % of total loans',
-          value: assumptions.operatingAssetsRatio || 10,
-          unit: '%',
-          key: 'operatingAssetsRatio'
-        }
-      ]
-    }
-  ];
+  // General division assumptions - removed operatingAssetsRatio
+  const generalAssumptions = [];
 
   // Product-specific assumptions
   const productAssumptions = Object.entries(divisionProducts).map(([productKey, product], index) => {
     
-    // Common assumptions for all products
-    const commonRows = [
-      {
-        parameter: 'Product Type',
-        description: 'Type of product for calculation logic',
-        value: product.productType || 'Credit',
-        unit: 'text',
-        key: `products.${productKey}.productType`,
-        options: ['Credit', 'Commission']
-      },
-      {
-        parameter: 'Volume Year 1',
-        description: 'New business volume year 1',
-        value: product.volumes?.y1 || 0,
-        unit: '€M',
-        key: `products.${productKey}.volumes.y1`
-      },
-      {
-        parameter: 'Volume Year 5',
-        description: 'New business volume year 5',
-        value: product.volumes?.y5 || 0,
-        unit: '€M',
-        key: `products.${productKey}.volumes.y5`
-      }
-    ];
+    // No common rows needed - product type is managed in ProductManager
 
     // Credit-specific assumptions
     const creditRows = [
@@ -83,15 +48,8 @@ const DivisionAssumptions = ({
         key: `products.${productKey}.costOfFunding`
       },
       {
-        parameter: 'Total Duration',
-        description: 'Total duration of loans in years',
-        value: product.totalDuration || product.durata || 5,
-        unit: 'years',
-        key: `products.${productKey}.totalDuration`
-      },
-      {
-        parameter: 'Average Duration',
-        description: 'Average duration of loans in years',
+        parameter: 'Loan Maturity',
+        description: 'Contractual maturity of loans in years (used for amortization calculations)',
         value: product.durata || 5,
         unit: 'years',
         key: `products.${productKey}.durata`
@@ -291,9 +249,38 @@ const DivisionAssumptions = ({
       }
     ] : [];
     
+    // Convert volumes to volumeArray if needed
+    const getVolumeArray = () => {
+      // If volumeArray already exists, use it
+      if (product.volumeArray && Array.isArray(product.volumeArray) && product.volumeArray.length === 10) {
+        return product.volumeArray;
+      }
+      
+      // If we have old y1/y10 format, convert to array
+      if (product.volumes && (product.volumes.y1 || product.volumes.y10)) {
+        const y1 = product.volumes.y1 || 0;
+        const y10 = product.volumes.y10 || 0;
+        
+        // Linear interpolation for intermediate years
+        return Array.from({ length: 10 }, (_, i) => {
+          if (i === 0) return y1;
+          if (i === 9) return y10;
+          return y1 + ((y10 - y1) * i / 9);
+        });
+      }
+      
+      // Default to zeros
+      return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    };
+
     return {
       category: `Product ${index + 1}: ${product.name}`,
-      rows: [...commonRows, ...specificRows, ...sharedRows]
+      productType: product.productType || 'Credit',
+      rows: [...specificRows, ...sharedRows],
+      productKey: productKey,
+      productName: product.name,
+      volumes: product.volumes || { y1: 0, y10: 0 }, // Keep for backward compatibility
+      volumeArray: getVolumeArray()
     };
   });
 
@@ -320,54 +307,209 @@ const DivisionAssumptions = ({
         </div>
 
         {allAssumptions.map((section, index) => (
-          <div key={index} className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.category}</h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {section.rows.map((row, rowIndex) => (
-                  <div key={rowIndex}>
-                    {row.options ? (
-                      <div className="mb-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {row.parameter}
-                        </label>
-                        <select
-                          value={row.isBoolean ? (row.value === 'Fixed' ? 'Fixed' : 'Variable') : row.value}
-                          onChange={(e) => {
-                            if (row.key && row.isBoolean) {
-                              onAssumptionChange(row.key, e.target.value === 'Fixed');
-                            } else if (row.key) {
-                              onAssumptionChange(row.key, e.target.value);
+          <div key={index} className="mb-12 border border-gray-200 rounded-xl p-6 bg-gradient-to-r from-gray-50 to-white">
+            {/* Product Header with Type Badge */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800">{section.category}</h3>
+              {section.productType && (
+                <span className={`px-4 py-2 text-sm font-semibold rounded-full border-2 ${
+                  section.productType === 'Credit' 
+                    ? 'bg-green-100 text-green-800 border-green-300' 
+                    : 'bg-blue-100 text-blue-800 border-blue-300'
+                }`}>
+                  {section.productType} Product
+                </span>
+              )}
+            </div>
+            
+            {/* Volume Input Grid for each product */}
+            {section.category.includes('Product') && (
+              <div className="mb-6">
+                <VolumeInputGrid
+                  values={section.volumeArray || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+                  onChange={(newVolumeArray) => {
+                    onAssumptionChange(`products.${section.productKey}.volumeArray`, newVolumeArray);
+                  }}
+                  label={`${section.productName} - Volume Projections`}
+                  unit="€M"
+                  disabled={false}
+                />
+              </div>
+            )}
+            
+            {/* Organized Cards Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Pricing & Profitability Card */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  Pricing & Profitability
+                </h4>
+                <div className="space-y-4">
+                  {section.rows.filter(row => 
+                    ['Interest Rate Spread', 'Cost of Funding', 'Commission Rate', 'Fee Income Rate', 
+                     'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside'].includes(row.parameter)
+                  ).map((row, rowIndex) => (
+                    <div key={rowIndex}>
+                      {row.options ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {row.parameter}
+                          </label>
+                          <select
+                            value={row.isBoolean ? (row.value === 'Fixed' ? 'Fixed' : 'Variable') : row.value}
+                            onChange={(e) => {
+                              if (row.key && row.isBoolean) {
+                                onAssumptionChange(row.key, e.target.value === 'Fixed');
+                              } else if (row.key) {
+                                onAssumptionChange(row.key, e.target.value);
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            {row.options.map(option => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <EditableNumberField
+                          label={row.parameter}
+                          value={row.value}
+                          onChange={(value) => {
+                            if (row.key) {
+                              onAssumptionChange(row.key, value);
                             }
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          {row.options.map(option => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : (
-                      <EditableNumberField
-                        label={row.parameter}
-                        value={row.value}
-                        onChange={(value) => {
-                          if (row.key) {
-                            onAssumptionChange(row.key, value);
-                          }
-                        }}
-                        unit={row.unit === 'text' ? '' : row.unit}
-                        disabled={false}
-                        isPercentage={row.unit === '%'}
-                        isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
-                        tooltip={row.description}
-                      />
-                    )}
-                  </div>
-                ))}
+                          unit={row.unit === 'text' ? '' : row.unit}
+                          disabled={false}
+                          isPercentage={row.unit === '%'}
+                          isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
+                          tooltip={row.description}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {/* Risk & RWA Card */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                  <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                  Risk & RWA
+                </h4>
+                <div className="space-y-4">
+                  {section.rows.filter(row => 
+                    ['RWA Density', 'Default Rate', 'Loss Given Default (LGD)', 'Loan-to-Value (LTV)', 
+                     'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight'].includes(row.parameter)
+                  ).map((row, rowIndex) => (
+                    <div key={rowIndex}>
+                      {row.options ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {row.parameter}
+                          </label>
+                          <select
+                            value={row.isBoolean ? (row.value === 'Fixed' ? 'Fixed' : 'Variable') : row.value}
+                            onChange={(e) => {
+                              if (row.key && row.isBoolean) {
+                                onAssumptionChange(row.key, e.target.value === 'Fixed');
+                              } else if (row.key) {
+                                onAssumptionChange(row.key, e.target.value);
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            {row.options.map(option => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <EditableNumberField
+                          label={row.parameter}
+                          value={row.value}
+                          onChange={(value) => {
+                            if (row.key) {
+                              onAssumptionChange(row.key, value);
+                            }
+                          }}
+                          unit={row.unit === 'text' ? '' : row.unit}
+                          disabled={false}
+                          isPercentage={row.unit === '%'}
+                          isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
+                          tooltip={row.description}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Structure & Operations Card */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                  Structure & Operations
+                </h4>
+                <div className="space-y-4">
+                  {section.rows.filter(row => 
+                    !['Interest Rate Spread', 'Cost of Funding', 'Commission Rate', 'Fee Income Rate', 
+                      'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside',
+                      'RWA Density', 'Default Rate', 'Loss Given Default (LGD)', 'Loan-to-Value (LTV)', 
+                      'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight'].includes(row.parameter)
+                  ).map((row, rowIndex) => (
+                    <div key={rowIndex}>
+                      {row.options ? (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            {row.parameter}
+                          </label>
+                          <select
+                            value={row.isBoolean ? (row.value === 'Fixed' ? 'Fixed' : 'Variable') : row.value}
+                            onChange={(e) => {
+                              if (row.key && row.isBoolean) {
+                                onAssumptionChange(row.key, e.target.value === 'Fixed');
+                              } else if (row.key) {
+                                onAssumptionChange(row.key, e.target.value);
+                              }
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            {row.options.map(option => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <EditableNumberField
+                          label={row.parameter}
+                          value={row.value}
+                          onChange={(value) => {
+                            if (row.key) {
+                              onAssumptionChange(row.key, value);
+                            }
+                          }}
+                          unit={row.unit === 'text' ? '' : row.unit}
+                          disabled={false}
+                          isPercentage={row.unit === '%'}
+                          isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
+                          tooltip={row.description}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
             </div>
           </div>
         ))}

@@ -1,9 +1,8 @@
 export const defaultAssumptions = {
-  version: '2.8', // Force reset for new Real Estate products
+  version: '3.8', // Implemented Excel-like 10-year volume input grid with paste functionality
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
-  operatingAssetsRatio: 2.0,
   euribor: 3.5, // EURIBOR base rate
   avgCostPerFte: 100, 
   backOfficeCostsY1: 2, 
@@ -35,7 +34,7 @@ export const defaultAssumptions = {
   products: {
     reSecuritization: {
       name: 'Finanziamenti alle Cartolarizzazioni Immobiliari (Note Senior)',
-      volumes: { y1: 150, y5: 800 },
+      volumes: { y1: 150, y10: 800 },
       avgLoanSize: 25.0, // Finanziamenti di importo significativo
       spread: 2.8, // Spread contenuto per note senior sicure
       rwaDensity: 35, // Bassa rischiosità per note senior
@@ -50,7 +49,7 @@ export const defaultAssumptions = {
     },
     reMortgage: {
       name: 'Finanziamenti Ipotecari',
-      volumes: { y1: 200, y5: 1200 },
+      volumes: { y1: 200, y10: 1200 },
       avgLoanSize: 0.8, // Finanziamenti retail di importo contenuto
       spread: 2.2, // Spread competitivo per ipoteche
       rwaDensity: 45, // RWA standard per mutui residenziali
@@ -65,7 +64,7 @@ export const defaultAssumptions = {
     },
     reBridge: {
       name: 'Finanziamenti Corporate Bridge Loan',
-      volumes: { y1: 80, y5: 400 },
+      volumes: { y1: 80, y10: 400 },
       avgLoanSize: 15.0, // Finanziamenti corporate di taglia media
       spread: 4.2, // Spread elevato per bridge loan
       rwaDensity: 85, // Alta rischiosità per natura temporanea
@@ -81,7 +80,7 @@ export const defaultAssumptions = {
     // SME Division Products
     smeRefinancing: {
       name: 'Refinancing (Rifinanziamento)',
-      volumes: { y1: 15, y5: 75 },
+      volumes: { y1: 15, y10: 75 },
       avgLoanSize: 15.0, // Average loan size in €M (as per description)
       spread: 3.5, // IRR Adj 7% - EURIBOR 3.5% = 3.5%
       rwaDensity: 80, // RWA 80% (Boris standard)
@@ -97,7 +96,7 @@ export const defaultAssumptions = {
     },
     smeBridge: {
       name: 'Bridge (Ponte)',
-      volumes: { y1: 15, y5: 60 },
+      volumes: { y1: 15, y10: 60 },
       avgLoanSize: 15.0, // Average loan size in €M (as per description)
       spread: 4.5, // IRR Adj 8% - EURIBOR 3.5% = 4.5%
       rwaDensity: 80, // RWA 80% (Boris standard)
@@ -112,7 +111,7 @@ export const defaultAssumptions = {
     },
     smeSpecialSituation: {
       name: 'Special Situation',
-      volumes: { y1: 20, y5: 80 },
+      volumes: { y1: 20, y10: 80 },
       avgLoanSize: 20.0, // Average loan size in €M (as per description)
       spread: 5.5, // IRR Adj 9% - EURIBOR 3.5% = 5.5%
       rwaDensity: 100, // RWA 100% (higher risk)
@@ -127,7 +126,7 @@ export const defaultAssumptions = {
     },
     smeNuovaFinanza: {
       name: 'Nuova Finanza',
-      volumes: { y1: 10, y5: 40 },
+      volumes: { y1: 10, y10: 40 },
       avgLoanSize: 10.0, // Average loan size in €M (as per description)
       spread: 8.5, // IRR Adj 12% - EURIBOR 3.5% = 8.5%
       rwaDensity: 136, // RWA 136% (UTP classification)
@@ -143,7 +142,7 @@ export const defaultAssumptions = {
     },
     smeRestructuring: {
       name: 'Restructuring (Ristrutturazione)',
-      volumes: { y1: 8, y5: 35 },
+      volumes: { y1: 8, y10: 35 },
       avgLoanSize: 8.0, // Average loan size in €M
       spread: 11.5, // IRR Adj 15% - EURIBOR 3.5% = 11.5%
       rwaDensity: 100, // RWA 100% (UTP but restructured)
@@ -160,7 +159,7 @@ export const defaultAssumptions = {
     // Digital Banking Division Products - Starling Bank Model
     digitalPersonalAccount: {
       name: 'Digital Personal Account',
-      volumes: { y1: 50, y5: 200 }, // Volume represents fee income in €M
+      volumes: { y1: 50, y10: 200 }, // Volume represents fee income in €M
       avgLoanSize: 0.003, // Average fee per customer (€3k average balance)
       spread: 0.0, // No traditional spread - fee-based model
       rwaDensity: 0, // Current accounts have 0% RWA
@@ -176,7 +175,7 @@ export const defaultAssumptions = {
     },
     digitalBusinessAccount: {
       name: 'Digital Business Account',
-      volumes: { y1: 30, y5: 120 }, // Volume represents fee income in €M
+      volumes: { y1: 30, y10: 120 }, // Volume represents fee income in €M
       avgLoanSize: 0.015, // Average fee per business customer (€15k average balance)
       spread: 0.0, // No traditional spread - fee-based model
       rwaDensity: 0, // Current accounts have 0% RWA
@@ -192,7 +191,7 @@ export const defaultAssumptions = {
     },
     digitalPaymentServices: {
       name: 'Payment & Card Services',
-      volumes: { y1: 20, y5: 80 }, // Volume represents transaction fee income
+      volumes: { y1: 20, y10: 80 }, // Volume represents transaction fee income
       avgLoanSize: 0.001, // Average fee per transaction
       spread: 0.4, // International transfer spread (like Starling's 0.4%)
       rwaDensity: 5, // Low RWA for payment services
@@ -208,7 +207,7 @@ export const defaultAssumptions = {
     },
     digitalMarketplace: {
       name: 'Marketplace & Third-Party Services',
-      volumes: { y1: 10, y5: 50 }, // Volume represents commission income
+      volumes: { y1: 10, y10: 50 }, // Volume represents commission income
       avgLoanSize: 0.05, // Average commission per service sold
       spread: 0.0, // No spread on marketplace
       rwaDensity: 0, // No RWA for commission-based services
@@ -224,7 +223,7 @@ export const defaultAssumptions = {
     },
     digitalBankingPlatform: {
       name: 'Banking-as-a-Service Platform',
-      volumes: { y1: 5, y5: 40 }, // Volume represents SaaS revenue
+      volumes: { y1: 5, y10: 40 }, // Volume represents SaaS revenue
       avgLoanSize: 0.1, // Average annual fee per client
       spread: 0.0, // No traditional spread
       rwaDensity: 0, // No RWA for SaaS services

@@ -4,10 +4,10 @@ import REAssumptions from '../assumptions/REAssumptions';
 import SMEAssumptions from '../assumptions/SMEAssumptions';
 import DigitalAssumptions from '../assumptions/DigitalAssumptions';
 import WealthAssumptions from '../assumptions/WealthAssumptions';
-import SubsidizedAssumptions from '../assumptions/SubsidizedAssumptions';
+import IncentiveAssumptions from '../assumptions/IncentiveAssumptions';
 import TechAssumptions from '../assumptions/TechAssumptions';
 
-const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, resetToDefaults, exportToFile, initialTab = 'general' }) => {
+const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 'general' }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // Update activeTab when initialTab changes (for navigation between assumption pages)
@@ -41,7 +41,7 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, resetToDefaul
     { id: 'sme', label: 'PMI in Difficoltà', icon: '🏭' },
     { id: 'digital', label: 'Digital Banking', icon: '📱' },
     { id: 'wealth', label: 'Wealth Management', icon: '💎' },
-    { id: 'subsidized', label: 'Finanza Agevolata', icon: '🌱' },
+    { id: 'incentive', label: 'Finanza Agevolata', icon: '🌱' },
     { id: 'tech', label: 'Tech Platform', icon: '🔧' }
   ];
 
@@ -81,14 +81,6 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, resetToDefaul
               value={assumptions.costOfFundsRate} 
               onChange={val => setAssumptions({...assumptions, costOfFundsRate: val})} 
               unit="% on Assets" 
-              disabled={!editMode} 
-              isPercentage
-            />
-            <EditableNumberField 
-              label="Operating Assets Ratio" 
-              value={assumptions.operatingAssetsRatio} 
-              onChange={val => setAssumptions({...assumptions, operatingAssetsRatio: val})} 
-              unit="% on Loans" 
               disabled={!editMode} 
               isPercentage
             />
@@ -213,8 +205,8 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, resetToDefaul
         return <DigitalAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
       case 'wealth':
         return <WealthAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
-      case 'subsidized':
-        return <SubsidizedAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
+      case 'incentive':
+        return <IncentiveAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
       case 'tech':
         return <TechAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
       default:
@@ -255,35 +247,11 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, resetToDefaul
       {/* Tab Content */}
       {renderTabContent()}
       
-      {/* Save and Debug Tools */}
+      {/* Auto-save status */}
       {editMode && (
-        <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-          <h4 className="font-semibold text-gray-800 mb-3">Save & Tools</h4>
-          <div className="flex gap-3 mb-4">
-            {exportToFile && (
-              <button
-                onClick={exportToFile}
-                className="px-4 py-2 bg-green-500 text-white text-sm rounded hover:bg-green-600"
-              >
-                💾 Save to Project Folder
-              </button>
-            )}
-            {resetToDefaults && (
-              <button
-                onClick={resetToDefaults}
-                className="px-4 py-2 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-              >
-                🔄 Reset to Defaults
-              </button>
-            )}
-            <button
-              onClick={() => console.log('Current assumptions:', assumptions)}
-              className="px-4 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-            >
-              📊 Log Current Data
-            </button>
-          </div>
+        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-gray-600 text-xs">
+            ✅ Auto-save enabled: All changes are automatically saved to server every 3 seconds<br/>
             Version: {assumptions.version} | RE Products: {Object.keys(assumptions.products || {}).filter(k => k.startsWith('re')).join(', ')}
           </p>
         </div>

@@ -12,7 +12,7 @@ import REFinancingSheet from './components/sheets/REFinancingSheet';
 import SMEFinancingSheet from './components/sheets/SMEFinancingSheet';
 import WealthManagementSheet from './components/sheets/WealthManagementSheet';
 import TechPlatformSheet from './components/sheets/TechPlatformSheet';
-import SubsidizedFinanceSheet from './components/sheets/SubsidizedFinanceSheet';
+import IncentiveFinanceSheet from './components/sheets/IncentiveFinanceSheet';
 import DigitalBankingSheet from './components/sheets/DigitalBankingSheet';
 
 // Utils
@@ -30,13 +30,26 @@ const ExcelLikeBankPlan = () => {
     hasUnsavedChanges, 
     lastFileExport, 
     isAutoSaving,
+    isLoading,
     importData, 
-    resetToDefaults, 
     exportToFile 
   } = useLocalStorage();
   
   // Calculate results using the extracted calculation engine
   const results = calculateResults(assumptions);
+
+  // Show loading screen while data is being loaded from server
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-200 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Bank Plan</h2>
+          <p className="text-gray-600">Retrieving latest data from server...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Note: Auto-saving is now enabled, so no beforeunload warning needed
 
@@ -48,8 +61,6 @@ const ExcelLikeBankPlan = () => {
             assumptions={assumptions} 
             setAssumptions={setAssumptions} 
             editMode={editMode}
-            resetToDefaults={resetToDefaults}
-            exportToFile={exportToFile}
           />
         );
 
@@ -96,7 +107,7 @@ const ExcelLikeBankPlan = () => {
                 </div>
                 <div className="mt-8">
                   <p className="text-sm text-gray-500">
-                    💡 This view will automatically aggregate data from: Real Estate, SME, Digital Banking, Wealth Management, Tech Platform, and Subsidized Finance divisions
+                    💡 This view will automatically aggregate data from: Real Estate, SME, Digital Banking, Wealth Management, Tech Platform, and Incentive Finance divisions
                   </p>
                 </div>
               </div>
@@ -133,9 +144,9 @@ const ExcelLikeBankPlan = () => {
             results={results} 
           />
         );
-      case 'subsidizedFinance': 
+      case 'incentiveFinance': 
         return (
-          <SubsidizedFinanceSheet 
+          <IncentiveFinanceSheet 
             assumptions={assumptions} 
             results={results} 
           />
@@ -155,8 +166,6 @@ const ExcelLikeBankPlan = () => {
             assumptions={assumptions} 
             setAssumptions={setAssumptions} 
             editMode={editMode}
-            resetToDefaults={resetToDefaults}
-            exportToFile={exportToFile}
             initialTab="re"
           />
         );
@@ -166,8 +175,6 @@ const ExcelLikeBankPlan = () => {
             assumptions={assumptions} 
             setAssumptions={setAssumptions} 
             editMode={editMode}
-            resetToDefaults={resetToDefaults}
-            exportToFile={exportToFile}
             initialTab="sme"
           />
         );
@@ -177,8 +184,6 @@ const ExcelLikeBankPlan = () => {
             assumptions={assumptions} 
             setAssumptions={setAssumptions} 
             editMode={editMode}
-            resetToDefaults={resetToDefaults}
-            exportToFile={exportToFile}
             initialTab="digital"
           />
         );
@@ -188,8 +193,6 @@ const ExcelLikeBankPlan = () => {
             assumptions={assumptions} 
             setAssumptions={setAssumptions} 
             editMode={editMode}
-            resetToDefaults={resetToDefaults}
-            exportToFile={exportToFile}
             initialTab="wealth"
           />
         );
@@ -199,20 +202,16 @@ const ExcelLikeBankPlan = () => {
             assumptions={assumptions} 
             setAssumptions={setAssumptions} 
             editMode={editMode}
-            resetToDefaults={resetToDefaults}
-            exportToFile={exportToFile}
             initialTab="tech"
           />
         );
-      case 'subsidizedAssumptions':
+      case 'incentiveAssumptions':
         return (
           <AssumptionsSheet 
             assumptions={assumptions} 
             setAssumptions={setAssumptions} 
             editMode={editMode}
-            resetToDefaults={resetToDefaults}
-            exportToFile={exportToFile}
-            initialTab="subsidized"
+            initialTab="incentive"
           />
         );
 
@@ -231,9 +230,6 @@ const ExcelLikeBankPlan = () => {
           hasUnsavedChanges={hasUnsavedChanges}
           lastFileExport={lastFileExport}
           isAutoSaving={isAutoSaving}
-          assumptions={assumptions}
-          importData={importData}
-          exportToFile={exportToFile}
         />
         
         <Navigation 

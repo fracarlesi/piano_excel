@@ -1,12 +1,12 @@
 import React from 'react';
 import StandardDivisionSheet from '../common/StandardDivisionSheet';
 
-const SubsidizedFinanceSheet = ({ assumptions, results }) => {
+const IncentiveFinanceSheet = ({ assumptions, results }) => {
   
   const customOverview = [
     { 
       label: 'Division Focus', 
-      value: 'Government-backed and subsidized lending programs'
+      value: 'Government-backed and incentive lending programs'
     },
     { 
       label: 'Target Market', 
@@ -30,7 +30,7 @@ const SubsidizedFinanceSheet = ({ assumptions, results }) => {
     <StandardDivisionSheet
       assumptions={assumptions}
       results={results}
-      divisionKey="subsidized"
+      divisionKey="incentive"
       divisionDisplayName="🌱 Finanza Agevolata"
       divisionDescription="Government-backed lending programs focusing on strategic sectors with public support. Low risk profile due to government guarantees and reduced capital requirements."
       divisionIcon="🌱"
@@ -47,4 +47,4 @@ const SubsidizedFinanceSheet = ({ assumptions, results }) => {
   );
 };
 
-export default SubsidizedFinanceSheet;
+export default IncentiveFinanceSheet;

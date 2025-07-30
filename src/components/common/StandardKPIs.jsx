@@ -23,26 +23,26 @@ const StandardKPIs = ({
   });
 
   // Calculate derived KPI values
-  const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0];
-  const netProfit = divisionResults.pnl.netProfit || [0,0,0,0,0];
-  const totalRevenues = (divisionResults.pnl.interestIncome || [0,0,0,0,0]).map((ii, i) => {
-    const ci = (divisionResults.pnl.commissionIncome || [0,0,0,0,0])[i] || 0;
-    const ie = (divisionResults.pnl.interestExpenses || [0,0,0,0,0])[i] || 0;
-    const ce = (divisionResults.pnl.commissionExpenses || [0,0,0,0,0])[i] || 0;
+  const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0,0,0,0,0,0];
+  const netProfit = divisionResults.pnl.netProfit || [0,0,0,0,0,0,0,0,0,0];
+  const totalRevenues = (divisionResults.pnl.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((ii, i) => {
+    const ci = (divisionResults.pnl.commissionIncome || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+    const ie = (divisionResults.pnl.interestExpenses || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+    const ce = (divisionResults.pnl.commissionExpenses || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
     return ii + ci + ie + ce; // ie and ce are negative
   });
   
   // Calculate operating expenses (allocated based on RWA)
-  const totalOpex = [0,0,0,0,0].map((_, i) => {
-    const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0])[i] || 0;
+  const totalOpex = [0,0,0,0,0,0,0,0,0,0].map((_, i) => {
+    const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
     const totalRwa = globalResults.capital.totalRWA[i] || 1;
     const rwaWeight = divisionRwa / totalRwa;
     
-    const personnelCosts = (globalResults.pnl.personnelCostsTotal || [0,0,0,0,0])[i] || 0;
-    const adminCosts = (globalResults.pnl.adminCosts || [0,0,0,0,0])[i] || 0;
-    const marketingCosts = (globalResults.pnl.marketingCosts || [0,0,0,0,0])[i] || 0;
-    const itCosts = (globalResults.pnl.itCosts || [0,0,0,0,0])[i] || 0;
-    const hqAllocation = (globalResults.pnl.hqAllocation || [0,0,0,0,0])[i] || 0;
+    const personnelCosts = (globalResults.pnl.personnelCostsTotal || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+    const adminCosts = (globalResults.pnl.adminCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+    const marketingCosts = (globalResults.pnl.marketingCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+    const itCosts = (globalResults.pnl.itCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+    const hqAllocation = (globalResults.pnl.hqAllocation || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
     
     return (personnelCosts + adminCosts + marketingCosts + itCosts + hqAllocation) * rwaWeight;
   });
@@ -53,8 +53,8 @@ const StandardKPIs = ({
   );
 
   // Cost of Risk
-  const costOfRisk = (divisionResults.pnl.totalLLP || [0,0,0,0,0]).map((llp, i) => {
-    const performingAssets = (divisionResults.bs.performingAssets || [0,0,0,0,0]);
+  const costOfRisk = (divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0]).map((llp, i) => {
+    const performingAssets = (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0]);
     const avgPerformingAssets = i > 0 
       ? (performingAssets[i] + performingAssets[i-1]) / 2 
       : performingAssets[i];
@@ -62,10 +62,10 @@ const StandardKPIs = ({
   });
 
   // FTE calculation (allocated based on RWA)
-  const fte = [0,0,0,0,0].map((_, i) => {
-    const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0])[i] || 0;
+  const fte = [0,0,0,0,0,0,0,0,0,0].map((_, i) => {
+    const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
     const totalRwa = globalResults.capital.totalRWA[i] || 1;
-    const totalFte = (globalResults.kpi.fte || [0,0,0,0,0])[i] || 0;
+    const totalFte = (globalResults.kpi.fte || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
     return totalFte * (divisionRwa / totalRwa);
   });
 
@@ -100,8 +100,8 @@ const StandardKPIs = ({
       formula: costOfRisk.map((val, i) => createFormula(i,
         'Loan Loss Provisions / Average Performing Assets × 10,000',
         [
-          year => `LLP: ${formatNumber(Math.abs((divisionResults.pnl.totalLLP || [0,0,0,0,0])[year]), 2)} €M`,
-          year => `Avg Performing Assets: ${formatNumber(year > 0 ? ((divisionResults.bs.performingAssets || [0,0,0,0,0])[year] + (divisionResults.bs.performingAssets || [0,0,0,0,0])[year-1]) / 2 : (divisionResults.bs.performingAssets || [0,0,0,0,0])[year], 0)} €M`,
+          year => `LLP: ${formatNumber(Math.abs((divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0])[year]), 2)} €M`,
+          year => `Avg Performing Assets: ${formatNumber(year > 0 ? ((divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year] + (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1]) / 2 : (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
           year => `Cost of Risk: ${formatNumber(val, 0)} basis points`,
           'Measures credit risk - lower is better'
         ]
@@ -116,10 +116,10 @@ const StandardKPIs = ({
       formula: fte.map((val, i) => createFormula(i,
         'Total Bank FTE × Division RWA Weight',
         [
-          year => `Total Bank FTE: ${formatNumber((globalResults.kpi.fte || [0,0,0,0,0])[year], 0)}`,
-          year => `Division RWA: ${formatNumber((divisionResults.capital.totalRWA || [0,0,0,0,0])[year], 0)} €M`,
+          year => `Total Bank FTE: ${formatNumber((globalResults.kpi.fte || [0,0,0,0,0,0,0,0,0,0])[year], 0)}`,
+          year => `Division RWA: ${formatNumber((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
           year => `Total RWA: ${formatNumber(globalResults.capital.totalRWA[year], 0)} €M`,
-          year => `RWA Weight: ${globalResults.capital.totalRWA[year] > 0 ? (((divisionResults.capital.totalRWA || [0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) * 100).toFixed(1) : 0}%`,
+          year => `RWA Weight: ${globalResults.capital.totalRWA[year] > 0 ? (((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) * 100).toFixed(1) : 0}%`,
           year => `Division FTE: ${formatNumber(val, 0)}`
         ]
       ))

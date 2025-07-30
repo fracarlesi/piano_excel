@@ -40,11 +40,11 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
       assumptionKey: 'techAssumptions'
     },
     {
-      key: 'subsidizedFinance',
+      key: 'incentiveFinance',
       name: 'Finanza Agevolata',
-      shortName: 'Subsidized',
+      shortName: 'Incentive',
       icon: TrendingUp,
-      assumptionKey: 'subsidizedAssumptions'
+      assumptionKey: 'incentiveAssumptions'
     }
   ];
 

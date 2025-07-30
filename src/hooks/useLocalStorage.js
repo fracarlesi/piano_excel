@@ -2,8 +2,23 @@ import { useState, useEffect } from 'react';
 import { defaultAssumptions } from '../data/defaultAssumptions';
 
 export const useLocalStorage = () => {
-  // Load saved data from localStorage or use defaults
-  const loadSavedData = () => {
+  // Load data from server first, fallback to localStorage, then defaults
+  const loadSavedData = async () => {
+    // Try to load from server first
+    try {
+      const response = await fetch('http://localhost:3001/api/load-assumptions');
+      if (response.ok) {
+        const serverData = await response.json();
+        console.log('Loaded data from server');
+        // Cache in localStorage for immediate use
+        localStorage.setItem('bankPlanAssumptions', JSON.stringify(serverData));
+        return serverData;
+      }
+    } catch (error) {
+      console.warn('Could not load from server, trying localStorage:', error);
+    }
+
+    // Fallback to localStorage
     const saved = localStorage.getItem('bankPlanAssumptions');
     if (saved) {
       try {
@@ -133,11 +148,31 @@ export const useLocalStorage = () => {
     return defaultAssumptions;
   };
 
-  const [assumptions, setAssumptionsInternal] = useState(loadSavedData);
+  const [assumptions, setAssumptionsInternal] = useState(defaultAssumptions);
   const [lastSaved, setLastSaved] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastFileExport, setLastFileExport] = useState(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load data from server on component mount
+  useEffect(() => {
+    const initializeData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await loadSavedData();
+        setAssumptionsInternal(data);
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error('Error initializing data:', error);
+        setAssumptionsInternal(defaultAssumptions);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeData();
+  }, []);
 
   // Wrapper function to track changes and trigger auto-save
   const setAssumptions = (newAssumptions) => {
@@ -166,8 +201,7 @@ export const useLocalStorage = () => {
     const autoSaveTimeoutId = setTimeout(async () => {
       setIsAutoSaving(true);
       try {
-        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-        const filename = `bank-plan-assumptions-${timestamp}.json`;
+        const filename = 'bank-plan-assumptions-current.json';
         
         const response = await fetch('http://localhost:3001/api/save-assumptions', {
           method: 'POST',
@@ -215,12 +249,6 @@ export const useLocalStorage = () => {
     }
   };
 
-  const resetToDefaults = () => {
-    localStorage.removeItem('bankPlanAssumptions');
-    setAssumptions(defaultAssumptions);
-    setLastSaved(null);
-    alert('Data reset to defaults successfully!');
-  };
 
   const exportToFile = async () => {
     try {
@@ -263,8 +291,8 @@ export const useLocalStorage = () => {
     hasUnsavedChanges,
     lastFileExport,
     isAutoSaving,
+    isLoading,
     importData,
-    resetToDefaults,
     exportToFile,
     saveToFile
   };

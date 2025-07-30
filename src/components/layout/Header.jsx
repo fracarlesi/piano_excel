@@ -1,6 +1,5 @@
 import React from 'react';
-import { Save, Download, Upload } from 'lucide-react';
-import { exportData } from '../../utils/formatters';
+import { Save } from 'lucide-react';
 
 const Header = ({ 
   editMode, 
@@ -8,14 +7,8 @@ const Header = ({
   lastSaved, 
   hasUnsavedChanges,
   lastFileExport,
-  isAutoSaving,
-  assumptions, 
-  importData,
-  exportToFile 
+  isAutoSaving
 }) => {
-  const handleExport = () => {
-    exportData(assumptions);
-  };
 
   return (
     <div className="bg-white shadow-sm sticky top-0 z-10">
@@ -47,7 +40,7 @@ const Header = ({
             {lastSaved && (
               <span className="text-xs text-gray-500">
                 <Save className="w-3 h-3 inline mr-1" />
-                Cache: {lastSaved.toLocaleTimeString('it-IT')}
+                Loaded: {lastSaved.toLocaleTimeString('it-IT')}
               </span>
             )}
             
@@ -64,23 +57,6 @@ const Header = ({
             >
               {editMode ? 'Lock Editing' : 'Enable Editing'}
             </button>
-            <button 
-              onClick={handleExport} 
-              className="flex items-center gap-2 px-3 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-            <label className="flex items-center gap-2 px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white text-sm transition-colors cursor-pointer">
-              <Upload className="w-4 h-4" />
-              Import
-              <input 
-                type="file" 
-                accept=".json" 
-                onChange={importData} 
-                className="hidden" 
-              />
-            </label>
           </div>
         </div>
       </div>

@@ -2,36 +2,65 @@
  * Calculate Commission Product results
  */
 const calculateCommissionProduct = (product, assumptions, years) => {
-  const annualGrowth = (product.volumes.y5 - product.volumes.y1) / 4;
-  const volumes5Y = years.map(i => product.volumes.y1 + (annualGrowth * i));
+  // Use volumeArray if available, otherwise fallback to interpolation (same logic as credit products)
+  const volumes10Y = years.map(i => {
+    let yearVolume;
+    
+    // Priority 1: Use volumeArray if available
+    if (product.volumeArray && Array.isArray(product.volumeArray) && product.volumeArray.length === 10) {
+      yearVolume = product.volumeArray[i] || 0;
+    }
+    // Priority 2: Use individual year keys (y1, y2, etc.)
+    else if (product.volumes) {
+      const yearKey = `y${i + 1}`;
+      if (product.volumes[yearKey] !== undefined) {
+        yearVolume = product.volumes[yearKey];
+      } else {
+        // Priority 3: Fallback to linear interpolation between y1 and y10
+        const y1 = product.volumes.y1 || 0;
+        const y10 = product.volumes.y10 || 0;
+        yearVolume = y1 + ((y10 - y1) * i / 9);
+      }
+    }
+    // Priority 4: Default to zero
+    else {
+      yearVolume = 0;
+    }
+    
+    // Apply quarterly distribution if provided
+    const quarterlyDist = product.quarterlyDist || [25, 25, 25, 25];
+    const quarterlyMultiplier = quarterlyDist.reduce((sum, q) => sum + q, 0) / 100;
+    
+    return yearVolume * quarterlyMultiplier;
+  });
   
   // Commission-based calculations
-  const commissionIncome = volumes5Y.map(v => v * (product.commissionRate || 0) / 100);
-  const feeIncome = volumes5Y.map(v => v * (product.feeIncomeRate || 0) / 100);
-  const setupFees = volumes5Y.map(v => v * (product.setupFeeRate || 0) / 100);
-  const managementFees = volumes5Y.map(v => v * (product.managementFeeRate || 0) / 100);
-  const performanceFees = volumes5Y.map(v => v * (product.performanceFeeRate || 0) / 100);
+  const commissionIncome = volumes10Y.map(v => v * (product.commissionRate || 0) / 100);
+  const feeIncome = volumes10Y.map(v => v * (product.feeIncomeRate || 0) / 100);
+  const setupFees = volumes10Y.map(v => v * (product.setupFeeRate || 0) / 100);
+  const managementFees = volumes10Y.map(v => v * (product.managementFeeRate || 0) / 100);
+  const performanceFees = volumes10Y.map(v => v * (product.performanceFeeRate || 0) / 100);
   
   const totalCommissionIncome = commissionIncome.map((ci, i) => 
     ci + feeIncome[i] + setupFees[i] + managementFees[i] + performanceFees[i]
   );
   
   // Commission products have minimal RWA
-  const operationalRWA = volumes5Y.map(v => v * (product.operationalRiskWeight || 15) / 100);
+  const operationalRWA = volumes10Y.map(v => v * (product.operationalRiskWeight || 15) / 100);
   
   return {
     name: product.name,
-    performingAssets: [0, 0, 0, 0, 0], // No lending assets
-    averagePerformingAssets: [0, 0, 0, 0, 0],
-    nonPerformingAssets: [0, 0, 0, 0, 0],
-    interestIncome: [0, 0, 0, 0, 0], // No interest income
-    interestExpense: [0, 0, 0, 0, 0],
+    performingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No lending assets
+    averagePerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    nonPerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    interestIncome: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No interest income
+    interestExpense: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     commissionIncome: totalCommissionIncome,
-    commissionExpense: [0, 0, 0, 0, 0], // Can be added if needed
-    llp: [0, 0, 0, 0, 0], // No credit losses
+    commissionExpense: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Can be added if needed
+    llp: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No credit losses
     rwa: operationalRWA,
-    numberOfTransactions: volumes5Y.map(v => Math.round(v / (product.avgTransactionSize || 0.001))),
-    newBusiness: volumes5Y,
+    numberOfTransactions: volumes10Y.map(v => Math.round(v / (product.avgTransactionSize || 0.001))),
+    newBusiness: volumes10Y,
     assumptions: {
       commissionRate: (product.commissionRate || 0) / 100,
       feeIncomeRate: (product.feeIncomeRate || 0) / 100,
@@ -48,7 +77,7 @@ const calculateCommissionProduct = (product, assumptions, years) => {
  */
 export const calculateResults = (assumptions) => {
   const results = { pnl: {}, bs: {}, capital: {}, kpi: {}, formulas: {} };
-  const years = [0, 1, 2, 3, 4];
+  const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   const productResults = {};
   for (const [key, product] of Object.entries(assumptions.products)) {
@@ -59,32 +88,56 @@ export const calculateResults = (assumptions) => {
         continue;
       }
       
-      const annualGrowth = (product.volumes.y5 - product.volumes.y1) / 4;
-      
-      // Apply quarterly distribution if provided
-      const quarterlyDist = product.quarterlyDist || [25, 25, 25, 25];
-      const quarterlyMultiplier = quarterlyDist.reduce((sum, q) => sum + q, 0) / 100;
-      
-      const volumes5Y = years.map(i => (product.volumes.y1 + (annualGrowth * i)) * quarterlyMultiplier);
+      // Use volumeArray if available, otherwise fallback to interpolation
+      const volumes10Y = years.map(i => {
+        let yearVolume;
+        
+        // Priority 1: Use volumeArray if available
+        if (product.volumeArray && Array.isArray(product.volumeArray) && product.volumeArray.length === 10) {
+          yearVolume = product.volumeArray[i] || 0;
+        }
+        // Priority 2: Use individual year keys (y1, y2, etc.)
+        else if (product.volumes) {
+          const yearKey = `y${i + 1}`;
+          if (product.volumes[yearKey] !== undefined) {
+            yearVolume = product.volumes[yearKey];
+          } else {
+            // Priority 3: Fallback to linear interpolation between y1 and y10
+            const y1 = product.volumes.y1 || 0;
+            const y10 = product.volumes.y10 || 0;
+            yearVolume = y1 + ((y10 - y1) * i / 9);
+          }
+        }
+        // Priority 4: Default to zero
+        else {
+          yearVolume = 0;
+        }
+        
+        // Apply quarterly distribution if provided
+        const quarterlyDist = product.quarterlyDist || [25, 25, 25, 25];
+        const quarterlyMultiplier = quarterlyDist.reduce((sum, q) => sum + q, 0) / 100;
+        
+        return yearVolume * quarterlyMultiplier;
+      });
 
-      const grossPerformingStock = [0, 0, 0, 0, 0];
-      const nplStock = [0, 0, 0, 0, 0];
-      const averagePerformingStock = [0, 0, 0, 0, 0];
-      const newNPLs = [0, 0, 0, 0, 0];
+      const grossPerformingStock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      const nplStock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      const averagePerformingStock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      const newNPLs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       
       // Apply credit classification impact on default rate (defined outside loop)
       const baseDefaultRate = product.dangerRate / 100;
       const classificationMultiplier = product.creditClassification === 'UTP' ? 2.5 : 1.0;
       const adjustedDefaultRate = baseDefaultRate * classificationMultiplier;
       
-      for (let year = 0; year < 5; year++) {
+      for (let year = 0; year < years.length; year++) {
           
           const defaultsFromStock = year > 0 ? grossPerformingStock[year - 1] * adjustedDefaultRate : 0;
           newNPLs[year] = defaultsFromStock;
 
           let repayments = 0;
           for (let prevYear = 0; prevYear < year; prevYear++) {
-              const cohortVolume = volumes5Y[prevYear];
+              const cohortVolume = volumes10Y[prevYear];
               const ageInYears = year - prevYear;
               
               // Apply grace period logic
@@ -92,7 +145,7 @@ export const calculateResults = (assumptions) => {
               const effectiveAge = Math.max(0, ageInYears - gracePeriod);
               
               // Use totalDuration if available, otherwise fall back to durata
-              const totalDuration = product.totalDuration || product.durata || 5;
+              const totalDuration = product.totalDuration || product.durata || 7;
               
               if (effectiveAge > 0 && effectiveAge <= totalDuration && product.type !== 'bullet') {
                   // During grace period, no repayments
@@ -106,7 +159,7 @@ export const calculateResults = (assumptions) => {
           }
 
           const prevYearStock = year > 0 ? grossPerformingStock[year - 1] : 0;
-          const totalEopStock = prevYearStock + volumes5Y[year] - repayments - newNPLs[year];
+          const totalEopStock = prevYearStock + volumes10Y[year] - repayments - newNPLs[year];
           grossPerformingStock[year] = totalEopStock;
           
           // Calculate duration-weighted average stock
@@ -114,10 +167,10 @@ export const calculateResults = (assumptions) => {
           
           // For each vintage (year of origination), calculate its contribution to average stock
           for (let originYear = 0; originYear <= year; originYear++) {
-              const vintageVolume = volumes5Y[originYear] || 0;
+              const vintageVolume = volumes10Y[originYear] || 0;
               if (vintageVolume > 0) {
                   const ageInYears = year - originYear;
-                  const totalDuration = product.totalDuration || product.durata || 5;
+                  const totalDuration = product.totalDuration || product.durata || 7;
                   const gracePeriod = product.gracePeriod || 0;
                   
                   if (ageInYears < totalDuration) {
@@ -167,12 +220,12 @@ export const calculateResults = (assumptions) => {
       const rwaMultiplier = product.creditClassification === 'UTP' ? 1.5 : 1.0;
       const adjustedRwaDensity = baseRwaDensity * rwaMultiplier;
       
-      const expectedLossOnNewBusiness = volumes5Y.map(v => -v * (product.dangerRate / 100) * lgd);
+      const expectedLossOnNewBusiness = volumes10Y.map(v => -v * (product.dangerRate / 100) * lgd);
       const lossOnStockDefaults = newNPLs.map(v => -v * lgd);
 
       // Calculate number of loans granted per year
       const avgLoanSize = product.avgLoanSize || 1.0;
-      const numberOfLoans = volumes5Y.map(v => Math.round(v / avgLoanSize));
+      const numberOfLoans = volumes10Y.map(v => Math.round(v / avgLoanSize));
 
       // Calculate interest income considering fixed vs variable rates
       const baseInterestRate = assumptions.euribor + product.spread;
@@ -183,7 +236,7 @@ export const calculateResults = (assumptions) => {
       const interestExpense = averagePerformingStock.map(v => -v * productCostOfFunding);
       
       // Calculate equity upside potential
-      const equityUpsideIncome = volumes5Y.map(v => v * (product.equityUpside || 0) / 100);
+      const equityUpsideIncome = volumes10Y.map(v => v * (product.equityUpside || 0) / 100);
       
       productResults[key] = {
           name: product.name,
@@ -192,15 +245,15 @@ export const calculateResults = (assumptions) => {
           nonPerformingAssets: nplStock,
           interestIncome: averagePerformingStock.map(v => v * interestRate / 100),
           interestExpense: interestExpense,
-          commissionIncome: volumes5Y.map(v => v * (product.commissionRate || 0) / 100),
+          commissionIncome: volumes10Y.map(v => v * (product.commissionRate || 0) / 100),
           equityUpsideIncome: equityUpsideIncome,
           llp: years.map(i => lossOnStockDefaults[i] + expectedLossOnNewBusiness[i]),
           rwa: grossPerformingStock.map(v => v * adjustedRwaDensity),
           numberOfLoans: numberOfLoans,
-          newBusiness: volumes5Y,
+          newBusiness: volumes10Y,
           assumptions: {
-              interestRate: interestRate / 100,
-              commissionRate: (product.commissionRate || 0) / 100,
+              interestRate: interestRate, // Keep as percentage for display (6.3 for 6.3%)
+              commissionRate: (product.commissionRate || 0), // Keep as percentage for display (0.8 for 0.8%)
               pd: adjustedDefaultRate,
               lgd: lgd,
               riskWeight: adjustedRwaDensity,
@@ -213,7 +266,7 @@ export const calculateResults = (assumptions) => {
   }
   
   // Define all available divisions dynamically based on product prefixes
-  const divisionPrefixes = ['re', 'sme', 'digital', 'wealth', 'tech', 'subsidized'];
+  const divisionPrefixes = ['re', 'sme', 'digital', 'wealth', 'tech', 'incentive'];
   
   // Create division-specific product results
   const divisionProductResults = {};
@@ -266,8 +319,7 @@ export const calculateResults = (assumptions) => {
     divisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].bs.nonPerformingAssets[i], 0)
   );
   const totalLoans = years.map(i => results.bs.performingAssets[i] + results.bs.nonPerformingAssets[i]);
-  results.bs.operatingAssets = totalLoans.map(v => v * (assumptions.operatingAssetsRatio / 100));
-  results.bs.totalAssets = years.map(i => totalLoans[i] + results.bs.operatingAssets[i]);
+  results.bs.totalAssets = totalLoans;
   
   // Calculate total RWA components first
   results.capital.rwaCreditRisk = years.map(i => 
@@ -275,8 +327,7 @@ export const calculateResults = (assumptions) => {
   );
   results.capital.rwaOperationalRisk = results.bs.totalAssets.map(assets => assets * 0.1);
   results.capital.rwaMarketRisk = years.map(() => 0);
-  results.capital.rwaOperatingAssets = results.bs.operatingAssets.map(oa => oa * 1.0); // 100% risk weight for operating assets
-  results.capital.totalRWA = years.map(i => results.capital.rwaCreditRisk[i] + results.capital.rwaOperationalRisk[i] + results.capital.rwaMarketRisk[i] + results.capital.rwaOperatingAssets[i]);
+  results.capital.totalRWA = years.map(i => results.capital.rwaCreditRisk[i] + results.capital.rwaOperationalRisk[i] + results.capital.rwaMarketRisk[i]);
 
   // Calculate P&L first to get net profit for equity calculation
   results.pnl.interestIncome = years.map(i => 
@@ -285,7 +336,7 @@ export const calculateResults = (assumptions) => {
   // Calculate interest expenses using product-specific cost of funding
   results.pnl.interestExpenses = years.map(i => 
     Object.values(productResults).reduce((sum, product) => {
-      const productInterestExpense = (product.interestExpense || [0,0,0,0,0])[i] || 0;
+      const productInterestExpense = (product.interestExpense || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
       return sum + productInterestExpense;
     }, 0)
   );
@@ -306,7 +357,7 @@ export const calculateResults = (assumptions) => {
     'digital': 'digitalBankingDivision',
     'wealth': 'wealthManagementDivision',
     'tech': 'techPlatformDivision',
-    'subsidized': 'subsidizedFinanceDivision'
+    'incentive': 'incentiveFinanceDivision'
   };
   
   let totalFte = years.map(() => 0);
@@ -360,8 +411,7 @@ export const calculateResults = (assumptions) => {
       const assetWeight = results.bs.totalAssets[i] > 0 ? 
         (results.divisions[prefix].bs.performingAssets[i] + results.divisions[prefix].bs.nonPerformingAssets[i]) / results.bs.totalAssets[i] : 0;
       return results.divisions[prefix].capital.rwaCreditRisk[i] + 
-             (results.capital.rwaOperationalRisk[i] * assetWeight) +
-             (results.capital.rwaOperatingAssets[i] * assetWeight);
+             (results.capital.rwaOperationalRisk[i] * assetWeight);
     });
   });
 
@@ -421,8 +471,6 @@ export const calculateResults = (assumptions) => {
       });
   }
   
-  const operatingAssetsRwaWeight = years.map(i => results.capital.totalRWA[i] > 0 ? results.capital.rwaOperatingAssets[i] / results.capital.totalRWA[i] : 0);
-  results.capital.allocatedEquityOperatingAssets = years.map(i => results.bs.equity[i] * operatingAssetsRwaWeight[i]);
 
   // Calculate total ROE
   results.kpi.roe = years.map(i => {

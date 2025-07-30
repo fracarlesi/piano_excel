@@ -34,7 +34,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
     const defaultCredit = {
       name: name,
       productType: 'Credit',
-      volumes: { y1: 50, y5: 200 },
+      volumes: { y1: 50, y10: 400 },
       spread: 3.0,
       costOfFunding: assumptions.costOfFundsRate || 3.0,
       totalDuration: 5,
@@ -58,7 +58,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
     const defaultCommission = {
       name: name,
       productType: 'Commission',
-      volumes: { y1: 10, y5: 50 },
+      volumes: { y1: 10, y10: 100 },
       commissionRate: 2.0,
       feeIncomeRate: 1.5,
       setupFeeRate: 0.5,
@@ -294,7 +294,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
                         {product.productType || 'Credit'}
                       </span>
                       <span className="text-xs text-gray-500">
-                        Vol Y1: €{product.volumes?.y1 || 0}M | Vol Y5: €{product.volumes?.y5 || 0}M
+                        Vol Y1: €{product.volumes?.y1 || 0}M | Vol Y10: €{product.volumes?.y10 || 0}M
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
