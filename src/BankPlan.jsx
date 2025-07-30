@@ -23,7 +23,7 @@ const ExcelLikeBankPlan = () => {
   const [editMode, setEditMode] = useState(true);
   
   // Use custom hooks for localStorage management
-  const { assumptions, setAssumptions, lastSaved, importData } = useLocalStorage();
+  const { assumptions, setAssumptions, lastSaved, importData, resetToDefaults, exportToFile } = useLocalStorage();
   
   // Calculate results using the extracted calculation engine
   const results = calculateResults(assumptions);
@@ -35,7 +35,9 @@ const ExcelLikeBankPlan = () => {
           <AssumptionsSheet 
             assumptions={assumptions} 
             setAssumptions={setAssumptions} 
-            editMode={editMode} 
+            editMode={editMode}
+            resetToDefaults={resetToDefaults}
+            exportToFile={exportToFile}
           />
         );
       case 'reFinancing': 

@@ -15,6 +15,20 @@ export const useLocalStorage = () => {
           return defaultAssumptions;
         }
         
+        // Force reset for version 2.7 to ensure new RE products are loaded
+        if (parsedData.version === '2.7') {
+          const hasNewREProducts = parsedData.products && 
+            parsedData.products.reSecuritization && 
+            parsedData.products.reMortgage && 
+            parsedData.products.reBridge;
+          
+          if (!hasNewREProducts) {
+            console.warn('Version 2.7 detected but missing new RE products, forcing reset');
+            localStorage.removeItem('bankPlanAssumptions');
+            return defaultAssumptions;
+          }
+        }
+        
         // Check if the saved data has the expected structure
         if (!parsedData.products || !parsedData.realEstateDivision) {
           console.warn('Saved data structure is incompatible with current version, using defaults');
@@ -35,18 +49,6 @@ export const useLocalStorage = () => {
           });
         }
 
-        // Migrate to include Automotive Division if missing
-        if (!parsedData.automotiveDivision) {
-          console.warn('Adding Automotive Division to existing data');
-          parsedData.automotiveDivision = defaultAssumptions.automotiveDivision;
-          
-          // Add Automotive products if missing
-          Object.keys(defaultAssumptions.products).forEach(key => {
-            if (key.startsWith('auto') && !parsedData.products[key]) {
-              parsedData.products[key] = defaultAssumptions.products[key];
-            }
-          });
-        }
 
         // Migrate to include Digital Banking Division if missing
         if (!parsedData.digitalBankingDivision) {
@@ -75,8 +77,32 @@ export const useLocalStorage = () => {
           });
         }
         
-        // Force update product names to latest version
+        // Force update product names and structure to latest version
         let needsUpdate = false;
+        
+        // Force update RE products to new structure
+        if (parsedData.products) {
+          const oldREProducts = ['reNoGaranzia', 'reConGaranzia'];
+          const hasOldREProducts = oldREProducts.some(key => parsedData.products[key]);
+          
+          if (hasOldREProducts) {
+            console.warn('Migrating to new Real Estate products structure');
+            // Remove old RE products
+            oldREProducts.forEach(key => {
+              if (parsedData.products[key]) {
+                delete parsedData.products[key];
+              }
+            });
+            
+            // Add new RE products
+            ['reSecuritization', 'reMortgage', 'reBridge'].forEach(key => {
+              if (defaultAssumptions.products[key]) {
+                parsedData.products[key] = defaultAssumptions.products[key];
+              }
+            });
+            needsUpdate = true;
+          }
+        }
         if (parsedData.products) {
           Object.keys(defaultAssumptions.products).forEach(key => {
             if (parsedData.products[key] && defaultAssumptions.products[key]) {
@@ -141,10 +167,52 @@ export const useLocalStorage = () => {
     }
   };
 
+  const resetToDefaults = () => {
+    localStorage.removeItem('bankPlanAssumptions');
+    setAssumptions(defaultAssumptions);
+    setLastSaved(null);
+    alert('Data reset to defaults successfully!');
+  };
+
+  const exportToFile = async () => {
+    try {
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `bank-plan-assumptions-${timestamp}.json`;
+      
+      const response = await fetch('http://localhost:3001/api/save-assumptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          data: assumptions,
+          filename: filename
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Assumptions saved successfully to: ${result.filepath}`);
+      } else {
+        throw new Error('Failed to save file on server');
+      }
+    } catch (error) {
+      console.error('Save server error:', error);
+      alert('Error: Cannot save to project folder. Make sure the save server is running (npm run start-save-server)');
+    }
+  };
+
+  const saveToFile = () => {
+    exportToFile();
+  };
+
   return {
     assumptions,
     setAssumptions,
     lastSaved,
-    importData
+    importData,
+    resetToDefaults,
+    exportToFile,
+    saveToFile
   };
 };

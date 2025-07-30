@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '2.6', // Version for Digital Banking Division addition
+  version: '2.8', // Force reset for new Real Estate products
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -33,35 +33,50 @@ export const defaultAssumptions = {
     fteY5: 80,
   },
   products: {
-    reNoGaranzia: {
-      name: 'Finanziamento Senza Garanzia Pubblica',
-      volumes: { y1: 100, y5: 650 },
-      avgLoanSize: 5.0, // Average loan size in €M
-      spread: 5.0, // Spread over EURIBOR (was tasso: 8.5, now 3.5 + 5.0)
-      rwaDensity: 100, 
-      durata: 3, 
-      commissionRate: 1.0,
-      dangerRate: 5.0, 
-      ltv: 75.0, 
-      recoveryCosts: 15.0, 
-      collateralHaircut: 30.0,
-      quarterlyDist: [25, 25, 25, 25], 
-      type: 'bullet'
-    },
-    reConGaranzia: {
-      name: 'Finanziamento Con Garanzia Pubblica',
-      volumes: { y1: 50, y5: 550 },
-      avgLoanSize: 3.0, // Average loan size in €M
-      spread: 3.0, // Spread over EURIBOR (was tasso: 6.5, now 3.5 + 3.0)
-      rwaDensity: 20, 
-      durata: 5, 
-      commissionRate: 0.5,
-      dangerRate: 1.5, 
-      ltv: 80.0, 
-      recoveryCosts: 10.0, 
-      collateralHaircut: 20.0,
-      quarterlyDist: [25, 25, 25, 25], 
+    reSecuritization: {
+      name: 'Finanziamenti alle Cartolarizzazioni Immobiliari (Note Senior)',
+      volumes: { y1: 150, y5: 800 },
+      avgLoanSize: 25.0, // Finanziamenti di importo significativo
+      spread: 2.8, // Spread contenuto per note senior sicure
+      rwaDensity: 35, // Bassa rischiosità per note senior
+      durata: 7, // Durata media-lunga
+      commissionRate: 0.3, // Commissione contenuta
+      dangerRate: 0.8, // Rischio molto basso
+      ltv: 65.0, // LTV conservativo
+      recoveryCosts: 8.0, // Costi di recupero bassi
+      collateralHaircut: 15.0, // Haircut moderato
+      quarterlyDist: [25, 25, 25, 25],
       type: 'amortizing'
+    },
+    reMortgage: {
+      name: 'Finanziamenti Ipotecari',
+      volumes: { y1: 200, y5: 1200 },
+      avgLoanSize: 0.8, // Finanziamenti retail di importo contenuto
+      spread: 2.2, // Spread competitivo per ipoteche
+      rwaDensity: 45, // RWA standard per mutui residenziali
+      durata: 25, // Durata tipica dei mutui
+      commissionRate: 0.8, // Commissione di istruttoria
+      dangerRate: 1.2, // Rischio contenuto
+      ltv: 80.0, // LTV standard per mutui
+      recoveryCosts: 12.0, // Costi procedura standard
+      collateralHaircut: 20.0, // Haircut standard
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'french' // Ammortamento alla francese
+    },
+    reBridge: {
+      name: 'Finanziamenti Corporate Bridge Loan',
+      volumes: { y1: 80, y5: 400 },
+      avgLoanSize: 15.0, // Finanziamenti corporate di taglia media
+      spread: 4.2, // Spread elevato per bridge loan
+      rwaDensity: 85, // Alta rischiosità per natura temporanea
+      durata: 2, // Durata breve tipica dei bridge
+      commissionRate: 2.5, // Commissioni elevate per complessità
+      dangerRate: 3.5, // Rischio elevato per natura bridge
+      ltv: 70.0, // LTV prudenziale
+      recoveryCosts: 18.0, // Costi più elevati per corporate
+      collateralHaircut: 25.0, // Haircut prudenziale
+      quarterlyDist: [25, 25, 25, 25],
+      type: 'bullet' // Rimborso bullet tipico
     },
     // SME Division Products
     smeRefinancing: {

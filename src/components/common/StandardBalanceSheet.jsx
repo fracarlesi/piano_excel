@@ -4,7 +4,7 @@ import { formatNumber } from '../../utils/formatters';
 
 /**
  * Standardized Balance Sheet structure for all divisions
- * This component creates a consistent Balance Sheet view across all banking divisions
+ * Following the exact schema provided
  */
 const StandardBalanceSheet = ({ 
   divisionResults, 
@@ -22,305 +22,220 @@ const StandardBalanceSheet = ({
     details: details.map(d => typeof d === 'function' ? d(year) : d)
   });
 
-  // Standard Balance Sheet Row Structure
-  const standardBSRows = [
-    // ========== ASSETS ==========
+  // Calculate derived values
+  const performingAssets = divisionResults.bs.performingAssets || [0,0,0,0,0];
+  const nonPerformingAssets = divisionResults.bs.nonPerformingAssets || [0,0,0,0,0];
+  const operatingAssets = performingAssets.map((pa, i) => {
+    const totalLoans = pa + nonPerformingAssets[i];
+    return totalLoans * (assumptions.operatingAssetsRatio || 0.1);
+  });
+  
+  const totalAssets = performingAssets.map((pa, i) => 
+    pa + nonPerformingAssets[i] + operatingAssets[i]
+  );
+
+  const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0];
+  const totalLiabilities = totalAssets.map((ta, i) => ta - allocatedEquity[i]);
+
+  // Breakdown of liabilities
+  const sightDeposits = totalLiabilities.map(tl => tl * 0.4); // 40% sight deposits
+  const termDeposits = totalLiabilities.map(tl => tl * 0.3); // 30% term deposits
+  const groupFunding = totalLiabilities.map(tl => tl * 0.3); // 30% group funding
+
+  // Balance Sheet Rows following the exact schema
+  const balanceSheetRows = [
+    // ========== ASSETS SECTION ==========
     {
-      label: 'ASSETS',
-      data: [null, null, null, null, null],
-      isHeader: true,
-      bgColor: 'blue'
-    },
-    
-    {
-      label: 'Performing Loans',
-      data: divisionResults.bs.performingAssets,
+      label: 'Total Assets',
+      data: totalAssets,
       decimals: 0,
       isTotal: true,
-      formula: divisionResults.bs.performingAssets.map((val, i) => createFormula(i,
-        'Σ(Product Performing Stocks)',
+      formula: totalAssets.map((val, i) => createFormula(i,
+        'Net Performing + Non-Performing + Operating Assets',
         [
-          'Sum of all performing loan stocks by product',
-          ...(showProductDetail ? Object.entries(productResults).map(([key, product]) =>
-            year => `${product.name}: ${formatNumber(product.performingAssets[year], 0)} €M`
-          ) : []),
-          year => `Total Performing: ${formatNumber(val, 0)} €M`
+          year => `Performing Assets: ${formatNumber(performingAssets[year], 0)} €M`,
+          year => `Non-Performing: ${formatNumber(nonPerformingAssets[year], 0)} €M`,
+          year => `Operating Assets: ${formatNumber(operatingAssets[year], 0)} €M`,
+          year => `Total: ${formatNumber(val, 0)} €M`
         ]
       ))
     },
-    
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product]) => ({
-      label: `  ${product.name}`,
-      data: product.performingAssets,
+
+    {
+      label: 'Net Performing Assets',
+      data: performingAssets,
+      decimals: 0,
+      isTotal: true,
+      formula: performingAssets.map((val, i) => createFormula(i,
+        'Sum of performing loans by product',
+        [
+          year => `Net Performing Assets: ${formatNumber(val, 0)} €M`
+        ]
+      ))
+    },
+
+    // Product breakdown for Performing Assets
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: product.performingAssets || [0,0,0,0,0],
       decimals: 0,
       indent: true,
-      formula: product.performingAssets.map((val, i) => createFormula(i,
-        'Previous Stock + New Business - Repayments - Defaults',
+      formula: (product.performingAssets || [0,0,0,0,0]).map((val, i) => createFormula(i,
+        'Stock evolution: Previous + New - Repayments - Defaults',
         [
-          year => `Previous Year Stock: ${year > 0 ? formatNumber(product.performingAssets[year - 1], 0) : '0'} €M`,
-          year => `New Business: ${formatNumber(product.newBusiness?.[year] || 0, 0)} €M`,
-          year => `Repayments: Based on ${assumptions.products[key]?.type === 'bullet' ? 'Bullet' : 'Amortizing'} schedule`,
-          year => `Defaults: ${formatNumber((product.assumptions?.pd || 0) * 100, 2)}% danger rate`,
-          year => `End of Year Stock: ${formatNumber(val, 0)} €M`
+          `Product: ${product.name}`,
+          year => `Performing Stock: ${formatNumber(val, 0)} €M`
         ]
       ))
     })) : []),
-    
+
     {
-      label: 'Non-Performing Loans',
-      data: divisionResults.bs.nonPerformingAssets,
+      label: 'Non Performing Assets',
+      data: nonPerformingAssets,
       decimals: 0,
       isTotal: true,
-      formula: divisionResults.bs.nonPerformingAssets.map((val, i) => createFormula(i,
-        'Σ(Product NPL Stocks)',
+      formula: nonPerformingAssets.map((val, i) => createFormula(i,
+        'Sum of NPL by product',
         [
-          'Accumulated defaults from performing portfolio',
-          ...(showProductDetail ? Object.entries(productResults).map(([key, product]) =>
-            year => `${product.name}: ${formatNumber(product.nonPerformingAssets?.[year] || 0, 0)} €M`
-          ) : []),
           year => `Total NPL: ${formatNumber(val, 0)} €M`
         ]
       ))
     },
-    
-    {
-      label: 'Total Loan Portfolio',
-      data: divisionResults.bs.performingAssets.map((perf, i) => 
-        perf + divisionResults.bs.nonPerformingAssets[i]
-      ),
+
+    // Product breakdown for NPL
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: product.nonPerformingAssets || [0,0,0,0,0],
       decimals: 0,
-      isHeader: true,
-      formula: divisionResults.bs.performingAssets.map((perf, i) => createFormula(i,
-        'Performing Loans + Non-Performing Loans',
+      indent: true
+    })) : []),
+
+    {
+      label: 'Operating assets',
+      data: operatingAssets,
+      decimals: 0,
+      formula: operatingAssets.map((val, i) => createFormula(i,
+        'Total Loans × Operating Assets Ratio',
         [
-          year => `Performing: ${formatNumber(divisionResults.bs.performingAssets[year], 0)} €M`,
-          year => `Non-Performing: ${formatNumber(divisionResults.bs.nonPerformingAssets[year], 0)} €M`,
-          year => `Total Portfolio: ${formatNumber(perf + divisionResults.bs.nonPerformingAssets[year], 0)} €M`
+          year => `Total Loans: ${formatNumber(performingAssets[year] + nonPerformingAssets[year], 0)} €M`,
+          year => `Operating Assets Ratio: ${(assumptions.operatingAssetsRatio || 0.1) * 100}%`,
+          year => `Operating Assets: ${formatNumber(val, 0)} €M`
         ]
       ))
     },
-    
+
+    // ========== TOTAL ASSETS SUMMARY ==========
     {
-      label: 'Other Assets',
-      data: divisionResults.bs.otherAssets || [0, 0, 0, 0, 0],
+      label: 'Total Assets',
+      data: totalAssets,
       decimals: 0,
-      formula: (divisionResults.bs.otherAssets || [0, 0, 0, 0, 0]).map((val, i) => createFormula(i,
-        'Operating assets and other non-loan assets',
+      isHeader: true,
+      bgColor: 'gray',
+      formula: totalAssets.map((val, i) => createFormula(i,
+        'Sum of all asset categories',
         [
-          'Includes IT systems, real estate, etc.',
-          year => `Other Assets: ${formatNumber(val, 0)} €M`
+          year => `Total Assets: ${formatNumber(val, 0)} €M`
         ]
       ))
     },
-    
+
+    // ========== LIABILITIES SECTION ==========
     {
-      label: 'TOTAL ASSETS',
-      data: divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalLoans = perf + divisionResults.bs.nonPerformingAssets[i];
-        const otherAssets = divisionResults.bs.otherAssets?.[i] || 0;
-        return totalLoans + otherAssets;
-      }),
-      decimals: 0,
-      isHeader: true,
-      bgColor: 'green',
-      formula: divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalLoans = perf + divisionResults.bs.nonPerformingAssets[i];
-        const otherAssets = divisionResults.bs.otherAssets?.[i] || 0;
-        return createFormula(i,
-          'Total Loan Portfolio + Other Assets',
-          [
-            year => `Loan Portfolio: ${formatNumber(totalLoans, 0)} €M`,
-            year => `Other Assets: ${formatNumber(otherAssets, 0)} €M`,
-            year => `Total Assets: ${formatNumber(totalLoans + otherAssets, 0)} €M`
-          ]
-        );
-      })
-    },
-    
-    // Spacing
-    {
-      label: '',
-      data: [null, null, null, null, null],
-      decimals: 0
-    },
-    
-    // ========== LIABILITIES & EQUITY ==========
-    {
-      label: 'LIABILITIES & EQUITY',
+      label: 'Liabilities',
       data: [null, null, null, null, null],
       isHeader: true,
-      bgColor: 'blue'
+      bgColor: 'lightgreen'
     },
-    
+
     {
-      label: 'Customer Deposits',
-      data: divisionResults.bs.customerDeposits || divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalAssets = perf + divisionResults.bs.nonPerformingAssets[i] + (divisionResults.bs.otherAssets?.[i] || 0);
-        const equity = divisionResults.bs.equity[i];
-        return (totalAssets - equity) * 0.6; // 60% of liabilities from deposits
-      }),
-      decimals: 0,
-      formula: (divisionResults.bs.customerDeposits || []).map((val, i) => createFormula(i,
-        'Sight Deposits + Term Deposits',
-        [
-          'Primary funding source',
-          year => `Customer Deposits: ${formatNumber(val || 0, 0)} €M`
-        ]
-      ))
-    },
-    
-    {
-      label: 'Interbank Funding',
-      data: divisionResults.bs.interbankFunding || divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalAssets = perf + divisionResults.bs.nonPerformingAssets[i] + (divisionResults.bs.otherAssets?.[i] || 0);
-        const equity = divisionResults.bs.equity[i];
-        return (totalAssets - equity) * 0.3; // 30% of liabilities from interbank
-      }),
-      decimals: 0,
-      formula: (divisionResults.bs.interbankFunding || []).map((val, i) => createFormula(i,
-        'Group funding and interbank loans',
-        [
-          'Secondary funding source',
-          year => `Interbank Funding: ${formatNumber(val || 0, 0)} €M`
-        ]
-      ))
-    },
-    
-    {
-      label: 'Other Liabilities',
-      data: divisionResults.bs.otherLiabilities || divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalAssets = perf + divisionResults.bs.nonPerformingAssets[i] + (divisionResults.bs.otherAssets?.[i] || 0);
-        const equity = divisionResults.bs.equity[i];
-        return (totalAssets - equity) * 0.1; // 10% of liabilities
-      }),
-      decimals: 0,
-      formula: (divisionResults.bs.otherLiabilities || []).map((val, i) => createFormula(i,
-        'Bonds, subordinated debt, and other',
-        [
-          year => `Other Liabilities: ${formatNumber(val || 0, 0)} €M`
-        ]
-      ))
-    },
-    
-    {
-      label: 'Total Liabilities',
-      data: divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalAssets = perf + divisionResults.bs.nonPerformingAssets[i] + (divisionResults.bs.otherAssets?.[i] || 0);
-        const equity = divisionResults.bs.equity[i];
-        return totalAssets - equity;
-      }),
-      decimals: 0,
-      isHeader: true,
-      formula: divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalAssets = perf + divisionResults.bs.nonPerformingAssets[i] + (divisionResults.bs.otherAssets?.[i] || 0);
-        const equity = divisionResults.bs.equity[i];
-        return createFormula(i,
-          'Total Assets - Shareholders Equity',
-          [
-            year => `Total Assets: ${formatNumber(totalAssets, 0)} €M`,
-            year => `Shareholders Equity: ${formatNumber(equity, 0)} €M`,
-            year => `Total Liabilities: ${formatNumber(totalAssets - equity, 0)} €M`
-          ]
-        );
-      })
-    },
-    
-    {
-      label: 'Shareholders Equity',
-      data: divisionResults.bs.equity,
+      label: 'Equity',
+      data: allocatedEquity,
       decimals: 0,
       isTotal: true,
-      formula: divisionResults.bs.equity.map((val, i) => createFormula(i,
-        'Allocated based on RWA contribution',
+      formula: allocatedEquity.map((val, i) => createFormula(i,
+        'Equity allocated based on RWA contribution',
         [
-          year => `Division RWA: ${formatNumber(divisionResults.capital.totalRWA[year], 0)} €M`,
+          year => `Division RWA: ${formatNumber((divisionResults.capital.totalRWA || [0,0,0,0,0])[year], 0)} €M`,
           year => `Total Bank RWA: ${formatNumber(globalResults.capital.totalRWA[year], 0)} €M`,
-          year => `RWA Weight: ${((divisionResults.capital.totalRWA[year] / globalResults.capital.totalRWA[year]) * 100).toFixed(1)}%`,
+          year => `RWA Weight: ${(((divisionResults.capital.totalRWA || [0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) * 100).toFixed(1)}%`,
           year => `Allocated Equity: ${formatNumber(val, 0)} €M`
         ]
       ))
     },
-    
+
     {
-      label: 'TOTAL LIABILITIES & EQUITY',
-      data: divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalLoans = perf + divisionResults.bs.nonPerformingAssets[i];
-        const otherAssets = divisionResults.bs.otherAssets?.[i] || 0;
-        return totalLoans + otherAssets;
-      }),
+      label: 'Sight deposits',
+      data: sightDeposits,
+      decimals: 0,
+      formula: sightDeposits.map((val, i) => createFormula(i,
+        'Total Liabilities × Sight Deposits %',
+        [
+          year => `Total Liabilities: ${formatNumber(totalLiabilities[year], 0)} €M`,
+          year => `Sight Deposits %: 40%`,
+          year => `Sight Deposits: ${formatNumber(val, 0)} €M`
+        ]
+      ))
+    },
+
+    {
+      label: 'Term deposits - Open Banking Solutions',
+      data: termDeposits,
+      decimals: 0,
+      formula: termDeposits.map((val, i) => createFormula(i,
+        'Total Liabilities × Term Deposits %',
+        [
+          year => `Total Liabilities: ${formatNumber(totalLiabilities[year], 0)} €M`,
+          year => `Term Deposits %: 30%`,
+          year => `Term Deposits: ${formatNumber(val, 0)} €M`
+        ]
+      ))
+    },
+
+    {
+      label: 'Group funding',
+      data: groupFunding,
+      decimals: 0,
+      formula: groupFunding.map((val, i) => createFormula(i,
+        'Total Liabilities × Group Funding %',
+        [
+          year => `Total Liabilities: ${formatNumber(totalLiabilities[year], 0)} €M`,
+          year => `Group Funding %: 30%`,
+          year => `Group Funding: ${formatNumber(val, 0)} €M`
+        ]
+      ))
+    },
+
+    // ========== TOTAL LIABILITIES SUMMARY ==========
+    {
+      label: 'Total liabilities',
+      data: totalAssets, // Must equal total assets
       decimals: 0,
       isHeader: true,
-      bgColor: 'green',
-      formula: divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalAssets = perf + divisionResults.bs.nonPerformingAssets[i] + (divisionResults.bs.otherAssets?.[i] || 0);
-        return createFormula(i,
-          'Must equal Total Assets (Balance Check)',
-          [
-            year => `Total L&E: ${formatNumber(totalAssets, 0)} €M`,
-            year => `Total Assets: ${formatNumber(totalAssets, 0)} €M`,
-            year => `Balance Check: ✓ OK`
-          ]
-        );
-      })
-    },
-    
-    // ========== KEY RATIOS ==========
-    {
-      label: '',
-      data: [null, null, null, null, null],
-      decimals: 0
-    },
-    
-    {
-      label: 'KEY BALANCE SHEET RATIOS',
-      data: [null, null, null, null, null],
-      isHeader: true
-    },
-    
-    {
-      label: 'Loan-to-Deposit Ratio (%)',
-      data: (() => {
-        const deposits = divisionResults.bs.customerDeposits || divisionResults.bs.performingAssets.map((perf, i) => {
-          const totalAssets = perf + divisionResults.bs.nonPerformingAssets[i] + (divisionResults.bs.otherAssets?.[i] || 0);
-          const equity = divisionResults.bs.equity[i];
-          return (totalAssets - equity) * 0.6;
-        });
-        
-        return divisionResults.bs.performingAssets.map((perf, i) => 
-          deposits[i] > 0 ? (perf / deposits[i]) * 100 : 0
-        );
-      })(),
-      decimals: 1,
-      isPercentage: true
-    },
-    
-    {
-      label: 'NPL Ratio (%)',
-      data: divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalLoans = perf + divisionResults.bs.nonPerformingAssets[i];
-        return totalLoans > 0 ? (divisionResults.bs.nonPerformingAssets[i] / totalLoans) * 100 : 0;
-      }),
-      decimals: 1,
-      isPercentage: true
-    },
-    
-    {
-      label: 'Leverage Ratio',
-      data: divisionResults.bs.performingAssets.map((perf, i) => {
-        const totalAssets = perf + divisionResults.bs.nonPerformingAssets[i] + (divisionResults.bs.otherAssets?.[i] || 0);
-        return divisionResults.bs.equity[i] > 0 ? totalAssets / divisionResults.bs.equity[i] : 0;
-      }),
-      decimals: 1
+      bgColor: 'gray',
+      formula: totalAssets.map((val, i) => createFormula(i,
+        'Must equal Total Assets (Balance Sheet identity)',
+        [
+          year => `Equity: ${formatNumber(allocatedEquity[year], 0)} €M`,
+          year => `Sight Deposits: ${formatNumber(sightDeposits[year], 0)} €M`,
+          year => `Term Deposits: ${formatNumber(termDeposits[year], 0)} €M`,
+          year => `Group Funding: ${formatNumber(groupFunding[year], 0)} €M`,
+          year => `Total L&E: ${formatNumber(val, 0)} €M`,
+          'Balance Sheet Check: ✓'
+        ]
+      ))
     }
   ];
 
-  // Apply any custom row transformations
-  const finalRows = standardBSRows.map(row => ({
-    ...row,
-    ...(customRowTransformations[row.label] || {})
-  }));
+  // Apply custom row transformations
+  const transformedRows = balanceSheetRows.map(row => {
+    const transformation = customRowTransformations[row.label];
+    if (transformation) {
+      return { ...row, ...transformation };
+    }
+    return row;
+  });
 
-  return <FinancialTable title="Balance Sheet" rows={finalRows} />;
+  return <FinancialTable title="2. Balance Sheet (€M)" rows={transformedRows} />;
 };
 
 export default StandardBalanceSheet;

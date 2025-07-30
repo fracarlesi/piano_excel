@@ -4,7 +4,7 @@ import { formatNumber } from '../../utils/formatters';
 
 /**
  * Standardized P&L structure for all divisions
- * This component creates a consistent P&L view across all banking divisions
+ * Following the exact schema provided
  */
 const StandardPnL = ({ 
   divisionResults, 
@@ -22,330 +22,369 @@ const StandardPnL = ({
     details: details.map(d => typeof d === 'function' ? d(year) : d)
   });
 
-  // Standard P&L Row Structure
-  const standardPnLRows = [
-    // ========== REVENUES ==========
+  // Calculate derived values
+  const netInterestIncome = (divisionResults.pnl.interestIncome || [0,0,0,0,0]).map((income, i) => {
+    const expenses = (divisionResults.pnl.interestExpenses || [0,0,0,0,0])[i] || 0;
+    return income + expenses; // expenses are negative
+  });
+
+  const netCommissionIncome = (divisionResults.pnl.commissionIncome || [0,0,0,0,0]).map((income, i) => {
+    const expenses = (divisionResults.pnl.commissionExpenses || [0,0,0,0,0])[i] || 0;
+    return income + expenses; // expenses are negative
+  });
+
+  const totalRevenues = netInterestIncome.map((nii, i) => nii + netCommissionIncome[i]);
+
+  // Calculate total operating expenses
+  const personnelCosts = divisionResults.pnl.personnelCosts || 
+    globalResults.pnl.personnelCostsTotal.map((cost, i) => {
+      const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0])[i] || 0;
+      const totalRwa = globalResults.capital.totalRWA[i] || 1;
+      return cost * (divisionRwa / totalRwa);
+    });
+
+  const otherOpex = divisionResults.pnl.otherOpex || [0,0,0,0,0].map((_, i) => {
+    const adminCosts = (globalResults.pnl.adminCosts || [0,0,0,0,0])[i] || 0;
+    const marketingCosts = (globalResults.pnl.marketingCosts || [0,0,0,0,0])[i] || 0;
+    const itCosts = (globalResults.pnl.itCosts || [0,0,0,0,0])[i] || 0;
+    const hqAllocation = (globalResults.pnl.hqAllocation || [0,0,0,0,0])[i] || 0;
+    const totalOtherOpex = adminCosts + marketingCosts + itCosts + hqAllocation;
+    
+    const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0])[i] || 0;
+    const totalRwa = globalResults.capital.totalRWA[i] || 1;
+    return totalOtherOpex * (divisionRwa / totalRwa);
+  });
+
+  const totalOpex = personnelCosts.map((pc, i) => pc + otherOpex[i]);
+
+  const preTaxProfit = totalRevenues.map((rev, i) => 
+    rev + totalOpex[i] + (divisionResults.pnl.totalLLP || [0,0,0,0,0])[i]
+  );
+
+  const netProfit = divisionResults.pnl.netProfit || preTaxProfit.map((pbt, i) => {
+    const taxRate = assumptions.taxRate || 0.3;
+    const taxes = pbt > 0 ? pbt * taxRate : 0;
+    return pbt - taxes;
+  });
+
+  // P&L Rows following the exact schema
+  const pnlRows = [
+    // ========== INTEREST INCOME SECTION ==========
     {
-      label: 'Interest Income',
-      data: divisionResults.pnl.interestIncome,
+      label: 'Interest Income (IC)',
+      data: divisionResults.pnl.interestIncome || [0,0,0,0,0],
       decimals: 2,
       isTotal: true,
-      formula: divisionResults.pnl.interestIncome.map((val, i) => createFormula(i,
+      formula: (divisionResults.pnl.interestIncome || [0,0,0,0,0]).map((val, i) => createFormula(i,
         'Σ(Average Performing Assets × Interest Rate)',
         [
           'Interest rate = EURIBOR + Product Spread',
-          ...(showProductDetail ? Object.entries(productResults).map(([key, product]) =>
-            year => `${product.name}: ${formatNumber(product.averagePerformingAssets?.[year] || 0, 2)} × ${formatNumber((product.assumptions?.interestRate || 0) * 100, 2)}% = ${formatNumber(product.interestIncome[year], 2)}`
-          ) : []),
           year => `Total Interest Income: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
     
-    {
-      label: 'Interest Expenses',
-      data: divisionResults.pnl.interestExpenses || globalResults.pnl.interestExpenses.map((exp, i) => {
-        // Allocate based on division's share of total assets
-        const divisionAssets = (divisionResults.bs.performingAssets[i] || 0) + (divisionResults.bs.nonPerformingAssets[i] || 0);
-        const totalAssets = globalResults.bs.totalAssets[i] || 1;
-        return exp * (divisionAssets / totalAssets);
-      }),
+    // Product breakdown for Interest Income
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: product.interestIncome || [0,0,0,0,0],
       decimals: 2,
-      isNegative: true,
-      formula: (divisionResults.pnl.interestExpenses || []).map((val, i) => createFormula(i,
-        'Division Assets × Cost of Funding Rate',
+      indent: true,
+      formula: (product.interestIncome || [0,0,0,0,0]).map((val, i) => createFormula(i,
+        'Average Performing Stock × Interest Rate',
         [
-          year => `Division Assets: ${formatNumber((divisionResults.bs.performingAssets[year] || 0) + (divisionResults.bs.nonPerformingAssets[year] || 0), 0)} €M`,
+          `Product: ${product.name}`,
+          year => `Interest Income: ${formatNumber(val, 2)} €M`
+        ]
+      ))
+    })) : []),
+
+    // ========== INTEREST EXPENSES SECTION ==========
+    {
+      label: 'Interest Expenses (IE)',
+      data: divisionResults.pnl.interestExpenses || [0,0,0,0,0],
+      decimals: 2,
+      isTotal: true,
+      formula: (divisionResults.pnl.interestExpenses || [0,0,0,0,0]).map((val, i) => createFormula(i,
+        'Division Liabilities × Cost of Funding',
+        [
           year => `Cost of Funding: ${assumptions.costOfFundsRate}%`,
           year => `Interest Expenses: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    
+
+    // Product breakdown for Interest Expenses
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: product.interestExpense || [0,0,0,0,0],
+      decimals: 2,
+      indent: true
+    })) : []),
+
+    // ========== NET INTEREST INCOME ==========
     {
-      label: 'Net Interest Income',
-      data: divisionResults.pnl.interestIncome.map((income, i) => {
-        const expenses = divisionResults.pnl.interestExpenses?.[i] || 
-          globalResults.pnl.interestExpenses[i] * ((divisionResults.bs.performingAssets[i] + divisionResults.bs.nonPerformingAssets[i]) / globalResults.bs.totalAssets[i]);
-        return income + expenses;
-      }),
+      label: 'Net Interest Income (NII)',
+      data: netInterestIncome,
       decimals: 2,
       isHeader: true,
-      formula: divisionResults.pnl.interestIncome.map((income, i) => createFormula(i,
+      formula: netInterestIncome.map((val, i) => createFormula(i,
         'Interest Income - Interest Expenses',
         [
-          year => `Interest Income: ${formatNumber(divisionResults.pnl.interestIncome[year], 2)} €M`,
-          year => `Interest Expenses: ${formatNumber(divisionResults.pnl.interestExpenses?.[year] || 0, 2)} €M`,
-          year => `Net Interest Income: ${formatNumber(income + (divisionResults.pnl.interestExpenses?.[year] || 0), 2)} €M`
+          year => `Interest Income: ${formatNumber((divisionResults.pnl.interestIncome || [0,0,0,0,0])[year], 2)} €M`,
+          year => `Interest Expenses: ${formatNumber((divisionResults.pnl.interestExpenses || [0,0,0,0,0])[year], 2)} €M`,
+          year => `NII: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    
+
+    // Product NII breakdown
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: (product.interestIncome || [0,0,0,0,0]).map((income, i) => 
+        income + (product.interestExpense || [0,0,0,0,0])[i]
+      ),
+      decimals: 2,
+      indent: true
+    })) : []),
+
+    // ========== COMMISSION INCOME SECTION ==========
     {
-      label: 'Commission Income',
-      data: divisionResults.pnl.commissionIncome,
+      label: 'Commission Income (CI)',
+      data: divisionResults.pnl.commissionIncome || [0,0,0,0,0],
       decimals: 2,
       isTotal: true,
-      formula: divisionResults.pnl.commissionIncome.map((val, i) => createFormula(i,
+      formula: (divisionResults.pnl.commissionIncome || [0,0,0,0,0]).map((val, i) => createFormula(i,
         'Σ(New Business × Commission Rate)',
         [
-          ...(showProductDetail ? Object.entries(productResults).map(([key, product]) =>
-            year => `${product.name}: ${formatNumber(product.newBusiness?.[year] || 0, 0)} × ${formatNumber((product.assumptions?.commissionRate || 0) * 100, 2)}% = ${formatNumber(product.commissionIncome[year], 2)}`
-          ) : []),
           year => `Total Commission Income: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    
-    {
-      label: 'Commission Expenses',
-      data: divisionResults.pnl.commissionExpenses || divisionResults.pnl.commissionIncome.map(income => -income * (assumptions.commissionExpenseRate || 20) / 100),
+
+    // Product breakdown for Commission Income
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: product.commissionIncome || [0,0,0,0,0],
       decimals: 2,
-      isNegative: true,
-      formula: (divisionResults.pnl.commissionExpenses || []).map((val, i) => createFormula(i,
-        'Commission Income × Commission Expense Rate',
+      indent: true
+    })) : []),
+
+    // ========== COMMISSION EXPENSES SECTION ==========
+    {
+      label: 'Commission Expenses (CE)',
+      data: divisionResults.pnl.commissionExpenses || [0,0,0,0,0],
+      decimals: 2,
+      isTotal: true
+    },
+
+    // Product breakdown for Commission Expenses
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: product.commissionExpense || [0,0,0,0,0],
+      decimals: 2,
+      indent: true
+    })) : []),
+
+    // ========== NET COMMISSION INCOME ==========
+    {
+      label: 'Net Commission Income (NCI)',
+      data: netCommissionIncome,
+      decimals: 2,
+      isHeader: true,
+      formula: netCommissionIncome.map((val, i) => createFormula(i,
+        'Commission Income - Commission Expenses',
         [
-          year => `Commission Income: ${formatNumber(divisionResults.pnl.commissionIncome[year], 2)} €M`,
-          year => `Commission Expense Rate: ${assumptions.commissionExpenseRate || 20}%`,
-          year => `Commission Expenses: ${formatNumber(val, 2)} €M`
+          year => `Commission Income: ${formatNumber((divisionResults.pnl.commissionIncome || [0,0,0,0,0])[year], 2)} €M`,
+          year => `Commission Expenses: ${formatNumber((divisionResults.pnl.commissionExpenses || [0,0,0,0,0])[year], 2)} €M`,
+          year => `NCI: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    
-    {
-      label: 'Net Commission Income',
-      data: divisionResults.pnl.commissionIncome.map((income, i) => {
-        const expenses = divisionResults.pnl.commissionExpenses?.[i] || -income * (assumptions.commissionExpenseRate || 20) / 100;
-        return income + expenses;
-      }),
+
+    // Product NCI breakdown
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: (product.commissionIncome || [0,0,0,0,0]).map((income, i) => 
+        income + (product.commissionExpense || [0,0,0,0,0])[i]
+      ),
       decimals: 2,
-      isHeader: true
-    },
-    
+      indent: true
+    })) : []),
+
+    // ========== TRADING INCOME ==========
     {
-      label: 'Total Operating Income',
-      data: divisionResults.pnl.interestIncome.map((interest, i) => {
-        const interestExpenses = divisionResults.pnl.interestExpenses?.[i] || 
-          globalResults.pnl.interestExpenses[i] * ((divisionResults.bs.performingAssets[i] + divisionResults.bs.nonPerformingAssets[i]) / globalResults.bs.totalAssets[i]);
-        const commissionExpenses = divisionResults.pnl.commissionExpenses?.[i] || 
-          -divisionResults.pnl.commissionIncome[i] * (assumptions.commissionExpenseRate || 20) / 100;
-        
-        const netInterest = interest + interestExpenses;
-        const netCommissions = divisionResults.pnl.commissionIncome[i] + commissionExpenses;
-        return netInterest + netCommissions;
-      }),
+      label: 'Trading Income',
+      data: [0,0,0,0,0],
+      decimals: 2
+    },
+
+    // ========== TOTAL REVENUES ==========
+    {
+      label: 'Total Revenues',
+      data: totalRevenues,
       decimals: 2,
       isHeader: true,
-      bgColor: 'blue'
+      bgColor: 'gray',
+      formula: totalRevenues.map((val, i) => createFormula(i,
+        'NII + NCI + Trading Income',
+        [
+          year => `NII: ${formatNumber(netInterestIncome[year], 2)} €M`,
+          year => `NCI: ${formatNumber(netCommissionIncome[year], 2)} €M`,
+          year => `Trading: 0 €M`,
+          year => `Total: ${formatNumber(val, 2)} €M`
+        ]
+      ))
     },
-    
-    // ========== OPERATING EXPENSES ==========
+
+    // ========== PERSONNEL COSTS ==========
     {
-      label: 'Personnel Costs',
-      data: divisionResults.pnl.personnelCosts || globalResults.kpi[`${divisionName}Fte`]?.map(fte => -fte * assumptions.avgCostPerFte / 1000) || [0, 0, 0, 0, 0],
+      label: 'Personnel cost',
+      data: personnelCosts,
       decimals: 2,
-      isNegative: true,
-      formula: (divisionResults.pnl.personnelCosts || []).map((val, i) => createFormula(i,
+      isTotal: true,
+      formula: personnelCosts.map((val, i) => createFormula(i,
         'FTE × Average Cost per FTE',
         [
-          year => `FTE: ${formatNumber(globalResults.kpi[`${divisionName}Fte`]?.[year] || 0, 0)}`,
-          year => `Average Cost: ${formatNumber(assumptions.avgCostPerFte, 0)}k€`,
+          year => `Division FTE allocation based on RWA`,
           year => `Personnel Costs: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    
-    {
-      label: 'Other Operating Expenses',
-      data: divisionResults.pnl.otherOperatingExpenses || divisionResults.pnl.personnelCosts?.map(pc => pc * 0.5) || [0, 0, 0, 0, 0],
+
+    // Product breakdown for Personnel
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `- o/w ${product.name}`,
+      data: product.personnelCosts || [0,0,0,0,0],
       decimals: 2,
-      isNegative: true,
-      formula: (divisionResults.pnl.otherOperatingExpenses || []).map((val, i) => createFormula(i,
-        'Administrative + Marketing + IT + HQ Allocation',
+      indent: true
+    })) : []),
+
+    // ========== OTHER OPEX ==========
+    {
+      label: 'Other OPEX',
+      data: otherOpex,
+      decimals: 2,
+      isTotal: true,
+      formula: otherOpex.map((val, i) => createFormula(i,
+        'Admin + Marketing + IT + HQ Allocation',
         [
-          'Allocated based on division size and complexity',
-          year => `Total Other Operating Expenses: ${formatNumber(val, 2)} €M`
+          year => `Allocated based on division RWA share`,
+          year => `Other OPEX: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    
+
     {
-      label: 'Total Operating Expenses',
-      data: (() => {
-        const personnelCosts = divisionResults.pnl.personnelCosts || globalResults.kpi[`${divisionName}Fte`]?.map(fte => -fte * assumptions.avgCostPerFte / 1000) || [0, 0, 0, 0, 0];
-        const otherOpex = divisionResults.pnl.otherOperatingExpenses || personnelCosts.map(pc => pc * 0.5);
-        return personnelCosts.map((pc, i) => pc + otherOpex[i]);
-      })(),
+      label: 'Back-office and other admin costs',
+      data: otherOpex.map(o => o * 0.4), // Approximate split
+      decimals: 2,
+      indent: true
+    },
+
+    {
+      label: 'IT costs',
+      data: otherOpex.map(o => o * 0.3), // Approximate split
+      decimals: 2,
+      indent: true
+    },
+
+    {
+      label: 'HQ Allocation',
+      data: otherOpex.map(o => o * 0.2), // Approximate split
+      decimals: 2,
+      indent: true
+    },
+
+    {
+      label: 'Other Costs',
+      data: otherOpex.map(o => o * 0.1), // Approximate split
+      decimals: 2,
+      indent: true
+    },
+
+    // ========== TOTAL OPEX ==========
+    {
+      label: 'Total OPEX',
+      data: totalOpex,
       decimals: 2,
       isHeader: true,
-      isNegative: true
-    },
-    
-    {
-      label: 'Operating Profit Before Provisions',
-      data: (() => {
-        const totalIncome = divisionResults.pnl.interestIncome.map((interest, i) => {
-          const interestExpenses = divisionResults.pnl.interestExpenses?.[i] || 
-            globalResults.pnl.interestExpenses[i] * ((divisionResults.bs.performingAssets[i] + divisionResults.bs.nonPerformingAssets[i]) / globalResults.bs.totalAssets[i]);
-          const commissionExpenses = divisionResults.pnl.commissionExpenses?.[i] || 
-            -divisionResults.pnl.commissionIncome[i] * (assumptions.commissionExpenseRate || 20) / 100;
-          
-          const netInterest = interest + interestExpenses;
-          const netCommissions = divisionResults.pnl.commissionIncome[i] + commissionExpenses;
-          return netInterest + netCommissions;
-        });
-        
-        const personnelCosts = divisionResults.pnl.personnelCosts || globalResults.kpi[`${divisionName}Fte`]?.map(fte => -fte * assumptions.avgCostPerFte / 1000) || [0, 0, 0, 0, 0];
-        const otherOpex = divisionResults.pnl.otherOperatingExpenses || personnelCosts.map(pc => pc * 0.5);
-        const totalOpex = personnelCosts.map((pc, i) => pc + otherOpex[i]);
-        
-        return totalIncome.map((income, i) => income + totalOpex[i]);
-      })(),
-      decimals: 2,
-      isHeader: true
-    },
-    
-    // ========== PROVISIONS ==========
-    {
-      label: 'Loan Loss Provisions',
-      data: divisionResults.pnl.totalLLP,
-      decimals: 2,
-      isNegative: true,
-      formula: divisionResults.pnl.totalLLP.map((val, i) => createFormula(i,
-        'Σ(Expected Loss on New Business + Loss on Stock Defaults)',
+      bgColor: 'gray',
+      formula: totalOpex.map((val, i) => createFormula(i,
+        'Personnel Costs + Other OPEX',
         [
-          'Based on PD × LGD methodology',
-          ...(showProductDetail ? Object.entries(productResults).map(([key, product]) =>
-            year => `${product.name}: ${formatNumber(product.llp?.[year] || 0, 2)} €M`
-          ) : []),
+          year => `Personnel: ${formatNumber(personnelCosts[year], 2)} €M`,
+          year => `Other OPEX: ${formatNumber(otherOpex[year], 2)} €M`,
+          year => `Total: ${formatNumber(val, 2)} €M`
+        ]
+      ))
+    },
+
+    // ========== OTHER COSTS SECTION ==========
+    {
+      label: 'Other Costs',
+      data: [0,0,0,0,0],
+      decimals: 2
+    },
+
+    {
+      label: 'Loan loss provisions',
+      data: divisionResults.pnl.totalLLP || [0,0,0,0,0],
+      decimals: 2,
+      indent: true,
+      formula: (divisionResults.pnl.totalLLP || [0,0,0,0,0]).map((val, i) => createFormula(i,
+        'Expected Loss on New Business + NPL Provisions',
+        [
           year => `Total LLP: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
-    
+
+    // Product breakdown for LLP
+    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      label: `  - o/w ${product.name}`,
+      data: product.llp || [0,0,0,0,0],
+      decimals: 2,
+      indent: true,
+      subIndent: true
+    })) : []),
+
+    {
+      label: 'Provisions for liabilities and charges (TFR)',
+      data: [0,0,0,0,0],
+      decimals: 2,
+      indent: true
+    },
+
     // ========== PRE-TAX PROFIT ==========
     {
-      label: 'Profit Before Tax',
-      data: (() => {
-        const totalIncome = divisionResults.pnl.interestIncome.map((interest, i) => {
-          const interestExpenses = divisionResults.pnl.interestExpenses?.[i] || 
-            globalResults.pnl.interestExpenses[i] * ((divisionResults.bs.performingAssets[i] + divisionResults.bs.nonPerformingAssets[i]) / globalResults.bs.totalAssets[i]);
-          const commissionExpenses = divisionResults.pnl.commissionExpenses?.[i] || 
-            -divisionResults.pnl.commissionIncome[i] * (assumptions.commissionExpenseRate || 20) / 100;
-          
-          const netInterest = interest + interestExpenses;
-          const netCommissions = divisionResults.pnl.commissionIncome[i] + commissionExpenses;
-          return netInterest + netCommissions;
-        });
-        
-        const personnelCosts = divisionResults.pnl.personnelCosts || globalResults.kpi[`${divisionName}Fte`]?.map(fte => -fte * assumptions.avgCostPerFte / 1000) || [0, 0, 0, 0, 0];
-        const otherOpex = divisionResults.pnl.otherOperatingExpenses || personnelCosts.map(pc => pc * 0.5);
-        const totalOpex = personnelCosts.map((pc, i) => pc + otherOpex[i]);
-        
-        return totalIncome.map((income, i) => income + totalOpex[i] + divisionResults.pnl.totalLLP[i]);
-      })(),
+      label: 'Pre-tax profit',
+      data: preTaxProfit,
       decimals: 2,
       isHeader: true,
-      bgColor: 'yellow'
-    },
-    
-    // ========== TAXES ==========
-    {
-      label: 'Income Tax',
-      data: (() => {
-        const pbt = (() => {
-          const totalIncome = divisionResults.pnl.interestIncome.map((interest, i) => {
-            const interestExpenses = divisionResults.pnl.interestExpenses?.[i] || 
-              globalResults.pnl.interestExpenses[i] * ((divisionResults.bs.performingAssets[i] + divisionResults.bs.nonPerformingAssets[i]) / globalResults.bs.totalAssets[i]);
-            const commissionExpenses = divisionResults.pnl.commissionExpenses?.[i] || 
-              -divisionResults.pnl.commissionIncome[i] * (assumptions.commissionExpenseRate || 20) / 100;
-            
-            const netInterest = interest + interestExpenses;
-            const netCommissions = divisionResults.pnl.commissionIncome[i] + commissionExpenses;
-            return netInterest + netCommissions;
-          });
-          
-          const personnelCosts = divisionResults.pnl.personnelCosts || globalResults.kpi[`${divisionName}Fte`]?.map(fte => -fte * assumptions.avgCostPerFte / 1000) || [0, 0, 0, 0, 0];
-          const otherOpex = divisionResults.pnl.otherOperatingExpenses || personnelCosts.map(pc => pc * 0.5);
-          const totalOpex = personnelCosts.map((pc, i) => pc + otherOpex[i]);
-          
-          return totalIncome.map((income, i) => income + totalOpex[i] + divisionResults.pnl.totalLLP[i]);
-        })();
-        
-        return pbt.map(profit => profit > 0 ? -profit * (assumptions.taxRate || 30) / 100 : 0);
-      })(),
-      decimals: 2,
-      isNegative: true,
-      formula: (() => {
-        const pbt = (() => {
-          const totalIncome = divisionResults.pnl.interestIncome.map((interest, i) => {
-            const interestExpenses = divisionResults.pnl.interestExpenses?.[i] || 
-              globalResults.pnl.interestExpenses[i] * ((divisionResults.bs.performingAssets[i] + divisionResults.bs.nonPerformingAssets[i]) / globalResults.bs.totalAssets[i]);
-            const commissionExpenses = divisionResults.pnl.commissionExpenses?.[i] || 
-              -divisionResults.pnl.commissionIncome[i] * (assumptions.commissionExpenseRate || 20) / 100;
-            
-            const netInterest = interest + interestExpenses;
-            const netCommissions = divisionResults.pnl.commissionIncome[i] + commissionExpenses;
-            return netInterest + netCommissions;
-          });
-          
-          const personnelCosts = divisionResults.pnl.personnelCosts || globalResults.kpi[`${divisionName}Fte`]?.map(fte => -fte * assumptions.avgCostPerFte / 1000) || [0, 0, 0, 0, 0];
-          const otherOpex = divisionResults.pnl.otherOperatingExpenses || personnelCosts.map(pc => pc * 0.5);
-          const totalOpex = personnelCosts.map((pc, i) => pc + otherOpex[i]);
-          
-          return totalIncome.map((income, i) => income + totalOpex[i] + divisionResults.pnl.totalLLP[i]);
-        })();
-        
-        return pbt.map((profit, i) => createFormula(i,
-          'PBT × Tax Rate (if PBT > 0)',
-          [
-            year => `Profit Before Tax: ${formatNumber(profit, 2)} €M`,
-            year => `Tax Rate: ${assumptions.taxRate || 30}%`,
-            year => profit > 0 ? `Tax: ${formatNumber(-profit * (assumptions.taxRate || 30) / 100, 2)} €M` : 'No tax on losses'
-          ]
-        ));
-      })()
-    },
-    
-    // ========== NET PROFIT ==========
-    {
-      label: 'Net Profit',
-      data: (() => {
-        const pbt = (() => {
-          const totalIncome = divisionResults.pnl.interestIncome.map((interest, i) => {
-            const interestExpenses = divisionResults.pnl.interestExpenses?.[i] || 
-              globalResults.pnl.interestExpenses[i] * ((divisionResults.bs.performingAssets[i] + divisionResults.bs.nonPerformingAssets[i]) / globalResults.bs.totalAssets[i]);
-            const commissionExpenses = divisionResults.pnl.commissionExpenses?.[i] || 
-              -divisionResults.pnl.commissionIncome[i] * (assumptions.commissionExpenseRate || 20) / 100;
-            
-            const netInterest = interest + interestExpenses;
-            const netCommissions = divisionResults.pnl.commissionIncome[i] + commissionExpenses;
-            return netInterest + netCommissions;
-          });
-          
-          const personnelCosts = divisionResults.pnl.personnelCosts || globalResults.kpi[`${divisionName}Fte`]?.map(fte => -fte * assumptions.avgCostPerFte / 1000) || [0, 0, 0, 0, 0];
-          const otherOpex = divisionResults.pnl.otherOperatingExpenses || personnelCosts.map(pc => pc * 0.5);
-          const totalOpex = personnelCosts.map((pc, i) => pc + otherOpex[i]);
-          
-          return totalIncome.map((income, i) => income + totalOpex[i] + divisionResults.pnl.totalLLP[i]);
-        })();
-        
-        const taxes = pbt.map(profit => profit > 0 ? -profit * (assumptions.taxRate || 30) / 100 : 0);
-        return pbt.map((profit, i) => profit + taxes[i]);
-      })(),
-      decimals: 2,
-      isHeader: true,
-      bgColor: 'green'
+      bgColor: 'gray',
+      formula: preTaxProfit.map((val, i) => createFormula(i,
+        'Total Revenues - Total OPEX - Other Costs',
+        [
+          year => `Revenues: ${formatNumber(totalRevenues[year], 2)} €M`,
+          year => `OPEX: ${formatNumber(totalOpex[year], 2)} €M`,
+          year => `LLP: ${formatNumber((divisionResults.pnl.totalLLP || [0,0,0,0,0])[year], 2)} €M`,
+          year => `PBT: ${formatNumber(val, 2)} €M`
+        ]
+      ))
     }
   ];
 
-  // Apply any custom row transformations
-  const finalRows = standardPnLRows.map(row => ({
-    ...row,
-    ...(customRowTransformations[row.label] || {})
-  }));
+  // Apply custom row transformations
+  const transformedRows = pnlRows.map(row => {
+    const transformation = customRowTransformations[row.label];
+    if (transformation) {
+      return { ...row, ...transformation };
+    }
+    return row;
+  });
 
-  return <FinancialTable title="Profit & Loss Statement" rows={finalRows} />;
+  return <FinancialTable title="1. P&L (€M)" rows={transformedRows} />;
 };
 
 export default StandardPnL;
