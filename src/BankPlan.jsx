@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Hooks
 import { useLocalStorage } from './hooks/useLocalStorage';
@@ -23,10 +23,22 @@ const ExcelLikeBankPlan = () => {
   const [editMode, setEditMode] = useState(true);
   
   // Use custom hooks for localStorage management
-  const { assumptions, setAssumptions, lastSaved, importData, resetToDefaults, exportToFile } = useLocalStorage();
+  const { 
+    assumptions, 
+    setAssumptions, 
+    lastSaved, 
+    hasUnsavedChanges, 
+    lastFileExport, 
+    isAutoSaving,
+    importData, 
+    resetToDefaults, 
+    exportToFile 
+  } = useLocalStorage();
   
   // Calculate results using the extracted calculation engine
   const results = calculateResults(assumptions);
+
+  // Note: Auto-saving is now enabled, so no beforeunload warning needed
 
   const renderCurrentSheet = () => {
     switch (activeSheet) {
@@ -216,8 +228,12 @@ const ExcelLikeBankPlan = () => {
           editMode={editMode}
           setEditMode={setEditMode}
           lastSaved={lastSaved}
+          hasUnsavedChanges={hasUnsavedChanges}
+          lastFileExport={lastFileExport}
+          isAutoSaving={isAutoSaving}
           assumptions={assumptions}
           importData={importData}
+          exportToFile={exportToFile}
         />
         
         <Navigation 

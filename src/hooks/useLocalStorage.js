@@ -133,10 +133,19 @@ export const useLocalStorage = () => {
     return defaultAssumptions;
   };
 
-  const [assumptions, setAssumptions] = useState(loadSavedData);
+  const [assumptions, setAssumptionsInternal] = useState(loadSavedData);
   const [lastSaved, setLastSaved] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastFileExport, setLastFileExport] = useState(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
-  // Auto-save effect
+  // Wrapper function to track changes and trigger auto-save
+  const setAssumptions = (newAssumptions) => {
+    setAssumptionsInternal(newAssumptions);
+    setHasUnsavedChanges(true); // Mark as having unsaved changes
+  };
+
+  // Auto-save to localStorage effect
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       try {
@@ -149,6 +158,45 @@ export const useLocalStorage = () => {
 
     return () => clearTimeout(timeoutId);
   }, [assumptions]);
+
+  // Auto-save to server effect - debounced to avoid excessive requests
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+
+    const autoSaveTimeoutId = setTimeout(async () => {
+      setIsAutoSaving(true);
+      try {
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `bank-plan-assumptions-${timestamp}.json`;
+        
+        const response = await fetch('http://localhost:3001/api/save-assumptions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            data: assumptions,
+            filename: filename
+          })
+        });
+
+        if (response.ok) {
+          setHasUnsavedChanges(false); // Reset unsaved changes flag
+          setLastFileExport(new Date()); // Track last file export
+          console.log('Auto-saved to server successfully');
+        } else {
+          console.warn('Auto-save to server failed:', response.status);
+        }
+      } catch (error) {
+        console.warn('Auto-save server error:', error);
+        // Don't show alert for auto-save failures - just log the error
+      } finally {
+        setIsAutoSaving(false);
+      }
+    }, 3000); // 3 second delay for server auto-save
+
+    return () => clearTimeout(autoSaveTimeoutId);
+  }, [assumptions, hasUnsavedChanges]);
 
   const importData = (event) => {
     const file = event.target.files[0];
@@ -192,6 +240,8 @@ export const useLocalStorage = () => {
 
       if (response.ok) {
         const result = await response.json();
+        setHasUnsavedChanges(false); // Reset unsaved changes flag
+        setLastFileExport(new Date()); // Track last file export
         alert(`Assumptions saved successfully to: ${result.filepath}`);
       } else {
         throw new Error('Failed to save file on server');
@@ -210,6 +260,9 @@ export const useLocalStorage = () => {
     assumptions,
     setAssumptions,
     lastSaved,
+    hasUnsavedChanges,
+    lastFileExport,
+    isAutoSaving,
     importData,
     resetToDefaults,
     exportToFile,
