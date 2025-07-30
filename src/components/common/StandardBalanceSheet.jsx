@@ -47,7 +47,7 @@ const StandardBalanceSheet = ({
       label: 'Total Assets',
       data: totalAssets,
       decimals: 0,
-      isTotal: true,
+      isHeader: true,
       formula: totalAssets.map((val, i) => createFormula(i,
         'Net Performing + Non-Performing Assets',
         [
@@ -63,7 +63,7 @@ const StandardBalanceSheet = ({
       label: 'Net Performing Assets',
       data: performingAssets,
       decimals: 0,
-      isTotal: true,
+      isHeader: true,
       formula: performingAssets.map((val, i) => createFormula(i,
         'Sum of performing loans by product',
         [
@@ -77,7 +77,7 @@ const StandardBalanceSheet = ({
       label: `${product.name}`,
       data: product.performingAssets || [0,0,0,0,0,0,0,0,0,0],
       decimals: 0,
-      indent: true,
+      isSubItem: true,
       formula: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
         'Stock evolution: Previous + New - Repayments - Defaults',
         [
@@ -98,7 +98,7 @@ const StandardBalanceSheet = ({
       label: 'Non Performing Assets',
       data: nonPerformingAssets,
       decimals: 0,
-      isTotal: true,
+      isHeader: true,
       formula: nonPerformingAssets.map((val, i) => createFormula(i,
         'Sum of NPL by product',
         [
@@ -112,7 +112,7 @@ const StandardBalanceSheet = ({
       label: `${product.name}`,
       data: product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0],
       decimals: 0,
-      indent: true,
+      isSubItem: true,
       formula: (product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
         createFormula(
           i,
@@ -136,7 +136,7 @@ const StandardBalanceSheet = ({
       label: 'Total Assets',
       data: totalAssets,
       decimals: 0,
-      isHeader: true,
+      isTotal: true,
       bgColor: 'gray',
       formula: totalAssets.map((val, i) => createFormula(i,
         'Sum of all asset categories',
@@ -149,7 +149,7 @@ const StandardBalanceSheet = ({
     // ========== LIABILITIES SECTION ==========
     {
       label: 'Liabilities',
-      data: [null, null, null, null, null],
+      data: [null, null, null, null, null, null, null, null, null, null],
       isHeader: true,
       bgColor: 'lightgreen'
     },
@@ -158,7 +158,7 @@ const StandardBalanceSheet = ({
       label: 'Equity',
       data: allocatedEquity,
       decimals: 0,
-      isTotal: true,
+      isSubItem: true,
       formula: allocatedEquity.map((val, i) => createFormula(i,
         'Equity allocated based on RWA contribution',
         [
@@ -174,6 +174,7 @@ const StandardBalanceSheet = ({
       label: 'Sight deposits',
       data: sightDeposits,
       decimals: 0,
+      isSubItem: true,
       formula: sightDeposits.map((val, i) => createFormula(i,
         'Total Liabilities × Sight Deposits %',
         [
@@ -188,6 +189,7 @@ const StandardBalanceSheet = ({
       label: 'Term deposits - Open Banking Solutions',
       data: termDeposits,
       decimals: 0,
+      isSubItem: true,
       formula: termDeposits.map((val, i) => createFormula(i,
         'Total Liabilities × Term Deposits %',
         [
@@ -202,6 +204,7 @@ const StandardBalanceSheet = ({
       label: 'Group funding',
       data: groupFunding,
       decimals: 0,
+      isSubItem: true,
       formula: groupFunding.map((val, i) => createFormula(i,
         'Total Liabilities × Group Funding %',
         [
@@ -217,7 +220,7 @@ const StandardBalanceSheet = ({
       label: 'Total liabilities',
       data: totalAssets, // Must equal total assets
       decimals: 0,
-      isHeader: true,
+      isTotal: true,
       bgColor: 'gray',
       formula: totalAssets.map((val, i) => createFormula(i,
         'Must equal Total Assets (Balance Sheet identity)',

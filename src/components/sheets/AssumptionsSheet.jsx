@@ -77,12 +77,31 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               isPercentage
             />
             <EditableNumberField 
-              label="Cost of Funding" 
-              value={assumptions.costOfFundsRate} 
-              onChange={val => setAssumptions({...assumptions, costOfFundsRate: val})} 
-              unit="% on Assets" 
+              label="FTP Spread" 
+              value={assumptions.ftpSpread} 
+              onChange={val => setAssumptions({...assumptions, ftpSpread: val})} 
+              unit="%" 
               disabled={!editMode} 
               isPercentage
+              tooltip="Spread over EURIBOR for internal funds transfer pricing. FTP Rate = EURIBOR + FTP Spread"
+            />
+            <EditableNumberField 
+              label="Deposit Rate" 
+              value={assumptions.depositRate} 
+              onChange={val => setAssumptions({...assumptions, depositRate: val})} 
+              unit="%" 
+              disabled={!editMode} 
+              isPercentage
+              tooltip="Interest rate paid to customers on deposit accounts"
+            />
+            <EditableNumberField 
+              label="Cost of External Funding" 
+              value={assumptions.costOfFundsRate} 
+              onChange={val => setAssumptions({...assumptions, costOfFundsRate: val})} 
+              unit="%" 
+              disabled={!editMode} 
+              isPercentage
+              tooltip="Cost of external market funding for Treasury operations"
             />
           </div>
           

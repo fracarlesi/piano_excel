@@ -1,9 +1,11 @@
 export const defaultAssumptions = {
-  version: '3.8', // Implemented Excel-like 10-year volume input grid with paste functionality
+  version: '4.0', // Implemented FTP (Funds Transfer Pricing) model with Treasury intermediation
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
   euribor: 3.5, // EURIBOR base rate
+  ftpSpread: 1.5, // Spread over EURIBOR for FTP rate (FTP = EURIBOR + ftpSpread)
+  depositRate: 0.5, // Rate paid to customers on deposit accounts
   avgCostPerFte: 100, 
   backOfficeCostsY1: 2, 
   adminCostsY1: 1.5,
@@ -156,37 +158,39 @@ export const defaultAssumptions = {
       type: 'bullet', // Bullet repayment
       equityUpside: 2.5 // 2.5% equity upside
     },
-    // Digital Banking Division Products - Starling Bank Model
+    // Digital Banking Division Products - Deposit Collection Model
     digitalPersonalAccount: {
       name: 'Digital Personal Account',
-      volumes: { y1: 50, y10: 200 }, // Volume represents fee income in €M
-      avgLoanSize: 0.003, // Average fee per customer (€3k average balance)
-      spread: 0.0, // No traditional spread - fee-based model
-      rwaDensity: 0, // Current accounts have 0% RWA
-      durata: 1, // Annual fee cycle
-      commissionRate: 0.0, // Base account is free
-      dangerRate: 0.0, // No credit risk on current accounts
+      productType: 'Deposit', // NEW: Treat as deposit liability
+      volumes: { y1: 100, y10: 500 }, // Volume represents deposit stock in €M
+      avgLoanSize: 0.005, // Average deposit per customer
+      spread: 0.0, // No traditional spread for deposits
+      rwaDensity: 20, // 20% operational risk weight
+      durata: 1, // Deposits are liquid
+      commissionRate: 1.0, // Account maintenance and transaction fees
+      dangerRate: 0.0, // No credit risk on deposits
       ltv: 0.0,
       recoveryCosts: 0.0,
       collateralHaircut: 0.0,
       quarterlyDist: [25, 25, 25, 25],
-      type: 'services', // Service-based revenue
+      type: 'services', // Service-based fees on top of deposit margins
       isDigital: true
     },
     digitalBusinessAccount: {
       name: 'Digital Business Account',
-      volumes: { y1: 30, y10: 120 }, // Volume represents fee income in €M
-      avgLoanSize: 0.015, // Average fee per business customer (€15k average balance)
-      spread: 0.0, // No traditional spread - fee-based model
-      rwaDensity: 0, // Current accounts have 0% RWA
-      durata: 1, // Annual fee cycle
+      productType: 'Deposit', // NEW: Treat as deposit liability
+      volumes: { y1: 75, y10: 300 }, // Volume represents deposit stock in €M
+      avgLoanSize: 0.025, // Average deposit per business customer
+      spread: 0.0, // No traditional spread for deposits
+      rwaDensity: 20, // 20% operational risk weight
+      durata: 1, // Deposits are liquid
       commissionRate: 2.5, // Business toolkit and premium services
-      dangerRate: 0.0, // No credit risk on current accounts
+      dangerRate: 0.0, // No credit risk on deposits
       ltv: 0.0,
       recoveryCosts: 0.0,
       collateralHaircut: 0.0,
       quarterlyDist: [25, 25, 25, 25],
-      type: 'services', // Service-based revenue
+      type: 'services', // Service-based fees on top of deposit margins
       isDigital: true
     },
     digitalPaymentServices: {

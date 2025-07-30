@@ -44,7 +44,7 @@ const StandardCapitalRequirements = ({
       label: 'RWA',
       data: totalRWA,
       decimals: 0,
-      isTotal: true,
+      isHeader: true,
       formula: totalRWA.map((val, i) => createFormula(i,
         'Credit Risk + Operational Risk + Market Risk RWA',
         [
@@ -61,7 +61,7 @@ const StandardCapitalRequirements = ({
       label: `${product.name}`,
       data: product.rwa || [0,0,0,0,0,0,0,0,0,0],
       decimals: 0,
-      indent: true,
+      isSubItem: true,
       formula: (product.rwa || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
         'Performing Assets × RWA Density',
         [
@@ -81,7 +81,7 @@ const StandardCapitalRequirements = ({
     // ========== EQUITY SECTION ==========
     {
       label: 'Equity',
-      data: [null, null, null, null, null],
+      data: [null, null, null, null, null, null, null, null, null, null],
       isHeader: true,
       bgColor: 'lightblue'
     },
@@ -91,7 +91,7 @@ const StandardCapitalRequirements = ({
       label: `${product.name}`,
       data: product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0],
       decimals: 0,
-      indent: true,
+      isSubItem: true,
       formula: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
         'Total Division Equity × (Product RWA / Division RWA)',
         [
@@ -112,7 +112,7 @@ const StandardCapitalRequirements = ({
         return totalDivisionRWA > 0 ? equity * (operatingRWA / totalDivisionRWA) : 0;
       }),
       decimals: 0,
-      indent: true,
+      isSubItem: true,
       formula: allocatedEquity.map((equity, i) => createFormula(i,
         'Division Equity × (Operating RWA / Total RWA)',
         [
@@ -130,7 +130,7 @@ const StandardCapitalRequirements = ({
       data: cet1Ratio,
       decimals: 1,
       unit: '%',
-      isTotal: true,
+      isSubTotal: true,
       formula: cet1Ratio.map((val, i) => createFormula(i,
         'Allocated Equity / Total RWA × 100',
         [
@@ -152,7 +152,7 @@ const StandardCapitalRequirements = ({
       }),
       decimals: 1,
       unit: '%',
-      indent: true,
+      isSubItem: true,
       formula: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((equity, i) => createFormula(i,
         'Product Equity / Product RWA × 100',
         [
@@ -167,7 +167,7 @@ const StandardCapitalRequirements = ({
     // ========== RWA BY RISK TYPE SECTION ==========
     {
       label: 'RWA by risk type',
-      data: [null, null, null, null, null],
+      data: [null, null, null, null, null, null, null, null, null, null],
       isHeader: true,
       bgColor: 'lightgray'
     },
@@ -176,7 +176,7 @@ const StandardCapitalRequirements = ({
       label: 'Credit Risk',
       data: creditRiskRWA,
       decimals: 0,
-      indent: true,
+      isSubItem: true,
       formula: creditRiskRWA.map((val, i) => createFormula(i,
         'Sum of Credit RWA from all products',
         [
@@ -190,7 +190,7 @@ const StandardCapitalRequirements = ({
       label: 'Operative risk',
       data: operationalRiskRWA,
       decimals: 0,
-      indent: true,
+      isSubItem: true,
       formula: operationalRiskRWA.map((val, i) => createFormula(i,
         'Total Assets × Operational Risk %',
         [
@@ -205,7 +205,7 @@ const StandardCapitalRequirements = ({
       label: 'Market risk',
       data: marketRiskRWA,
       decimals: 0,
-      indent: true,
+      isSubItem: true,
       formula: marketRiskRWA.map((val, i) => createFormula(i,
         'Market Risk RWA (minimal for banking book)',
         [

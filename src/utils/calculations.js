@@ -1,4 +1,74 @@
 /**
+ * Calculate Deposit Product results (for Digital Banking division)
+ * These products work as liabilities - they collect deposits from customers
+ */
+const calculateDepositProduct = (product, assumptions, years, ftpRate, depositRate) => {
+  // Use volumeArray for deposit volumes (same logic as other products)
+  const volumes10Y = years.map(i => {
+    let yearVolume;
+    
+    if (product.volumeArray && Array.isArray(product.volumeArray) && product.volumeArray.length === 10) {
+      yearVolume = product.volumeArray[i] || 0;
+    } else if (product.volumes) {
+      const yearKey = `y${i + 1}`;
+      if (product.volumes[yearKey] !== undefined) {
+        yearVolume = product.volumes[yearKey];
+      } else {
+        const y1 = product.volumes.y1 || 0;
+        const y10 = product.volumes.y10 || 0;
+        yearVolume = y1 + ((y10 - y1) * i / 9);
+      }
+    } else {
+      yearVolume = 0;
+    }
+    
+    const quarterlyDist = product.quarterlyDist || [25, 25, 25, 25];
+    const quarterlyMultiplier = quarterlyDist.reduce((sum, q) => sum + q, 0) / 100;
+    return yearVolume * quarterlyMultiplier;
+  });
+  
+  // For deposit products, volumes represent deposit stock (cumulative)
+  // Calculate deposit stock evolution: previous stock + new deposits - withdrawals
+  const depositStock = [];
+  const retentionRate = 0.90;
+  
+  for (let i = 0; i < years.length; i++) {
+    if (i === 0) {
+      depositStock[i] = volumes10Y[i];
+    } else {
+      // Previous stock * retention rate + new deposits
+      depositStock[i] = depositStock[i-1] * retentionRate + volumes10Y[i];
+    }
+  }
+  
+  // Interest expense: what we pay to customers on their deposits
+  const interestExpense = depositStock.map(stock => -stock * depositRate);
+  
+  // Interest income: what Treasury pays us for providing liquidity (FTP rate)
+  const interestIncome = depositStock.map(stock => stock * ftpRate);
+  
+  // Commission income from account fees, transaction fees, etc.
+  const commissionIncome = volumes10Y.map(v => v * (product.commissionRate || 0) / 100);
+  
+  return {
+    name: product.name,
+    volumes: volumes10Y,
+    depositStock: depositStock, // This is the key metric for deposit products
+    performingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Deposit products don't create assets
+    averagePerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    nonPerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    interestIncome: interestIncome, // Revenue from Treasury FTP
+    interestExpense: interestExpense, // Cost of customer deposits
+    commissionIncome: commissionIncome,
+    commissionExpense: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    llp: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No credit losses on deposits
+    rwa: depositStock.map(stock => stock * 0.20), // 20% RWA weight for operational risk
+    newBusiness: volumes10Y,
+    numberOfLoans: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] // Deposits are not loans
+  };
+};
+
+/**
  * Calculate Commission Product results
  */
 const calculateCommissionProduct = (product, assumptions, years) => {
@@ -63,6 +133,7 @@ const calculateCommissionProduct = (product, assumptions, years) => {
     llp: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No credit losses
     rwa: operationalRWA,
     numberOfTransactions: volumes10Y.map(v => Math.round(v / (product.avgTransactionSize || 0.001))),
+    numberOfLoans: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Commission products are not loans
     newBusiness: volumes10Y,
     assumptions: {
       commissionRate: (product.commissionRate || 0) / 100,
@@ -83,13 +154,23 @@ const calculateCommissionProduct = (product, assumptions, years) => {
 export const calculateResults = (assumptions) => {
   const results = { pnl: {}, bs: {}, capital: {}, kpi: {}, formulas: {} };
   const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  
+  // Calculate FTP (Funds Transfer Pricing) rate: EURIBOR + FTP Spread
+  const ftpRate = (assumptions.euribor + (assumptions.ftpSpread || 1.5)) / 100;
+  const depositRate = (assumptions.depositRate || 0.5) / 100;
 
   const productResults = {};
   for (const [key, product] of Object.entries(assumptions.products)) {
       
-      // Skip calculation if product type is not Credit for credit-specific calculations
+      // Route to appropriate calculation function based on product type
       if (product.productType === 'Commission') {
         productResults[key] = calculateCommissionProduct(product, assumptions, years);
+        continue;
+      }
+      
+      // Handle Digital Banking products as deposits (liabilities)
+      if (product.productType === 'Deposit' || key.startsWith('digitalBanking')) {
+        productResults[key] = calculateDepositProduct(product, assumptions, years, ftpRate, depositRate);
         continue;
       }
       
@@ -246,9 +327,8 @@ export const calculateResults = (assumptions) => {
       const baseInterestRate = assumptions.euribor + product.spread;
       const interestRate = product.isFixedRate ? product.spread + 2.0 : baseInterestRate; // Fixed rate assumption
       
-      // Calculate interest expense using product-specific cost of funding
-      const productCostOfFunding = (product.costOfFunding || assumptions.costOfFundsRate || 3.0) / 100;
-      const interestExpense = averagePerformingStock.map(v => -v * productCostOfFunding);
+      // Calculate interest expense using FTP rate for all credit products
+      const interestExpense = averagePerformingStock.map(v => -v * ftpRate);
       
       // Calculate equity upside potential
       const equityUpsideIncome = volumes10Y.map(v => v * (product.equityUpside || 0) / 100);
@@ -275,7 +355,7 @@ export const calculateResults = (assumptions) => {
               riskWeight: adjustedRwaDensity,
               baseRiskWeight: classificationAdjustedRwaDensity, // RWA before state guarantee mitigation
               stateGuaranteePercentage: stateGuaranteePercentage,
-              costOfFunding: productCostOfFunding,
+              ftpRate: ftpRate * 100, // Store FTP rate as percentage for display
               isFixedRate: product.isFixedRate || false,
               creditClassification: product.creditClassification || 'Bonis',
               equityUpside: (product.equityUpside || 0) / 100
@@ -506,15 +586,19 @@ export const calculateResults = (assumptions) => {
       return avgPerformingAssets > 0 ? (-results.pnl.totalLLP[i] / avgPerformingAssets) * 10000 : 0;
   });
 
-  // Calculate total number of loans granted
-  results.kpi.totalNumberOfLoans = years.map(i => Object.values(productResults).reduce((sum, p) => sum + p.numberOfLoans[i], 0));
+  // Calculate total number of loans granted (exclude deposit products)
+  results.kpi.totalNumberOfLoans = years.map(i => 
+    Object.values(productResults).reduce((sum, p) => 
+      sum + (p.numberOfLoans ? p.numberOfLoans[i] || 0 : 0), 0
+    )
+  );
   
-  // Calculate division-level number of loans dynamically
+  // Calculate division-level number of loans dynamically (exclude deposit products)
   divisionPrefixes.forEach(prefix => {
     results.kpi[`${prefix}NumberOfLoans`] = years.map(i => 
       Object.entries(productResults)
         .filter(([key]) => key.startsWith(prefix))
-        .reduce((sum, [key, p]) => sum + p.numberOfLoans[i], 0)
+        .reduce((sum, [key, p]) => sum + (p.numberOfLoans ? p.numberOfLoans[i] || 0 : 0), 0)
     );
   });
 

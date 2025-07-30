@@ -34,7 +34,7 @@ const FinancialTable = ({ title, rows }) => (
             >
               <td 
                 className={`py-2 text-gray-800 ${
-                  row.isSubItem ? 'pl-10 pr-6' : 'px-6'
+                  row.isSubItem ? 'pl-8 pr-6 text-xs italic' : 'pl-6 pr-6'
                 } ${
                   row.isTotal ? 'text-blue-900 font-bold' : ''
                 } ${
@@ -42,10 +42,10 @@ const FinancialTable = ({ title, rows }) => (
                 } ${
                   row.isHeader ? 'text-gray-800 font-semibold' : ''
                 } ${
-                  row.isSubItem ? 'text-gray-600 text-sm' : ''
+                  row.isSubItem ? 'text-gray-600' : ''
                 }`}
               >
-                {row.isSubItem ? `└─ ${row.label}` : row.label}
+                {row.label}
               </td>
               {row.data && row.data.map((value, i) => (
                 <td 
@@ -57,7 +57,7 @@ const FinancialTable = ({ title, rows }) => (
                   } ${
                     row.isHeader ? 'font-semibold text-gray-800' : ''
                   } ${
-                    row.isSubItem ? 'text-sm text-gray-600' : ''
+                    row.isSubItem ? 'text-xs text-gray-600' : ''
                   } ${
                     !row.isTotal && !row.isSubTotal && !row.isHeader && !row.isSubItem ? 
                       (value < 0 ? 'text-red-600' : 'text-gray-900') : ''

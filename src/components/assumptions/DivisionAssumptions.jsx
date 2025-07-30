@@ -55,13 +55,6 @@ const DivisionAssumptions = ({
         key: `products.${productKey}.commissionRate`
       },
       {
-        parameter: 'Cost of Funding',
-        description: 'Cost of funding for this product',
-        value: product.costOfFunding || assumptions.costOfFundsRate || 3.0,
-        unit: '%',
-        key: `products.${productKey}.costOfFunding`
-      },
-      {
         parameter: 'Loan Maturity',
         description: 'Contractual maturity of loans in years (used for amortization calculations)',
         value: product.durata || 5,
@@ -390,7 +383,7 @@ const DivisionAssumptions = ({
                         </h4>
                         <div className="space-y-4">
                           {productAssumption.rows.filter(row => 
-                            ['Interest Rate Spread', 'Commission Rate', 'Cost of Funding', 'Fee Income Rate', 
+                            ['Interest Rate Spread', 'Commission Rate', 'Fee Income Rate', 
                              'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside'].includes(row.parameter)
                           ).map((row, rowIndex) => (
                             <div key={rowIndex}>
@@ -543,7 +536,7 @@ const DivisionAssumptions = ({
                         </h4>
                         <div className="space-y-4">
                           {productAssumption.rows.filter(row => 
-                            !['Interest Rate Spread', 'Cost of Funding', 'Commission Rate', 'Fee Income Rate', 
+                            !['Interest Rate Spread', 'Commission Rate', 'Fee Income Rate', 
                               'Setup Fee Rate', 'Management Fee Rate', 'Performance Fee Rate', 'Equity Upside',
                               'RWA Density', 'Default Rate', 'Loan-to-Value (LTV)', 
                               'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight', 'State Guarantee Coverage'].includes(row.parameter)

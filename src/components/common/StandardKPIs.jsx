@@ -80,6 +80,7 @@ const StandardKPIs = ({
       data: costIncomeRatio,
       decimals: 1,
       unit: '%',
+      isSubTotal: true,
       formula: costIncomeRatio.map((val, i) => createFormula(i,
         'Total Operating Expenses / Total Revenues × 100',
         [
@@ -97,6 +98,7 @@ const StandardKPIs = ({
       data: costOfRisk,
       decimals: 0,
       unit: ' bps',
+      isSubTotal: true,
       formula: costOfRisk.map((val, i) => createFormula(i,
         'Loan Loss Provisions / Average Performing Assets × 10,000',
         [
@@ -113,6 +115,7 @@ const StandardKPIs = ({
       label: 'FTE',
       data: fte,
       decimals: 0,
+      isSubTotal: true,
       formula: fte.map((val, i) => createFormula(i,
         'Total Bank FTE × Division RWA Weight',
         [
@@ -130,6 +133,7 @@ const StandardKPIs = ({
       label: 'FTE front-office (for back-office costs)',
       data: fteFrontOffice,
       decimals: 0,
+      isSubItem: true,
       formula: fteFrontOffice.map((val, i) => createFormula(i,
         'Total Division FTE × Front-Office Ratio',
         [

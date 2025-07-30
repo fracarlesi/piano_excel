@@ -115,15 +115,15 @@ const StandardPnL = ({
 
     // ========== INTEREST EXPENSES SECTION ==========
     {
-      label: 'Interest Expenses (IE)',
+      label: 'FTP',
       data: divisionResults.pnl.interestExpenses || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
       isHeader: true,
       formula: (divisionResults.pnl.interestExpenses || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
-        'Division Liabilities × Cost of Funding',
+        'Average Performing Assets × FTP Rate (EURIBOR + FTP Spread)',
         [
-          year => `Cost of Funding: ${assumptions.costOfFundsRate}%`,
-          year => `Interest Expenses: ${formatNumber(val, 2)} €M`
+          year => `FTP Rate: ${((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5)).toFixed(2)}% (EURIBOR ${(assumptions.euribor || 3.5).toFixed(1)}% + Spread ${(assumptions.ftpSpread || 1.5).toFixed(1)}%)`,
+          year => `FTP Cost: ${formatNumber(val, 2)} €M`
         ]
       ))
     },
@@ -142,7 +142,7 @@ const StandardPnL = ({
         
         return createFormula(
           i,
-          'Average Performing Assets × Cost of Funding',
+          'Average Performing Assets × FTP Rate',
           [
             {
               name: 'Average Performing Assets',
@@ -151,16 +151,16 @@ const StandardPnL = ({
               calculation: 'Weighted average of performing loan stock'
             },
             {
-              name: 'Cost of Funding',
-              value: (originalProduct.costOfFunding || assumptions.costOfFundsRate || 3.0),
+              name: 'FTP Rate',
+              value: ((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5)),
               unit: '%',
-              calculation: 'Product-specific funding cost'
+              calculation: 'Internal funds transfer pricing rate (EURIBOR + FTP Spread)'
             }
           ],
           year => {
             const avgAssets = (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
-            const costOfFunding = (originalProduct.costOfFunding || assumptions.costOfFundsRate || 3.0);
-            return `${formatNumber(avgAssets, 2)} × ${formatNumber(costOfFunding, 2)}% = ${formatNumber(Math.abs(val), 2)} €M (expense)`;
+            const ftpRate = ((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5));
+            return `${formatNumber(avgAssets, 2)} × ${formatNumber(ftpRate, 2)}% = ${formatNumber(Math.abs(val), 2)} €M (FTP cost)`;
           }
         );
       })
