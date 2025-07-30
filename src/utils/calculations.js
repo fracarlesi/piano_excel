@@ -45,8 +45,11 @@ const calculateCommissionProduct = (product, assumptions, years) => {
     ci + feeIncome[i] + setupFees[i] + managementFees[i] + performanceFees[i]
   );
   
-  // Commission products have minimal RWA
-  const operationalRWA = volumes10Y.map(v => v * (product.operationalRiskWeight || 15) / 100);
+  // Commission products have minimal RWA, also apply state guarantee if present
+  const baseOperationalRWA = (product.operationalRiskWeight || 15) / 100;
+  const stateGuaranteePercentage = (product.stateGuaranteePercentage || 0) / 100;
+  const adjustedOperationalRWA = baseOperationalRWA * (1 - stateGuaranteePercentage);
+  const operationalRWA = volumes10Y.map(v => v * adjustedOperationalRWA);
   
   return {
     name: product.name,
@@ -64,7 +67,9 @@ const calculateCommissionProduct = (product, assumptions, years) => {
     assumptions: {
       commissionRate: (product.commissionRate || 0) / 100,
       feeIncomeRate: (product.feeIncomeRate || 0) / 100,
-      operationalRiskWeight: (product.operationalRiskWeight || 15) / 100
+      operationalRiskWeight: adjustedOperationalRWA,
+      baseOperationalRiskWeight: baseOperationalRWA,
+      stateGuaranteePercentage: stateGuaranteePercentage
     }
   };
 };
@@ -213,12 +218,22 @@ export const calculateResults = (assumptions) => {
       const collateralValue = 1 / (product.ltv / 100);
       const discountedCollateralValue = collateralValue * (1 - (product.collateralHaircut / 100));
       const netRecoveryValue = discountedCollateralValue * (1 - (product.recoveryCosts / 100));
-      const lgd = Math.max(0, 1 - netRecoveryValue);
+      const baseLgd = Math.max(0, 1 - netRecoveryValue);
+      
+      // Apply state guarantee mitigation: LGD applies only to unguaranteed portion
+      const stateGuaranteePercentage = (product.stateGuaranteePercentage || 0) / 100;
+      const lgd = baseLgd * (1 - stateGuaranteePercentage);
       
       // Apply credit classification impact on RWA density
       const baseRwaDensity = product.rwaDensity / 100;
       const rwaMultiplier = product.creditClassification === 'UTP' ? 1.5 : 1.0;
-      const adjustedRwaDensity = baseRwaDensity * rwaMultiplier;
+      const classificationAdjustedRwaDensity = baseRwaDensity * rwaMultiplier;
+      
+      // Apply state guarantee mitigation to RWA: guaranteed portion has 0% RWA
+      const guaranteedPortionRwa = 0; // State-guaranteed portion typically has 0% RWA
+      const unguaranteedPortionRwa = classificationAdjustedRwaDensity;
+      const adjustedRwaDensity = (guaranteedPortionRwa * stateGuaranteePercentage) + 
+                                (unguaranteedPortionRwa * (1 - stateGuaranteePercentage));
       
       const expectedLossOnNewBusiness = volumes10Y.map(v => -v * (product.dangerRate / 100) * lgd);
       const lossOnStockDefaults = newNPLs.map(v => -v * lgd);
@@ -256,7 +271,10 @@ export const calculateResults = (assumptions) => {
               commissionRate: (product.commissionRate || 0), // Keep as percentage for display (0.8 for 0.8%)
               pd: adjustedDefaultRate,
               lgd: lgd,
+              baseLgd: baseLgd, // LGD before state guarantee mitigation
               riskWeight: adjustedRwaDensity,
+              baseRiskWeight: classificationAdjustedRwaDensity, // RWA before state guarantee mitigation
+              stateGuaranteePercentage: stateGuaranteePercentage,
               costOfFunding: productCostOfFunding,
               isFixedRate: product.isFixedRate || false,
               creditClassification: product.creditClassification || 'Bonis',
