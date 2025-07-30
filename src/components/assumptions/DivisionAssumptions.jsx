@@ -280,10 +280,58 @@ const DivisionAssumptions = ({
       }
     ];
 
+    // Deposit and Service-specific assumptions (simplified model)
+    const depositAndServiceRows = [
+      {
+        parameter: 'Customer Acquisition Cost (CAC)',
+        description: 'Cost to acquire each new customer',
+        value: product.cac || 30,
+        unit: '€',
+        key: `products.${productKey}.cac`
+      },
+      {
+        parameter: 'Annual Churn Rate',
+        description: 'Percentage of customers lost annually',
+        value: product.churnRate || 5,
+        unit: '%',
+        key: `products.${productKey}.churnRate`
+      },
+      {
+        parameter: 'Average Deposit per Customer',
+        description: 'Average deposit amount per customer',
+        value: product.avgDeposit || 3000,
+        unit: '€',
+        key: `products.${productKey}.avgDeposit`
+      },
+      {
+        parameter: 'Deposit Interest Rate',
+        description: 'Interest rate paid to customers on deposits',
+        value: product.depositInterestRate || 0.5,
+        unit: '%',
+        key: `products.${productKey}.depositInterestRate`
+      },
+      {
+        parameter: 'Monthly Fee',
+        description: 'Monthly subscription/account fee per customer',
+        value: product.monthlyFee || 1,
+        unit: '€',
+        key: `products.${productKey}.monthlyFee`
+      },
+      {
+        parameter: 'Annual Service Revenue per Customer',
+        description: 'Additional service revenue per customer per year',
+        value: product.annualServiceRevenue || 25,
+        unit: '€',
+        key: `products.${productKey}.annualServiceRevenue`
+      }
+    ];
+
     // Determine which rows to show based on product type
     const productType = product.productType || 'Credit';
     let specificRows;
-    if (productType === 'DigitalService') {
+    if (productType === 'DepositAndService') {
+      specificRows = depositAndServiceRows;
+    } else if (productType === 'DigitalService') {
       specificRows = digitalServiceRows;
     } else if (productType === 'Credit') {
       specificRows = creditRows;
@@ -315,8 +363,8 @@ const DivisionAssumptions = ({
     
     // Convert volumes or customers to array format
     const getInputArray = () => {
-      // For DigitalService products, use customers data
-      if (productType === 'DigitalService') {
+      // For DigitalService and DepositAndService products, use customers data
+      if (productType === 'DigitalService' || productType === 'DepositAndService') {
         // First check if there's a customerArray
         if (product.customerArray && Array.isArray(product.customerArray) && product.customerArray.length === 10) {
           return product.customerArray;
@@ -370,7 +418,8 @@ const DivisionAssumptions = ({
       productName: product.name,
       volumes: product.volumes || { y1: 0, y10: 0 }, // Keep for backward compatibility
       inputArray: getInputArray(),
-      isDigitalService: productType === 'DigitalService'
+      isDigitalService: productType === 'DigitalService',
+      isDepositAndService: productType === 'DepositAndService'
     };
   });
 
@@ -422,6 +471,8 @@ const DivisionAssumptions = ({
                           ? 'bg-green-100 text-green-800 border border-green-300' 
                           : productAssumption.productType === 'DigitalService'
                           ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                          : productAssumption.productType === 'DepositAndService'
+                          ? 'bg-indigo-100 text-indigo-800 border border-indigo-300'
                           : 'bg-blue-100 text-blue-800 border border-blue-300'
                       }`}>
                         {productAssumption.productType}
@@ -445,8 +496,8 @@ const DivisionAssumptions = ({
                       <VolumeInputGrid
                         values={productAssumption.inputArray || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
                         onChange={(newArray) => {
-                          if (productAssumption.isDigitalService) {
-                            // For DigitalService products, save the full customer array
+                          if (productAssumption.isDigitalService || productAssumption.isDepositAndService) {
+                            // For DigitalService and DepositAndService products, save the full customer array
                             onAssumptionChange(`products.${productKey}.customerArray`, newArray);
                             // Also update y1 and y5 for backward compatibility
                             const y1 = newArray[0] || 0;
@@ -457,8 +508,8 @@ const DivisionAssumptions = ({
                             onAssumptionChange(`products.${productKey}.volumeArray`, newArray);
                           }
                         }}
-                        label={`${product.name} - ${productAssumption.isDigitalService ? 'New Customer Acquisitions' : 'Volume Projections'}`}
-                        unit={productAssumption.isDigitalService ? 'customers' : '€M'}
+                        label={`${product.name} - ${productAssumption.isDigitalService || productAssumption.isDepositAndService ? 'New Customer Acquisitions' : 'Volume Projections'}`}
+                        unit={productAssumption.isDigitalService || productAssumption.isDepositAndService ? 'customers' : '€M'}
                         disabled={false}
                       />
                     </div>
@@ -470,11 +521,13 @@ const DivisionAssumptions = ({
                       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
                           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                          {productAssumption.isDigitalService ? 'Customer Acquisition' : 'Pricing & Profitability'}
+                          {productAssumption.isDepositAndService ? 'Acquisizione Clienti' : productAssumption.isDigitalService ? 'Customer Acquisition' : 'Pricing & Profitability'}
                         </h4>
                         <div className="space-y-4">
                           {productAssumption.rows.filter(row => {
-                            if (productAssumption.isDigitalService) {
+                            if (productAssumption.isDepositAndService) {
+                              return ['Customer Acquisition Cost (CAC)', 'Annual Churn Rate'].includes(row.parameter);
+                            } else if (productAssumption.isDigitalService) {
                               return ['Customer Acquisition Cost (CAC)'].includes(row.parameter);
                             } else {
                               return ['Interest Rate Spread', 'Commission Rate', 'Fee Income Rate', 
@@ -530,11 +583,13 @@ const DivisionAssumptions = ({
                       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
                           <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                          {productAssumption.isDigitalService ? 'Customer Metrics' : 'Risk & RWA'}
+                          {productAssumption.isDepositAndService ? 'Comportamento e Redditività Cliente' : productAssumption.isDigitalService ? 'Customer Metrics' : 'Risk & RWA'}
                         </h4>
                         <div className="space-y-4">
                           {productAssumption.rows.filter(row => {
-                            if (productAssumption.isDigitalService) {
+                            if (productAssumption.isDepositAndService) {
+                              return ['Average Deposit per Customer', 'Deposit Interest Rate', 'Monthly Fee', 'Annual Service Revenue per Customer'].includes(row.parameter);
+                            } else if (productAssumption.isDigitalService) {
                               return ['Average Deposit per Customer', 'Annual Churn Rate'].includes(row.parameter);
                             } else {
                               return ['RWA Density', 'Default Rate', 'Loan-to-Value (LTV)', 
@@ -627,7 +682,8 @@ const DivisionAssumptions = ({
                         </div>
                       </div>
 
-                      {/* Third Card - varies by product type */}
+                      {/* Third Card - varies by product type (hidden for DepositAndService) */}
+                      {!productAssumption.isDepositAndService && (
                       <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
                           <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
@@ -690,6 +746,7 @@ const DivisionAssumptions = ({
                           ))}
                         </div>
                       </div>
+                      )}
                       
                     </div>
                   </div>

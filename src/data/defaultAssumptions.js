@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '4.0', // Implemented FTP (Funds Transfer Pricing) model with Treasury intermediation
+  version: '5.0', // Digital Banking simplified to single Deposit & Service product model
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -158,66 +158,23 @@ export const defaultAssumptions = {
       type: 'bullet', // Bullet repayment
       equityUpside: 2.5 // 2.5% equity upside
     },
-    // Digital Banking Division Products - Deposit Collection Model
-    digitalPersonalAccount: {
-      name: 'Digital Personal Account',
-      productType: 'DigitalService',
+    // Digital Banking Division - Single Deposit & Service Product
+    digitalRetailAccount: {
+      name: 'Conto Corrente Retail',
+      productType: 'DepositAndService',
       isDigital: true,
-      customers: { y1: 50000, y5: 250000 }, // Numero di nuovi clienti
+      // DRIVER DI ACQUISIZIONE
+      customers: { y1: 50000, y5: 250000 }, // Nuovi clienti/anno
       cac: 30, // Costo Acquisizione Cliente in €
+      churnRate: 5, // % annua di clienti persi
+      
+      // DRIVER DI STATO PATRIMONIALE (FUNDING)
       avgDeposit: 3000, // Deposito medio per cliente in €
-      churnRate: 5, // % annua
-      monthlyFee: 0, // €
-      annualServiceRevenue: 15, // Ricavi da servizi extra per cliente in €
-      depositInterestRate: 0.5 // Tasso pagato sui depositi in %
-    },
-    digitalBusinessAccount: {
-      name: 'Digital Business Account',
-      productType: 'DigitalService',
-      isDigital: true,
-      customers: { y1: 15000, y5: 75000 }, // Numero di nuovi clienti business
-      cac: 120, // Costo Acquisizione Cliente business in €
-      avgDeposit: 25000, // Deposito medio per cliente business in €
-      churnRate: 8, // % annua (più alta per business)
-      monthlyFee: 15, // € canone mensile
-      annualServiceRevenue: 150, // Ricavi da servizi business per cliente in €
-      depositInterestRate: 0.8 // Tasso pagato sui depositi business in %
-    },
-    digitalPaymentServices: {
-      name: 'Payment & Card Services',
-      productType: 'DigitalService',
-      isDigital: true,
-      customers: { y1: 80000, y5: 400000 }, // Clienti che usano servizi di pagamento
-      cac: 15, // Costo acquisizione più basso (cross-selling)
-      avgDeposit: 1500, // Deposito medio più basso per payment users
-      churnRate: 12, // % annua più alta per servizi specifici
-      monthlyFee: 0, // Gratuito base
-      annualServiceRevenue: 45, // Ricavi da commissioni pagamenti per cliente
-      depositInterestRate: 0.3 // Tasso più basso per conti transazionali
-    },
-    digitalMarketplace: {
-      name: 'Marketplace & Third-Party Services',
-      productType: 'DigitalService',
-      isDigital: true,
-      customers: { y1: 25000, y5: 150000 }, // Clienti attivi marketplace
-      cac: 45, // Costo acquisizione marketplace
-      avgDeposit: 2000, // Deposito medio per utenti marketplace
-      churnRate: 15, // % annua alta per marketplace
-      monthlyFee: 0, // Gratuito
-      annualServiceRevenue: 120, // Ricavi elevati da commissioni marketplace
-      depositInterestRate: 0.4 // Tasso standard
-    },
-    digitalBankingPlatform: {
-      name: 'Banking-as-a-Service Platform',
-      productType: 'DigitalService',
-      isDigital: true,
-      customers: { y1: 200, y5: 1500 }, // Clienti BaaS (B2B)
-      cac: 5000, // Costo acquisizione B2B elevato
-      avgDeposit: 0, // Nessun deposito per BaaS
-      churnRate: 3, // % annua bassa per contratti enterprise
-      monthlyFee: 2500, // € canone mensile enterprise
-      annualServiceRevenue: 15000, // Ricavi elevati da servizi enterprise
-      depositInterestRate: 0 // Nessun interesse sui depositi
+      depositInterestRate: 0.5, // Tasso passivo pagato sui depositi in %
+      
+      // DRIVER DI CONTO ECONOMICO (RICAVI)
+      monthlyFee: 1, // Canone mensile in €
+      annualServiceRevenue: 25 // Ricavi medi da servizi extra per cliente all'anno in €
     }
   }
 };

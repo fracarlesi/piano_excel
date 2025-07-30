@@ -248,6 +248,108 @@ const calculateDigitalServiceProduct = (product, assumptions, years, ftpRate) =>
 };
 
 /**
+ * Calculate Deposit and Service Product results (simplified Digital Banking model)
+ * Single product combining deposit collection and service revenues
+ */
+const calculateDepositAndServiceProduct = (product, assumptions, years, ftpRate) => {
+  // Get new customers per year
+  const newCustomers = years.map(i => {
+    // First check if there's a customerArray
+    if (product.customerArray && Array.isArray(product.customerArray) && product.customerArray.length === 10) {
+      return product.customerArray[i] || 0;
+    }
+    // Otherwise use customers object
+    if (product.customers) {
+      if (product.customers[`y${i + 1}`] !== undefined) {
+        return product.customers[`y${i + 1}`];
+      } else {
+        // Linear interpolation between y1 and y5
+        const y1 = product.customers.y1 || 0;
+        const y5 = product.customers.y5 || 0;
+        if (i < 5) {
+          return y1 + ((y5 - y1) * i / 4);
+        } else {
+          // Beyond year 5, maintain y5 level
+          return y5;
+        }
+      }
+    }
+    return 0;
+  });
+
+  // Calculate total customer stock evolution
+  const totalCustomers = [];
+  const churnRate = (product.churnRate || 5) / 100;
+  
+  for (let i = 0; i < years.length; i++) {
+    if (i === 0) {
+      totalCustomers[i] = newCustomers[i];
+    } else {
+      // Previous year customers * (1 - churn) + new customers
+      totalCustomers[i] = totalCustomers[i-1] * (1 - churnRate) + newCustomers[i];
+    }
+  }
+
+  // Calculate average customers for revenue calculations
+  const avgCustomers = totalCustomers.map((current, i) => {
+    if (i === 0) return current / 2; // Half year for first year
+    return (totalCustomers[i-1] + current) / 2;
+  });
+
+  // Calculate deposit stock (funding generated)
+  const avgDeposit = (product.avgDeposit || 0) / 1000000; // Convert to millions
+  const depositStock = totalCustomers.map(customers => customers * avgDeposit);
+
+  // Calculate revenues from fees and services
+  const monthlyFee = product.monthlyFee || 0;
+  const annualServiceRevenue = product.annualServiceRevenue || 0;
+  const commissionIncome = avgCustomers.map(customers => 
+    (customers * monthlyFee * 12 + customers * annualServiceRevenue) / 1000000 // Convert to millions
+  );
+
+  // Calculate direct operating costs (customer acquisition)
+  const cac = product.cac || 0;
+  const marketingCosts = newCustomers.map(customers => 
+    -(customers * cac) / 1000000 // Convert to millions, negative as cost
+  );
+
+  // Calculate interest expense on deposits
+  const depositInterestRate = (product.depositInterestRate || 0) / 100;
+  const interestExpense = depositStock.map(stock => -stock * depositInterestRate);
+
+  // Calculate FTP income (funds transfer pricing to Treasury)
+  const ftpIncome = depositStock.map(stock => stock * ftpRate);
+
+  return {
+    name: product.name,
+    volumes: newCustomers, // New customers per year
+    totalCustomers: totalCustomers,
+    avgCustomers: avgCustomers,
+    depositStock: depositStock, // Total deposit liability (funding)
+    performingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No credit assets
+    averagePerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    nonPerformingAssets: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    interestIncome: ftpIncome, // Revenue from Treasury FTP
+    interestExpense: interestExpense, // Cost of deposit interest
+    commissionIncome: commissionIncome, // Service fees and monthly fees
+    commissionExpense: marketingCosts, // Customer acquisition costs
+    llp: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // No credit losses
+    rwa: depositStock.map(stock => stock * 0.15), // Operational risk RWA (15% of deposits)
+    newBusiness: newCustomers,
+    numberOfLoans: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Not a lending product
+    assumptions: {
+      cac: cac,
+      avgDeposit: product.avgDeposit || 0,
+      churnRate: churnRate * 100,
+      monthlyFee: monthlyFee,
+      annualServiceRevenue: annualServiceRevenue,
+      depositInterestRate: depositInterestRate * 100,
+      ftpRate: ftpRate * 100
+    }
+  };
+};
+
+/**
  * Advanced calculation engine for bank business plan
  * 
  * @param {Object} assumptions - The financial assumptions object
@@ -273,6 +375,12 @@ export const calculateResults = (assumptions) => {
       // Handle Digital Service products (new customer-based model)
       if (product.productType === 'DigitalService') {
         productResults[key] = calculateDigitalServiceProduct(product, assumptions, years, ftpRate);
+        continue;
+      }
+      
+      // Handle Deposit and Service products (simplified Digital Banking model)
+      if (product.productType === 'DepositAndService') {
+        productResults[key] = calculateDepositAndServiceProduct(product, assumptions, years, ftpRate);
         continue;
       }
       
