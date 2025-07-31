@@ -264,15 +264,11 @@ export const calculateResults = (assumptions) => {
   // Personnel costs total
   results.pnl.personnelCostsTotal = results.allPersonnelCosts.grandTotal.costs;
   
-  // Other operating expenses
-  results.pnl.adminCosts = years.map(i => -assumptions.adminCostsY1 * costGrowth[i]);
-  results.pnl.marketingCosts = years.map(i => -assumptions.marketingCostsY1 * costGrowth[i]);
+  // Inter-division cost allocations
   results.pnl.hqAllocation = years.map(i => -assumptions.hqAllocationY1 * costGrowth[i]);
   results.pnl.itCosts = years.map(i => -assumptions.itCostsY1 * costGrowth[i]);
   
   const otherOpex = years.map(i => 
-    results.pnl.adminCosts[i] + 
-    results.pnl.marketingCosts[i] + 
     results.pnl.hqAllocation[i] + 
     results.pnl.itCosts[i]
   );
@@ -370,6 +366,21 @@ export const calculateResults = (assumptions) => {
       const totalRWA = results.capital.totalRWA[i] || 1;
       const rwaWeight = divisionRWA / totalRWA;
       return otherOpex[i] * rwaWeight;
+    });
+    
+    // Breakdown of other OPEX into IT costs and HQ allocation
+    division.pnl.itCosts = years.map(i => {
+      const divisionRWA = division.capital.rwaCreditRisk[i] || 0;
+      const totalRWA = results.capital.totalRWA[i] || 1;
+      const rwaWeight = divisionRWA / totalRWA;
+      return results.pnl.itCosts[i] * rwaWeight;
+    });
+    
+    division.pnl.hqAllocation = years.map(i => {
+      const divisionRWA = division.capital.rwaCreditRisk[i] || 0;
+      const totalRWA = results.capital.totalRWA[i] || 1;
+      const rwaWeight = divisionRWA / totalRWA;
+      return results.pnl.hqAllocation[i] * rwaWeight;
     });
     
     // Total OPEX

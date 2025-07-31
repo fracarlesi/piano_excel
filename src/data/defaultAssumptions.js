@@ -1,21 +1,15 @@
 export const defaultAssumptions = {
-  version: '10.43', // Fixed Annual Salary Review to allow 0% value - removed hardcoded fallbacks
+  version: '10.47', // Removed product-level breakdown from Other OPEX section in P&L table
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
   euribor: 3.5, // EURIBOR base rate
   ftpSpread: 1.5, // Spread over EURIBOR for FTP rate (FTP = EURIBOR + ftpSpread)
   depositRate: 0.5, // Rate paid to customers on deposit accounts
-  testNewField: 999, // TEST: Nuovo campo per verificare smart merge
   quarterlyAllocation: [25, 25, 25, 25], // % di erogazioni per Q1, Q2, Q3, Q4
-  backOfficeCostsY1: 2, 
-  adminCostsY1: 1.5,
-  marketingCostsY1: 1, 
   hqAllocationY1: 2.5, 
   itCostsY1: 4, 
   costGrowthRate: 10, 
-  otherCostsY1: 0.5,
-  provisionsY1: 0.2, 
   commissionExpenseRate: 0.0,
   
   // Global Personnel Parameters

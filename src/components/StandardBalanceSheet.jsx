@@ -28,10 +28,11 @@ const StandardBalanceSheet = ({
   const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0,0,0,0,0,0];
   const totalLiabilities = totalAssets.map((ta, i) => ta - allocatedEquity[i]);
 
-  // Breakdown of liabilities
-  const sightDeposits = totalLiabilities.map(tl => tl * 0.4); // 40% sight deposits
-  const termDeposits = totalLiabilities.map(tl => tl * 0.3); // 30% term deposits
-  const groupFunding = totalLiabilities.map(tl => tl * 0.3); // 30% group funding
+  // Breakdown of liabilities using configured funding mix
+  const fundingMix = assumptions.fundingMix || { sightDeposits: 40, termDeposits: 40, groupFunding: 20 };
+  const sightDeposits = totalLiabilities.map(tl => tl * (fundingMix.sightDeposits / 100));
+  const termDeposits = totalLiabilities.map(tl => tl * (fundingMix.termDeposits / 100));
+  const groupFunding = totalLiabilities.map(tl => tl * (fundingMix.groupFunding / 100));
 
   // Balance Sheet Rows following the exact schema
   const balanceSheetRows = [

@@ -23,6 +23,8 @@ const StandardPnL = ({
   //   firstValue: divisionResults.pnl?.personnelCosts?.[0]
   // });
   
+  // Standard years array
+  const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   // Calculate derived values
   const netInterestIncome = (divisionResults.pnl.interestIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
@@ -506,119 +508,50 @@ const StandardPnL = ({
       decimals: 2,
       isHeader: true,
       formula: otherOpex.map((val, i) => createFormula(i,
-        'Admin + Marketing + IT + HQ Allocation',
+        'IT Costs + HQ Allocation',
         [
-          year => `Allocated based on division RWA share`,
+          year => `Inter-division cost allocations`,
           year => `Other OPEX: ${formatNumber(val, 2)} €M`
         ]
       )),
       // Add breakdown as subRows
       subRows: showProductDetail ? [
         {
-          label: 'Back-office and other admin costs',
-          data: otherOpex.map(o => o * 0.4), // Approximate split
+          label: 'IT costs (from Tech Division)',
+          data: divisionResults.pnl.itCosts || years.map(() => 0),
           decimals: 2,
-          formula: otherOpex.map((val, i) => createFormula(
+          formula: (divisionResults.pnl.itCosts || years.map(() => 0)).map((val, i) => createFormula(
             i,
-            'Total Other OPEX × 40%',
+            'Tech Division costs allocated to business divisions',
             [
               {
-                name: 'Total Other OPEX',
+                name: 'IT Costs',
                 value: val,
                 unit: '€M',
-                calculation: 'Sum of admin, marketing, IT, HQ costs'
+                calculation: 'IT costs allocated based on division technology usage'
               }
             ],
-            year => `${formatNumber(val, 2)} × 40% = ${formatNumber(Math.abs(val * 0.4), 2)} €M`
+            year => `IT costs allocated: ${formatNumber(Math.abs(val), 2)} €M`
           ))
         },
         {
-          label: 'IT costs',
-          data: otherOpex.map(o => o * 0.3), // Approximate split
+          label: 'HQ Allocation (from Central Functions)',
+          data: divisionResults.pnl.hqAllocation || years.map(() => 0),
           decimals: 2,
-          formula: otherOpex.map((val, i) => createFormula(
+          formula: (divisionResults.pnl.hqAllocation || years.map(() => 0)).map((val, i) => createFormula(
             i,
-            'Total Other OPEX × 30%',
+            'Central Functions costs allocated to business divisions',
             [
               {
-                name: 'Total Other OPEX',
+                name: 'HQ Allocation',
                 value: val,
                 unit: '€M',
-                calculation: 'Sum of admin, marketing, IT, HQ costs'
+                calculation: 'Central overhead allocated based on division size'
               }
             ],
-            year => `${formatNumber(val, 2)} × 30% = ${formatNumber(Math.abs(val * 0.3), 2)} €M`
+            year => `HQ allocation: ${formatNumber(Math.abs(val), 2)} €M`
           ))
-        },
-        {
-          label: 'HQ Allocation',
-          data: otherOpex.map(o => o * 0.2), // Approximate split
-          decimals: 2,
-          formula: otherOpex.map((val, i) => createFormula(
-            i,
-            'Total Other OPEX × 20%',
-            [
-              {
-                name: 'Total Other OPEX',
-                value: val,
-                unit: '€M',
-                calculation: 'Sum of admin, marketing, IT, HQ costs'
-              }
-            ],
-            year => `${formatNumber(val, 2)} × 20% = ${formatNumber(Math.abs(val * 0.2), 2)} €M`
-          ))
-        },
-        {
-          label: 'Other Costs',
-          data: otherOpex.map(o => o * 0.1), // Approximate split
-          decimals: 2,
-          formula: otherOpex.map((val, i) => createFormula(
-            i,
-            'Total Other OPEX × 10%',
-            [
-              {
-                name: 'Total Other OPEX',
-                value: val,
-                unit: '€M',
-                calculation: 'Sum of admin, marketing, IT, HQ costs'
-              }
-            ],
-            year => `${formatNumber(val, 2)} × 10% = ${formatNumber(Math.abs(val * 0.1), 2)} €M`
-          ))
-        },
-        // Product-level breakdown
-        ...Object.entries(productResults).map(([key, product], index) => ({
-          label: `o/w ${product.name}`,
-          data: product.otherOpex ?? [0,0,0,0,0,0,0,0,0,0],
-          decimals: 2,
-          formula: (product.otherOpex ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
-            createFormula(
-              i,
-              'Total Other OPEX × RWA Weight',
-              [
-                {
-                  name: 'Total Other OPEX',
-                  value: otherOpex[i] ?? 0,
-                  unit: '€M',
-                  calculation: 'Division total other OPEX'
-                },
-                {
-                  name: 'Product RWA Weight',
-                  value: globalResults.capital.totalRWA[i] > 0 ? 
-                    ((product.rwa ?? [0,0,0,0,0,0,0,0,0,0])[i] / globalResults.capital.totalRWA[i] * 100) : 0,
-                  unit: '%',
-                  calculation: 'Product RWA as % of total RWA'
-                }
-              ],
-              year => {
-                const totalOtherOpex = otherOpex[year] ?? 0;
-                const rwaWeight = globalResults.capital.totalRWA[year] > 0 ? 
-                  ((product.rwa ?? [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) : 0;
-                return `${formatNumber(totalOtherOpex, 2)} × ${formatNumber(rwaWeight * 100, 2)}% = ${formatNumber(Math.abs(val), 2)} €M`;
-              }
-            )
-          )
-        }))
+        }
       ] : []
     },
 

@@ -124,60 +124,25 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
           </div>
           
           <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Personnel Costs</h4>
+            <h4 className="font-semibold text-gray-700 mb-2">Inter-Division Cost Allocations (Year 1)</h4>
             <EditableNumberField 
-              label="Average Cost per FTE" 
-              value={assumptions.avgCostPerFte} 
-              onChange={val => setAssumptions({...assumptions, avgCostPerFte: val})} 
-              unit="k€" 
-              disabled={!editMode} 
-              isInteger
-              tooltip="Average annual cost per Full-Time Equivalent employee including salary, benefits, and social charges"
-              tooltipImpact="Determines personnel costs across all divisions based on their FTE counts"
-              tooltipFormula="Division Personnel Cost = FTE Count × Average Cost per FTE"
-            />
-          </div>
-          
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Operating Costs (Year 1)</h4>
-            <EditableNumberField 
-              label="Administrative Costs" 
-              value={assumptions.adminCostsY1} 
-              onChange={val => setAssumptions({...assumptions, adminCostsY1: val})} 
-              unit="€M" 
-              disabled={!editMode}
-              tooltip="General administrative expenses for Year 1 including office, utilities, and professional services"
-              tooltipImpact="Allocated to business divisions as Other OPEX, grows annually by cost growth rate"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
-            />
-            <EditableNumberField 
-              label="Marketing Costs" 
-              value={assumptions.marketingCostsY1} 
-              onChange={val => setAssumptions({...assumptions, marketingCostsY1: val})} 
-              unit="€M" 
-              disabled={!editMode}
-              tooltip="Marketing and advertising expenses for Year 1 to acquire customers and promote products"
-              tooltipImpact="Allocated to business divisions, particularly important for Digital Banking and Wealth Management"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
-            />
-            <EditableNumberField 
-              label="IT Costs" 
+              label="IT Costs (from Tech Division)" 
               value={assumptions.itCostsY1} 
               onChange={val => setAssumptions({...assumptions, itCostsY1: val})} 
               unit="€M" 
               disabled={!editMode}
-              tooltip="Technology infrastructure and software costs for Year 1"
-              tooltipImpact="Allocated across divisions, with higher allocation to Digital Banking and Tech Platform divisions"
+              tooltip="Technology costs from Tech Division allocated to business divisions"
+              tooltipImpact="Tech Division costs allocated to other divisions based on their technology usage"
               tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
             <EditableNumberField 
-              label="HQ Allocation" 
+              label="HQ Allocation (from Central Functions)" 
               value={assumptions.hqAllocationY1} 
               onChange={val => setAssumptions({...assumptions, hqAllocationY1: val})} 
               unit="€M" 
               disabled={!editMode}
-              tooltip="Headquarters overhead costs allocated to business divisions for Year 1"
-              tooltipImpact="Distributed to business divisions based on their relative size and complexity"
+              tooltip="Central Functions costs allocated to business divisions"
+              tooltipImpact="Central Functions overhead distributed to business divisions based on size"
               tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
           </div>
