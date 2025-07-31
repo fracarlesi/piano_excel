@@ -27,6 +27,25 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v8.02 (2025-07-31)
+- Fixed critical bug where division data was being completely overwritten
+- Now preserving existing division data when recalculating
+- This fixes the issue where Digital and Real Estate divisions were losing their personnel costs
+
+### v8.01 (2025-07-31)
+- Created centralized division mappings in `/src/utils/divisionMappings.js`
+- Eliminated all duplicate mapping definitions throughout the codebase
+- Fixed inconsistent division naming that was causing personnel costs to show only for Wealth division
+- Single source of truth for all division-related mappings
+
+### v8.00 (2025-07-31) - MAJOR REFACTORING
+- **Architectural Change**: Complete refactoring of personnel cost calculation system
+- Created dedicated modular calculator in `/src/utils/calculators/personnelCalculator.js`
+- Explicit data flow: personnel costs calculated once upfront and explicitly assigned
+- Eliminated complex mapping and potential data loss issues
+- Clear separation of concerns: personnel logic isolated from main calculation engine
+- Better maintainability and easier debugging with clear data structure
+
 ### v7.31 (2025-07-31)
 - Fixed critical bug where division structure was being recreated, wiping out personnel costs
 - Personnel costs now properly preserved when calculating division-level results

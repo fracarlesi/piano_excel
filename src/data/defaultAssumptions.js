@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '7.31', // Fixed division structure overwrite bug that was clearing personnel costs
+  version: '8.02', // Fixed division data overwrite issue - now preserving existing data when recalculating
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
