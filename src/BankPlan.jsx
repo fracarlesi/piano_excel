@@ -270,6 +270,7 @@ const ExcelLikeBankPlan = () => {
           hasUnsavedChanges={hasUnsavedChanges}
           lastFileExport={lastFileExport}
           isAutoSaving={isAutoSaving}
+          version={assumptions?.version}
         />
         
         <Navigation 

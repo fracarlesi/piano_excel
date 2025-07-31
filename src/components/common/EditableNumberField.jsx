@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Tooltip from './Tooltip';
 
 // A smarter input field that handles numeric formatting for better UX.
 const EditableNumberField = ({ 
@@ -8,7 +9,11 @@ const EditableNumberField = ({
   unit = "", 
   disabled, 
   isPercentage = false, 
-  isInteger = false 
+  isInteger = false,
+  tooltip,
+  tooltipTitle,
+  tooltipImpact,
+  tooltipFormula
 }) => {
   const [inputValue, setInputValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
@@ -41,8 +46,17 @@ const EditableNumberField = ({
 
   return (
     <div className="mb-2">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {unit && <span className="text-gray-500">({unit})</span>}
+      <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+        <span>{label} {unit && <span className="text-gray-500">({unit})</span>}</span>
+        {(tooltip || tooltipTitle) && (
+          <Tooltip 
+            id={`tooltip-${label.toLowerCase().replace(/\s+/g, '-')}`}
+            title={tooltipTitle || label}
+            description={tooltip}
+            impact={tooltipImpact}
+            formula={tooltipFormula}
+          />
+        )}
       </label>
       <div className="relative">
         <input

@@ -7,16 +7,22 @@ const Header = ({
   lastSaved, 
   hasUnsavedChanges,
   lastFileExport,
-  isAutoSaving
+  isAutoSaving,
+  version
 }) => {
 
   return (
     <div className="bg-white shadow-sm sticky top-0 z-10">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-3">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Interactive Business Plan</h1>
-            <p className="text-xs text-gray-600">New Bank S.p.A. | Financial Model</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Interactive Business Plan</h1>
+              <p className="text-xs text-gray-600">New Bank S.p.A. | Financial Model</p>
+            </div>
+            <div className="px-3 py-1 bg-purple-100 border border-purple-300 rounded-md">
+              <span className="text-sm font-semibold text-purple-800">v{version || '5.9'}</span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Real-time sync status */}

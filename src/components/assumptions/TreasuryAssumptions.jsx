@@ -21,6 +21,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="%"
               isPercentage={true}
               tooltip="Required liquidity buffer as % of total deposits"
+              tooltipTitle="Liquidity Buffer Requirement"
+              tooltipImpact="Determines minimum liquid assets the bank must hold for regulatory compliance"
+              tooltipFormula="Liquidity Buffer = Total Deposits × Buffer Requirement %"
             />
             <EditableNumberField
               label="Liquid Asset Return Rate"
@@ -30,6 +33,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={true}
               decimals={2}
               tooltip="Annual return on liquid assets (government bonds, ECB deposits)"
+              tooltipTitle="Liquid Asset Return Rate"
+              tooltipImpact="Generates interest income on mandatory liquidity holdings"
+              tooltipFormula="Liquidity Income = Liquidity Buffer × Return Rate"
             />
           </div>
 
@@ -44,6 +50,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={true}
               decimals={2}
               tooltip="Cost of interbank funding for covering funding gaps"
+              tooltipTitle="Interbank Funding Rate"
+              tooltipImpact="Cost of external funding when loans exceed deposits"
+              tooltipFormula="Interbank Cost = Funding Gap × Interbank Rate"
             />
           </div>
 
@@ -57,6 +66,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="€M"
               isPercentage={false}
               tooltip="Initial size of trading portfolio"
+              tooltipTitle="Trading Book Size"
+              tooltipImpact="Proprietary trading assets generate additional income"
+              tooltipFormula="Trading Income = Trading Book × Return Target ± Volatility"
             />
             <EditableNumberField
               label="Trading Book Growth Rate"
@@ -65,6 +77,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="%"
               isPercentage={true}
               tooltip="Annual growth rate of trading book"
+              tooltipTitle="Trading Book Growth Rate"
+              tooltipImpact="Increases trading assets and potential income over time"
+              tooltipFormula="Trading Book Year N = Initial Size × (1 + Growth Rate)^(N-1)"
             />
             <EditableNumberField
               label="Trading Book Return Target"
@@ -73,6 +88,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="%"
               isPercentage={true}
               tooltip="Target annual return on trading activities"
+              tooltipTitle="Trading Book Return Target"
+              tooltipImpact="Expected income from proprietary trading operations"
+              tooltipFormula="Expected Trading Income = Trading Book × Return Target"
             />
             <EditableNumberField
               label="Trading Book Volatility"
@@ -81,6 +99,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="%"
               isPercentage={true}
               tooltip="Expected volatility of trading returns"
+              tooltipTitle="Trading Book Volatility"
+              tooltipImpact="Risk measure for trading activities, affects capital requirements"
+              tooltipFormula="Actual Return = Target Return ± Volatility adjustments"
             />
           </div>
 
@@ -94,6 +115,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="people"
               isInteger={true}
               tooltip="Number of treasury employees at year 1"
+              tooltipTitle="FTE Year 1"
+              tooltipImpact="Drives personnel costs for treasury operations"
+              tooltipFormula="Personnel Cost = FTE × Average Cost per FTE"
             />
             <EditableNumberField
               label="FTE Year 5"
@@ -102,6 +126,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="people"
               isInteger={true}
               tooltip="Target number of treasury employees by year 5"
+              tooltipTitle="FTE Year 5"
+              tooltipImpact="Linear growth in staffing from Year 1 to Year 5"
+              tooltipFormula="FTE grows linearly between Year 1 and Year 5"
             />
           </div>
         </div>

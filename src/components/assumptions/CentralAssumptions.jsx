@@ -22,6 +22,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Annual cost for board of directors, CEO, and executive management"
+              tooltipTitle="Board & Executive Costs"
+              tooltipImpact="Direct cost to bank P&L, not allocated to divisions"
+              tooltipFormula="Grows annually by cost growth rate"
             />
           </div>
 
@@ -35,6 +38,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Annual compliance, AML, and regulatory reporting costs"
+              tooltipTitle="Compliance Costs"
+              tooltipImpact="Ensures regulatory compliance across all divisions"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
             <EditableNumberField
               label="Risk Management Costs (Year 1)"
@@ -44,6 +50,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Central risk management function costs"
+              tooltipTitle="Risk Management Costs"
+              tooltipImpact="Covers enterprise risk, credit risk oversight, and operational risk"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
           </div>
 
@@ -57,6 +66,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Internal and external audit costs"
+              tooltipTitle="Audit Costs"
+              tooltipImpact="Ensures control effectiveness and financial reporting accuracy"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
             <EditableNumberField
               label="Legal Costs (Year 1)"
@@ -66,6 +78,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Legal department and external counsel costs"
+              tooltipTitle="Legal Costs"
+              tooltipImpact="Supports all divisions with contracts, disputes, and regulatory matters"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
           </div>
 
@@ -79,6 +94,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Strategic planning, M&A, and investor relations"
+              tooltipTitle="Strategy & Planning Costs"
+              tooltipImpact="Drives long-term value creation and stakeholder communication"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
             <EditableNumberField
               label="HR Central Costs (Year 1)"
@@ -88,6 +106,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Central HR, training, and recruitment costs"
+              tooltipTitle="HR Central Costs"
+              tooltipImpact="Manages talent across all divisions and ensures consistent policies"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
           </div>
 
@@ -101,6 +122,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Headquarters and central facilities costs"
+              tooltipTitle="Facilities Costs"
+              tooltipImpact="Fixed infrastructure costs not attributable to specific divisions"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
           </div>
 
@@ -113,6 +137,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="people"
               isInteger={true}
               tooltip="Number of employees in central functions at year 1"
+              tooltipTitle="FTE Year 1"
+              tooltipImpact="Drives personnel costs for central functions"
+              tooltipFormula="Personnel Cost = FTE × Average Cost per FTE"
             />
             <EditableNumberField
               label="FTE Year 5"
@@ -121,6 +148,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="people"
               isInteger={true}
               tooltip="Target number of employees in central functions by year 5"
+              tooltipTitle="FTE Year 5"
+              tooltipImpact="Linear interpolation between Year 1 and Year 5 FTE"
+              tooltipFormula="FTE grows linearly from Year 1 to Year 5"
             />
           </div>
         </div>

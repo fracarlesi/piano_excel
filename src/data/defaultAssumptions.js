@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.9', // Added Central Functions and Treasury divisions for realistic bank structure
+  version: '5.10', // Added comprehensive tooltip system for all assumptions (2025-07-31)
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

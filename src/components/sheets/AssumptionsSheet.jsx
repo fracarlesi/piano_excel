@@ -63,6 +63,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               unit="€M" 
               disabled={!editMode} 
               isInteger
+              tooltip="Starting capital invested in the bank at inception"
+              tooltipImpact="Determines the initial equity base for capital ratios and affects the bank's lending capacity"
+              tooltipFormula="Used as starting point for equity evolution in balance sheet"
             />
             <EditableNumberField 
               label="Tax Rate" 
@@ -71,6 +74,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               unit="%" 
               disabled={!editMode} 
               isPercentage
+              tooltip="Corporate income tax rate applied to pre-tax profits"
+              tooltipImpact="Reduces net income across all divisions and affects return on equity (ROE)"
+              tooltipFormula="Tax = Pre-tax Profit × Tax Rate"
             />
             <EditableNumberField 
               label="EURIBOR" 
@@ -79,6 +85,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               unit="%" 
               disabled={!editMode} 
               isPercentage
+              tooltip="European Interbank Offered Rate - the reference rate for interbank lending"
+              tooltipImpact="Base rate for internal funds transfer pricing (FTP) and affects Treasury's interbank operations"
+              tooltipFormula="FTP Rate = EURIBOR + FTP Spread"
             />
             <EditableNumberField 
               label="FTP Spread" 
@@ -118,6 +127,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               unit="k€" 
               disabled={!editMode} 
               isInteger
+              tooltip="Average annual cost per Full-Time Equivalent employee including salary, benefits, and social charges"
+              tooltipImpact="Determines personnel costs across all divisions based on their FTE counts"
+              tooltipFormula="Division Personnel Cost = FTE Count × Average Cost per FTE"
             />
           </div>
           
@@ -129,6 +141,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               onChange={val => setAssumptions({...assumptions, adminCostsY1: val})} 
               unit="€M" 
               disabled={!editMode}
+              tooltip="General administrative expenses for Year 1 including office, utilities, and professional services"
+              tooltipImpact="Allocated to business divisions as Other OPEX, grows annually by cost growth rate"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
             <EditableNumberField 
               label="Marketing Costs" 
@@ -136,6 +151,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               onChange={val => setAssumptions({...assumptions, marketingCostsY1: val})} 
               unit="€M" 
               disabled={!editMode}
+              tooltip="Marketing and advertising expenses for Year 1 to acquire customers and promote products"
+              tooltipImpact="Allocated to business divisions, particularly important for Digital Banking and Wealth Management"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
             <EditableNumberField 
               label="IT Costs" 
@@ -143,6 +161,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               onChange={val => setAssumptions({...assumptions, itCostsY1: val})} 
               unit="€M" 
               disabled={!editMode}
+              tooltip="Technology infrastructure and software costs for Year 1"
+              tooltipImpact="Allocated across divisions, with higher allocation to Digital Banking and Tech Platform divisions"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
             <EditableNumberField 
               label="HQ Allocation" 
@@ -150,6 +171,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               onChange={val => setAssumptions({...assumptions, hqAllocationY1: val})} 
               unit="€M" 
               disabled={!editMode}
+              tooltip="Headquarters overhead costs allocated to business divisions for Year 1"
+              tooltipImpact="Distributed to business divisions based on their relative size and complexity"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
           </div>
           
@@ -162,6 +186,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               unit="%" 
               disabled={!editMode} 
               isPercentage
+              tooltip="Annual inflation rate applied to all operating costs"
+              tooltipImpact="Increases all OPEX categories year-over-year across all divisions"
+              tooltipFormula="Cost Year N = Cost Year 1 × (1 + Rate)^(N-1)"
             />
             <EditableNumberField 
               label="Commission Expense Rate" 
@@ -170,6 +197,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
               unit="%" 
               disabled={!editMode} 
               isPercentage
+              tooltip="Percentage of commission income paid out as commission expenses"
+              tooltipImpact="Reduces net commission income in divisions with fee-based products (Wealth Management, Tech Platform)"
+              tooltipFormula="Commission Expense = Commission Income × Commission Expense Rate"
             />
           </div>
         </div>
@@ -188,6 +218,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
             unit="%" 
             disabled={!editMode} 
             isPercentage
+            tooltip="Percentage of funding from on-demand customer deposits"
+            tooltipImpact="Lower cost funding source, affects net interest margin and liquidity ratios"
+            tooltipFormula="Part of total funding mix (must sum to 100% with other sources)"
           />
           <EditableNumberField 
             label="Term Deposits" 
@@ -199,6 +232,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
             unit="%" 
             disabled={!editMode} 
             isPercentage
+            tooltip="Percentage of funding from fixed-term customer deposits"
+            tooltipImpact="Higher cost than sight deposits but more stable funding, affects interest expense"
+            tooltipFormula="Part of total funding mix (must sum to 100% with other sources)"
           />
           <EditableNumberField 
             label="Group Funding" 
@@ -210,6 +246,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
             unit="%" 
             disabled={!editMode} 
             isPercentage
+            tooltip="Percentage of funding from parent company or group entities"
+            tooltipImpact="Internal funding at market rates, managed by Treasury division"
+            tooltipFormula="Part of total funding mix (must sum to 100% with other sources)"
           />
         </div>
       </div>

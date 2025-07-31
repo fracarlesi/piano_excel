@@ -45,21 +45,30 @@ const DivisionAssumptions = ({
         description: 'Spread over EURIBOR',
         value: product.spread || 0,
         unit: '%',
-        key: `products.${productKey}.spread`
+        key: `products.${productKey}.spread`,
+        tooltip: 'Margin charged above EURIBOR rate on loans',
+        tooltipImpact: 'Directly increases interest income for the product',
+        tooltipFormula: 'Loan Rate = EURIBOR + Spread'
       },
       {
         parameter: 'Commission Rate',
         description: 'Upfront commission on new business volume',
         value: product.commissionRate || 0,
         unit: '%',
-        key: `products.${productKey}.commissionRate`
+        key: `products.${productKey}.commissionRate`,
+        tooltip: 'One-time fee charged on new loan originations',
+        tooltipImpact: 'Generates commission income in the year of origination',
+        tooltipFormula: 'Commission Income = New Volume × Commission Rate'
       },
       {
         parameter: 'Loan Maturity',
         description: 'Contractual maturity of loans in years (used for amortization calculations)',
         value: product.durata || 5,
         unit: 'years',
-        key: `products.${productKey}.durata`
+        key: `products.${productKey}.durata`,
+        tooltip: 'Total loan duration for amortization calculation',
+        tooltipImpact: 'Affects loan repayment schedule and outstanding balance evolution',
+        tooltipFormula: 'Used in French/bullet amortization calculations'
       },
       {
         parameter: 'Grace Period Duration',
@@ -73,35 +82,50 @@ const DivisionAssumptions = ({
         description: 'Risk-weighted assets density',
         value: product.rwaDensity || 75,
         unit: '%',
-        key: `products.${productKey}.rwaDensity`
+        key: `products.${productKey}.rwaDensity`,
+        tooltip: 'Percentage of loan amount that counts as risk-weighted assets',
+        tooltipImpact: 'Determines capital requirements and CET1 ratio',
+        tooltipFormula: 'RWA = Loan Outstanding × RWA Density'
       },
       {
         parameter: 'Default Rate',
         description: 'Annual default rate',
         value: product.dangerRate || 1.5,
         unit: '%',
-        key: `products.${productKey}.dangerRate`
+        key: `products.${productKey}.dangerRate`,
+        tooltip: 'Annual percentage of loans that default and become non-performing',
+        tooltipImpact: 'Increases NPL stock and drives loan loss provisions',
+        tooltipFormula: 'New NPLs = Performing Loans × Default Rate'
       },
       {
         parameter: 'Loan-to-Value (LTV)',
         description: 'Maximum loan-to-value ratio',
         value: product.ltv || 80,
         unit: '%',
-        key: `products.${productKey}.ltv`
+        key: `products.${productKey}.ltv`,
+        tooltip: 'Maximum loan amount as percentage of collateral value',
+        tooltipImpact: 'Affects Loss Given Default (LGD) calculation and credit risk',
+        tooltipFormula: 'Max Loan Amount = Collateral Value × LTV'
       },
       {
         parameter: 'Recovery Costs',
         description: 'Costs for recovery procedures',
         value: product.recoveryCosts || 10,
         unit: '%',
-        key: `products.${productKey}.recoveryCosts`
+        key: `products.${productKey}.recoveryCosts`,
+        tooltip: 'Legal and administrative costs to recover defaulted loans',
+        tooltipImpact: 'Reduces net recovery value and increases LGD',
+        tooltipFormula: 'Used in LGD calculation: reduces collateral recovery value'
       },
       {
         parameter: 'Collateral Haircut',
         description: 'Haircut on collateral value',
         value: product.collateralHaircut || 15,
         unit: '%',
-        key: `products.${productKey}.collateralHaircut`
+        key: `products.${productKey}.collateralHaircut`,
+        tooltip: 'Discount applied to collateral value in liquidation scenarios',
+        tooltipImpact: 'Reduces recovery value and increases LGD',
+        tooltipFormula: 'Liquidation Value = Collateral Value × (1 - Haircut)'
       },
       {
         parameter: 'Average Loan Size',
@@ -165,7 +189,10 @@ const DivisionAssumptions = ({
         description: 'Annual management fee rate on AUM',
         value: product.managementFeeRate || 0,
         unit: '%',
-        key: `products.${productKey}.managementFeeRate`
+        key: `products.${productKey}.managementFeeRate`,
+        tooltip: 'Annual percentage fee charged on assets under management',
+        tooltipImpact: 'Primary revenue driver for wealth management products',
+        tooltipFormula: 'Management Fees = AUM × Management Fee Rate'
       },
       {
         parameter: 'Performance Fee Rate',
@@ -252,28 +279,40 @@ const DivisionAssumptions = ({
         description: 'Cost to acquire each new customer',
         value: product.cac || 30,
         unit: '€',
-        key: `products.${productKey}.cac`
+        key: `products.${productKey}.cac`,
+        tooltip: 'Marketing and onboarding cost per new customer',
+        tooltipImpact: 'Recorded as operating expense in the year of acquisition',
+        tooltipFormula: 'Total Acquisition Cost = New Customers × CAC'
       },
       {
         parameter: 'Average Deposit per Customer',
         description: 'Average deposit amount per customer',
         value: product.avgDeposit || 3000,
         unit: '€',
-        key: `products.${productKey}.avgDeposit`
+        key: `products.${productKey}.avgDeposit`,
+        tooltip: 'Average balance maintained in customer accounts',
+        tooltipImpact: 'Drives deposit volume and interest expense',
+        tooltipFormula: 'Total Deposits = Active Customers × Avg Deposit'
       },
       {
         parameter: 'Annual Churn Rate',
         description: 'Percentage of customers lost annually',
         value: product.churnRate || 5,
         unit: '%',
-        key: `products.${productKey}.churnRate`
+        key: `products.${productKey}.churnRate`,
+        tooltip: 'Percentage of customers who close their accounts each year',
+        tooltipImpact: 'Reduces active customer base and requires replacement acquisitions',
+        tooltipFormula: 'Customers Lost = Active Customers × Churn Rate'
       },
       {
         parameter: 'Monthly Fee',
         description: 'Monthly subscription/account fee per customer',
         value: product.monthlyFee || 0,
         unit: '€',
-        key: `products.${productKey}.monthlyFee`
+        key: `products.${productKey}.monthlyFee`,
+        tooltip: 'Recurring monthly fee charged to each active customer',
+        tooltipImpact: 'Generates predictable commission income stream',
+        tooltipFormula: 'Monthly Income = Active Customers × Monthly Fee'
       },
       {
         parameter: 'Annual Service Revenue per Customer',
@@ -461,7 +500,10 @@ const DivisionAssumptions = ({
         description: 'Percentage of loan/service amount covered by state guarantee (e.g., MCC guarantee)',
         value: product.stateGuaranteePercentage || 0,
         unit: '%',
-        key: `products.${productKey}.stateGuaranteePercentage`
+        key: `products.${productKey}.stateGuaranteePercentage`,
+        tooltip: 'Portion of loan covered by government guarantee schemes',
+        tooltipImpact: 'Reduces effective LGD and RWA density for guaranteed portion',
+        tooltipFormula: 'Effective LGD = Base LGD × (1 - Guarantee %)'
       }
     ];
     
@@ -678,7 +720,10 @@ const DivisionAssumptions = ({
                                 disabled={false}
                                 isPercentage={row.unit === '%'}
                                 isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
-                                tooltip={row.description}
+                                tooltip={row.tooltip || row.description}
+                                tooltipTitle={row.parameter}
+                                tooltipImpact={row.tooltipImpact}
+                                tooltipFormula={row.tooltipFormula}
                               />
                             ))}
                           </div>
@@ -707,7 +752,10 @@ const DivisionAssumptions = ({
                                 disabled={false}
                                 isPercentage={row.unit === '%'}
                                 isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
-                                tooltip={row.description}
+                                tooltip={row.tooltip || row.description}
+                                tooltipTitle={row.parameter}
+                                tooltipImpact={row.tooltipImpact}
+                                tooltipFormula={row.tooltipFormula}
                               />
                             ))}
                           </div>
@@ -736,7 +784,10 @@ const DivisionAssumptions = ({
                                 disabled={false}
                                 isPercentage={row.unit === '%'}
                                 isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
-                                tooltip={row.description}
+                                tooltip={row.tooltip || row.description}
+                                tooltipTitle={row.parameter}
+                                tooltipImpact={row.tooltipImpact}
+                                tooltipFormula={row.tooltipFormula}
                               />
                             ))}
                             
@@ -822,7 +873,10 @@ const DivisionAssumptions = ({
                                 disabled={false}
                                 isPercentage={row.unit === '%'}
                                 isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
-                                tooltip={row.description}
+                                tooltip={row.tooltip || row.description}
+                                tooltipTitle={row.parameter}
+                                tooltipImpact={row.tooltipImpact}
+                                tooltipFormula={row.tooltipFormula}
                               />
                             ))}
                           </div>
@@ -851,7 +905,10 @@ const DivisionAssumptions = ({
                                 disabled={false}
                                 isPercentage={row.unit === '%'}
                                 isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
-                                tooltip={row.description}
+                                tooltip={row.tooltip || row.description}
+                                tooltipTitle={row.parameter}
+                                tooltipImpact={row.tooltipImpact}
+                                tooltipFormula={row.tooltipFormula}
                               />
                             ))}
                           </div>
@@ -915,7 +972,10 @@ const DivisionAssumptions = ({
                                   disabled={false}
                                   isPercentage={row.unit === '%'}
                                   isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
-                                  tooltip={row.description}
+                                  tooltip={row.tooltip || row.description}
+                                tooltipTitle={row.parameter}
+                                tooltipImpact={row.tooltipImpact}
+                                tooltipFormula={row.tooltipFormula}
                                 />
                               )}
                             </div>
@@ -977,7 +1037,10 @@ const DivisionAssumptions = ({
                                   disabled={false}
                                   isPercentage={row.unit === '%'}
                                   isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
-                                  tooltip={row.description}
+                                  tooltip={row.tooltip || row.description}
+                                tooltipTitle={row.parameter}
+                                tooltipImpact={row.tooltipImpact}
+                                tooltipFormula={row.tooltipFormula}
                                 />
                               )}
                             </div>
@@ -1083,7 +1146,10 @@ const DivisionAssumptions = ({
                                   disabled={false}
                                   isPercentage={row.unit === '%'}
                                   isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
-                                  tooltip={row.description}
+                                  tooltip={row.tooltip || row.description}
+                                tooltipTitle={row.parameter}
+                                tooltipImpact={row.tooltipImpact}
+                                tooltipFormula={row.tooltipFormula}
                                 />
                               )}
                             </div>
