@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.31', // Fixed Loan Maturity and Grace Period fields to properly handle zero values
+  version: '5.34', // Fixed bullet loan duration parsing - ensure durata is treated as number for correct maturity calculations
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

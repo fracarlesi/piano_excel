@@ -91,7 +91,7 @@ const calculateCommissionProduct = (product, assumptions, years) => {
         const y10 = product.volumes.y10 !== undefined ? product.volumes.y10 : 0;
         
         // Special case for bullet loans with short duration: only originate in year 1
-        if (product.type === 'bullet' && product.durata <= 2 && y10 === 0 && i > 0) {
+        if ((product.type || '').toLowerCase() === 'bullet' && product.durata <= 2 && y10 === 0 && i > 0) {
           yearVolume = 0; // No new originations after year 1
         } else {
           yearVolume = y1 + ((y10 - y1) * i / 9);
@@ -650,7 +650,7 @@ export const calculateResults = (assumptions) => {
             const y10 = product.volumes.y10 !== undefined ? product.volumes.y10 : 0; // Default y10 to 0 if not specified
             
             // Special case for bullet loans with short duration: only originate in year 1
-            if (product.type === 'bullet' && product.durata <= 2 && y10 === 0 && i > 0) {
+            if ((product.type || '').toLowerCase() === 'bullet' && product.durata <= 2 && y10 === 0 && i > 0) {
               yearVolume = 0; // No new originations after year 1
             } else {
               yearVolume = y1 + ((y10 - y1) * i / 9);
@@ -675,7 +675,7 @@ export const calculateResults = (assumptions) => {
       const newNPLs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       
       // Debug loan parameters
-      if (product.type === 'bullet') {
+      if ((product.type || '').toLowerCase() === 'bullet') {
           console.log(`\n=== BULLET LOAN: ${product.name} ===`);
           console.log(`Durata: ${product.durata}`);
           console.log(`Volumes Y1: ${product.volumes?.y1}, Y10: ${product.volumes?.y10}`);
@@ -702,24 +702,34 @@ export const calculateResults = (assumptions) => {
               const effectiveAge = Math.max(0, ageInYears - gracePeriod);
               
               // Use totalDuration if available, otherwise fall back to durata
-              const totalDuration = product.totalDuration || product.durata || 7;
+              // Ensure durata is a number
+              const totalDuration = Number(product.totalDuration || product.durata || 7);
               
-              if (effectiveAge > 0 && effectiveAge <= totalDuration && product.type !== 'bullet') {
+              // Normalize product type to lowercase for comparison
+              const productType = (product.type || '').toLowerCase();
+              
+              // Debug duration values
+              if (productType === 'bullet' && year === 0 && prevYear === 0) {
+                  console.log(`  Product: ${product.name}, durata=${product.durata}, totalDuration=${totalDuration}, type=${product.type}`);
+              }
+              
+              if (effectiveAge > 0 && effectiveAge <= totalDuration && productType !== 'bullet') {
                   // During grace period, no repayments
                   if (ageInYears > gracePeriod) {
                       repayments += cohortVolume / (totalDuration - gracePeriod);
                   }
               }
               // For bullet loans, repay exactly at maturity
-              if (product.type === 'bullet' && cohortVolume > 0) {
-                  // For integer durations, use exact comparison
-                  // For fractional durations, use rounded comparison
-                  const isMaturity = (totalDuration % 1 === 0) 
-                      ? ageInYears === totalDuration 
-                      : Math.abs(ageInYears - totalDuration) < 0.01;
-                  
-                  if (isMaturity) {
+              if (productType === 'bullet' && cohortVolume > 0) {
+                  // Check if this cohort matures in the current year
+                  if (ageInYears === totalDuration) {
                       repayments += cohortVolume;
+                      console.log(`    >>> REPAYING Bullet Cohort Y${prevYear}: ${cohortVolume.toFixed(1)} at year ${year} (age=${ageInYears}, duration=${totalDuration})`);
+                  }
+                  
+                  // Debug: log each cohort check
+                  if (cohortVolume > 0) {
+                      console.log(`  Bullet Cohort Y${prevYear}: volume=${cohortVolume.toFixed(1)}, age=${ageInYears}, duration=${totalDuration}, matures at year ${prevYear + totalDuration}`);
                   }
               }
           }
@@ -727,6 +737,11 @@ export const calculateResults = (assumptions) => {
           const prevYearStock = year > 0 ? grossPerformingStock[year - 1] : 0;
           const totalEopStock = prevYearStock + volumes10Y[year] - repayments - newNPLs[year];
           grossPerformingStock[year] = totalEopStock;
+          
+          // Debug for bullet loans
+          if ((product.type || '').toLowerCase() === 'bullet') {
+              console.log(`Year ${year}: prevStock=${prevYearStock.toFixed(1)}, newVol=${volumes10Y[year].toFixed(1)}, repayments=${repayments.toFixed(1)}, stock=${totalEopStock.toFixed(1)}, durata=${product.durata}`);
+          }
           
           // Calculate duration-weighted average stock
           let durationWeightedAvgStock = 0;
@@ -736,12 +751,12 @@ export const calculateResults = (assumptions) => {
               const vintageVolume = volumes10Y[originYear] || 0;
               if (vintageVolume > 0) {
                   const ageInYears = year - originYear;
-                  const totalDuration = product.totalDuration || product.durata || 7;
+                  const totalDuration = Number(product.totalDuration || product.durata || 7);
                   const gracePeriod = product.gracePeriod || 0;
                   
                   let vintageAvgStock = 0;
                   
-                  if (product.type === 'bullet') {
+                  if ((product.type || '').toLowerCase() === 'bullet') {
                       // Bullet: full amount until maturity, then zero
                       if (ageInYears < totalDuration) {
                           vintageAvgStock = vintageVolume;
@@ -750,7 +765,7 @@ export const calculateResults = (assumptions) => {
                       }
                   } else if (ageInYears < totalDuration) {
                       // For non-bullet loans, only calculate if within duration
-                      if (product.type === 'interest-only') {
+                      if ((product.type || '').toLowerCase() === 'interest-only') {
                           // Interest-only: full amount until final repayment
                           vintageAvgStock = ageInYears < (totalDuration - 1) ? vintageVolume : vintageVolume / 2;
                       } else {
