@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.22', // Fixed dangerRate display to allow zero values
+  version: '5.30', // Smart merge: adds new fields but respects product deletions
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

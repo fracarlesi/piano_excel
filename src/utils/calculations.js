@@ -88,8 +88,14 @@ const calculateCommissionProduct = (product, assumptions, years) => {
       } else {
         // Priority 3: Fallback to linear interpolation between y1 and y10
         const y1 = product.volumes.y1 || 0;
-        const y10 = product.volumes.y10 || 0;
-        yearVolume = y1 + ((y10 - y1) * i / 9);
+        const y10 = product.volumes.y10 !== undefined ? product.volumes.y10 : 0;
+        
+        // Special case for bullet loans with short duration: only originate in year 1
+        if (product.type === 'bullet' && product.durata <= 2 && y10 === 0 && i > 0) {
+          yearVolume = 0; // No new originations after year 1
+        } else {
+          yearVolume = y1 + ((y10 - y1) * i / 9);
+        }
       }
     }
     // Priority 4: Default to zero
@@ -641,8 +647,14 @@ export const calculateResults = (assumptions) => {
           } else {
             // Priority 3: Fallback to linear interpolation between y1 and y10
             const y1 = product.volumes.y1 || 0;
-            const y10 = product.volumes.y10 || 0;
-            yearVolume = y1 + ((y10 - y1) * i / 9);
+            const y10 = product.volumes.y10 !== undefined ? product.volumes.y10 : 0; // Default y10 to 0 if not specified
+            
+            // Special case for bullet loans with short duration: only originate in year 1
+            if (product.type === 'bullet' && product.durata <= 2 && y10 === 0 && i > 0) {
+              yearVolume = 0; // No new originations after year 1
+            } else {
+              yearVolume = y1 + ((y10 - y1) * i / 9);
+            }
           }
         }
         // Priority 4: Default to zero
@@ -690,14 +702,33 @@ export const calculateResults = (assumptions) => {
                       repayments += cohortVolume / (totalDuration - gracePeriod);
                   }
               }
-              if (ageInYears === totalDuration && product.type === 'bullet') {
-                  repayments += cohortVolume;
+              // For bullet loans, repay exactly at maturity
+              if (product.type === 'bullet' && cohortVolume > 0) {
+                  // For integer durations, use exact comparison
+                  // For fractional durations, use rounded comparison
+                  const isMaturity = (totalDuration % 1 === 0) 
+                      ? ageInYears === totalDuration 
+                      : Math.abs(ageInYears - totalDuration) < 0.01;
+                  
+                  if (isMaturity) {
+                      repayments += cohortVolume;
+                  }
+                  
+                  // Debug log for bullet loans
+                  if (year <= 3 && prevYear === 0) {
+                      console.log(`Bullet ${product.name}: year=${year}, ageInYears=${ageInYears}, totalDuration=${totalDuration}, isMaturity=${isMaturity}, cohortVolume=${cohortVolume}`);
+                  }
               }
           }
 
           const prevYearStock = year > 0 ? grossPerformingStock[year - 1] : 0;
           const totalEopStock = prevYearStock + volumes10Y[year] - repayments - newNPLs[year];
           grossPerformingStock[year] = totalEopStock;
+          
+          // Debug for bullet loans
+          if (product.type === 'bullet' && year <= 3) {
+              console.log(`Bullet ${product.name} Y${year}: Stock=${totalEopStock.toFixed(1)}, NewVol=${volumes10Y[year].toFixed(1)}, Repay=${repayments.toFixed(1)}`);
+          }
           
           // Calculate duration-weighted average stock
           let durationWeightedAvgStock = 0;
@@ -710,17 +741,18 @@ export const calculateResults = (assumptions) => {
                   const totalDuration = product.totalDuration || product.durata || 7;
                   const gracePeriod = product.gracePeriod || 0;
                   
-                  if (ageInYears < totalDuration) {
-                      let vintageAvgStock = 0;
-                      
-                      if (product.type === 'bullet') {
-                          // Bullet: full amount until maturity, then zero
-                          if (ageInYears < totalDuration) {
-                              vintageAvgStock = vintageVolume;
-                          } else {
-                              vintageAvgStock = 0; // Loan fully repaid at maturity
-                          }
-                      } else if (product.type === 'interest-only') {
+                  let vintageAvgStock = 0;
+                  
+                  if (product.type === 'bullet') {
+                      // Bullet: full amount until maturity, then zero
+                      if (ageInYears < totalDuration) {
+                          vintageAvgStock = vintageVolume;
+                      } else {
+                          vintageAvgStock = 0; // Loan fully repaid at maturity
+                      }
+                  } else if (ageInYears < totalDuration) {
+                      // For non-bullet loans, only calculate if within duration
+                      if (product.type === 'interest-only') {
                           // Interest-only: full amount until final repayment
                           vintageAvgStock = ageInYears < (totalDuration - 1) ? vintageVolume : vintageVolume / 2;
                       } else {
@@ -738,13 +770,11 @@ export const calculateResults = (assumptions) => {
                       
                       // Apply default adjustments (reduce stock for cumulative defaults)
                       // For bullet loans, we don't apply gradual default reduction to the principal
-                      if (product.type !== 'bullet') {
-                          const cumulativeDefaultRate = Math.min(0.95, adjustedDefaultRate * ageInYears);
-                          vintageAvgStock *= (1 - cumulativeDefaultRate);
-                      }
-                      
-                      durationWeightedAvgStock += vintageAvgStock;
+                      const cumulativeDefaultRate = Math.min(0.95, adjustedDefaultRate * ageInYears);
+                      vintageAvgStock *= (1 - cumulativeDefaultRate);
                   }
+                  
+                  durationWeightedAvgStock += vintageAvgStock;
               }
           }
           

@@ -43,10 +43,90 @@ export const useFirebaseState = () => {
 
   // Load initial data and set up real-time listener
   useEffect(() => {
-    // In development mode, use local data
+    // In development mode, use local data but preserve existing values
     if (isDevelopment) {
       console.log('🚀 Development mode: Using local defaultAssumptions');
-      setLocalAssumptions(defaultAssumptions);
+      
+      // Get saved data from localStorage if available
+      const savedData = localStorage.getItem('bankAssumptions');
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          console.log('📦 Found saved data in localStorage, version:', parsedData.version);
+          
+          // If saved version is older than default version, merge
+          const compareVersions = (v1, v2) => {
+            const parts1 = v1.split('.').map(Number);
+            const parts2 = v2.split('.').map(Number);
+            
+            for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+              const part1 = parts1[i] || 0;
+              const part2 = parts2[i] || 0;
+              if (part1 > part2) return 1;
+              if (part1 < part2) return -1;
+            }
+            return 0;
+          };
+          
+          if (compareVersions(defaultAssumptions.version, parsedData.version) > 0) {
+            console.log(`🔄 Updating from version ${parsedData.version} to ${defaultAssumptions.version}`);
+            
+            // Smart merge that respects deletions but adds new fields
+            const mergeData = (localData, savedData) => {
+              const merged = { ...savedData }; // Start with saved data
+              
+              // Add new top-level fields (but not products)
+              Object.keys(localData).forEach(key => {
+                if (key !== 'products' && !(key in savedData)) {
+                  merged[key] = localData[key];
+                  console.log(`✨ Adding new field: ${key}`);
+                }
+              });
+              
+              // For products, only update existing ones with new fields
+              if (savedData.products) {
+                merged.products = { ...savedData.products };
+                
+                // For each existing product in saved data
+                Object.keys(savedData.products).forEach(productKey => {
+                  const savedProduct = savedData.products[productKey];
+                  const defaultProduct = localData.products?.[productKey];
+                  
+                  if (defaultProduct && typeof savedProduct === 'object') {
+                    // Add any new fields from default to saved product
+                    Object.keys(defaultProduct).forEach(field => {
+                      if (!(field in savedProduct)) {
+                        merged.products[productKey][field] = defaultProduct[field];
+                        console.log(`✨ Adding new field to ${productKey}: ${field}`);
+                      }
+                    });
+                  }
+                });
+              }
+              
+              return merged;
+            };
+            
+            const mergedData = mergeData(defaultAssumptions, parsedData);
+            mergedData.version = defaultAssumptions.version;
+            
+            setLocalAssumptions(mergedData);
+            localStorage.setItem('bankAssumptions', JSON.stringify(mergedData));
+            console.log('✅ Version updated successfully');
+          } else {
+            // Use saved data as-is
+            setLocalAssumptions(parsedData);
+          }
+        } catch (error) {
+          console.error('Error parsing saved data:', error);
+          setLocalAssumptions(defaultAssumptions);
+        }
+      } else {
+        // No saved data, use defaults
+        setLocalAssumptions(defaultAssumptions);
+        localStorage.setItem('bankAssumptions', JSON.stringify(defaultAssumptions));
+      }
+      
       setIsLoading(false);
       return; // Skip Firebase connection in development
     }
@@ -88,59 +168,48 @@ export const useFirebaseState = () => {
             if (defaultAssumptions.version && data.version && versionComparison > 0) {
               console.log(`🔄 Updating Firebase from version ${data.version} to ${defaultAssumptions.version}`);
               
-              // Smart merge: structure from local, values from Firebase
+              // Smart merge that respects deletions but adds new fields
               const mergeData = (localData, firebaseData) => {
-                // Recursive merge function
-                const deepMerge = (local, firebase, path = '') => {
-                  const merged = {};
+                const merged = { ...firebaseData }; // Start with Firebase data
+                
+                // Add new top-level fields (but not products)
+                Object.keys(localData).forEach(key => {
+                  if (key !== 'products' && !(key in firebaseData)) {
+                    merged[key] = localData[key];
+                    console.log(`✨ Adding new field: ${key}`);
+                  }
+                });
+                
+                // For products, only update existing ones with new fields
+                if (firebaseData.products) {
+                  merged.products = { ...firebaseData.products };
                   
-                  // For each key in local structure
-                  Object.keys(local).forEach(key => {
-                    const localValue = local[key];
-                    const firebaseValue = firebase?.[key];
-                    const currentPath = path ? `${path}.${key}` : key;
+                  // For each existing product in Firebase
+                  Object.keys(firebaseData.products).forEach(productKey => {
+                    const firebaseProduct = firebaseData.products[productKey];
+                    const defaultProduct = localData.products?.[productKey];
                     
-                    // If it's an object (not array), recurse
-                    if (localValue && typeof localValue === 'object' && !Array.isArray(localValue)) {
-                      merged[key] = deepMerge(localValue, firebaseValue, currentPath);
-                    } else {
-                      // For primitive values or arrays:
-                      // - If exists in Firebase, keep Firebase value (user modifications)
-                      // - If new field, use local default value
-                      if (firebaseValue !== undefined) {
-                        merged[key] = firebaseValue;
-                        if (localValue !== firebaseValue && key !== 'version') {
-                          console.log(`📌 Keeping user value for ${currentPath}: ${firebaseValue} (local default: ${localValue})`);
+                    if (defaultProduct && typeof firebaseProduct === 'object') {
+                      // Add any new fields from default to Firebase product
+                      Object.keys(defaultProduct).forEach(field => {
+                        if (!(field in firebaseProduct)) {
+                          merged.products[productKey][field] = defaultProduct[field];
+                          console.log(`✨ Adding new field to ${productKey}: ${field}`);
                         }
-                      } else {
-                        merged[key] = localValue;
-                        console.log(`✨ Adding new field ${currentPath}: ${localValue}`);
-                      }
+                      });
                     }
                   });
-                  
-                  // Preserve any Firebase fields not in local (backwards compatibility)
-                  if (firebase && typeof firebase === 'object' && !Array.isArray(firebase)) {
-                    Object.keys(firebase).forEach(key => {
-                      if (!(key in local)) {
-                        merged[key] = firebase[key];
-                        console.log(`🔒 Preserving Firebase-only field ${path ? path + '.' : ''}${key}`);
-                      }
-                    });
-                  }
-                  
-                  return merged;
-                };
+                }
                 
-                return deepMerge(localData, firebaseData);
+                return merged;
               };
               
               const mergedData = mergeData(defaultAssumptions, data);
-              mergedData.version = defaultAssumptions.version; // Ensure version is updated
+              mergedData.version = defaultAssumptions.version;
               
               set(assumptionsRef.current, cleanDataForFirebase(mergedData))
                 .then(() => {
-                  console.log('✅ Firebase updated with smart merge');
+                  console.log('✅ Firebase version updated successfully');
                 })
                 .catch((error) => {
                   console.error('❌ Error updating Firebase:', error);
@@ -217,6 +286,15 @@ export const useFirebaseState = () => {
     // Update local state immediately for responsive UI
     setLocalAssumptions(newAssumptions);
     
+    // In development mode, save to localStorage
+    if (isDevelopment) {
+      localStorage.setItem('bankAssumptions', JSON.stringify(newAssumptions));
+      setLastSaved(new Date());
+      setHasUnsavedChanges(false);
+      lastSyncedDataRef.current = JSON.stringify(newAssumptions);
+      return;
+    }
+    
     // Check if data has actually changed
     const currentData = JSON.stringify(newAssumptions);
     if (currentData !== lastSyncedDataRef.current) {
@@ -232,7 +310,7 @@ export const useFirebaseState = () => {
         saveToFirebase(newAssumptions);
       }, 3000);
     }
-  }, [saveToFirebase]);
+  }, [saveToFirebase, isDevelopment]);
 
   // Export/Import functions (no longer needed but kept for compatibility)
   const exportToFile = useCallback(() => {
