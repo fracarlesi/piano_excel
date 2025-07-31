@@ -23,7 +23,7 @@ const Header = ({
               <p className="text-xs text-gray-600">New Bank S.p.A. | Financial Model</p>
             </div>
             <div className="px-3 py-1 bg-purple-100 border border-purple-300 rounded-md">
-              <span className="text-sm font-semibold text-purple-800">v{version || '5.9'}</span>
+              <span className="text-sm font-semibold text-purple-800">v{version || '10.01'}</span>
             </div>
             {isDevelopment && (
               <div className="px-3 py-1 bg-yellow-100 border border-yellow-300 rounded-md">
@@ -53,7 +53,7 @@ const Header = ({
             {lastSaved && (
               <span className="text-xs text-gray-500">
                 <Save className="w-3 h-3 inline mr-1" />
-                Last sync: {lastSaved.toLocaleTimeString('it-IT')}
+                Last sync: {new Date(lastSaved).toLocaleTimeString('it-IT')}
               </span>
             )}
             <button 

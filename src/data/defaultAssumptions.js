@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '8.02', // Fixed division data overwrite issue - now preserving existing data when recalculating
+  version: '10.01', // Fixed unused variables warnings in StandardDivisionSheet, StandardPnL, treasuryCalculator, and financial-engine index
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

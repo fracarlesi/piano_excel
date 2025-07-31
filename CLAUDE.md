@@ -20,13 +20,50 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 4. Maintain Italian language for business terms where appropriate
 5. Test Firebase sync after major changes
 
-## Project Structure
-- `/src/components/` - React components
-- `/src/utils/calculations.js` - Core financial calculations
-- `/src/data/defaultAssumptions.js` - Default values and version
-- Firebase config in `/src/config/firebase.js`
+## Project Structure (v10.00 - Enterprise Architecture)
+```
+/src/
+├── features/              # Feature-based modules
+│   ├── financial-modeling/    # Main financial planning UI
+│   └── assumptions-editor/    # Assumption editing components
+├── lib/                   # Core business logic
+│   ├── financial-engine/      # Calculation engine
+│   │   ├── strategies/        # Loan amortization strategies
+│   │   ├── calculators/       # Specialized calculators
+│   │   └── utils/            # Decimal.js utilities
+│   ├── firebase/             # Firebase configuration
+│   └── utils/                # Shared utilities
+├── store/                 # Zustand state management
+├── components/            # Reusable UI components
+└── data/                  # Default assumptions
+```
+
+Key Technologies:
+- **State Management**: Zustand (replaced React Context)
+- **Precision Math**: Decimal.js for financial calculations
+- **Design Patterns**: Strategy pattern for loan types
+- **Architecture**: Feature-based folder structure
 
 ## Version Changelog
+### v10.00 (2025-07-31)
+- Enterprise-grade architectural refactoring
+- Feature-based folder structure for better organization
+- Implemented Decimal.js for precise financial calculations
+- Strategy pattern for loan amortization types
+- Zustand state management replacing React Context
+- Eliminated prop drilling with global state store
+- Firebase synchronization integrated with Zustand
+- Professional-grade code organization and modularity
+
+### v9.00 (2025-07-31)
+- Major architectural refactoring for improved maintainability
+- Modularized calculation engine with specialized calculators
+- Implemented React Context for centralized state management
+- Created StandardDivisionSheet for uniform division visualization
+- Simplified DivisionAssumptions with product-specific components
+- Eliminated prop drilling throughout component hierarchy
+- Fixed all personnel cost calculation and display issues
+
 ### v8.02 (2025-07-31)
 - Fixed critical bug where division data was being completely overwritten
 - Now preserving existing division data when recalculating

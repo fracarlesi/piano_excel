@@ -1,10 +1,10 @@
 import React from 'react';
-import ExcelLikeBankPlan from './BankPlan';
+import BankPlanApp from './features/financial-modeling/BankPlanApp';
 
 function App() {
   return (
     <div className="App">
-      <ExcelLikeBankPlan />
+      <BankPlanApp />
     </div>
   );
 }
