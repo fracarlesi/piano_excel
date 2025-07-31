@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '7.23', // Costi del personale ora correttamente riflessi nel P&L e KPI di ogni divisione
+  version: '7.24', // Implementato calculation trace dettagliato per costi del personale con breakdown bottom-up per livello e dipartimento
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

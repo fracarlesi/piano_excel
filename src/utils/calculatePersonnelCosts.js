@@ -21,7 +21,11 @@ export const calculatePersonnelCosts = (assumptions, years) => {
   // Helper function to calculate division costs
   const calculateDivisionCosts = (divisionData, salaryGrowth, companyTaxMultiplier, years) => {
     if (!divisionData || !divisionData.staffing) {
-      return years.map(() => ({ cost: 0, headcount: 0 }));
+      return years.map(() => ({ 
+        cost: 0, 
+        headcount: 0, 
+        details: [] 
+      }));
     }
     
     const { headcountGrowth = 0, staffing = [] } = divisionData;
@@ -30,6 +34,7 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     return years.map((_, yearIndex) => {
       let totalCost = 0;
       let totalHeadcount = 0;
+      const levelDetails = [];
       
       staffing.forEach(level => {
         // Apply headcount growth only to Junior and Middle levels
@@ -40,11 +45,26 @@ export const calculatePersonnelCosts = (assumptions, years) => {
         const headcount = level.count * growthMultiplier;
         const ralPerHead = (level.ralPerHead || 0) * salaryGrowth[yearIndex];
         const companyCostPerHead = ralPerHead * companyTaxMultiplier;
-        totalCost += headcount * companyCostPerHead / 1000; // Convert to €M
+        const levelCost = headcount * companyCostPerHead / 1000; // Convert to €M
+        
+        totalCost += levelCost;
         totalHeadcount += headcount;
+        
+        // Store details for calculation trace
+        levelDetails.push({
+          level: level.level,
+          headcount: headcount,
+          ralPerHead: ralPerHead,
+          companyCostPerHead: companyCostPerHead,
+          totalCost: levelCost
+        });
       });
       
-      return { cost: totalCost, headcount: totalHeadcount };
+      return { 
+        cost: totalCost, 
+        headcount: totalHeadcount,
+        details: levelDetails
+      };
     });
   };
 
@@ -54,7 +74,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     const divisionCosts = calculateDivisionCosts(assumptions.realEstateDivision, salaryGrowth, companyTaxMultiplier, years);
     results.byDivision.RealEstateFinancing = {
       costs: divisionCosts.map(d => -d.cost), // Negative for P&L
-      headcount: divisionCosts.map(d => d.headcount)
+      headcount: divisionCosts.map(d => d.headcount),
+      details: divisionCosts.map(d => d.details) // Store details for calculation trace
     };
   }
 
@@ -63,7 +84,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     const divisionCosts = calculateDivisionCosts(assumptions.smeDivision, salaryGrowth, companyTaxMultiplier, years);
     results.byDivision.SMEFinancing = {
       costs: divisionCosts.map(d => -d.cost),
-      headcount: divisionCosts.map(d => d.headcount)
+      headcount: divisionCosts.map(d => d.headcount),
+      details: divisionCosts.map(d => d.details)
     };
   }
 
@@ -72,7 +94,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     const divisionCosts = calculateDivisionCosts(assumptions.wealthDivision, salaryGrowth, companyTaxMultiplier, years);
     results.byDivision.WealthAndAssetManagement = {
       costs: divisionCosts.map(d => -d.cost),
-      headcount: divisionCosts.map(d => d.headcount)
+      headcount: divisionCosts.map(d => d.headcount),
+      details: divisionCosts.map(d => d.details)
     };
   }
 
@@ -81,7 +104,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     const divisionCosts = calculateDivisionCosts(assumptions.incentiveDivision, salaryGrowth, companyTaxMultiplier, years);
     results.byDivision.Incentives = {
       costs: divisionCosts.map(d => -d.cost),
-      headcount: divisionCosts.map(d => d.headcount)
+      headcount: divisionCosts.map(d => d.headcount),
+      details: divisionCosts.map(d => d.details)
     };
   }
 
@@ -90,7 +114,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     const divisionCosts = calculateDivisionCosts(assumptions.digitalBankingDivision, salaryGrowth, companyTaxMultiplier, years);
     results.byDivision.DigitalBanking = {
       costs: divisionCosts.map(d => -d.cost),
-      headcount: divisionCosts.map(d => d.headcount)
+      headcount: divisionCosts.map(d => d.headcount),
+      details: divisionCosts.map(d => d.details)
     };
   }
 
@@ -99,7 +124,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     const divisionCosts = calculateDivisionCosts(assumptions.techDivision, salaryGrowth, companyTaxMultiplier, years);
     results.byDivision.Tech = {
       costs: divisionCosts.map(d => -d.cost),
-      headcount: divisionCosts.map(d => d.headcount)
+      headcount: divisionCosts.map(d => d.headcount),
+      details: divisionCosts.map(d => d.details)
     };
   }
 
@@ -108,7 +134,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     const divisionCosts = calculateDivisionCosts(assumptions.treasury, salaryGrowth, companyTaxMultiplier, years);
     results.byDivision.Treasury = {
       costs: divisionCosts.map(d => -d.cost),
-      headcount: divisionCosts.map(d => d.headcount)
+      headcount: divisionCosts.map(d => d.headcount),
+      details: divisionCosts.map(d => d.details)
     };
   }
 
@@ -119,7 +146,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
       
       results.byDepartment[deptKey] = {
         costs: deptCosts.map(d => -d.cost), // Negative for P&L
-        headcount: deptCosts.map(d => d.headcount)
+        headcount: deptCosts.map(d => d.headcount),
+        details: deptCosts.map(d => d.details)
       };
       
       // Add to central functions total

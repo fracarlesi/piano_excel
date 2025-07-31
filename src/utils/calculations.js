@@ -1814,6 +1814,9 @@ export const calculateResults = (assumptions) => {
           divisionProducts.reduce((sum, p) => sum + p.llp[i], 0)
         ),
         personnelCosts: divisionPersonnelCosts,
+        personnelCostDetails: prefix === 'central' 
+          ? personnelResults.byDepartment 
+          : (personnelResults.byDivision[personnelDivisionKey]?.details || []),
         netProfit: years.map(i => 
           divisionProducts.reduce((sum, p) => sum + p.netProfit[i], 0)
         )

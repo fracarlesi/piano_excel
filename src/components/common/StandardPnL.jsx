@@ -498,13 +498,74 @@ const StandardPnL = ({
       data: personnelCosts,
       decimals: 2,
       isHeader: true,
-      formula: personnelCosts.map((val, i) => createFormula(i,
-        'FTE × Average Cost per FTE',
-        [
-          year => `Division FTE allocation based on RWA`,
-          year => `Personnel Costs: ${formatNumber(val, 2)} €M`
-        ]
-      )),
+      formula: personnelCosts.map((val, i) => {
+        // Get personnel cost details for calculation trace
+        const personnelDetails = divisionResults.pnl.personnelCostDetails;
+        
+        if (divisionName === 'Central Functions' && personnelDetails) {
+          // For Central Functions, show department-level aggregation with drill-down
+          const deptPrecedents = Object.entries(personnelDetails)
+            .map(([deptKey, dept]) => {
+              const deptCost = dept.costs ? Math.abs(dept.costs[i] || 0) : 0;
+              const deptDetails = dept.details ? dept.details[i] : null;
+              
+              // Build drill-down calculation for each department
+              let deptCalculation = '';
+              if (deptDetails && deptDetails.length > 0) {
+                deptCalculation = deptDetails.map(level => 
+                  `${level.level}: ${formatNumber(level.headcount, 1)} × ${formatNumber(level.companyCostPerHead / 1000, 0)}k = ${formatNumber(level.totalCost, 2)}€M`
+                ).join('\n');
+              }
+              
+              return {
+                name: deptKey.replace(/([A-Z])/g, ' $1').trim(), // Convert camelCase to readable
+                value: `${formatNumber(deptCost, 2)} €M`,
+                calculation: deptCalculation || 'Department personnel cost'
+              };
+            })
+            .filter(d => parseFloat(d.value) > 0);
+          
+          return createFormula(
+            i,
+            'Sum of all Central Functions department costs',
+            deptPrecedents,
+            year => {
+              const parts = deptPrecedents.map(d => `${d.name} (${d.value})`);
+              return parts.join(' + ') + ` = ${formatNumber(Math.abs(val), 2)} €M`;
+            }
+          );
+        } else if (personnelDetails && personnelDetails[i]) {
+          // For business divisions, show level-based calculation
+          const levelDetails = personnelDetails[i];
+          const levelSummary = levelDetails.map(level => ({
+            name: `${level.level}`,
+            value: level.totalCost,
+            unit: '€M',
+            calculation: `${formatNumber(level.headcount, 1)} × ${formatNumber(level.companyCostPerHead / 1000, 0)}k`
+          }));
+          
+          return createFormula(
+            i,
+            'Sum by seniority level',
+            levelSummary,
+            year => {
+              const parts = levelDetails.map(level => 
+                `(${level.level} (${formatNumber(level.headcount, 1)}) * Cost/Head (${formatNumber(level.companyCostPerHead / 1000, 0)}k))`
+              );
+              return parts.join(' + ') + ` = ${formatNumber(Math.abs(val), 2)} €M`;
+            }
+          );
+        } else {
+          // Fallback to simple formula
+          return createFormula(i,
+            'Personnel costs allocated to division',
+            [
+              year => `Division personnel costs based on bottom-up model`,
+              year => `Personnel Costs: ${formatNumber(Math.abs(val), 2)} €M`
+            ]
+          );
+        }
+      }),
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
