@@ -115,7 +115,7 @@ export const createProductFormula = (year, product, formulaType, values) => {
       ],
       calculation: () => {
         if (isDepositProduct) {
-          return `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.ftpRate || values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M`;
+          return `${formatNumber(values.depositStock !== undefined ? values.depositStock : values.avgAssets, 2)} × ${formatNumber(values.depositRate !== undefined ? values.depositRate : (values.ftpRate !== undefined ? values.ftpRate : values.interestRate), 2)}% = ${formatNumber(values.result, 2)} €M`;
         } else if (values.isFixed) {
           return `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M`;
         } else {

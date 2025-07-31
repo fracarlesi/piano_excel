@@ -103,14 +103,18 @@ export const calculateCreditProduct = (product, assumptions, years) => {
           if (productType === 'french' || productType === 'amortizing') {
             const quarterlyRate = getInterestRate(product, assumptions) / 4;
             const totalQuarters = durata * 4;
+            const gracePeriodQuarters = gracePeriod * 4;
+            const amortizationQuarters = totalQuarters - gracePeriodQuarters; // Exclude grace period from amortization
             
-            if (quarterlyRate > 0) {
-              // French amortization formula for quarterly payments
+            if (quarterlyRate > 0 && amortizationQuarters > 0) {
+              // French amortization formula for quarterly payments (excluding grace period)
+              // During grace period: no payments
+              // After grace period: amortize over remaining quarters
+              const compoundFactor = Math.pow(1 + quarterlyRate, amortizationQuarters);
               vintage.quarterlyPayment = quarterVolume * 
-                (quarterlyRate * Math.pow(1 + quarterlyRate, totalQuarters)) / 
-                (Math.pow(1 + quarterlyRate, totalQuarters) - 1);
+                (quarterlyRate * compoundFactor) / (compoundFactor - 1);
             } else {
-              vintage.quarterlyPayment = quarterVolume / totalQuarters;
+              vintage.quarterlyPayment = amortizationQuarters > 0 ? quarterVolume / amortizationQuarters : 0;
             }
             
             // Initialize amortization schedule
@@ -147,14 +151,22 @@ export const calculateCreditProduct = (product, assumptions, years) => {
           // For French loans, update outstanding principal each quarter
           if ((vintage.type === 'french' || vintage.type === 'amortizing') && currentQuarter > vintageStartQuarter) {
             const quartersElapsed = currentQuarter - vintageStartQuarter;
+            const gracePeriodQuarters = gracePeriod * 4; // Convert years to quarters
             const quarterlyRate = getInterestRate(product, assumptions) / 4;
             
-            // Calculate interest on current outstanding balance
-            const interestPayment = vintage.outstandingPrincipal * quarterlyRate;
-            const principalPayment = vintage.quarterlyPayment - interestPayment;
-            
-            // Update outstanding principal
-            vintage.outstandingPrincipal = Math.max(0, vintage.outstandingPrincipal - principalPayment);
+            // During grace period, no principal repayment occurs
+            if (quartersElapsed <= gracePeriodQuarters) {
+              // Grace period: capital remains constant, only interest accumulates
+              // No principal repayment during grace period
+            } else {
+              // Post grace period: normal amortization
+              // Calculate interest on current outstanding balance
+              const interestPayment = vintage.outstandingPrincipal * quarterlyRate;
+              const principalPayment = vintage.quarterlyPayment - interestPayment;
+              
+              // Update outstanding principal
+              vintage.outstandingPrincipal = Math.max(0, vintage.outstandingPrincipal - principalPayment);
+            }
             
             // Debug for French loans
             if (product.durata <= 10 && quartersElapsed <= 4) {
@@ -264,10 +276,21 @@ export const calculateCreditProduct = (product, assumptions, years) => {
     return 0;
   });
   
+  // Calculate actual average quarterly outstanding stock used for interest calculation
+  const actualAverageStock = totalInterestIncome.map((interest, i) => {
+    // Reverse engineer from interest calculation: interest = avgStock * rate
+    // getInterestRate already returns a decimal (e.g., 0.10 for 10%), so don't divide by 100 again!
+    const annualRate = getInterestRate(product, assumptions);
+    // The interest is already in millions, so the result is in millions too
+    const avgStock = annualRate > 0 ? interest / annualRate : 0;
+    return avgStock;
+  });
+
   return {
     performingAssets: grossPerformingStock,
     nonPerformingAssets: nplStock,
     averagePerformingAssets: averagePerformingStock,
+    actualAverageStock: actualAverageStock, // The REAL average stock used for interest calc
     newNPLs: newNPLs,
     interestIncome: totalInterestIncome,
     commissionIncome: commissionIncome,
