@@ -11,6 +11,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Show version being deployed
+        run: |
+          echo "🔍 Checking version in defaultAssumptions.js..."
+          VERSION=$(grep -o "version: '[^']*'" src/data/defaultAssumptions.js | cut -d"'" -f2)
+          echo "📦 Deploying version: $VERSION"
+          echo ""
+          echo "🔥 Checking current Firebase version..."
+          FIREBASE_VERSION=$(curl -s https://newbank-bd93f-default-rtdb.europe-west1.firebasedatabase.app/assumptions/version.json | tr -d '"')
+          if [ -z "$FIREBASE_VERSION" ]; then
+            echo "📊 Current Firebase version: Not found (will be initialized)"
+          else
+            echo "📊 Current Firebase version: $FIREBASE_VERSION"
+          fi
+          echo ""
+          echo "🌐 Version $VERSION will auto-sync to Firebase when the app loads in production"
       - name: Build project
         run: npm ci && npm run build
         env:
