@@ -73,7 +73,7 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
       {/* Griglia unica con tutto integrato */}
       <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
         <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700">Bank Navigation</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Model Navigation</h3>
         </div>
         
         {/* Riga superiore - Bank Consolidated + Divisioni Financial */}

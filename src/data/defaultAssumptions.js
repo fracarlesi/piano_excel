@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.15', // Implemented smart merge: structure from code, values from user
+  version: '5.16', // Changed "Bank Navigation" to "Model Navigation" in UI
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

@@ -27,6 +27,10 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v5.16 (2025-07-31)
+- UI improvement: Changed "Bank Navigation" to "Model Navigation" for clarity
+- Minor interface enhancement
+
 ### v5.15 (2025-07-31)
 - Implemented smart merge logic for Firebase sync:
   - Structure and new fields come from code (defaultAssumptions.js)
