@@ -54,6 +54,20 @@ export const useFirebaseState = () => {
     const unsubscribe = onValue(assumptionsRef.current, (snapshot) => {
       const data = snapshot.val();
       if (data) {
+        // Check if local version is newer than Firebase version
+        if (defaultAssumptions.version && data.version && 
+            parseFloat(defaultAssumptions.version) > parseFloat(data.version)) {
+          console.log(`🔄 Updating Firebase version from ${data.version} to ${defaultAssumptions.version}`);
+          // Update only the version in Firebase
+          const updatedData = { ...data, version: defaultAssumptions.version };
+          set(assumptionsRef.current, cleanDataForFirebase(updatedData))
+            .then(() => {
+              console.log('✅ Version updated in Firebase');
+            })
+            .catch((error) => {
+              console.error('Error updating version:', error);
+            });
+        }
         setLocalAssumptions(data);
         lastSyncedDataRef.current = JSON.stringify(data);
         setLastSaved(new Date());

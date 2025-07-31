@@ -11,7 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm ci && npm run build
+      - name: Build project
+        run: npm ci && npm run build
         env:
           CI: false
       - uses: FirebaseExtended/action-hosting-deploy@v0

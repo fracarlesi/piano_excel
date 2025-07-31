@@ -27,6 +27,11 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v5.12 (2025-07-31)
+- Auto-sync version from defaultAssumptions.js to Firebase on production deployment
+- No manual intervention needed: version updates automatically when deployed
+- Removed unnecessary scripts folder
+
 ### v5.11 (2025-07-31)
 - Implemented development mode: uses local defaultAssumptions.js instead of Firebase
 - Added visual indicator for Local Dev Mode in header

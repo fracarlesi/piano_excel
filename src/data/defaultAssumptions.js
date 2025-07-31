@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.11', // Development mode: use local data instead of Firebase for faster development
+  version: '5.12', // Auto-sync version to Firebase on production deployment
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
