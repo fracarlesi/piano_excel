@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.31', // Removed €M unit from calculation formulas for cleaner display
+  version: '10.35', // Fixed interest timing: interest starts from quarter AFTER disbursement (Q1 disbursement = interest from Q2)
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

@@ -146,9 +146,14 @@ export const calculateCreditProduct = (product, assumptions, years) => {
         const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
         
         // Check if vintage is active in this quarter
-        if (currentQuarter >= vintageStartQuarter && currentQuarter < vintageMaturityQuarter) {
+        // Interest starts from the quarter AFTER disbursement (banking convention)
+        // For Bullet loans, include the maturity quarter (<=) to calculate interest until maturity
+        // For amortizing loans, exclude maturity quarter (<) as loan is fully repaid
+        const includeMaturityQuarter = vintage.type === 'bullet' ? currentQuarter <= vintageMaturityQuarter : currentQuarter < vintageMaturityQuarter;
+        if (currentQuarter > vintageStartQuarter && includeMaturityQuarter) {
           
           // For French loans, update outstanding principal each quarter
+          // First payment is in the quarter AFTER disbursement (standard banking practice)
           if ((vintage.type === 'french' || vintage.type === 'amortizing') && currentQuarter > vintageStartQuarter) {
             const quartersElapsed = currentQuarter - vintageStartQuarter;
             const gracePeriodQuarters = gracePeriod * 4; // Convert years to quarters
@@ -202,21 +207,56 @@ export const calculateCreditProduct = (product, assumptions, years) => {
           totalPrincipalRepaymentsForYear += vintage.initialAmount;
         }
       } else if (vintage.type === 'french' || vintage.type === 'amortizing') {
-        // French: quarterly principal repayments
+        // French: calculate exact principal repayments for each quarter
         const startOfYear = Math.max(year * 4, vintageStartQuarter);
         const endOfYear = Math.min(currentYearEnd, vintageMaturityQuarter);
         
         if (endOfYear > startOfYear) {
-          const quartersInYear = endOfYear - startOfYear;
-          const quarterlyPrincipal = vintage.quarterlyPayment * quartersInYear;
-          // Approximate - more accurate calculation would track each quarter
-          totalPrincipalRepaymentsForYear += Math.min(quarterlyPrincipal * 0.6, vintage.initialAmount); // ~60% is principal
+          // Track the outstanding principal at start of year
+          let outstandingAtYearStart = vintage.initialAmount;
+          const quarterlyRate = getInterestRate(product, assumptions) / 4;
+          
+          // Calculate principal repaid up to start of year
+          for (let q = vintageStartQuarter + 1; q < startOfYear; q++) {
+            if (q > vintageStartQuarter) {
+              const interestPayment = outstandingAtYearStart * quarterlyRate;
+              const principalPayment = vintage.quarterlyPayment - interestPayment;
+              outstandingAtYearStart -= principalPayment;
+            }
+          }
+          
+          // Now calculate principal repayments during this year
+          let yearlyPrincipalRepayment = 0;
+          let currentOutstanding = outstandingAtYearStart;
+          
+          for (let q = startOfYear; q < endOfYear; q++) {
+            if (q > vintageStartQuarter) {
+              const interestPayment = currentOutstanding * quarterlyRate;
+              const principalPayment = vintage.quarterlyPayment - interestPayment;
+              yearlyPrincipalRepayment += principalPayment;
+              currentOutstanding -= principalPayment;
+            }
+          }
+          
+          totalPrincipalRepaymentsForYear += yearlyPrincipalRepayment;
         }
       }
       
       // Outstanding stock at year end (use actual outstanding principal)
+      // For Bullet loans: include if maturity is after year end (loan still outstanding)
+      // For amortizing loans: same logic
       if (vintageMaturityQuarter > currentYearEnd && vintage.outstandingPrincipal > 0) {
         totalOutstandingStockForYear += vintage.outstandingPrincipal;
+        
+        // Debug for first year of 5-year loans
+        if (year === 0 && product.durata === 5 && product.name && product.name.includes('ipotecario')) {
+          console.log('Year-end stock debug:', {
+            year: year + 1,
+            vintageOutstanding: vintage.outstandingPrincipal,
+            totalStock: totalOutstandingStockForYear,
+            initialAmount: vintage.initialAmount
+          });
+        }
       }
     });
     
