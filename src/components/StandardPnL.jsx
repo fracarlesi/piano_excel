@@ -18,10 +18,10 @@ const StandardPnL = ({
 }) => {
   
   // SIMPLE DEBUG
-  console.log(`PnL for ${divisionName}:`, {
-    hasPersonnelCosts: !!divisionResults.pnl?.personnelCosts,
-    firstValue: divisionResults.pnl?.personnelCosts?.[0]
-  });
+  // console.log(`PnL for ${divisionName}:`, {
+  //   hasPersonnelCosts: !!divisionResults.pnl?.personnelCosts,
+  //   firstValue: divisionResults.pnl?.personnelCosts?.[0]
+  // });
   
 
   // Calculate derived values

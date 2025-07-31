@@ -222,6 +222,7 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
             onChange={val => {
               const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
               newAllocation[0] = val;
+              // console.log('Q1 changed to:', val, 'New allocation:', newAllocation);
               setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
             }} 
             unit="%" 
@@ -274,10 +275,11 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
             tooltipImpact="Q4 loans generate interest for only ~12.5% of the year"
           />
         </div>
+        {/* Warning solo se la somma non fa 100 */}
         {assumptions.quarterlyAllocation && 
          assumptions.quarterlyAllocation.reduce((a, b) => a + b, 0) !== 100 && (
           <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm text-yellow-700">
-            ⚠️ Warning: Quarterly allocations must sum to 100% (current sum: {assumptions.quarterlyAllocation.reduce((a, b) => a + b, 0)}%)
+            ⚠️ Warning: Quarterly allocations should sum to 100% (current sum: {assumptions.quarterlyAllocation.reduce((a, b) => a + b, 0)}%)
           </div>
         )}
       </div>

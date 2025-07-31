@@ -36,7 +36,6 @@ const useAssumptionsStore = create(
         // Clear any old localStorage data that might interfere
         localStorage.removeItem('bankPlanAssumptions');
         localStorage.removeItem('bankPlanAssumptions_backup');
-        console.log('Cleared old localStorage data');
         
         // Sign in anonymously for Firebase access
         await signInAnonymously(auth);
@@ -53,16 +52,12 @@ const useAssumptionsStore = create(
             
             // Skip merge if we're making local changes
             if (state.isUpdatingLocally) {
-              console.log('Skipping Firebase merge - local update in progress, isUpdatingLocally:', state.isUpdatingLocally);
               return;
             }
             
             // Smart merge: preserve user data, update structure from code
             const merged = smartMergeAssumptions(defaultAssumptions, data.assumptions);
             
-            console.log('Firebase data version:', data.assumptions.version);
-            console.log('Default version:', defaultAssumptions.version);
-            console.log('Merged version:', merged.version);
             
             set({ 
               assumptions: merged,
@@ -74,7 +69,6 @@ const useAssumptionsStore = create(
             get().calculateResults();
           } else {
             // No data in Firebase, use defaults
-            console.log('No Firebase data, using defaults with version:', defaultAssumptions.version);
             set({ 
               assumptions: defaultAssumptions,
               isLoading: false 
@@ -99,7 +93,6 @@ const useAssumptionsStore = create(
      * Update assumptions
      */
     setAssumptions: (newAssumptions) => {
-      console.log('🔄 setAssumptions called, setting isUpdatingLocally to true');
       
       const { updatingLocallyTimeout } = get();
       
@@ -110,7 +103,6 @@ const useAssumptionsStore = create(
       
       // Set a safety timeout to force reset the flag after 10 seconds
       const timeout = setTimeout(() => {
-        console.log('⚠️ Force resetting isUpdatingLocally flag due to timeout');
         set({ isUpdatingLocally: false });
       }, 10000);
       
@@ -132,7 +124,6 @@ const useAssumptionsStore = create(
      * Update a specific assumption field
      */
     updateAssumption: (path, value) => {
-      console.log('🔄 updateAssumption called for path:', path, 'setting isUpdatingLocally to true');
       
       const { assumptions, updatingLocallyTimeout } = get();
       const updated = updateNestedProperty(assumptions, path, value);
@@ -144,7 +135,6 @@ const useAssumptionsStore = create(
       
       // Set a safety timeout to force reset the flag after 10 seconds
       const timeout = setTimeout(() => {
-        console.log('⚠️ Force resetting isUpdatingLocally flag due to timeout');
         set({ isUpdatingLocally: false });
       }, 10000);
       
@@ -184,12 +174,10 @@ const useAssumptionsStore = create(
       const { assumptions, firebaseRef } = get();
       
       if (!firebaseRef) {
-        console.log('❌ Firebase save skipped - no firebaseRef');
         return;
       }
       
       try {
-        console.log('💾 Starting Firebase save...');
         set({ isAutoSaving: true });
         
         await firebaseSet(firebaseRef, {
@@ -198,7 +186,6 @@ const useAssumptionsStore = create(
           version: assumptions.version
         });
         
-        console.log('✅ Firebase save successful, resetting isUpdatingLocally to false');
         
         const { updatingLocallyTimeout } = get();
         if (updatingLocallyTimeout) {
@@ -214,7 +201,6 @@ const useAssumptionsStore = create(
         });
       } catch (error) {
         console.error('❌ Error saving to Firebase:', error);
-        console.log('🔄 Resetting isUpdatingLocally to false due to error');
         
         const { updatingLocallyTimeout } = get();
         if (updatingLocallyTimeout) {
@@ -237,17 +223,13 @@ const useAssumptionsStore = create(
     autoSave: () => {
       const { autoSaveTimeout } = get();
       
-      console.log('⏰ Auto-save triggered, setting up 3-second delay...');
-      
       // Clear existing timeout
       if (autoSaveTimeout) {
         clearTimeout(autoSaveTimeout);
-        console.log('🔄 Cleared previous auto-save timeout');
       }
       
       // Set new timeout
       const timeout = setTimeout(() => {
-        console.log('⏱️ Auto-save timeout expired, calling saveToFirebase...');
         get().saveToFirebase();
       }, 3000); // 3 second delay
       
@@ -329,20 +311,15 @@ function smartMergeAssumptions(codeAssumptions, firebaseAssumptions) {
         if (key in target) {
           if (key === 'products') {
             // Special handling for products - Firebase state takes precedence
-            console.log('🔄 Merging products: Firebase state takes precedence...');
-            
             // Start with Firebase products (respects deletions)
             target[key] = { ...source[key] };
             
             // Add any new products from defaults that aren't in Firebase
             for (const productKey in merged[key]) {
               if (merged[key].hasOwnProperty(productKey) && !source[key][productKey]) {
-                console.log(`📦 Adding new default product: ${productKey}`);
                 target[key][productKey] = merged[key][productKey];
               }
             }
-            
-            console.log(`✅ Products merged: ${Object.keys(target[key]).length} total products`);
           } else if (typeof target[key] === 'object' && !Array.isArray(target[key])) {
             // Recurse for objects
             mergeRecursive(target[key], source[key]);

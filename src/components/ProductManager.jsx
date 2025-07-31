@@ -97,7 +97,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
     };
 
     // Update through Zustand store
-    console.log('Adding product with volumeArray:', newProduct.volumeArray);
+    // console.log('Adding product with volumeArray:', newProduct.volumeArray);
     onAssumptionChange('products', updatedProducts);
     
     // Force immediate save to Firebase
@@ -110,7 +110,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
     setNewProductType('Credit');
     setIsAddingProduct(false);
     
-    console.log(`✅ Product "${newProductName}" added successfully!`);
+    // console.log(`✅ Product "${newProductName}" added successfully!`);
     alert(`Product "${newProductName}" added successfully!`);
   };
 
@@ -124,7 +124,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
       // Update through Zustand store
       onAssumptionChange('products', updatedProducts);
       
-      console.log(`🗑️ Product "${productName}" removed successfully!`);
+      // console.log(`🗑️ Product "${productName}" removed successfully!`);
       alert(`Product "${productName}" removed successfully!`);
     }
   };
@@ -166,7 +166,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
     // Update through Zustand store
     onAssumptionChange(`products.${editingProduct}`, productToSave);
 
-    console.log(`✏️ Product "${editProductName}" updated successfully!`);
+    // console.log(`✏️ Product "${editProductName}" updated successfully!`);
     alert(`Product updated successfully!`);
     setEditingProduct(null);
     setEditProductName('');

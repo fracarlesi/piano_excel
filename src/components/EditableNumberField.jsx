@@ -30,14 +30,20 @@ const EditableNumberField = ({
   }, [value, isFocused, formatOptions]);
 
   const handleFocus = () => {
+    // console.log('EditableNumberField handleFocus - current value:', value, 'type:', typeof value);
     setIsFocused(true);
     setInputValue((value ?? 0).toString());
   };
 
   const handleBlur = () => {
+    // console.log('EditableNumberField handleBlur - inputValue:', inputValue);
     setIsFocused(false);
-    const numericValue = parseFloat(inputValue.replace(/,/g, '.')) || 0;
-    onChange(numericValue);
+    const cleanValue = inputValue.replace(/,/g, '.');
+    const numericValue = parseFloat(cleanValue);
+    // Use 0 only if the value is actually NaN, not if it's 0
+    const finalValue = isNaN(numericValue) ? 0 : numericValue;
+    // console.log('EditableNumberField handleBlur - sending:', finalValue, 'type:', typeof finalValue);
+    onChange(finalValue);
   };
 
   const handleChange = (e) => {

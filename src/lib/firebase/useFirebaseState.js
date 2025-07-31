@@ -45,14 +45,12 @@ export const useFirebaseState = () => {
   useEffect(() => {
     // In development mode, use local data but preserve existing values
     if (isDevelopment) {
-      console.log('🚀 Development mode: Using local defaultAssumptions');
       
       // Get saved data from localStorage if available
       const savedData = localStorage.getItem('bankAssumptions');
       if (savedData) {
         try {
           const parsedData = JSON.parse(savedData);
-          console.log('📦 Found saved data in localStorage, version:', parsedData.version);
           
           // If saved version is older than default version, merge
           const compareVersions = (v1, v2) => {
@@ -69,7 +67,6 @@ export const useFirebaseState = () => {
           };
           
           if (compareVersions(defaultAssumptions.version, parsedData.version) > 0) {
-            console.log(`🔄 Updating from version ${parsedData.version} to ${defaultAssumptions.version}`);
             
             // Smart merge that respects deletions but adds new fields
             const mergeData = (localData, savedData) => {
@@ -79,7 +76,6 @@ export const useFirebaseState = () => {
               Object.keys(localData).forEach(key => {
                 if (key !== 'products' && !(key in savedData)) {
                   merged[key] = localData[key];
-                  console.log(`✨ Adding new field: ${key}`);
                 }
               });
               
@@ -97,7 +93,6 @@ export const useFirebaseState = () => {
                     Object.keys(defaultProduct).forEach(field => {
                       if (!(field in savedProduct)) {
                         merged.products[productKey][field] = defaultProduct[field];
-                        console.log(`✨ Adding new field to ${productKey}: ${field}`);
                       }
                     });
                   }
@@ -112,7 +107,6 @@ export const useFirebaseState = () => {
             
             setLocalAssumptions(mergedData);
             localStorage.setItem('bankAssumptions', JSON.stringify(mergedData));
-            console.log('✅ Version updated successfully');
           } else {
             // Use saved data as-is
             setLocalAssumptions(parsedData);
@@ -136,16 +130,12 @@ export const useFirebaseState = () => {
       try {
         // Sign in anonymously to get write permissions
         await signInAnonymously(auth);
-        console.log('🔐 Signed in anonymously to Firebase');
         
         // Now set up the real-time listener
         const unsubscribe = onValue(assumptionsRef.current, (snapshot) => {
           const data = snapshot.val();
           if (data) {
             // Debug logs
-            console.log('📊 Firebase data loaded');
-            console.log('📌 Local version:', defaultAssumptions.version);
-            console.log('🔥 Firebase version:', data.version);
             
             // Compare versions properly (split by dot and compare parts)
             const compareVersions = (v1, v2) => {
@@ -162,11 +152,9 @@ export const useFirebaseState = () => {
             };
             
             const versionComparison = compareVersions(defaultAssumptions.version, data.version);
-            console.log('📐 Version comparison result:', versionComparison > 0 ? 'Local is newer' : versionComparison < 0 ? 'Firebase is newer' : 'Same version');
             
             // Check if local version is newer than Firebase version
             if (defaultAssumptions.version && data.version && versionComparison > 0) {
-              console.log(`🔄 Updating Firebase from version ${data.version} to ${defaultAssumptions.version}`);
               
               // Smart merge that respects deletions but adds new fields
               const mergeData = (localData, firebaseData) => {
@@ -176,8 +164,7 @@ export const useFirebaseState = () => {
                 Object.keys(localData).forEach(key => {
                   if (key !== 'products' && !(key in firebaseData)) {
                     merged[key] = localData[key];
-                    console.log(`✨ Adding new field: ${key}`);
-                  }
+                    }
                 });
                 
                 // For products, only update existing ones with new fields
@@ -194,8 +181,7 @@ export const useFirebaseState = () => {
                       Object.keys(defaultProduct).forEach(field => {
                         if (!(field in firebaseProduct)) {
                           merged.products[productKey][field] = defaultProduct[field];
-                          console.log(`✨ Adding new field to ${productKey}: ${field}`);
-                        }
+                          }
                       });
                     }
                   });
@@ -209,13 +195,11 @@ export const useFirebaseState = () => {
               
               set(assumptionsRef.current, cleanDataForFirebase(mergedData))
                 .then(() => {
-                  console.log('✅ Firebase version updated successfully');
                 })
                 .catch((error) => {
                   console.error('❌ Error updating Firebase:', error);
                 });
             } else {
-              console.log('ℹ️ Version update not needed or condition not met');
             }
             setLocalAssumptions(data);
             lastSyncedDataRef.current = JSON.stringify(data);
@@ -262,7 +246,6 @@ export const useFirebaseState = () => {
   const saveToFirebase = useCallback(async (data) => {
     // Skip Firebase save in development mode
     if (isDevelopment) {
-      console.log('💾 Development mode: Skipping Firebase save');
       return;
     }
     
@@ -315,12 +298,10 @@ export const useFirebaseState = () => {
   // Export/Import functions (no longer needed but kept for compatibility)
   const exportToFile = useCallback(() => {
     // This function is no longer needed with Firebase
-    console.log('Export functionality has been replaced by real-time Firebase sync');
   }, []);
 
   const importData = useCallback(() => {
     // This function is no longer needed with Firebase
-    console.log('Import functionality has been replaced by real-time Firebase sync');
   }, []);
 
   return {

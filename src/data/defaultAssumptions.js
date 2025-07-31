@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.12', // REVOLUTIONARY FIX: Implemented correct quarterly rolling stock interest calculation
+  version: '10.21', // Complete codebase cleanup: removed all obsolete files, empty directories, and broken imports
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

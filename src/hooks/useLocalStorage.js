@@ -88,7 +88,6 @@ export const useLocalStorage = () => {
         const response = await fetch('http://localhost:3001/api/load-assumptions');
         if (response.ok) {
           const serverData = await response.json();
-          console.log('Loaded data from server');
           // Cache in localStorage for immediate use
           localStorage.setItem('bankPlanAssumptions', JSON.stringify(serverData));
           return serverData;
@@ -113,7 +112,6 @@ export const useLocalStorage = () => {
           
           // Extract user values before reset
           const userValues = extractUserValues(parsedData);
-          console.log('Preserving user values:', userValues);
           
           // Get fresh defaults and merge user values
           const updatedData = mergeUserValues(defaultAssumptions, userValues);
@@ -179,7 +177,6 @@ export const useLocalStorage = () => {
           // Check if it's still using the old flat structure
           if (digitalProduct.customers && !digitalProduct.acquisition) {
             console.warn('Migrating Digital Banking product to modular structure');
-            console.log('Preserving existing values:', {
               customers: digitalProduct.customers,
               cac: digitalProduct.cac,
               avgDeposit: digitalProduct.avgDeposit
@@ -296,7 +293,6 @@ export const useLocalStorage = () => {
           const savedUserValues = localStorage.getItem('bankPlanAssumptions_userValues');
           if (savedUserValues) {
             const { values } = JSON.parse(savedUserValues);
-            console.log('Recovering user values from backup:', values);
             const recoveredData = mergeUserValues(defaultAssumptions, values);
             
             // Save the recovered data
@@ -317,7 +313,6 @@ export const useLocalStorage = () => {
       const savedUserValues = localStorage.getItem('bankPlanAssumptions_userValues');
       if (savedUserValues) {
         const { values } = JSON.parse(savedUserValues);
-        console.log('Restoring user values to fresh defaults:', values);
         return mergeUserValues(defaultAssumptions, values);
       }
     } catch (error) {
@@ -407,7 +402,6 @@ export const useLocalStorage = () => {
         if (response.ok) {
           setHasUnsavedChanges(false); // Reset unsaved changes flag
           setLastFileExport(new Date()); // Track last file export
-          console.log('Auto-saved to server successfully');
         } else {
           console.warn('Auto-save to server failed:', response.status);
         }

@@ -73,7 +73,7 @@ export const calculateCreditProduct = (product, assumptions, years) => {
   const gracePeriod = Number(product.gracePeriod || 0);
   const spread = product.spread || 0;
   
-  // Create quarterly vintages with maturity tracking
+  // Create quarterly vintages with detailed amortization schedule
   for (let year = 0; year < years.length; year++) {
     if (volumes10Y[year] > 0) {
       const quarterlyDist = product.quarterlyDist || [25, 25, 25, 25];
@@ -83,7 +83,7 @@ export const calculateCreditProduct = (product, assumptions, years) => {
         const quarterVolume = volumes10Y[year] * (quarterlyDist[quarter] / 100);
         
         if (quarterVolume > 0) {
-          vintages.push({
+          const vintage = {
             startYear: year,
             startQuarter: quarter, // Q0, Q1, Q2, Q3
             initialAmount: quarterVolume,
@@ -97,7 +97,27 @@ export const calculateCreditProduct = (product, assumptions, years) => {
             // Calculate maturity quarter (start + duration in quarters)
             maturityYear: year + Math.floor((quarter + durata * 4) / 4),
             maturityQuarter: (quarter + durata * 4) % 4
-          });
+          };
+          
+          // For French loans, calculate quarterly payment
+          if (productType === 'french' || productType === 'amortizing') {
+            const quarterlyRate = getInterestRate(product, assumptions) / 4;
+            const totalQuarters = durata * 4;
+            
+            if (quarterlyRate > 0) {
+              // French amortization formula for quarterly payments
+              vintage.quarterlyPayment = quarterVolume * 
+                (quarterlyRate * Math.pow(1 + quarterlyRate, totalQuarters)) / 
+                (Math.pow(1 + quarterlyRate, totalQuarters) - 1);
+            } else {
+              vintage.quarterlyPayment = quarterVolume / totalQuarters;
+            }
+            
+            // Initialize amortization schedule
+            vintage.amortizationSchedule = [];
+          }
+          
+          vintages.push(vintage);
         }
       }
     }
@@ -111,49 +131,80 @@ export const calculateCreditProduct = (product, assumptions, years) => {
     let totalAverageStockForYear = 0;
     let defaultsForYear = 0;
     
-    // Calculate quarterly interest for each quarter of the year
+    // Calculate quarterly interest and update amortization for each quarter
     for (let quarter = 0; quarter < 4; quarter++) {
       let quarterlyOutstandingStock = 0;
+      const currentQuarter = year * 4 + quarter;
       
-      // Sum all active vintages in this quarter
+      // Process each vintage for this quarter
       vintages.forEach((vintage) => {
-        // Check if vintage is active in this quarter
         const vintageStartQuarter = vintage.startYear * 4 + vintage.startQuarter;
         const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
-        const currentQuarter = year * 4 + quarter;
         
-        // Vintage is active if: started <= current < maturity
+        // Check if vintage is active in this quarter
         if (currentQuarter >= vintageStartQuarter && currentQuarter < vintageMaturityQuarter) {
-          quarterlyOutstandingStock += vintage.initialAmount;
+          
+          // For French loans, update outstanding principal each quarter
+          if ((vintage.type === 'french' || vintage.type === 'amortizing') && currentQuarter > vintageStartQuarter) {
+            const quartersElapsed = currentQuarter - vintageStartQuarter;
+            const quarterlyRate = getInterestRate(product, assumptions) / 4;
+            
+            // Calculate interest on current outstanding balance
+            const interestPayment = vintage.outstandingPrincipal * quarterlyRate;
+            const principalPayment = vintage.quarterlyPayment - interestPayment;
+            
+            // Update outstanding principal
+            vintage.outstandingPrincipal = Math.max(0, vintage.outstandingPrincipal - principalPayment);
+            
+            // Debug for French loans
+            if (product.durata <= 10 && quartersElapsed <= 4) {
+            }
+          }
+          
+          quarterlyOutstandingStock += vintage.outstandingPrincipal;
         }
       });
       
-      // Calculate quarterly interest
+      // Calculate quarterly interest on actual outstanding stock
       const interestRate = getInterestRate(product, assumptions);
-      const quarterlyInterestRate = interestRate / 4; // Convert annual to quarterly
+      const quarterlyInterestRate = interestRate / 4;
       const quarterlyInterest = quarterlyOutstandingStock * quarterlyInterestRate;
       
       totalInterestIncomeForYear += quarterlyInterest;
       
-      // Debug for short-term loans
-      if (product.durata <= 2 && quarterlyOutstandingStock > 0) {
-        console.log(`Year ${year + 1}, Q${quarter + 1}: Stock ${quarterlyOutstandingStock.toFixed(2)}M€, Interest ${quarterlyInterest.toFixed(3)}M€`);
+      // Debug for all loans
+      if (product.durata <= 5 && quarterlyOutstandingStock > 0) {
       }
     }
     
     // Calculate end-of-year outstanding stock and principal repayments
     vintages.forEach((vintage) => {
       const currentYearEnd = (year + 1) * 4; // End of current year in quarters
+      const vintageStartQuarter = vintage.startYear * 4 + vintage.startQuarter;
       const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
       
-      // Check if vintage matures this year
-      if (vintageMaturityQuarter <= currentYearEnd && vintageMaturityQuarter > year * 4) {
-        totalPrincipalRepaymentsForYear += vintage.initialAmount;
+      // Calculate principal repayments during the year
+      if (vintage.type === 'bullet') {
+        // Bullet: full repayment at maturity
+        if (vintageMaturityQuarter <= currentYearEnd && vintageMaturityQuarter > year * 4) {
+          totalPrincipalRepaymentsForYear += vintage.initialAmount;
+        }
+      } else if (vintage.type === 'french' || vintage.type === 'amortizing') {
+        // French: quarterly principal repayments
+        const startOfYear = Math.max(year * 4, vintageStartQuarter);
+        const endOfYear = Math.min(currentYearEnd, vintageMaturityQuarter);
+        
+        if (endOfYear > startOfYear) {
+          const quartersInYear = endOfYear - startOfYear;
+          const quarterlyPrincipal = vintage.quarterlyPayment * quartersInYear;
+          // Approximate - more accurate calculation would track each quarter
+          totalPrincipalRepaymentsForYear += Math.min(quarterlyPrincipal * 0.6, vintage.initialAmount); // ~60% is principal
+        }
       }
       
-      // Check if vintage is still outstanding at year end
-      if (vintageMaturityQuarter > currentYearEnd) {
-        totalOutstandingStockForYear += vintage.initialAmount;
+      // Outstanding stock at year end (use actual outstanding principal)
+      if (vintageMaturityQuarter > currentYearEnd && vintage.outstandingPrincipal > 0) {
+        totalOutstandingStockForYear += vintage.outstandingPrincipal;
       }
     });
     

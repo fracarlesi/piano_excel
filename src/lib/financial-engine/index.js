@@ -60,21 +60,30 @@ export const calculateResults = (assumptions) => {
   const productResults = {};
   
   for (const [key, product] of Object.entries(assumptions.products)) {
+    let productResult;
+    
     // Route to appropriate calculator based on product type
     if (product.productType === 'Commission') {
-      productResults[key] = calculateCommissionProduct(product, assumptions, years);
+      productResult = calculateCommissionProduct(product, assumptions, years);
     } else if (product.productType === 'DepositAndService' || product.isDigital) {
       if (product.acquisition) {
         // Unified digital customer model
-        productResults[key] = calculateDigitalCustomerModel(product, assumptions, years, ftpRate);
+        productResult = calculateDigitalCustomerModel(product, assumptions, years, ftpRate);
       } else {
         // Simple deposit product
-        productResults[key] = calculateDigitalProduct(product, assumptions, years, ftpRate, depositRate);
+        productResult = calculateDigitalProduct(product, assumptions, years, ftpRate, depositRate);
       }
     } else {
       // Default to credit product
-      productResults[key] = calculateCreditProduct(product, assumptions, years);
+      productResult = calculateCreditProduct(product, assumptions, years);
     }
+    
+    // Add product metadata to results
+    productResult.name = product.name;
+    productResult.key = key;
+    productResult.productType = product.productType;
+    
+    productResults[key] = productResult;
   }
   
   results.productResults = productResults;

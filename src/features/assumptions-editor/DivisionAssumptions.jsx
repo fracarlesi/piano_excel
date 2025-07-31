@@ -39,7 +39,7 @@ const DivisionAssumptions = ({
 
   // Handle volume changes
   const handleVolumeChange = (productKey, volumes) => {
-    console.log('📊 Volume change for product:', productKey, 'new volumes:', volumes);
+    // console.log('📊 Volume change for product:', productKey, 'new volumes:', volumes);
     onAssumptionChange(`products.${productKey}.volumeArray`, volumes);
   };
 
