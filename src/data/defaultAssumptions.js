@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '7.22', // Headcount growth si applica solo a Junior e Middle, Senior e Head of rimangono costanti
+  version: '7.23', // Costi del personale ora correttamente riflessi nel P&L e KPI di ogni divisione
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

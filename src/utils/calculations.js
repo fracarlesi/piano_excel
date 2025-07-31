@@ -1276,6 +1276,31 @@ export const calculateResults = (assumptions) => {
   // Store detailed personnel costs for divisions
   results.personnelCostsByDivision = personnelResults.byDivision;
   results.personnelCostsByCentralDept = personnelResults.byDepartment;
+  
+  // Update division-level FTE from personnel results
+  const divisionPersonnelKeys = {
+    're': 'RealEstateFinancing',
+    'sme': 'SMEFinancing',
+    'digital': 'DigitalBanking',
+    'wealth': 'WealthAndAssetManagement',
+    'incentive': 'Incentives',
+    'tech': 'Tech',
+    'treasury': 'Treasury'
+  };
+  
+  divisionPrefixes.forEach(prefix => {
+    if (prefix === 'central') {
+      // Central functions total headcount from all departments
+      results.kpi[`${prefix}Fte`] = years.map(i => 
+        Object.values(personnelResults.byDepartment).reduce((sum, dept) => 
+          sum + (dept.headcount?.[i] || 0), 0
+        )
+      );
+    } else {
+      const divisionKey = divisionPersonnelKeys[prefix];
+      results.kpi[`${prefix}Fte`] = personnelResults.byDivision[divisionKey]?.headcount || years.map(() => 0);
+    }
+  });
 
   const costGrowth = years.map(i => Math.pow(1 + assumptions.costGrowthRate / 100, i));
   results.pnl.adminCosts = years.map(i => -assumptions.adminCostsY1 * costGrowth[i]);
@@ -1737,10 +1762,28 @@ export const calculateResults = (assumptions) => {
   // Calculate division-level results
   results.divisions = {};
   
+  // Mapping from division prefixes to personnel cost division keys
+  const divisionPersonnelMapping = {
+    're': 'RealEstateFinancing',
+    'sme': 'SMEFinancing',
+    'digital': 'DigitalBanking',
+    'wealth': 'WealthAndAssetManagement',
+    'incentive': 'Incentives',
+    'tech': 'Tech',
+    'treasury': 'Treasury',
+    'central': 'CentralFunctions'
+  };
+  
   divisionPrefixes.forEach(prefix => {
     const divisionProducts = Object.entries(productResults)
       .filter(([key]) => key.startsWith(prefix))
       .map(([key, product]) => product);
+    
+    // Get personnel costs from the new bottom-up calculation
+    const personnelDivisionKey = divisionPersonnelMapping[prefix];
+    const divisionPersonnelCosts = prefix === 'central' 
+      ? personnelResults.centralFunctionsTotal
+      : (personnelResults.byDivision[personnelDivisionKey]?.costs || years.map(() => 0));
     
     results.divisions[prefix] = {
       bs: {
@@ -1770,9 +1813,7 @@ export const calculateResults = (assumptions) => {
         totalLLP: years.map(i => 
           divisionProducts.reduce((sum, p) => sum + p.llp[i], 0)
         ),
-        personnelCosts: years.map(i => 
-          divisionProducts.reduce((sum, p) => sum + p.personnelCosts[i], 0)
-        ),
+        personnelCosts: divisionPersonnelCosts,
         netProfit: years.map(i => 
           divisionProducts.reduce((sum, p) => sum + p.netProfit[i], 0)
         )

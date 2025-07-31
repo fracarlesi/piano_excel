@@ -27,6 +27,11 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v7.23 (2025-07-31)
+- Personnel costs from bottom-up model now correctly reflected in P&L for each division
+- Division FTE in KPIs now shows actual headcount from staffing tables
+- Fixed calculation logic to use new personnel data structure
+- Each division's P&L now shows its specific personnel costs
 ### v7.22 (2025-07-31)
 - Headcount growth now applies only to Junior and Middle levels
 - Senior and Head of positions remain constant over time (no automatic growth)

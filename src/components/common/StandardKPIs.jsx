@@ -54,13 +54,17 @@ const StandardKPIs = ({
     return avgPerformingAssets > 0 ? (Math.abs(llp) / avgPerformingAssets) * 10000 : 0;
   });
 
-  // FTE calculation (allocated based on RWA)
-  const fte = [0,0,0,0,0,0,0,0,0,0].map((_, i) => {
-    const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const totalRwa = globalResults.capital.totalRWA[i] || 1;
-    const totalFte = (globalResults.kpi.fte || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    return totalFte * (divisionRwa / totalRwa);
-  });
+  // FTE calculation - get actual division FTE from KPI data
+  const divisionPrefix = divisionName.toLowerCase().includes('real estate') ? 're' :
+                        divisionName.toLowerCase().includes('sme') || divisionName.toLowerCase().includes('pmi') ? 'sme' :
+                        divisionName.toLowerCase().includes('digital') ? 'digital' :
+                        divisionName.toLowerCase().includes('wealth') ? 'wealth' :
+                        divisionName.toLowerCase().includes('incentive') || divisionName.toLowerCase().includes('finanza agevolata') ? 'incentive' :
+                        divisionName.toLowerCase().includes('tech') ? 'tech' :
+                        divisionName.toLowerCase().includes('central') ? 'central' :
+                        divisionName.toLowerCase().includes('treasury') ? 'treasury' : '';
+  
+  const fte = globalResults.kpi[`${divisionPrefix}Fte`] || [0,0,0,0,0,0,0,0,0,0];
 
   // FTE front-office (assume 60% of total FTE for client-facing divisions)
   const fteFrontOffice = fte.map(f => f * 0.6);
@@ -144,46 +148,40 @@ const StandardKPIs = ({
       decimals: 0,
       isSubTotal: true,
       formula: fte.map((val, i) => createFormula(i,
-        'Total Bank FTE × Division RWA Weight',
+        'Division Actual FTE from Bottom-up Personnel Model',
         [
           {
-            name: 'Total Bank FTE',
-            value: (globalResults.kpi.fte || [0,0,0,0,0,0,0,0,0,0])[i],
+            name: 'Junior Count',
+            value: 0, // Would need to pass detailed data
             unit: 'FTE',
-            calculation: 'Total bank-wide headcount'
+            calculation: 'Entry-level positions (subject to growth)'
           },
           {
-            name: 'Division RWA',
-            value: (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i],
-            unit: '€M',
-            calculation: 'Risk-weighted assets for this division'
+            name: 'Middle Count',
+            value: 0, // Would need to pass detailed data
+            unit: 'FTE',
+            calculation: 'Mid-level positions (subject to growth)'
           },
           {
-            name: 'Total Bank RWA',
-            value: globalResults.capital.totalRWA[i],
-            unit: '€M',
-            calculation: 'Total bank risk-weighted assets'
+            name: 'Senior Count',
+            value: 0, // Would need to pass detailed data
+            unit: 'FTE',
+            calculation: 'Senior positions (constant)'
           },
           {
-            name: 'RWA Weight',
-            value: globalResults.capital.totalRWA[i] > 0 ? ((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] / globalResults.capital.totalRWA[i]) * 100 : 0,
-            unit: '%',
-            calculation: 'Division share of total RWA'
+            name: 'Head of Count',
+            value: 0, // Would need to pass detailed data
+            unit: 'FTE',
+            calculation: 'Leadership positions (constant)'
           },
           {
-            name: 'Division FTE',
+            name: 'Total Division FTE',
             value: val,
             unit: 'FTE',
-            calculation: 'Allocated headcount for this division'
+            calculation: 'Sum of all seniority levels in this division'
           }
         ],
-        () => {
-          const totalFte = (globalResults.kpi.fte || [0,0,0,0,0,0,0,0,0,0])[i];
-          const divRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i];
-          const totalRwa = globalResults.capital.totalRWA[i];
-          const weight = totalRwa > 0 ? (divRwa / totalRwa) : 0;
-          return `${formatNumber(totalFte, 0)} × ${formatNumber(weight * 100, 1)}% = ${formatNumber(val, 0)}`;
-        }
+        () => `Actual headcount from personnel staffing: ${formatNumber(val, 0)} FTE`
       ))
     },
 
