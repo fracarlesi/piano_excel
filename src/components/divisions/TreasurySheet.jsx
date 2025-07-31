@@ -1,6 +1,5 @@
 import React from 'react';
 import FinancialTable from '../common/FinancialTable';
-import StandardBalanceSheet from '../common/StandardBalanceSheet';
 import StandardCapitalRequirements from '../common/StandardCapitalRequirements';
 import { formatNumber } from '../../utils/formatters';
 import { createFormula } from '../../utils/formulaHelpers';

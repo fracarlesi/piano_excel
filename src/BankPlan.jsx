@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 // Hooks
 import { useFirebaseState } from './hooks/useFirebaseState';
@@ -32,9 +32,7 @@ const ExcelLikeBankPlan = () => {
     hasUnsavedChanges, 
     lastFileExport, 
     isAutoSaving,
-    isLoading,
-    importData, 
-    exportToFile 
+    isLoading
   } = useFirebaseState();
   
   // Show loading screen while data is being loaded from Firebase
