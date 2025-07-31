@@ -90,7 +90,7 @@ const DivisionAssumptions = ({
       {
         parameter: 'Default Rate',
         description: 'Annual default rate',
-        value: product.dangerRate || 1.5,
+        value: product.dangerRate !== undefined ? product.dangerRate : 1.5,
         unit: '%',
         key: `products.${productKey}.dangerRate`,
         tooltip: 'Annual percentage of loans that default and become non-performing',

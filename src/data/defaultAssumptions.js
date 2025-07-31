@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.21', // Fixed bullet loan amortization to maintain constant capital until maturity
+  version: '5.22', // Fixed dangerRate display to allow zero values
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
