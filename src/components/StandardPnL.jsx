@@ -35,13 +35,8 @@ const StandardPnL = ({
     return income + expenses; // expenses are negative
   });
 
-  // Calculate other income (equity upside)
-  const otherIncome = Object.values(productResults).reduce((acc, product) => {
-    const equityUpside = product.equityUpsideIncome ?? [0,0,0,0,0,0,0,0,0,0];
-    return acc.map((val, i) => val + equityUpside[i]);
-  }, [0,0,0,0,0,0,0,0,0,0]);
-
-  const totalRevenues = netInterestIncome.map((nii, i) => nii + netCommissionIncome[i] + otherIncome[i]);
+  // Total revenues = NII + NCI (simplified, removed other income and trading income)
+  const totalRevenues = netInterestIncome.map((nii, i) => nii + netCommissionIncome[i]);
 
   // Use pre-calculated values from division results
   const personnelCosts = divisionResults.pnl.personnelCosts ?? [0,0,0,0,0,0,0,0,0,0];
@@ -408,70 +403,6 @@ const StandardPnL = ({
       })) : []
     },
 
-    // ========== OTHER INCOME ==========
-    {
-      label: 'Other Income',
-      data: Object.values(productResults).reduce((acc, product) => {
-        const equityUpside = product.equityUpsideIncome ?? [0,0,0,0,0,0,0,0,0,0];
-        return acc.map((val, i) => val + equityUpside[i]);
-      }, [0,0,0,0,0,0,0,0,0,0]),
-      decimals: 2,
-      isHeader: true,
-      formula: Object.values(productResults).reduce((acc, product) => {
-        const equityUpside = product.equityUpsideIncome ?? [0,0,0,0,0,0,0,0,0,0];
-        return acc.map((val, i) => val + equityUpside[i]);
-      }, [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
-        'Equity Upside Income from products',
-        [
-          year => `Other Income: ${formatNumber(val, 2)} €M`
-        ]
-      )),
-      // Add product breakdown as subRows
-      subRows: showProductDetail ? Object.entries(productResults)
-        .filter(([key, product]) => product.equityUpsideIncome && product.equityUpsideIncome.some(val => val > 0))
-        .map(([key, product], index) => ({
-          label: `o/w ${product.name} (Equity Upside)`,
-          data: product.equityUpsideIncome ?? [0,0,0,0,0,0,0,0,0,0],
-          decimals: 2,
-          formula: (product.equityUpsideIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
-            const productKey = Object.keys(assumptions.products ?? {}).find(k => 
-              assumptions.products[k].name === product.name
-            );
-            const originalProduct = productKey ? assumptions.products[productKey] : {};
-            
-            return createFormula(
-              i,
-              'New Business Volume × Equity Upside Rate',
-              [
-                {
-                  name: 'New Business Volume',
-                  value: (product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
-                  unit: '€M',
-                  calculation: 'Volume of new business originated'
-                },
-                {
-                  name: 'Equity Upside Rate',
-                  value: originalProduct.equityUpside ?? 0,
-                  unit: '%',
-                  calculation: 'Potential equity participation rate'
-                }
-              ],
-              year => {
-                const volume = (product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[year] ?? 0;
-                const rate = originalProduct.equityUpside ?? 0;
-                return `${formatNumber(volume, 2)} × ${formatNumber(rate, 2)}% = ${formatNumber(val, 2)} €M`;
-              }
-            );
-          })
-        })) : []
-    },
-
-    {
-      label: 'Trading Income',
-      data: [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2
-    },
-
     // ========== TOTAL REVENUES ==========
     {
       label: 'Total Revenues',
@@ -480,17 +411,16 @@ const StandardPnL = ({
       isTotal: true,
       bgColor: 'gray',
       formula: totalRevenues.map((val, i) => createFormula(i,
-        'NII + NCI + Other Income + Trading Income',
+        'NII + NCI',
         [
           year => `NII: ${formatNumber(netInterestIncome[year], 2)} €M`,
           year => `NCI: ${formatNumber(netCommissionIncome[year], 2)} €M`,
-          year => `Other Income: ${formatNumber(otherIncome[year], 2)} €M`,
-          year => `Trading: 0 €M`,
           year => `Total: ${formatNumber(val, 2)} €M`
         ],
-        year => `${formatNumber(netInterestIncome[year], 2)} + ${formatNumber(netCommissionIncome[year], 2)} + ${formatNumber(otherIncome[year], 2)} + 0 = ${formatNumber(val, 2)} €M`
+        year => `${formatNumber(netInterestIncome[year], 2)} + ${formatNumber(netCommissionIncome[year], 2)} = ${formatNumber(val, 2)} €M`
       ))
     },
+
 
     // ========== PERSONNEL COSTS ==========
     {

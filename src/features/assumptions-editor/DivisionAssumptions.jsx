@@ -83,23 +83,25 @@ const DivisionAssumptions = ({
     );
   };
 
+  // Division mapping for paths
+  const divisionMapping = {
+    're': 'realEstateDivision',
+    'sme': 'smeDivision',
+    'digital': 'digitalBankingDivision',
+    'wealth': 'wealthDivision',
+    'tech': 'techDivision',
+    'incentive': 'incentiveDivision',
+    'treasury': 'treasury',
+    'central': 'centralFunctions'
+  };
+
   // Get division assumptions object based on key
   const getDivisionAssumptions = () => {
-    const divisionMapping = {
-      're': 'realEstateDivision',
-      'sme': 'smeDivision',
-      'digital': 'digitalBankingDivision',
-      'wealth': 'wealthDivision',
-      'tech': 'techDivision',
-      'incentive': 'incentiveDivision',
-      'treasury': 'treasury',
-      'central': 'centralFunctions'
-    };
-    
     return assumptions[divisionMapping[divisionKey]];
   };
 
   const divisionAssumptions = getDivisionAssumptions();
+  const divisionPath = divisionMapping[divisionKey];
 
   return (
     <div className="p-6 space-y-6">
@@ -116,10 +118,11 @@ const DivisionAssumptions = ({
             👥 Personale e Costi HR
           </h3>
           <StaffingTable
-            divisionKey={divisionKey}
             divisionData={divisionAssumptions}
-            onAssumptionChange={onAssumptionChange}
+            path={divisionPath}
+            handleAssumptionChange={onAssumptionChange}
             editMode={true}
+            companyTaxMultiplier={assumptions.personnel?.companyTaxMultiplier || 1.4}
           />
         </div>
       )}

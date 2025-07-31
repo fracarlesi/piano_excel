@@ -30,13 +30,18 @@ const StaffingTable = ({
   const totalRAL = completeStaffing.reduce((sum, level) => sum + (level.count || 0) * (level.ralPerHead || 0), 0);
   const totalCompanyCost = totalRAL * companyTaxMultiplier;
 
-  // Update staffing array to include only non-zero entries
+  // Update staffing array
   const updateStaffing = (index, field, value) => {
     const updatedStaffing = [...completeStaffing];
     updatedStaffing[index] = { ...updatedStaffing[index], [field]: value };
     
-    // Filter out entries with zero count and zero RAL to keep data clean
-    const cleanedStaffing = updatedStaffing.filter(level => level.count > 0 || level.ralPerHead > 0);
+    // Keep all entries that have been modified from defaults or have values
+    const cleanedStaffing = updatedStaffing.filter(level => {
+      const defaultLevel = standardLevels.find(s => s.level === level.level);
+      const hasCount = level.count > 0;
+      const hasModifiedRAL = level.ralPerHead !== defaultLevel?.defaultRAL;
+      return hasCount || hasModifiedRAL;
+    });
     
     handleAssumptionChange(`${path}.staffing`, cleanedStaffing);
   };

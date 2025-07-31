@@ -16,6 +16,8 @@
  * @returns {Object} Complete product calculation results
  */
 export const calculateCreditProduct = (product, assumptions, years) => {
+  // Calculate FTP rate for interest expense
+  const ftpRate = (assumptions.euribor + assumptions.ftpSpread) / 100;
   // Get interest rate based on product type
   const getInterestRate = (product, assumptions) => {
     if (product.isFixedRate) {
@@ -326,6 +328,10 @@ export const calculateCreditProduct = (product, assumptions, years) => {
     return avgStock;
   });
 
+  // Calculate interest expense (FTP cost of funding)
+  // Apply FTP rate to the same average stock used for interest income
+  const interestExpense = actualAverageStock.map(avgStock => -avgStock * ftpRate);
+
   return {
     performingAssets: grossPerformingStock,
     nonPerformingAssets: nplStock,
@@ -333,6 +339,7 @@ export const calculateCreditProduct = (product, assumptions, years) => {
     actualAverageStock: actualAverageStock, // The REAL average stock used for interest calc
     newNPLs: newNPLs,
     interestIncome: totalInterestIncome,
+    interestExpense: interestExpense, // FTP cost of funding
     commissionIncome: commissionIncome,
     llp: totalLLP,
     rwa: rwa,

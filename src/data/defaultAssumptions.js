@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.35', // Fixed interest timing: interest starts from quarter AFTER disbursement (Q1 disbursement = interest from Q2)
+  version: '10.43', // Fixed Annual Salary Review to allow 0% value - removed hardcoded fallbacks
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

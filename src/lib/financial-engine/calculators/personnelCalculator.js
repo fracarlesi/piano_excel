@@ -16,7 +16,8 @@
 export const calculateAllPersonnelCosts = (assumptions, years) => {
   // Extract global personnel parameters
   const personnel = assumptions.personnel || {};
-  const { annualSalaryReview = 2.5, companyTaxMultiplier = 1.4 } = personnel;
+  const annualSalaryReview = personnel.annualSalaryReview ?? 0;
+  const companyTaxMultiplier = personnel.companyTaxMultiplier ?? 1.4;
   const salaryGrowth = years.map(i => Math.pow(1 + annualSalaryReview / 100, i));
   
   // Helper function to calculate costs for a single unit (division or department)

@@ -148,26 +148,26 @@ export const createProductFormula = (year, product, formulaType, values) => {
         },
         {
           name: 'EURIBOR',
-          value: values.euribor || 3.5,
+          value: values.euribor,
           unit: '%',
           calculation: 'European interbank reference rate'
         },
         {
           name: 'FTP Spread',
-          value: values.ftpSpread || 1.5,
+          value: values.ftpSpread,
           unit: '%',
           calculation: 'Internal funding margin over EURIBOR'
         },
         {
           name: 'Total FTP Rate',
-          value: values.ftpRate || 5.0,
+          value: values.ftpRate,
           unit: '%',
-          calculation: `${formatNumber(values.euribor || 3.5, 2)}% + ${formatNumber(values.ftpSpread || 1.5, 2)}% = ${formatNumber(values.ftpRate || 5.0, 2)}%`
+          calculation: `${formatNumber(values.euribor, 2)}% + ${formatNumber(values.ftpSpread, 2)}% = ${formatNumber(values.ftpRate, 2)}%`
         }
       ],
       calculation: () => isDepositProduct ?
         `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.interestRate || 0, 2)}% = ${formatNumber(Math.abs(values.result), 2)}` :
-        `${formatNumber(values.avgAssets, 2)} × (${formatNumber(values.euribor || 3.5, 2)}% + ${formatNumber(values.ftpSpread || 1.5, 2)}%) = ${formatNumber(Math.abs(values.result), 2)}`
+        `${formatNumber(values.avgAssets, 2)} × (${formatNumber(values.euribor, 2)}% + ${formatNumber(values.ftpSpread, 2)}%) = ${formatNumber(Math.abs(values.result), 2)}`
     },
     
     commissionIncome: {

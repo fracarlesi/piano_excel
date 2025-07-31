@@ -105,7 +105,7 @@ const PersonnelAssumptions = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <EditableNumberField
               label="Annual Salary Review"
-              value={assumptions.personnel?.annualSalaryReview || 2.5}
+              value={assumptions.personnel?.annualSalaryReview ?? 0}
               onChange={val => handleAssumptionChange('personnel.annualSalaryReview', val)}
               unit="%"
               disabled={!editMode}
