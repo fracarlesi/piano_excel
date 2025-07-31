@@ -1,7 +1,7 @@
 import React from 'react';
 import FinancialTable from './FinancialTable';
 import { formatNumber } from '../../utils/formatters';
-import { createFormula } from '../../utils/formulaHelpers';
+import { createFormula, createAggregateFormula } from '../../utils/formulaHelpers';
 
 /**
  * Standardized Balance Sheet structure for all divisions
@@ -16,13 +16,6 @@ const StandardBalanceSheet = ({
   showProductDetail = true,
   customRowTransformations = {}
 }) => {
-  
-  // Helper function to create formula explanations with numerical calculations
-  const createFormula = (year, formula, details, calculation = null) => ({
-    formula,
-    details: details.map(d => typeof d === 'function' ? d(year) : d),
-    calculation: typeof calculation === 'function' ? calculation(year) : calculation
-  });
 
   // Calculate derived values
   const performingAssets = divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0];
@@ -48,14 +41,24 @@ const StandardBalanceSheet = ({
       data: totalAssets,
       decimals: 0,
       isHeader: true,
-      formula: totalAssets.map((val, i) => createFormula(i,
+      formula: totalAssets.map((val, i) => createFormula(
+        i,
         'Net Performing + Non-Performing Assets',
         [
-          year => `Performing Assets: ${formatNumber(performingAssets[year], 0)} €M`,
-          year => `Non-Performing: ${formatNumber(nonPerformingAssets[year], 0)} €M`,
-          year => `Total: ${formatNumber(val, 0)} €M`
+          {
+            name: 'Net Performing Assets',
+            value: performingAssets[i],
+            unit: '€M',
+            calculation: 'Sum of all performing loans'
+          },
+          {
+            name: 'Non-Performing Assets',
+            value: nonPerformingAssets[i],
+            unit: '€M',
+            calculation: 'Accumulated defaulted loans'
+          }
         ],
-        year => `${formatNumber(performingAssets[year], 0)} + ${formatNumber(nonPerformingAssets[year], 0)} = ${formatNumber(val, 0)} €M`
+        () => `${formatNumber(performingAssets[i], 0)} + ${formatNumber(nonPerformingAssets[i], 0)} = ${formatNumber(val, 0)} €M`
       ))
     },
 
@@ -64,29 +67,55 @@ const StandardBalanceSheet = ({
       data: performingAssets,
       decimals: 0,
       isHeader: true,
-      formula: performingAssets.map((val, i) => createFormula(i,
-        'Sum of performing loans by product',
-        [
-          year => `Net Performing Assets: ${formatNumber(val, 0)} €M`
-        ]
+      formula: performingAssets.map((val, i) => createAggregateFormula(
+        i,
+        'Net Performing Assets',
+        Object.entries(productResults).map(([key, product]) => ({
+          name: product.name,
+          value: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i],
+          unit: '€M'
+        }))
       )),
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.performingAssets || [0,0,0,0,0,0,0,0,0,0],
         decimals: 0,
-        formula: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
-          'Stock evolution: Previous + New - Repayments - Defaults',
+        formula: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(
+          i,
+          'Stock = Previous + New Business - Repayments - Defaults',
           [
-            `Product: ${product.name}`,
-            year => `Previous Stock: ${i > 0 ? formatNumber((product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1], 0) : '0'} €M`,
-            year => `New Business: ${formatNumber((product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
-            year => `Performing Stock: ${formatNumber(val, 0)} €M`
+            {
+              name: 'Previous Stock',
+              value: i > 0 ? (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i-1] || 0 : 0,
+              unit: '€M',
+              calculation: 'End of previous year balance'
+            },
+            {
+              name: 'New Business',
+              value: (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+              unit: '€M',
+              calculation: 'New loans originated this year'
+            },
+            {
+              name: 'Repayments',
+              value: (product.principalRepayments || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+              unit: '€M',
+              calculation: 'Principal repaid according to amortization schedule'
+            },
+            {
+              name: 'Defaults',
+              value: i > 0 ? ((product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i-1] || 0) * ((product.assumptions?.pd || 0.015)) : 0,
+              unit: '€M',
+              calculation: `Previous Stock × Default Rate (${formatNumber((product.assumptions?.pd || 0.015) * 100, 2)}%)`
+            }
           ],
-          year => {
-            const prev = i > 0 ? (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1] || 0 : 0;
-            const newBusiness = (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
-            return `${formatNumber(prev, 0)} + ${formatNumber(newBusiness, 0)} - Repayments - Defaults = ${formatNumber(val, 0)} €M`;
+          () => {
+            const prev = i > 0 ? (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i-1] || 0 : 0;
+            const newBusiness = (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+            const repayments = (product.principalRepayments || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+            const defaults = i > 0 ? prev * (product.assumptions?.pd || 0.015) : 0;
+            return `${formatNumber(prev, 0)} + ${formatNumber(newBusiness, 0)} - ${formatNumber(repayments, 0)} - ${formatNumber(defaults, 0)} = ${formatNumber(val, 0)} €M`;
           }
         ))
       })) : []
@@ -155,14 +184,36 @@ const StandardBalanceSheet = ({
       data: allocatedEquity,
       decimals: 0,
       isSubItem: true,
-      formula: allocatedEquity.map((val, i) => createFormula(i,
-        'Equity allocated based on RWA contribution',
+      formula: allocatedEquity.map((val, i) => createFormula(
+        i,
+        'Total Bank Equity × (Division RWA / Total Bank RWA)',
         [
-          year => `Division RWA: ${formatNumber((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
-          year => `Total Bank RWA: ${formatNumber(globalResults.capital.totalRWA[year], 0)} €M`,
-          year => `RWA Weight: ${(((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) * 100).toFixed(1)}%`,
-          year => `Allocated Equity: ${formatNumber(val, 0)} €M`
-        ]
+          {
+            name: 'Total Bank Equity',
+            value: globalResults.bs.equity[i],
+            unit: '€M',
+            calculation: 'Total bank regulatory capital'
+          },
+          {
+            name: 'Division RWA',
+            value: (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i],
+            unit: '€M',
+            calculation: 'Risk-weighted assets for this division'
+          },
+          {
+            name: 'Total Bank RWA',
+            value: globalResults.capital.totalRWA[i],
+            unit: '€M',
+            calculation: 'Total bank risk-weighted assets'
+          },
+          {
+            name: 'RWA Weight',
+            value: ((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] / globalResults.capital.totalRWA[i]) * 100,
+            unit: '%',
+            calculation: 'Division\'s share of total RWA'
+          }
+        ],
+        () => `${formatNumber(globalResults.bs.equity[i], 0)} × (${formatNumber((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i], 0)} / ${formatNumber(globalResults.capital.totalRWA[i], 0)}) = ${formatNumber(val, 0)} €M`
       ))
     },
 
@@ -171,13 +222,24 @@ const StandardBalanceSheet = ({
       data: sightDeposits,
       decimals: 0,
       isSubItem: true,
-      formula: sightDeposits.map((val, i) => createFormula(i,
+      formula: sightDeposits.map((val, i) => createFormula(
+        i,
         'Total Liabilities × Sight Deposits %',
         [
-          year => `Total Liabilities: ${formatNumber(totalLiabilities[year], 0)} €M`,
-          year => `Sight Deposits %: 40%`,
-          year => `Sight Deposits: ${formatNumber(val, 0)} €M`
-        ]
+          {
+            name: 'Total Liabilities',
+            value: totalLiabilities[i],
+            unit: '€M',
+            calculation: 'Total Assets - Equity'
+          },
+          {
+            name: 'Sight Deposits %',
+            value: 40,
+            unit: '%',
+            calculation: 'Funding mix assumption'
+          }
+        ],
+        () => `${formatNumber(totalLiabilities[i], 0)} × 40% = ${formatNumber(val, 0)} €M`
       ))
     },
 

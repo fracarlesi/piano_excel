@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '6.10', // Calculation Trace migliorato: tutte le formule ora mostrano i valori numerici di ogni variabile (EURIBOR, Spread, FTP Rate) per completa trasparenza dei calcoli
+  version: '6.11', // Calculation Trace esteso a tutte le tabelle finanziarie: Balance Sheet, KPIs e Capital Requirements ora mostrano i valori numerici per ogni componente del calcolo
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

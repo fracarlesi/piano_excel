@@ -1,6 +1,7 @@
 import React from 'react';
 import FinancialTable from './FinancialTable';
 import { formatNumber } from '../../utils/formatters';
+import { createFormula } from '../../utils/formulaHelpers';
 
 /**
  * Standardized KPIs structure for all divisions
@@ -15,16 +16,8 @@ const StandardKPIs = ({
   showProductDetail = true,
   customRowTransformations = {}
 }) => {
-  
-  // Helper function to create formula explanations
-  const createFormula = (year, formula, details) => ({
-    formula,
-    details: details.map(d => typeof d === 'function' ? d(year) : d)
-  });
 
   // Calculate derived KPI values
-  const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0,0,0,0,0,0];
-  const netProfit = divisionResults.pnl.netProfit || [0,0,0,0,0,0,0,0,0,0];
   const totalRevenues = (divisionResults.pnl.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((ii, i) => {
     const ci = (divisionResults.pnl.commissionIncome || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
     const ie = (divisionResults.pnl.interestExpenses || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
@@ -84,11 +77,26 @@ const StandardKPIs = ({
       formula: costIncomeRatio.map((val, i) => createFormula(i,
         'Total Operating Expenses / Total Revenues × 100',
         [
-          year => `Operating Expenses: ${formatNumber(Math.abs(totalOpex[year]), 2)} €M`,
-          year => `Total Revenues: ${formatNumber(totalRevenues[year], 2)} €M`,
-          year => `Cost/Income: ${formatNumber(val, 1)}%`,
-          'Lower is better - indicates operational efficiency'
-        ]
+          {
+            name: 'Total Operating Expenses',
+            value: Math.abs(totalOpex[i]),
+            unit: '€M',
+            calculation: 'Personnel + Admin + Marketing + IT + HQ costs allocated by RWA'
+          },
+          {
+            name: 'Total Revenues',
+            value: totalRevenues[i],
+            unit: '€M',
+            calculation: 'Interest Income + Commission Income - Interest Expenses - Commission Expenses'
+          },
+          {
+            name: 'Cost/Income Ratio',
+            value: val,
+            unit: '%',
+            calculation: 'Lower is better - indicates operational efficiency'
+          }
+        ],
+        () => `${formatNumber(Math.abs(totalOpex[i]), 2)} / ${formatNumber(totalRevenues[i], 2)} × 100 = ${formatNumber(val, 1)}%`
       ))
     },
 
@@ -102,11 +110,30 @@ const StandardKPIs = ({
       formula: costOfRisk.map((val, i) => createFormula(i,
         'Loan Loss Provisions / Average Performing Assets × 10,000',
         [
-          year => `LLP: ${formatNumber(Math.abs((divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0])[year]), 2)} €M`,
-          year => `Avg Performing Assets: ${formatNumber(year > 0 ? ((divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year] + (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1]) / 2 : (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
-          year => `Cost of Risk: ${formatNumber(val, 0)} basis points`,
-          'Measures credit risk - lower is better'
-        ]
+          {
+            name: 'Loan Loss Provisions',
+            value: Math.abs((divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0])[i]),
+            unit: '€M',
+            calculation: 'Annual credit risk provisions'
+          },
+          {
+            name: 'Average Performing Assets',
+            value: i > 0 ? ((divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i] + (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i-1]) / 2 : (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i],
+            unit: '€M',
+            calculation: i > 0 ? 'Average of beginning and ending balance' : 'Year-end balance'
+          },
+          {
+            name: 'Cost of Risk',
+            value: val,
+            unit: 'bps',
+            calculation: 'Measures credit risk - lower is better'
+          }
+        ],
+        () => {
+          const llp = Math.abs((divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0])[i]);
+          const avgAssets = i > 0 ? ((divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i] + (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i-1]) / 2 : (divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i];
+          return `${formatNumber(llp, 2)} / ${formatNumber(avgAssets, 0)} × 10,000 = ${formatNumber(val, 0)} bps`;
+        }
       ))
     },
 
@@ -119,12 +146,44 @@ const StandardKPIs = ({
       formula: fte.map((val, i) => createFormula(i,
         'Total Bank FTE × Division RWA Weight',
         [
-          year => `Total Bank FTE: ${formatNumber((globalResults.kpi.fte || [0,0,0,0,0,0,0,0,0,0])[year], 0)}`,
-          year => `Division RWA: ${formatNumber((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
-          year => `Total RWA: ${formatNumber(globalResults.capital.totalRWA[year], 0)} €M`,
-          year => `RWA Weight: ${globalResults.capital.totalRWA[year] > 0 ? (((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) * 100).toFixed(1) : 0}%`,
-          year => `Division FTE: ${formatNumber(val, 0)}`
-        ]
+          {
+            name: 'Total Bank FTE',
+            value: (globalResults.kpi.fte || [0,0,0,0,0,0,0,0,0,0])[i],
+            unit: 'FTE',
+            calculation: 'Total bank-wide headcount'
+          },
+          {
+            name: 'Division RWA',
+            value: (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i],
+            unit: '€M',
+            calculation: 'Risk-weighted assets for this division'
+          },
+          {
+            name: 'Total Bank RWA',
+            value: globalResults.capital.totalRWA[i],
+            unit: '€M',
+            calculation: 'Total bank risk-weighted assets'
+          },
+          {
+            name: 'RWA Weight',
+            value: globalResults.capital.totalRWA[i] > 0 ? ((divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] / globalResults.capital.totalRWA[i]) * 100 : 0,
+            unit: '%',
+            calculation: 'Division share of total RWA'
+          },
+          {
+            name: 'Division FTE',
+            value: val,
+            unit: 'FTE',
+            calculation: 'Allocated headcount for this division'
+          }
+        ],
+        () => {
+          const totalFte = (globalResults.kpi.fte || [0,0,0,0,0,0,0,0,0,0])[i];
+          const divRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i];
+          const totalRwa = globalResults.capital.totalRWA[i];
+          const weight = totalRwa > 0 ? (divRwa / totalRwa) : 0;
+          return `${formatNumber(totalFte, 0)} × ${formatNumber(weight * 100, 1)}% = ${formatNumber(val, 0)}`;
+        }
       ))
     },
 
@@ -137,11 +196,26 @@ const StandardKPIs = ({
       formula: fteFrontOffice.map((val, i) => createFormula(i,
         'Total Division FTE × Front-Office Ratio',
         [
-          year => `Total Division FTE: ${formatNumber(fte[year], 0)}`,
-          year => `Front-Office Ratio: 60%`,
-          year => `Front-Office FTE: ${formatNumber(val, 0)}`,
-          'Used for back-office cost allocation calculations'
-        ]
+          {
+            name: 'Total Division FTE',
+            value: fte[i],
+            unit: 'FTE',
+            calculation: 'Total allocated headcount'
+          },
+          {
+            name: 'Front-Office Ratio',
+            value: 60,
+            unit: '%',
+            calculation: 'Percentage of client-facing staff'
+          },
+          {
+            name: 'Front-Office FTE',
+            value: val,
+            unit: 'FTE',
+            calculation: 'Used for back-office cost allocation calculations'
+          }
+        ],
+        () => `${formatNumber(fte[i], 0)} × 60% = ${formatNumber(val, 0)}`
       ))
     }
   ];
