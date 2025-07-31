@@ -1,3 +1,5 @@
+import { calculatePersonnelCosts } from './calculatePersonnelCosts';
+
 /**
  * Calculate Deposit Product results (for Digital Banking division)
  * These products work as liabilities - they collect deposits from customers
@@ -552,14 +554,10 @@ const calculateDepositAndServiceProduct = (product, assumptions, years, ftpRate,
   };
 };
 
-/**
- * Calculate personnel costs using bottom-up approach
- * 
- * @param {Object} personnel - Personnel structure from assumptions
- * @param {Array} years - Array of year indices
- * @returns {Object} Personnel costs by division and total
- */
-const calculatePersonnelCosts = (personnel, years) => {
+// Old calculatePersonnelCosts function removed - now using imported function
+
+/*
+const calculatePersonnelCostsOld = (personnel, years) => {
   if (!personnel) {
     // Return empty structure if personnel data not available
     return {
@@ -571,7 +569,7 @@ const calculatePersonnelCosts = (personnel, years) => {
     };
   }
 
-  const { annualSalaryReview = 2.5, businessDivisions = {}, structuralDivisions = {} } = personnel;
+  const { annualSalaryReview = 2.5, companyTaxMultiplier = 1.4, businessDivisions = {}, structuralDivisions = {} } = personnel;
   const salaryGrowth = years.map(i => Math.pow(1 + annualSalaryReview / 100, i));
   
   const results = {
@@ -593,8 +591,9 @@ const calculatePersonnelCosts = (personnel, years) => {
       
       staffing.forEach(level => {
         const headcount = level.count * headcountMultiplier[yearIndex];
-        const costPerHead = level.costPerHead * salaryGrowth[yearIndex];
-        totalCost += headcount * costPerHead / 1000; // Convert to €M
+        const ralPerHead = (level.ralPerHead || level.costPerHead || 0) * salaryGrowth[yearIndex];
+        const companyCostPerHead = ralPerHead * companyTaxMultiplier;
+        totalCost += headcount * companyCostPerHead / 1000; // Convert to €M
         totalHeadcount += headcount;
       });
       
@@ -618,8 +617,9 @@ const calculatePersonnelCosts = (personnel, years) => {
       
       staffing.forEach(level => {
         const headcount = level.count * headcountMultiplier[yearIndex];
-        const costPerHead = level.costPerHead * salaryGrowth[yearIndex];
-        totalCost += headcount * costPerHead / 1000; // Convert to €M
+        const ralPerHead = (level.ralPerHead || level.costPerHead || 0) * salaryGrowth[yearIndex];
+        const companyCostPerHead = ralPerHead * companyTaxMultiplier;
+        totalCost += headcount * companyCostPerHead / 1000; // Convert to €M
         totalHeadcount += headcount;
       });
       
@@ -643,8 +643,9 @@ const calculatePersonnelCosts = (personnel, years) => {
       
       staffing.forEach(level => {
         const headcount = level.count * headcountMultiplier[yearIndex];
-        const costPerHead = level.costPerHead * salaryGrowth[yearIndex];
-        totalCost += headcount * costPerHead / 1000; // Convert to €M
+        const ralPerHead = (level.ralPerHead || level.costPerHead || 0) * salaryGrowth[yearIndex];
+        const companyCostPerHead = ralPerHead * companyTaxMultiplier;
+        totalCost += headcount * companyCostPerHead / 1000; // Convert to €M
         totalHeadcount += headcount;
       });
       
@@ -722,6 +723,7 @@ const calculatePersonnelCosts = (personnel, years) => {
 
   return results;
 };
+*/
 
 /**
  * Advanced calculation engine for bank business plan
@@ -1267,7 +1269,7 @@ export const calculateResults = (assumptions) => {
   results.kpi.fte = totalFte;
   
   // Calculate personnel costs using new bottom-up model
-  const personnelResults = calculatePersonnelCosts(assumptions.personnel, years);
+  const personnelResults = calculatePersonnelCosts(assumptions, years);
   results.pnl.personnelCostsTotal = personnelResults.totalCosts;
   results.kpi.fte = personnelResults.totalHeadcount;
   

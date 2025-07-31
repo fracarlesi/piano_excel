@@ -1,8 +1,10 @@
 import React from 'react';
 import EditableNumberField from '../common/EditableNumberField';
+import StaffingTable from './StaffingTable';
 
 const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
   const treasury = assumptions.treasury || {};
+  const companyTaxMultiplier = assumptions.personnel?.companyTaxMultiplier || 1.4;
 
   return (
     <div className="space-y-8">
@@ -104,33 +106,6 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               tooltipFormula="Actual Return = Target Return ± Volatility adjustments"
             />
           </div>
-
-          {/* Staffing */}
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-3">Treasury Staffing</h4>
-            <EditableNumberField
-              label="FTE Year 1"
-              value={treasury.fteY1}
-              onChange={val => onAssumptionChange('treasury.fteY1', val)}
-              unit="people"
-              isInteger={true}
-              tooltip="Number of treasury employees at year 1"
-              tooltipTitle="FTE Year 1"
-              tooltipImpact="Drives personnel costs for treasury operations"
-              tooltipFormula="Personnel Cost = FTE × Average Cost per FTE"
-            />
-            <EditableNumberField
-              label="FTE Year 5"
-              value={treasury.fteY5}
-              onChange={val => onAssumptionChange('treasury.fteY5', val)}
-              unit="people"
-              isInteger={true}
-              tooltip="Target number of treasury employees by year 5"
-              tooltipTitle="FTE Year 5"
-              tooltipImpact="Linear growth in staffing from Year 1 to Year 5"
-              tooltipFormula="FTE grows linearly between Year 1 and Year 5"
-            />
-          </div>
         </div>
 
         {/* FTP Information */}
@@ -146,14 +121,25 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
             <li>Manages funding gaps through interbank market</li>
           </ul>
         </div>
+      </div>
 
-        {/* Summary */}
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+      {/* Personnel Staffing */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold text-gray-800 mb-6">Treasury Personnel Staffing</h3>
+        
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="text-sm text-green-800">
-            <strong>Key Metrics:</strong> Treasury manages the bank's liquidity position, ensuring adequate buffers while optimizing returns on liquid assets. 
-            It also handles the funding gap between total loans and deposits through interbank funding when needed.
+            Configure the Treasury division staffing levels and compensation. Personnel costs are calculated based on RAL × {companyTaxMultiplier}x multiplier.
           </p>
         </div>
+
+        <StaffingTable
+          divisionData={treasury}
+          path="treasury"
+          handleAssumptionChange={onAssumptionChange}
+          editMode={true}
+          companyTaxMultiplier={companyTaxMultiplier}
+        />
       </div>
     </div>
   );

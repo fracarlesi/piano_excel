@@ -10,7 +10,9 @@ const PersonnelAssumptions = ({
   const renderStaffingTable = (divisionKey, divisionData, path) => {
     const staffing = divisionData.staffing || [];
     const totalCount = staffing.reduce((sum, level) => sum + level.count, 0);
-    const totalCost = staffing.reduce((sum, level) => sum + level.count * level.costPerHead, 0);
+    const totalRAL = staffing.reduce((sum, level) => sum + level.count * (level.ralPerHead || level.costPerHead || 0), 0);
+    const companyTaxMultiplier = assumptions.personnel?.companyTaxMultiplier || 1.4;
+    const totalCompanyCost = totalRAL * companyTaxMultiplier;
 
     return (
       <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
@@ -34,8 +36,9 @@ const PersonnelAssumptions = ({
               <tr className="bg-gray-50">
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
                 <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Count</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Cost/Head (€k)</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total (€k)</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">RAL/Head (€k)</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total RAL (€k)</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Company Cost (€k)</th>
               </tr>
             </thead>
             <tbody>
@@ -58,10 +61,10 @@ const PersonnelAssumptions = ({
                   </td>
                   <td className="px-4 py-2">
                     <EditableNumberField
-                      value={level.costPerHead}
+                      value={level.ralPerHead || level.costPerHead || 0}
                       onChange={val => {
                         const newStaffing = [...staffing];
-                        newStaffing[index] = { ...level, costPerHead: val };
+                        newStaffing[index] = { ...level, ralPerHead: val };
                         handleAssumptionChange(`${path}.staffing`, newStaffing);
                       }}
                       disabled={!editMode}
@@ -70,15 +73,19 @@ const PersonnelAssumptions = ({
                     />
                   </td>
                   <td className="px-4 py-2 text-center text-gray-700">
-                    {(level.count * level.costPerHead).toFixed(0)}
+                    {(level.count * (level.ralPerHead || level.costPerHead || 0)).toFixed(0)}
+                  </td>
+                  <td className="px-4 py-2 text-center text-gray-700">
+                    {(level.count * (level.ralPerHead || level.costPerHead || 0) * companyTaxMultiplier).toFixed(0)}
                   </td>
                 </tr>
               ))}
               <tr className="bg-gray-50 font-semibold">
                 <td className="px-4 py-2">Total</td>
                 <td className="px-4 py-2 text-center">{totalCount}</td>
-                <td className="px-4 py-2 text-center">{totalCount > 0 ? (totalCost / totalCount).toFixed(0) : 0}</td>
-                <td className="px-4 py-2 text-center">{totalCost.toFixed(0)}</td>
+                <td className="px-4 py-2 text-center">{totalCount > 0 ? (totalRAL / totalCount).toFixed(0) : 0}</td>
+                <td className="px-4 py-2 text-center">{totalRAL.toFixed(0)}</td>
+                <td className="px-4 py-2 text-center">{totalCompanyCost.toFixed(0)}</td>
               </tr>
             </tbody>
           </table>
@@ -95,18 +102,33 @@ const PersonnelAssumptions = ({
         {/* Global Driver */}
         <div className="mb-8 p-4 bg-blue-50 rounded-lg">
           <h4 className="font-semibold text-gray-700 mb-3">Global Personnel Parameters</h4>
-          <EditableNumberField
-            label="Annual Salary Review"
-            value={assumptions.personnel?.annualSalaryReview || 2.5}
-            onChange={val => handleAssumptionChange('personnel.annualSalaryReview', val)}
-            unit="%"
-            disabled={!editMode}
-            isPercentage
-            decimals={1}
-            tooltip="Annual salary increase applied to all personnel costs"
-            tooltipImpact="Affects all personnel costs across the entire organization"
-            tooltipFormula="Next Year Cost = Current Cost × (1 + Annual Salary Review %)"
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <EditableNumberField
+              label="Annual Salary Review"
+              value={assumptions.personnel?.annualSalaryReview || 2.5}
+              onChange={val => handleAssumptionChange('personnel.annualSalaryReview', val)}
+              unit="%"
+              disabled={!editMode}
+              isPercentage
+              decimals={1}
+              tooltip="Annual salary increase applied to all personnel costs"
+              tooltipImpact="Affects all personnel costs across the entire organization"
+              tooltipFormula="Next Year Cost = Current Cost × (1 + Annual Salary Review %)"
+            />
+            <EditableNumberField
+              label="Company Tax Multiplier"
+              value={assumptions.personnel?.companyTaxMultiplier || 1.4}
+              onChange={val => handleAssumptionChange('personnel.companyTaxMultiplier', val)}
+              unit="x"
+              disabled={!editMode}
+              decimals={2}
+              min={1}
+              max={2}
+              tooltip="Multiplier to convert RAL to company cost (social charges, TFR, etc.)"
+              tooltipImpact="Converts gross salary (RAL) to total company cost including all charges"
+              tooltipFormula="Company Cost = RAL × Company Tax Multiplier"
+            />
+          </div>
         </div>
 
         {/* Business Divisions */}

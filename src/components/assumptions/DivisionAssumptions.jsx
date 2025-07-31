@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import EditableNumberField from '../common/EditableNumberField';
 import ProductManager from '../common/ProductManager';
-import VolumeTable from '../common/VolumeTable';
 import VolumeInputGrid from '../common/VolumeInputGrid';
+import StaffingTable from './StaffingTable';
 
 /**
  * Base component for division-specific assumptions
@@ -611,7 +611,13 @@ const DivisionAssumptions = ({
     };
   });
 
-  const allAssumptions = [...generalAssumptions, ...productAssumptions];
+
+  // Get division staffing data
+  const divisionStaffingKey = `${divisionKey}Division`;
+  const divisionData = assumptions[divisionStaffingKey] || {};
+  
+  // Get global personnel parameters
+  const companyTaxMultiplier = assumptions.personnel?.companyTaxMultiplier || 1.4;
 
   return (
     <div className="space-y-6">
@@ -622,6 +628,26 @@ const DivisionAssumptions = ({
         assumptions={assumptions}
         onAssumptionChange={onAssumptionChange}
       />
+
+      {/* Personnel Staffing */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <div className="flex items-center mb-4">
+          <span className="text-2xl mr-3">👥</span>
+          <h2 className="text-xl font-bold text-gray-800">{divisionName} - Personnel Staffing</h2>
+        </div>
+        
+        <div className="text-sm text-gray-600 mb-6">
+          Configure headcount and salary levels for the {divisionName} division.
+        </div>
+        
+        <StaffingTable
+          divisionData={divisionData}
+          path={divisionStaffingKey}
+          handleAssumptionChange={onAssumptionChange}
+          editMode={true}
+          companyTaxMultiplier={companyTaxMultiplier}
+        />
+      </div>
 
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center mb-4">
@@ -1000,7 +1026,7 @@ const DivisionAssumptions = ({
                                   unit={row.unit === 'text' ? '' : row.unit}
                                   disabled={false}
                                   isPercentage={row.unit === '%'}
-                                  isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
+                                  isInteger={(row.unit === '€M' && row.parameter.includes('Volume')) || row.unit === 'units'}
                                   tooltip={row.tooltip || row.description}
                                 tooltipTitle={row.parameter}
                                 tooltipImpact={row.tooltipImpact}
@@ -1079,7 +1105,7 @@ const DivisionAssumptions = ({
                                   unit={row.unit === 'text' ? '' : row.unit}
                                   disabled={false}
                                   isPercentage={row.unit === '%'}
-                                  isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
+                                  isInteger={(row.unit === '€M' && row.parameter.includes('Volume')) || row.unit === 'units'}
                                   tooltip={row.tooltip || row.description}
                                 tooltipTitle={row.parameter}
                                 tooltipImpact={row.tooltipImpact}
@@ -1207,7 +1233,7 @@ const DivisionAssumptions = ({
                                   unit={row.unit === 'text' ? '' : row.unit}
                                   disabled={false}
                                   isPercentage={row.unit === '%'}
-                                  isInteger={row.unit === '€M' && row.parameter.includes('Volume') || row.unit === 'units'}
+                                  isInteger={(row.unit === '€M' && row.parameter.includes('Volume')) || row.unit === 'units'}
                                   tooltip={row.tooltip || row.description}
                                 tooltipTitle={row.parameter}
                                 tooltipImpact={row.tooltipImpact}

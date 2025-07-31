@@ -27,6 +27,21 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v7.22 (2025-07-31)
+- Headcount growth now applies only to Junior and Middle levels
+- Senior and Head of positions remain constant over time (no automatic growth)
+- Added visual indicator (↗) for levels subject to growth in staffing tables
+- Updated UI labels and tooltips to clarify growth behavior
+### v7.21 (2025-07-31)
+- Fixed staffing tables to always show all 4 seniority levels (Junior, Middle, Senior, Head of)
+- Added default RAL values for each level when adding new positions
+- Tables now allow adding personnel at any seniority level even if not initially present
+### v7.20 (2025-07-31)
+- Moved personnel staffing from centralized structure to individual division assumptions
+- Each division now manages its own staffing table (headcount growth, levels, RAL)
+- Central Functions split into 9 departments with individual staffing
+- Kept only global parameters (annualSalaryReview, companyTaxMultiplier) in personnel object
+- Better organization and division-specific control of HR planning
 ### v5.20 (2025-07-31)
 - Fixed unsecured fields appearing in Structure & Operations section
 - Properly filtered fields to show only in Risk & RWA section

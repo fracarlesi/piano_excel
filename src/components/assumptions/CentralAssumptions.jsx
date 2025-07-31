@@ -1,122 +1,36 @@
 import React from 'react';
 import EditableNumberField from '../common/EditableNumberField';
+import StaffingTable from './StaffingTable';
 
 const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
   const centralFunctions = assumptions.centralFunctions || {};
+  const companyTaxMultiplier = assumptions.personnel?.companyTaxMultiplier || 1.4;
+
+  // List of departments
+  const departments = [
+    { key: 'CEOOffice', name: 'CEO Office', icon: '👔' },
+    { key: 'Operations', name: 'Operations', icon: '⚙️' },
+    { key: 'HR', name: 'Human Resources', icon: '👥' },
+    { key: 'AFC', name: 'Administration, Finance & Control', icon: '💰' },
+    { key: 'RiskManagement', name: 'Risk Management', icon: '⚖️' },
+    { key: 'ComplianceAndAML', name: 'Compliance & AML', icon: '🛡️' },
+    { key: 'Legal', name: 'Legal', icon: '⚖️' },
+    { key: 'MarketingAndCommunication', name: 'Marketing & Communication', icon: '📢' },
+    { key: 'InternalAudit', name: 'Internal Audit', icon: '🔍' }
+  ];
 
   return (
     <div className="space-y-8">
-      {/* Central Functions Costs */}
+      {/* Non-Personnel Central Costs */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold text-gray-800 mb-6">Central Functions Costs</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-6">Central Functions - Non-Personnel Costs</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Cost Components */}
           <div>
-            <h4 className="font-semibold text-gray-700 mb-3">Executive & Governance</h4>
-            <EditableNumberField
-              label="Board & Executive Costs (Year 1)"
-              value={centralFunctions.boardAndExecutiveCostsY1}
-              onChange={val => onAssumptionChange('centralFunctions.boardAndExecutiveCostsY1', val)}
-              unit="€M"
-              isPercentage={false}
-              decimals={1}
-              tooltip="Annual cost for board of directors, CEO, and executive management"
-              tooltipTitle="Board & Executive Costs"
-              tooltipImpact="Direct cost to bank P&L, not allocated to divisions"
-              tooltipFormula="Grows annually by cost growth rate"
-            />
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-3">Compliance & Risk</h4>
-            <EditableNumberField
-              label="Compliance Costs (Year 1)"
-              value={centralFunctions.complianceCostsY1}
-              onChange={val => onAssumptionChange('centralFunctions.complianceCostsY1', val)}
-              unit="€M"
-              isPercentage={false}
-              decimals={1}
-              tooltip="Annual compliance, AML, and regulatory reporting costs"
-              tooltipTitle="Compliance Costs"
-              tooltipImpact="Ensures regulatory compliance across all divisions"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
-            />
-            <EditableNumberField
-              label="Risk Management Costs (Year 1)"
-              value={centralFunctions.riskManagementCostsY1}
-              onChange={val => onAssumptionChange('centralFunctions.riskManagementCostsY1', val)}
-              unit="€M"
-              isPercentage={false}
-              decimals={1}
-              tooltip="Central risk management function costs"
-              tooltipTitle="Risk Management Costs"
-              tooltipImpact="Covers enterprise risk, credit risk oversight, and operational risk"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
-            />
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-3">Control Functions</h4>
-            <EditableNumberField
-              label="Audit Costs (Year 1)"
-              value={centralFunctions.auditCostsY1}
-              onChange={val => onAssumptionChange('centralFunctions.auditCostsY1', val)}
-              unit="€M"
-              isPercentage={false}
-              decimals={1}
-              tooltip="Internal and external audit costs"
-              tooltipTitle="Audit Costs"
-              tooltipImpact="Ensures control effectiveness and financial reporting accuracy"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
-            />
-            <EditableNumberField
-              label="Legal Costs (Year 1)"
-              value={centralFunctions.legalCostsY1}
-              onChange={val => onAssumptionChange('centralFunctions.legalCostsY1', val)}
-              unit="€M"
-              isPercentage={false}
-              decimals={1}
-              tooltip="Legal department and external counsel costs"
-              tooltipTitle="Legal Costs"
-              tooltipImpact="Supports all divisions with contracts, disputes, and regulatory matters"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
-            />
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-3">Corporate Functions</h4>
-            <EditableNumberField
-              label="Strategy & Planning Costs (Year 1)"
-              value={centralFunctions.strategyAndPlanningCostsY1}
-              onChange={val => onAssumptionChange('centralFunctions.strategyAndPlanningCostsY1', val)}
-              unit="€M"
-              isPercentage={false}
-              decimals={1}
-              tooltip="Strategic planning, M&A, and investor relations"
-              tooltipTitle="Strategy & Planning Costs"
-              tooltipImpact="Drives long-term value creation and stakeholder communication"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
-            />
-            <EditableNumberField
-              label="HR Central Costs (Year 1)"
-              value={centralFunctions.hrCentralCostsY1}
-              onChange={val => onAssumptionChange('centralFunctions.hrCentralCostsY1', val)}
-              unit="€M"
-              isPercentage={false}
-              decimals={1}
-              tooltip="Central HR, training, and recruitment costs"
-              tooltipTitle="HR Central Costs"
-              tooltipImpact="Manages talent across all divisions and ensures consistent policies"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
-            />
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-gray-700 mb-3">Infrastructure</h4>
+            <h4 className="font-semibold text-gray-700 mb-3">Infrastructure & Facilities</h4>
             <EditableNumberField
               label="Facilities Costs (Year 1)"
-              value={centralFunctions.facilitiesCostsY1}
+              value={centralFunctions.facilitiesCostsY1 || 3.0}
               onChange={val => onAssumptionChange('centralFunctions.facilitiesCostsY1', val)}
               unit="€M"
               isPercentage={false}
@@ -129,39 +43,90 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
           </div>
 
           <div>
-            <h4 className="font-semibold text-gray-700 mb-3">Staffing</h4>
+            <h4 className="font-semibold text-gray-700 mb-3">External Services</h4>
             <EditableNumberField
-              label="FTE Year 1"
-              value={centralFunctions.fteY1}
-              onChange={val => onAssumptionChange('centralFunctions.fteY1', val)}
-              unit="people"
-              isInteger={true}
-              tooltip="Number of employees in central functions at year 1"
-              tooltipTitle="FTE Year 1"
-              tooltipImpact="Drives personnel costs for central functions"
-              tooltipFormula="Personnel Cost = FTE × Average Cost per FTE"
+              label="External Services (Year 1)"
+              value={centralFunctions.externalServicesY1 || 2.5}
+              onChange={val => onAssumptionChange('centralFunctions.externalServicesY1', val)}
+              unit="€M"
+              isPercentage={false}
+              decimals={1}
+              tooltip="External consultants, legal services, professional fees"
+              tooltipTitle="External Services"
+              tooltipImpact="Professional services supporting all bank functions"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
+            />
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-gray-700 mb-3">Regulatory & Other</h4>
+            <EditableNumberField
+              label="Regulatory Fees (Year 1)"
+              value={centralFunctions.regulatoryFeesY1 || 1.8}
+              onChange={val => onAssumptionChange('centralFunctions.regulatoryFeesY1', val)}
+              unit="€M"
+              isPercentage={false}
+              decimals={1}
+              tooltip="Regulatory fees, contributions, and supervisory charges"
+              tooltipTitle="Regulatory Fees"
+              tooltipImpact="Mandatory fees paid to regulatory authorities"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
             <EditableNumberField
-              label="FTE Year 5"
-              value={centralFunctions.fteY5}
-              onChange={val => onAssumptionChange('centralFunctions.fteY5', val)}
-              unit="people"
-              isInteger={true}
-              tooltip="Target number of employees in central functions by year 5"
-              tooltipTitle="FTE Year 5"
-              tooltipImpact="Linear interpolation between Year 1 and Year 5 FTE"
-              tooltipFormula="FTE grows linearly from Year 1 to Year 5"
+              label="Other Central Costs (Year 1)"
+              value={centralFunctions.otherCentralCostsY1 || 1.2}
+              onChange={val => onAssumptionChange('centralFunctions.otherCentralCostsY1', val)}
+              unit="€M"
+              isPercentage={false}
+              decimals={1}
+              tooltip="Other miscellaneous central costs"
+              tooltipTitle="Other Central Costs"
+              tooltipImpact="Catch-all for unallocated central expenses"
+              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
             />
           </div>
         </div>
+      </div>
 
-        {/* Summary */}
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            <strong>Note:</strong> Central Functions costs are not allocated to business divisions and directly impact bank-level profitability. 
-            These costs grow at the general cost growth rate defined in General Assumptions.
+      {/* Department-based Personnel Staffing */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold text-gray-800 mb-6">Central Functions - Personnel by Department</h3>
+        
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> Configure staffing for each central department. Personnel costs are calculated based on RAL × {companyTaxMultiplier}x multiplier.
           </p>
         </div>
+
+        <div className="space-y-6">
+          {departments.map(dept => (
+            <div key={dept.key} className="border border-gray-200 rounded-lg overflow-hidden">
+              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                  <span className="text-xl">{dept.icon}</span>
+                  {dept.name}
+                </h4>
+              </div>
+              <div className="p-4">
+                <StaffingTable
+                  divisionData={centralFunctions.departments?.[dept.key] || {}}
+                  path={`centralFunctions.departments.${dept.key}`}
+                  handleAssumptionChange={onAssumptionChange}
+                  editMode={true}
+                  companyTaxMultiplier={companyTaxMultiplier}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <p className="text-sm text-yellow-800">
+          <strong>Important:</strong> Central Functions costs are not allocated to business divisions and directly impact bank-level profitability. 
+          Both personnel and non-personnel costs grow at the general cost growth rate defined in General Assumptions.
+        </p>
       </div>
     </div>
   );

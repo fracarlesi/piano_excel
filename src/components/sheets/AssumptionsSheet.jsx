@@ -8,7 +8,6 @@ import IncentiveAssumptions from '../assumptions/IncentiveAssumptions';
 import TechAssumptions from '../assumptions/TechAssumptions';
 import CentralAssumptions from '../assumptions/CentralAssumptions';
 import TreasuryAssumptions from '../assumptions/TreasuryAssumptions';
-import PersonnelAssumptions from '../assumptions/PersonnelAssumptions';
 
 const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 'general' }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -326,12 +325,42 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
         </div>
       </div>
       
-      {/* Personnel Section */}
-      <PersonnelAssumptions 
-        assumptions={assumptions}
-        handleAssumptionChange={handleAssumptionChange}
-        editMode={editMode}
-      />
+      {/* Global Personnel Parameters */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold text-gray-800 mb-6">Global Personnel Parameters</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <EditableNumberField
+            label="Annual Salary Review"
+            value={assumptions.personnel?.annualSalaryReview || 2.5}
+            onChange={val => handleAssumptionChange('personnel.annualSalaryReview', val)}
+            unit="%"
+            disabled={!editMode}
+            isPercentage
+            decimals={1}
+            tooltip="Annual salary increase applied to all personnel costs"
+            tooltipImpact="Affects all personnel costs across the entire organization"
+            tooltipFormula="Next Year Cost = Current Cost × (1 + Annual Salary Review %)"
+          />
+          <EditableNumberField
+            label="Company Tax Multiplier"
+            value={assumptions.personnel?.companyTaxMultiplier || 1.4}
+            onChange={val => handleAssumptionChange('personnel.companyTaxMultiplier', val)}
+            unit="x"
+            disabled={!editMode}
+            decimals={2}
+            min={1}
+            max={2}
+            tooltip="Multiplier to convert RAL to company cost (social charges, TFR, etc.)"
+            tooltipImpact="Converts gross salary (RAL) to total company cost including all charges"
+            tooltipFormula="Company Cost = RAL × Company Tax Multiplier"
+          />
+        </div>
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> Detailed personnel staffing by division is configured in each division's assumption page.
+          </p>
+        </div>
+      </div>
     </div>
   );
 
