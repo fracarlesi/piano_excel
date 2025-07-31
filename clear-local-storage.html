@@ -1,0 +1,28 @@
+<\!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Local Storage</title>
+</head>
+<body>
+    <h1>Clear Bank Assumptions Local Storage</h1>
+    <button onclick="clearStorage()">Clear Local Storage</button>
+    <p id="status"></p>
+    
+    <script>
+        function clearStorage() {
+            localStorage.removeItem('bankAssumptions');
+            document.getElementById('status').textContent = 'Local storage cleared\! You can now close this page.';
+        }
+        
+        // Show current data
+        const data = localStorage.getItem('bankAssumptions');
+        if (data) {
+            const parsed = JSON.parse(data);
+            document.getElementById('status').textContent = 'Found local data version: ' + parsed.version;
+        } else {
+            document.getElementById('status').textContent = 'No local data found';
+        }
+    </script>
+</body>
+</html>
+EOF < /dev/null

@@ -29,7 +29,7 @@ const cleanDataForFirebase = (data) => {
 
 export const useFirebaseState = () => {
   // Check if we're in development mode
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = false; // FORCE FIREBASE USAGE IN ALL ENVIRONMENTS
   
   const [assumptions, setLocalAssumptions] = useState(isDevelopment ? defaultAssumptions : null);
   const [isLoading, setIsLoading] = useState(!isDevelopment); // No loading in dev mode
