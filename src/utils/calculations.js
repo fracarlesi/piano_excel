@@ -1060,6 +1060,9 @@ export const calculateResults = (assumptions) => {
       const allocatedOtherOpex = years.map(i => otherOpex[i] * rwaWeight[i]);
       const allocatedTaxes = years.map(i => results.pnl.taxes[i] * rwaWeight[i]);
       
+      // Store allocated other OPEX in product for visibility
+      product.otherOpex = allocatedOtherOpex;
+      
       product.netProfit = years.map(i => revenues[i] + product.interestExpense[i] + product.llp[i] + product.personnelCosts[i] + allocatedOtherOpex[i] + allocatedTaxes[i] + product.commissionExpense[i]);
       
       product.roe = years.map(i => {

@@ -53,75 +53,72 @@ const StandardCapitalRequirements = ({
           year => `Market Risk RWA: ${formatNumber(marketRiskRWA[year], 0)} €M`,
           year => `Total RWA: ${formatNumber(val, 0)} €M`
         ]
-      ))
+      )),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.rwa || [0,0,0,0,0,0,0,0,0,0],
+        decimals: 0,
+        formula: (product.rwa || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
+          'Performing Assets × RWA Density',
+          [
+            `Product: ${product.name}`,
+            year => `Performing Assets: ${formatNumber((product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
+            year => `RWA Density: ${((product.assumptions?.riskWeight || 0.75) * 100).toFixed(0)}%`,
+            year => `Product RWA: ${formatNumber(val, 0)} €M`
+          ],
+          year => {
+            const assets = (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
+            const density = (product.assumptions?.riskWeight || 0.75) * 100;
+            return `${formatNumber(assets, 0)} × ${density.toFixed(0)}% = ${formatNumber(val, 0)} €M`;
+          }
+        ))
+      })) : []
     },
-
-    // Product breakdown for RWA
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.rwa || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 0,
-      isSubItem: true,
-      formula: (product.rwa || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
-        'Performing Assets × RWA Density',
-        [
-          `Product: ${product.name}`,
-          year => `Performing Assets: ${formatNumber((product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
-          year => `RWA Density: ${((product.assumptions?.riskWeight || 0.75) * 100).toFixed(0)}%`,
-          year => `Product RWA: ${formatNumber(val, 0)} €M`
-        ],
-        year => {
-          const assets = (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
-          const density = (product.assumptions?.riskWeight || 0.75) * 100;
-          return `${formatNumber(assets, 0)} × ${density.toFixed(0)}% = ${formatNumber(val, 0)} €M`;
-        }
-      ))
-    })) : []),
 
     // ========== EQUITY SECTION ==========
     {
       label: 'Equity',
-      data: [null, null, null, null, null, null, null, null, null, null],
+      data: allocatedEquity,
+      decimals: 0,
       isHeader: true,
-      bgColor: 'lightblue'
-    },
-
-    // Product breakdown for Equity
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 0,
-      isSubItem: true,
-      formula: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
-        'Total Division Equity × (Product RWA / Division RWA)',
-        [
-          `Product: ${product.name}`,
-          year => `Product RWA: ${formatNumber((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
-          year => `Division RWA: ${formatNumber(totalRWA[year], 0)} €M`,
-          year => `RWA Weight: ${totalRWA[year] > 0 ? (((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year] / totalRWA[year]) * 100).toFixed(1) : 0}%`,
-          year => `Allocated Equity: ${formatNumber(val, 0)} €M`
-        ]
-      ))
-    })) : []),
-
-    {
-      label: 'Operating assets',
-      data: allocatedEquity.map((equity, i) => {
-        const operatingRWA = operationalRiskRWA[i];
-        const totalDivisionRWA = totalRWA[i];
-        return totalDivisionRWA > 0 ? equity * (operatingRWA / totalDivisionRWA) : 0;
-      }),
-      decimals: 0,
-      isSubItem: true,
-      formula: allocatedEquity.map((equity, i) => createFormula(i,
-        'Division Equity × (Operating RWA / Total RWA)',
-        [
-          year => `Division Equity: ${formatNumber(equity, 0)} €M`,
-          year => `Operating RWA: ${formatNumber(operationalRiskRWA[year], 0)} €M`,
-          year => `Total RWA: ${formatNumber(totalRWA[year], 0)} €M`,
-          year => `Operating Equity: ${formatNumber(totalRWA[year] > 0 ? equity * (operationalRiskRWA[year] / totalRWA[year]) : 0, 0)} €M`
-        ]
-      ))
+      bgColor: 'lightblue',
+      // Add breakdown as subRows
+      subRows: showProductDetail ? [
+        ...Object.entries(productResults).map(([key, product], index) => ({
+          label: `o/w ${product.name}`,
+          data: product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0],
+          decimals: 0,
+          formula: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
+            'Total Division Equity × (Product RWA / Division RWA)',
+            [
+              `Product: ${product.name}`,
+              year => `Product RWA: ${formatNumber((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
+              year => `Division RWA: ${formatNumber(totalRWA[year], 0)} €M`,
+              year => `RWA Weight: ${totalRWA[year] > 0 ? (((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year] / totalRWA[year]) * 100).toFixed(1) : 0}%`,
+              year => `Allocated Equity: ${formatNumber(val, 0)} €M`
+            ]
+          ))
+        })),
+        {
+          label: 'Operating assets',
+          data: allocatedEquity.map((equity, i) => {
+            const operatingRWA = operationalRiskRWA[i];
+            const totalDivisionRWA = totalRWA[i];
+            return totalDivisionRWA > 0 ? equity * (operatingRWA / totalDivisionRWA) : 0;
+          }),
+          decimals: 0,
+          formula: allocatedEquity.map((equity, i) => createFormula(i,
+            'Division Equity × (Operating RWA / Total RWA)',
+            [
+              year => `Division Equity: ${formatNumber(equity, 0)} €M`,
+              year => `Operating RWA: ${formatNumber(operationalRiskRWA[year], 0)} €M`,
+              year => `Total RWA: ${formatNumber(totalRWA[year], 0)} €M`,
+              year => `Operating Equity: ${formatNumber(totalRWA[year] > 0 ? equity * (operationalRiskRWA[year] / totalRWA[year]) : 0, 0)} €M`
+            ]
+          ))
+        }
+      ] : []
     },
 
     // ========== CET1 RATIO SECTION ==========
@@ -140,29 +137,27 @@ const StandardCapitalRequirements = ({
           'Regulatory minimum: 4.5% + buffers'
         ],
         year => totalRWA[year] > 0 ? `${formatNumber(allocatedEquity[year], 0)} ÷ ${formatNumber(totalRWA[year], 0)} × 100 = ${formatNumber(val, 1)}%` : '0 ÷ 0 = 0%'
-      ))
+      )),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((equity, i) => {
+          const productRWA = (product.rwa || [0,0,0,0,0,0,0,0,0,0])[i];
+          return productRWA > 0 ? (equity / productRWA) * 100 : 0;
+        }),
+        decimals: 1,
+        unit: '%',
+        formula: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((equity, i) => createFormula(i,
+          'Product Equity / Product RWA × 100',
+          [
+            `Product: ${product.name}`,
+            year => `Product Equity: ${formatNumber(equity, 0)} €M`,
+            year => `Product RWA: ${formatNumber((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
+            year => `Product CET1: ${formatNumber((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year] > 0 ? (equity / (product.rwa || [0,0,0,0,0,0,0,0,0,0])[year]) * 100 : 0, 1)}%`
+          ]
+        ))
+      })) : []
     },
-
-    // Product breakdown for CET1
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((equity, i) => {
-        const productRWA = (product.rwa || [0,0,0,0,0,0,0,0,0,0])[i];
-        return productRWA > 0 ? (equity / productRWA) * 100 : 0;
-      }),
-      decimals: 1,
-      unit: '%',
-      isSubItem: true,
-      formula: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((equity, i) => createFormula(i,
-        'Product Equity / Product RWA × 100',
-        [
-          `Product: ${product.name}`,
-          year => `Product Equity: ${formatNumber(equity, 0)} €M`,
-          year => `Product RWA: ${formatNumber((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
-          year => `Product CET1: ${formatNumber((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year] > 0 ? (equity / (product.rwa || [0,0,0,0,0,0,0,0,0,0])[year]) * 100 : 0, 1)}%`
-        ]
-      ))
-    })) : []),
 
     // ========== RWA BY RISK TYPE SECTION ==========
     {

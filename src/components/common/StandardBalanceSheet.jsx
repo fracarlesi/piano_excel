@@ -69,30 +69,28 @@ const StandardBalanceSheet = ({
         [
           year => `Net Performing Assets: ${formatNumber(val, 0)} €M`
         ]
-      ))
+      )),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.performingAssets || [0,0,0,0,0,0,0,0,0,0],
+        decimals: 0,
+        formula: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
+          'Stock evolution: Previous + New - Repayments - Defaults',
+          [
+            `Product: ${product.name}`,
+            year => `Previous Stock: ${i > 0 ? formatNumber((product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1], 0) : '0'} €M`,
+            year => `New Business: ${formatNumber((product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
+            year => `Performing Stock: ${formatNumber(val, 0)} €M`
+          ],
+          year => {
+            const prev = i > 0 ? (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1] || 0 : 0;
+            const newBusiness = (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
+            return `${formatNumber(prev, 0)} + ${formatNumber(newBusiness, 0)} - Repayments - Defaults = ${formatNumber(val, 0)} €M`;
+          }
+        ))
+      })) : []
     },
-
-    // Product breakdown for Performing Assets
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.performingAssets || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 0,
-      isSubItem: true,
-      formula: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
-        'Stock evolution: Previous + New - Repayments - Defaults',
-        [
-          `Product: ${product.name}`,
-          year => `Previous Stock: ${i > 0 ? formatNumber((product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1], 0) : '0'} €M`,
-          year => `New Business: ${formatNumber((product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year], 0)} €M`,
-          year => `Performing Stock: ${formatNumber(val, 0)} €M`
-        ],
-        year => {
-          const prev = i > 0 ? (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[year-1] || 0 : 0;
-          const newBusiness = (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
-          return `${formatNumber(prev, 0)} + ${formatNumber(newBusiness, 0)} - Repayments - Defaults = ${formatNumber(val, 0)} €M`;
-        }
-      ))
-    })) : []),
 
     {
       label: 'Non Performing Assets',
@@ -104,31 +102,29 @@ const StandardBalanceSheet = ({
         [
           year => `Total NPL: ${formatNumber(val, 0)} €M`
         ]
-      ))
-    },
-
-    // Product breakdown for NPL
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 0,
-      isSubItem: true,
-      formula: (product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
-        createFormula(
-          i,
-          'Cumulative defaults from loan portfolio',
-          [
-            {
-              name: 'NPL Stock',
-              value: val,
-              unit: '€M',
-              calculation: 'Accumulated non-performing loans'
-            }
-          ],
-          year => `Cumulative NPL stock: ${formatNumber(val, 0)} €M`
+      )),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0],
+        decimals: 0,
+        formula: (product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
+          createFormula(
+            i,
+            'Cumulative defaults from loan portfolio',
+            [
+              {
+                name: 'NPL Stock',
+                value: val,
+                unit: '€M',
+                calculation: 'Accumulated non-performing loans'
+              }
+            ],
+            year => `Cumulative NPL stock: ${formatNumber(val, 0)} €M`
+          )
         )
-      )
-    })) : []),
+      })) : []
+    },
 
 
     // ========== TOTAL ASSETS SUMMARY ==========

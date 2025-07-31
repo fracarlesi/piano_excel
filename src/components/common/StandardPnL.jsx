@@ -86,38 +86,35 @@ const StandardPnL = ({
             formula: `${formatNumber((product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[i], 2)} × ${((product.assumptions?.interestRate || 0) * 100).toFixed(2)}%`
           }))
         )
-      )
+      ),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.interestIncome || [0,0,0,0,0,0,0,0,0,0],
+        decimals: 2,
+        formula: (product.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+          const productKey = Object.keys(assumptions.products || {}).find(k => 
+            assumptions.products[k].name === product.name
+          );
+          const originalProduct = productKey ? assumptions.products[productKey] : {};
+          
+          const isDigitalProduct = product.depositStock && product.depositStock.some(v => v > 0);
+          
+          return createProductFormula(i, product, 'interestIncome', {
+            avgAssets: (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+            depositStock: isDigitalProduct ? (product.depositStock || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
+            interestRate: product.assumptions?.interestRate || 0,
+            ftpRate: product.assumptions?.ftpRate || 5.0,
+            depositRate: isDigitalProduct ? (originalProduct.baseAccount?.interestRate || originalProduct.savingsModule?.interestRate || 0) : 0,
+            isFixed: product.assumptions?.isFixedRate || false,
+            euribor: assumptions.euribor || 3.5,
+            ftpSpread: assumptions.ftpSpread || 1.5,
+            spread: originalProduct.spread || 0,
+            result: val
+          });
+        })
+      })) : []
     },
-    
-    // Product breakdown for Interest Income
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.interestIncome || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2,
-      isSubItem: true,
-      formula: (product.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
-        // Extract the product key to get the original product data with spread
-        const productKey = Object.keys(assumptions.products || {}).find(k => 
-          assumptions.products[k].name === product.name
-        );
-        const originalProduct = productKey ? assumptions.products[productKey] : {};
-        
-        // Check if this is a digital product
-        const isDigitalProduct = product.depositStock && product.depositStock.some(v => v > 0);
-        
-        return createProductFormula(i, product, 'interestIncome', {
-          avgAssets: (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
-          depositStock: isDigitalProduct ? (product.depositStock || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
-          interestRate: product.assumptions?.interestRate || 0,
-          ftpRate: product.assumptions?.ftpRate || 5.0,
-          isFixed: product.assumptions?.isFixedRate || false,
-          euribor: assumptions.euribor || 3.5,
-          ftpSpread: assumptions.ftpSpread || 1.5,
-          spread: originalProduct.spread || 0,
-          result: val
-        });
-      })
-    })) : []),
 
     // ========== INTEREST EXPENSES SECTION ==========
     {
@@ -131,50 +128,45 @@ const StandardPnL = ({
           year => `FTP Rate: ${((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5)).toFixed(2)}% (EURIBOR ${(assumptions.euribor || 3.5).toFixed(1)}% + Spread ${(assumptions.ftpSpread || 1.5).toFixed(1)}%)`,
           year => `FTP Cost: ${formatNumber(val, 2)} €M`
         ]
-      ))
-    },
-
-    // Product breakdown for Interest Expenses
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.interestExpense || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2,
-      isSubItem: true,
-      formula: (product.interestExpense || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
-        const productKey = Object.keys(assumptions.products || {}).find(k => 
-          assumptions.products[k].name === product.name
-        );
-        const originalProduct = productKey ? assumptions.products[productKey] : {};
-        
-        // Check if this is a digital product
-        const isDigitalProduct = product.depositStock && product.depositStock.some(v => v > 0);
-        
-        // Determine the deposit interest rate based on product type
-        let depositRate = 0;
-        if (product.name && product.name.includes('Conto Corrente Base')) {
-          depositRate = 0.1; // Base account rate
-        } else if (product.name && product.name.includes('Conto Deposito')) {
-          // For savings account, calculate weighted average rate
-          const baseProduct = assumptions.products.digitalRetailCustomer;
-          if (baseProduct && baseProduct.savingsModule && baseProduct.savingsModule.depositMix) {
-            depositRate = baseProduct.savingsModule.depositMix.reduce((sum, deposit) => 
-              sum + (deposit.percentage / 100) * deposit.interestRate, 0
-            );
-          } else {
-            depositRate = 3.0; // Default savings rate
+      )),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.interestExpense || [0,0,0,0,0,0,0,0,0,0],
+        decimals: 2,
+        formula: (product.interestExpense || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+          const productKey = Object.keys(assumptions.products || {}).find(k => 
+            assumptions.products[k].name === product.name
+          );
+          const originalProduct = productKey ? assumptions.products[productKey] : {};
+          
+          const isDigitalProduct = product.depositStock && product.depositStock.some(v => v > 0);
+          
+          let depositRate = 0;
+          if (product.name && product.name.includes('Conto Corrente Base')) {
+            depositRate = 0.1;
+          } else if (product.name && product.name.includes('Conto Deposito')) {
+            const baseProduct = assumptions.products.digitalRetailCustomer;
+            if (baseProduct && baseProduct.savingsModule && baseProduct.savingsModule.depositMix) {
+              depositRate = baseProduct.savingsModule.depositMix.reduce((sum, deposit) => 
+                sum + (deposit.percentage / 100) * deposit.interestRate, 0
+              );
+            } else {
+              depositRate = 3.0;
+            }
           }
-        }
-        
-        return createProductFormula(i, product, 'interestExpense', {
-          avgAssets: (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
-          depositStock: isDigitalProduct ? (product.depositStock || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
-          interestRate: product.assumptions?.interestRate || 0,
-          depositRate: depositRate,
-          ftpRate: ((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5)),
-          result: val
-        });
-      })
-    })) : []),
+          
+          return createProductFormula(i, product, 'interestExpense', {
+            avgAssets: (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+            depositStock: isDigitalProduct ? (product.depositStock || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
+            interestRate: product.assumptions?.interestRate || 0,
+            depositRate: depositRate,
+            ftpRate: ((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5)),
+            result: val
+          });
+        })
+      })) : []
+    },
 
     // ========== NET INTEREST INCOME ==========
     {
@@ -204,42 +196,40 @@ const StandardPnL = ({
           const expenses = (divisionResults.pnl.interestExpenses || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
           return `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expenses), 2)}) = ${formatNumber(val, 2)} €M`;
         }
-      ))
+      )),
+      // Add product NII breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: (product.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => 
+          income + (product.interestExpense || [0,0,0,0,0,0,0,0,0,0])[i]
+        ),
+        decimals: 2,
+        formula: (product.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
+          const expense = (product.interestExpense || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+          const nii = income + expense;
+          
+          return createFormula(
+            i,
+            'Interest Income - Interest Expense',
+            [
+              {
+                name: 'Interest Income',
+                value: income,
+                unit: '€M',
+                calculation: 'Product interest income'
+              },
+              {
+                name: 'Interest Expense',
+                value: expense,
+                unit: '€M',
+                calculation: 'Product funding cost'
+              }
+            ],
+            year => `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expense), 2)}) = ${formatNumber(nii, 2)} €M`
+          );
+        })
+      })) : []
     },
-
-    // Product NII breakdown
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: (product.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => 
-        income + (product.interestExpense || [0,0,0,0,0,0,0,0,0,0])[i]
-      ),
-      decimals: 2,
-      isSubItem: true,
-      formula: (product.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
-        const expense = (product.interestExpense || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-        const nii = income + expense;
-        
-        return createFormula(
-          i,
-          'Interest Income - Interest Expense',
-          [
-            {
-              name: 'Interest Income',
-              value: income,
-              unit: '€M',
-              calculation: 'Product interest income'
-            },
-            {
-              name: 'Interest Expense',
-              value: expense,
-              unit: '€M',
-              calculation: 'Product funding cost'
-            }
-          ],
-          year => `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expense), 2)}) = ${formatNumber(nii, 2)} €M`
-        );
-      })
-    })) : []),
 
     // ========== COMMISSION INCOME SECTION ==========
     {
@@ -266,47 +256,45 @@ const StandardPnL = ({
             };
           })
         )
-      )
+      ),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.commissionIncome || [0,0,0,0,0,0,0,0,0,0],
+        decimals: 2,
+        formula: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+          const productKey = Object.keys(assumptions.products || {}).find(k => 
+            assumptions.products[k].name === product.name
+          );
+          const originalProduct = productKey ? assumptions.products[productKey] : {};
+          
+          // Check product type for digital products
+          const isBaseAccount = product.name && product.name.includes('Conto Corrente Base');
+          const isPremium = product.name && product.name.includes('Servizi Premium');
+          const isReferral = product.name && product.name.includes('Referral Wealth Management');
+          
+          // Get base assumptions for digital products
+          const baseProduct = assumptions.products.digitalRetailCustomer;
+          
+          return createProductFormula(i, product, 'commissionIncome', {
+            volume: (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+            commissionRate: (originalProduct.commissionRate || 0),
+            // Digital product specific values
+            isBaseAccount: isBaseAccount,
+            isPremium: isPremium,
+            isReferral: isReferral,
+            avgCustomers: isBaseAccount ? (product.avgCustomers || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
+            monthlyFee: isBaseAccount && baseProduct ? baseProduct.baseAccount.monthlyFee : 0,
+            activeCustomers: isPremium ? ((product.totalCustomers || [0,0,0,0,0,0,0,0,0,0])[i] * 0.2) : 0,
+            annualRevenue: isPremium && baseProduct ? baseProduct.premiumServicesModule.avgAnnualRevenue : 0,
+            newCustomers: isReferral ? (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
+            adoptionRate: isReferral && baseProduct ? baseProduct.wealthManagementReferral.adoptionRate : 0,
+            referralFee: isReferral && baseProduct ? baseProduct.wealthManagementReferral.referralFee : 0,
+            result: val
+          });
+        })
+      })) : []
     },
-
-    // Product breakdown for Commission Income
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.commissionIncome || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2,
-      isSubItem: true,
-      formula: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
-        const productKey = Object.keys(assumptions.products || {}).find(k => 
-          assumptions.products[k].name === product.name
-        );
-        const originalProduct = productKey ? assumptions.products[productKey] : {};
-        
-        // Check product type for digital products
-        const isBaseAccount = product.name && product.name.includes('Conto Corrente Base');
-        const isPremium = product.name && product.name.includes('Servizi Premium');
-        const isReferral = product.name && product.name.includes('Referral Wealth Management');
-        
-        // Get base assumptions for digital products
-        const baseProduct = assumptions.products.digitalRetailCustomer;
-        
-        return createProductFormula(i, product, 'commissionIncome', {
-          volume: (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
-          commissionRate: (originalProduct.commissionRate || 0),
-          // Digital product specific values
-          isBaseAccount: isBaseAccount,
-          isPremium: isPremium,
-          isReferral: isReferral,
-          avgCustomers: isBaseAccount ? (product.avgCustomers || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
-          monthlyFee: isBaseAccount && baseProduct ? baseProduct.baseAccount.monthlyFee : 0,
-          activeCustomers: isPremium ? ((product.totalCustomers || [0,0,0,0,0,0,0,0,0,0])[i] * 0.2) : 0,
-          annualRevenue: isPremium && baseProduct ? baseProduct.premiumServicesModule.avgAnnualRevenue : 0,
-          newCustomers: isReferral ? (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
-          adoptionRate: isReferral && baseProduct ? baseProduct.wealthManagementReferral.adoptionRate : 0,
-          referralFee: isReferral && baseProduct ? baseProduct.wealthManagementReferral.referralFee : 0,
-          result: val
-        });
-      })
-    })) : []),
 
     // ========== COMMISSION EXPENSES SECTION ==========
     {
@@ -338,34 +326,32 @@ const StandardPnL = ({
             return `${formatNumber(income, 2)} × ${formatNumber(rate, 2)}% = ${formatNumber(Math.abs(val), 2)} €M (expense)`;
           }
         )
-      )
+      ),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.commissionExpense || [0,0,0,0,0,0,0,0,0,0],
+        decimals: 2,
+        formula: (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+          // Check if this is a CAC expense for digital products
+          const isBaseAccount = product.name && product.name.includes('Conto Corrente Base');
+          const isCacExpense = isBaseAccount && val < 0; // CAC is negative
+          
+          // Get base assumptions for digital products
+          const baseProduct = assumptions.products.digitalRetailCustomer;
+          
+          return createProductFormula(i, product, 'commissionExpense', {
+            commissionIncome: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+            expenseRate: assumptions.commissionExpenseRate || 0,
+            // CAC specific values
+            isCac: isCacExpense,
+            newCustomers: isCacExpense ? ((product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] * 1000) : 0, // Convert from thousands
+            cac: isCacExpense && baseProduct ? baseProduct.acquisition.cac : 0,
+            result: val
+          });
+        })
+      })) : []
     },
-
-    // Product breakdown for Commission Expenses
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.commissionExpense || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2,
-      isSubItem: true,
-      formula: (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
-        // Check if this is a CAC expense for digital products
-        const isBaseAccount = product.name && product.name.includes('Conto Corrente Base');
-        const isCacExpense = isBaseAccount && val < 0; // CAC is negative
-        
-        // Get base assumptions for digital products
-        const baseProduct = assumptions.products.digitalRetailCustomer;
-        
-        return createProductFormula(i, product, 'commissionExpense', {
-          commissionIncome: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
-          expenseRate: assumptions.commissionExpenseRate || 0,
-          // CAC specific values
-          isCac: isCacExpense,
-          newCustomers: isCacExpense ? ((product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] * 1000) : 0, // Convert from thousands
-          cac: isCacExpense && baseProduct ? baseProduct.acquisition.cac : 0,
-          result: val
-        });
-      })
-    })) : []),
 
     // ========== NET COMMISSION INCOME ==========
     {
@@ -385,42 +371,40 @@ const StandardPnL = ({
           const expenses = (divisionResults.pnl.commissionExpenses || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
           return `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expenses), 2)}) = ${formatNumber(val, 2)} €M`;
         }
-      ))
+      )),
+      // Add product NCI breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => 
+          income + (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0])[i]
+        ),
+        decimals: 2,
+        formula: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
+          const expense = (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+          const nci = income + expense;
+          
+          return createFormula(
+            i,
+            'Commission Income - Commission Expense',
+            [
+              {
+                name: 'Commission Income',
+                value: income,
+                unit: '€M',
+                calculation: 'Product commission income'
+              },
+              {
+                name: 'Commission Expense',
+                value: expense,
+                unit: '€M',
+                calculation: 'Product commission expense'
+              }
+            ],
+            year => `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expense), 2)}) = ${formatNumber(nci, 2)} €M`
+          );
+        })
+      })) : []
     },
-
-    // Product NCI breakdown
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => 
-        income + (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0])[i]
-      ),
-      decimals: 2,
-      isSubItem: true,
-      formula: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
-        const expense = (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-        const nci = income + expense;
-        
-        return createFormula(
-          i,
-          'Commission Income - Commission Expense',
-          [
-            {
-              name: 'Commission Income',
-              value: income,
-              unit: '€M',
-              calculation: 'Product commission income'
-            },
-            {
-              name: 'Commission Expense',
-              value: expense,
-              unit: '€M',
-              calculation: 'Product commission expense'
-            }
-          ],
-          year => `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expense), 2)}) = ${formatNumber(nci, 2)} €M`
-        );
-      })
-    })) : []),
 
     // ========== OTHER INCOME ==========
     {
@@ -439,48 +423,46 @@ const StandardPnL = ({
         [
           year => `Other Income: ${formatNumber(val, 2)} €M`
         ]
-      ))
-    },
-
-    // Product breakdown for Other Income (Equity Upside)
-    ...(showProductDetail ? Object.entries(productResults)
-      .filter(([key, product]) => product.equityUpsideIncome && product.equityUpsideIncome.some(val => val > 0))
-      .map(([key, product], index) => ({
-        label: `${product.name} (Equity Upside)`,
-        data: product.equityUpsideIncome || [0,0,0,0,0,0,0,0,0,0],
-        decimals: 2,
-        isSubItem: true,
-        formula: (product.equityUpsideIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
-          const productKey = Object.keys(assumptions.products || {}).find(k => 
-            assumptions.products[k].name === product.name
-          );
-          const originalProduct = productKey ? assumptions.products[productKey] : {};
-          
-          return createFormula(
-            i,
-            'New Business Volume × Equity Upside Rate',
-            [
-              {
-                name: 'New Business Volume',
-                value: (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
-                unit: '€M',
-                calculation: 'Volume of new business originated'
-              },
-              {
-                name: 'Equity Upside Rate',
-                value: originalProduct.equityUpside || 0,
-                unit: '%',
-                calculation: 'Potential equity participation rate'
+      )),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults)
+        .filter(([key, product]) => product.equityUpsideIncome && product.equityUpsideIncome.some(val => val > 0))
+        .map(([key, product], index) => ({
+          label: `o/w ${product.name} (Equity Upside)`,
+          data: product.equityUpsideIncome || [0,0,0,0,0,0,0,0,0,0],
+          decimals: 2,
+          formula: (product.equityUpsideIncome || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+            const productKey = Object.keys(assumptions.products || {}).find(k => 
+              assumptions.products[k].name === product.name
+            );
+            const originalProduct = productKey ? assumptions.products[productKey] : {};
+            
+            return createFormula(
+              i,
+              'New Business Volume × Equity Upside Rate',
+              [
+                {
+                  name: 'New Business Volume',
+                  value: (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+                  unit: '€M',
+                  calculation: 'Volume of new business originated'
+                },
+                {
+                  name: 'Equity Upside Rate',
+                  value: originalProduct.equityUpside || 0,
+                  unit: '%',
+                  calculation: 'Potential equity participation rate'
+                }
+              ],
+              year => {
+                const volume = (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
+                const rate = originalProduct.equityUpside || 0;
+                return `${formatNumber(volume, 2)} × ${formatNumber(rate, 2)}% = ${formatNumber(val, 2)} €M`;
               }
-            ],
-            year => {
-              const volume = (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
-              const rate = originalProduct.equityUpside || 0;
-              return `${formatNumber(volume, 2)} × ${formatNumber(rate, 2)}% = ${formatNumber(val, 2)} €M`;
-            }
-          );
-        })
-      })) : []),
+            );
+          })
+        })) : []
+    },
 
     {
       label: 'Trading Income',
@@ -520,43 +502,41 @@ const StandardPnL = ({
           year => `Division FTE allocation based on RWA`,
           year => `Personnel Costs: ${formatNumber(val, 2)} €M`
         ]
-      ))
-    },
-
-    // Product breakdown for Personnel
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `${product.name}`,
-      data: product.personnelCosts || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2,
-      isSubItem: true,
-      formula: (product.personnelCosts || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
-        createFormula(
-          i,
-          'Total Personnel Costs × RWA Weight',
-          [
-            {
-              name: 'Total Personnel Costs',
-              value: personnelCosts[i] || 0,
-              unit: '€M',
-              calculation: 'Division total personnel costs'
-            },
-            {
-              name: 'Product RWA Weight',
-              value: globalResults.capital.totalRWA[i] > 0 ? 
-                ((product.rwa || [0,0,0,0,0,0,0,0,0,0])[i] / globalResults.capital.totalRWA[i] * 100) : 0,
-              unit: '%',
-              calculation: 'Product RWA as % of total RWA'
+      )),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.personnelCosts || [0,0,0,0,0,0,0,0,0,0],
+        decimals: 2,
+        formula: (product.personnelCosts || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
+          createFormula(
+            i,
+            'Total Personnel Costs × RWA Weight',
+            [
+              {
+                name: 'Total Personnel Costs',
+                value: personnelCosts[i] || 0,
+                unit: '€M',
+                calculation: 'Division total personnel costs'
+              },
+              {
+                name: 'Product RWA Weight',
+                value: globalResults.capital.totalRWA[i] > 0 ? 
+                  ((product.rwa || [0,0,0,0,0,0,0,0,0,0])[i] / globalResults.capital.totalRWA[i] * 100) : 0,
+                unit: '%',
+                calculation: 'Product RWA as % of total RWA'
+              }
+            ],
+            year => {
+              const totalPersonnel = personnelCosts[year] || 0;
+              const rwaWeight = globalResults.capital.totalRWA[year] > 0 ? 
+                ((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) : 0;
+              return `${formatNumber(totalPersonnel, 2)} × ${formatNumber(rwaWeight * 100, 2)}% = ${formatNumber(Math.abs(val), 2)} €M`;
             }
-          ],
-          year => {
-            const totalPersonnel = personnelCosts[year] || 0;
-            const rwaWeight = globalResults.capital.totalRWA[year] > 0 ? 
-              ((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) : 0;
-            return `${formatNumber(totalPersonnel, 2)} × ${formatNumber(rwaWeight * 100, 2)}% = ${formatNumber(Math.abs(val), 2)} €M`;
-          }
+          )
         )
-      )
-    })) : []),
+      })) : []
+    },
 
     // ========== OTHER OPEX ==========
     {
@@ -570,87 +550,115 @@ const StandardPnL = ({
           year => `Allocated based on division RWA share`,
           year => `Other OPEX: ${formatNumber(val, 2)} €M`
         ]
-      ))
-    },
-
-    {
-      label: 'Back-office and other admin costs',
-      data: otherOpex.map(o => o * 0.4), // Approximate split
-      decimals: 2,
-      isSubItem: true,
-      formula: otherOpex.map((val, i) => createFormula(
-        i,
-        'Total Other OPEX × 40%',
-        [
-          {
-            name: 'Total Other OPEX',
-            value: val,
-            unit: '€M',
-            calculation: 'Sum of admin, marketing, IT, HQ costs'
-          }
-        ],
-        year => `${formatNumber(val, 2)} × 40% = ${formatNumber(Math.abs(val * 0.4), 2)} €M`
-      ))
-    },
-
-    {
-      label: 'IT costs',
-      data: otherOpex.map(o => o * 0.3), // Approximate split
-      decimals: 2,
-      isSubItem: true,
-      formula: otherOpex.map((val, i) => createFormula(
-        i,
-        'Total Other OPEX × 30%',
-        [
-          {
-            name: 'Total Other OPEX',
-            value: val,
-            unit: '€M',
-            calculation: 'Sum of admin, marketing, IT, HQ costs'
-          }
-        ],
-        year => `${formatNumber(val, 2)} × 30% = ${formatNumber(Math.abs(val * 0.3), 2)} €M`
-      ))
-    },
-
-    {
-      label: 'HQ Allocation',
-      data: otherOpex.map(o => o * 0.2), // Approximate split
-      decimals: 2,
-      isSubItem: true,
-      formula: otherOpex.map((val, i) => createFormula(
-        i,
-        'Total Other OPEX × 20%',
-        [
-          {
-            name: 'Total Other OPEX',
-            value: val,
-            unit: '€M',
-            calculation: 'Sum of admin, marketing, IT, HQ costs'
-          }
-        ],
-        year => `${formatNumber(val, 2)} × 20% = ${formatNumber(Math.abs(val * 0.2), 2)} €M`
-      ))
-    },
-
-    {
-      label: 'Other Costs',
-      data: otherOpex.map(o => o * 0.1), // Approximate split
-      decimals: 2,
-      isSubItem: true,
-      formula: otherOpex.map((val, i) => createFormula(
-        i,
-        'Total Other OPEX × 10%',
-        [
-          {
-            name: 'Total Other OPEX',
-            value: val,
-            unit: '€M',
-            calculation: 'Sum of admin, marketing, IT, HQ costs'
-          }
-        ],
-        year => `${formatNumber(val, 2)} × 10% = ${formatNumber(Math.abs(val * 0.1), 2)} €M`
-      ))
+      )),
+      // Add breakdown as subRows
+      subRows: showProductDetail ? [
+        {
+          label: 'Back-office and other admin costs',
+          data: otherOpex.map(o => o * 0.4), // Approximate split
+          decimals: 2,
+          formula: otherOpex.map((val, i) => createFormula(
+            i,
+            'Total Other OPEX × 40%',
+            [
+              {
+                name: 'Total Other OPEX',
+                value: val,
+                unit: '€M',
+                calculation: 'Sum of admin, marketing, IT, HQ costs'
+              }
+            ],
+            year => `${formatNumber(val, 2)} × 40% = ${formatNumber(Math.abs(val * 0.4), 2)} €M`
+          ))
+        },
+        {
+          label: 'IT costs',
+          data: otherOpex.map(o => o * 0.3), // Approximate split
+          decimals: 2,
+          formula: otherOpex.map((val, i) => createFormula(
+            i,
+            'Total Other OPEX × 30%',
+            [
+              {
+                name: 'Total Other OPEX',
+                value: val,
+                unit: '€M',
+                calculation: 'Sum of admin, marketing, IT, HQ costs'
+              }
+            ],
+            year => `${formatNumber(val, 2)} × 30% = ${formatNumber(Math.abs(val * 0.3), 2)} €M`
+          ))
+        },
+        {
+          label: 'HQ Allocation',
+          data: otherOpex.map(o => o * 0.2), // Approximate split
+          decimals: 2,
+          formula: otherOpex.map((val, i) => createFormula(
+            i,
+            'Total Other OPEX × 20%',
+            [
+              {
+                name: 'Total Other OPEX',
+                value: val,
+                unit: '€M',
+                calculation: 'Sum of admin, marketing, IT, HQ costs'
+              }
+            ],
+            year => `${formatNumber(val, 2)} × 20% = ${formatNumber(Math.abs(val * 0.2), 2)} €M`
+          ))
+        },
+        {
+          label: 'Other Costs',
+          data: otherOpex.map(o => o * 0.1), // Approximate split
+          decimals: 2,
+          formula: otherOpex.map((val, i) => createFormula(
+            i,
+            'Total Other OPEX × 10%',
+            [
+              {
+                name: 'Total Other OPEX',
+                value: val,
+                unit: '€M',
+                calculation: 'Sum of admin, marketing, IT, HQ costs'
+              }
+            ],
+            year => `${formatNumber(val, 2)} × 10% = ${formatNumber(Math.abs(val * 0.1), 2)} €M`
+          ))
+        },
+        // Product-level breakdown
+        ...Object.entries(productResults).map(([key, product], index) => ({
+          label: `o/w ${product.name}`,
+          data: product.otherOpex || [0,0,0,0,0,0,0,0,0,0],
+          decimals: 2,
+          formula: (product.otherOpex || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
+            createFormula(
+              i,
+              'Total Other OPEX × RWA Weight',
+              [
+                {
+                  name: 'Total Other OPEX',
+                  value: otherOpex[i] || 0,
+                  unit: '€M',
+                  calculation: 'Division total other OPEX'
+                },
+                {
+                  name: 'Product RWA Weight',
+                  value: globalResults.capital.totalRWA[i] > 0 ? 
+                    ((product.rwa || [0,0,0,0,0,0,0,0,0,0])[i] / globalResults.capital.totalRWA[i] * 100) : 0,
+                  unit: '%',
+                  calculation: 'Product RWA as % of total RWA'
+                }
+              ],
+              year => {
+                const totalOtherOpex = otherOpex[year] || 0;
+                const rwaWeight = globalResults.capital.totalRWA[year] > 0 ? 
+                  ((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) : 0;
+                return `${formatNumber(totalOtherOpex, 2)} × ${formatNumber(rwaWeight * 100, 2)}% = ${formatNumber(Math.abs(val), 2)} €M`;
+              }
+            )
+          )
+        }))
+      ] : []
     },
 
     // ========== TOTAL OPEX ==========
@@ -675,48 +683,59 @@ const StandardPnL = ({
     {
       label: 'Other Costs',
       data: [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2
-    },
-
-    {
-      label: 'Loan loss provisions',
-      data: divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
-      isSubItem: true,
-      formula: (divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
-        'Expected Loss on New Business + NPL Provisions',
-        [
-          year => `Total LLP: ${formatNumber(val, 2)} €M`
-        ]
-      ))
-    },
-
-    // Product breakdown for LLP
-    ...(showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-      label: `  ${product.name}`,
-      data: product.llp || [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2,
-      isSubItem: true
-    })) : []),
-
-    {
-      label: 'Provisions for liabilities and charges (TFR)',
-      data: [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2,
-      isSubItem: true,
-      formula: [0,0,0,0,0,0,0,0,0,0].map((val, i) => createFormula(
-        i,
-        'Employee termination provisions',
-        [
-          {
-            name: 'TFR Provisions',
-            value: 0,
-            unit: '€M',
-            calculation: 'Currently not modeled in business plan'
-          }
-        ],
-        year => `TFR provisions: ${formatNumber(0, 2)} €M (not applicable)`
-      ))
+      // Add breakdown as subRows
+      subRows: showProductDetail ? [
+        {
+          label: 'Loan loss provisions',
+          data: divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0],
+          decimals: 2,
+          formula: (divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
+            'Expected Loss on New Business + NPL Provisions',
+            [
+              year => `Total LLP: ${formatNumber(val, 2)} €M`
+            ]
+          )),
+          // Add product breakdown as nested subRows
+          subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+            label: `o/w ${product.name}`,
+            data: product.llp || [0,0,0,0,0,0,0,0,0,0],
+            decimals: 2,
+            formula: (product.llp || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+              const productKey = Object.keys(assumptions.products || {}).find(k => 
+                assumptions.products[k].name === product.name
+              );
+              const originalProduct = productKey ? assumptions.products[productKey] : {};
+              
+              return createProductFormula(i, product, 'llp', {
+                pd: (originalProduct.dangerRate || 0) / 100,
+                lgd: 0.45, // Standard LGD assumption
+                ead: (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+                creditClass: 'Bonis',
+                result: val
+              });
+            })
+          })) : []
+        },
+        {
+          label: 'Provisions for liabilities and charges (TFR)',
+          data: [0,0,0,0,0,0,0,0,0,0],
+          decimals: 2,
+          formula: [0,0,0,0,0,0,0,0,0,0].map((val, i) => createFormula(
+            i,
+            'Employee termination provisions',
+            [
+              {
+                name: 'TFR Provisions',
+                value: 0,
+                unit: '€M',
+                calculation: 'Currently not modeled in business plan'
+              }
+            ],
+            year => `TFR provisions: ${formatNumber(0, 2)} €M (not applicable)`
+          ))
+        }
+      ] : []
     },
 
     // ========== PRE-TAX PROFIT ==========

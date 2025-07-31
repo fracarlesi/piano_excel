@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.7', // Digital Banking with zero interest margin - commission-only model
+  version: '5.8', // Added expandable/collapsible rows in financial tables with drill-down functionality
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
