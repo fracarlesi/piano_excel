@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.10', // Added comprehensive tooltip system for all assumptions (2025-07-31)
+  version: '5.11', // Development mode: use local data instead of Firebase for faster development
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

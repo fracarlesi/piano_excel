@@ -27,8 +27,11 @@ const cleanDataForFirebase = (data) => {
 };
 
 export const useFirebaseState = () => {
-  const [assumptions, setLocalAssumptions] = useState(null); // Start with null to detect loading state
-  const [isLoading, setIsLoading] = useState(true);
+  // Check if we're in development mode
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  const [assumptions, setLocalAssumptions] = useState(isDevelopment ? defaultAssumptions : null);
+  const [isLoading, setIsLoading] = useState(!isDevelopment); // No loading in dev mode
   const [lastSaved, setLastSaved] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
@@ -39,6 +42,15 @@ export const useFirebaseState = () => {
 
   // Load initial data and set up real-time listener
   useEffect(() => {
+    // In development mode, use local data
+    if (isDevelopment) {
+      console.log('🚀 Development mode: Using local defaultAssumptions');
+      setLocalAssumptions(defaultAssumptions);
+      setIsLoading(false);
+      return; // Skip Firebase connection in development
+    }
+    
+    // Production mode: Use Firebase
     const unsubscribe = onValue(assumptionsRef.current, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -67,15 +79,23 @@ export const useFirebaseState = () => {
 
     // Cleanup listener on unmount
     return () => {
-      off(assumptionsRef.current);
+      if (!isDevelopment) {
+        off(assumptionsRef.current);
+      }
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, []);
+  }, [isDevelopment]);
 
   // Auto-save function with debouncing
   const saveToFirebase = useCallback(async (data) => {
+    // Skip Firebase save in development mode
+    if (isDevelopment) {
+      console.log('💾 Development mode: Skipping Firebase save');
+      return;
+    }
+    
     setIsAutoSaving(true);
     try {
       const cleanedData = cleanDataForFirebase(data);
@@ -89,7 +109,7 @@ export const useFirebaseState = () => {
     } finally {
       setIsAutoSaving(false);
     }
-  }, []);
+  }, [isDevelopment]);
 
   // Wrapper for setAssumptions that triggers auto-save
   const setAssumptions = useCallback((newAssumptions) => {

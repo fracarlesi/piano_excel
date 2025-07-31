@@ -11,6 +11,8 @@ const Header = ({
   version
 }) => {
 
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
   return (
     <div className="bg-white shadow-sm sticky top-0 z-10">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,10 +25,15 @@ const Header = ({
             <div className="px-3 py-1 bg-purple-100 border border-purple-300 rounded-md">
               <span className="text-sm font-semibold text-purple-800">v{version || '5.9'}</span>
             </div>
+            {isDevelopment && (
+              <div className="px-3 py-1 bg-yellow-100 border border-yellow-300 rounded-md">
+                <span className="text-sm font-semibold text-yellow-800">🛠️ Local Dev Mode</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {/* Real-time sync status */}
-            {isAutoSaving && (
+            {!isDevelopment && isAutoSaving && (
               <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 border border-blue-300 rounded-md">
                 <span className="text-xs text-blue-800 font-medium">
                   🔄 Syncing...
@@ -35,7 +42,7 @@ const Header = ({
             )}
             
             {/* Show success status when synced */}
-            {!hasUnsavedChanges && !isAutoSaving && lastSaved && (
+            {!isDevelopment && !hasUnsavedChanges && !isAutoSaving && lastSaved && (
               <div className="flex items-center gap-1 px-3 py-1 bg-green-100 border border-green-300 rounded-md">
                 <span className="text-xs text-green-800 font-medium">
                   ✅ Synced with Firebase
