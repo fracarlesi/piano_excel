@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.40', // Implementato motore di calcolo crediti con logica vintage - gestione corretta di piani ammortamento complessi (Francese con preammortamento, Bullet) e tracciamento separato di ogni annata di finanziamenti
+  version: '5.50', // Gestione prodotti completamente data-driven: aggiunta/rimozione/modifica prodotti ora scrive direttamente su Firebase per sincronizzazione automatica tra tutti gli utenti
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

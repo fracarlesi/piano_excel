@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { ref, set, remove } from 'firebase/database';
+import { database } from '../../config/firebase';
 
 const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionChange }) => {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -79,7 +81,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
   };
 
   // Add new product
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!newProductName.trim()) {
       alert('Please enter a product name');
       return;
@@ -88,26 +90,38 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
     const productKey = generateProductKey(newProductName);
     const newProduct = createDefaultProduct(newProductName.trim(), newProductType);
 
-    // Update assumptions with new product
-    onAssumptionChange(`products.${productKey}`, newProduct);
-
-    // Reset form
-    setNewProductName('');
-    setNewProductType('Credit');
-    setIsAddingProduct(false);
-    
-    alert(`Product "${newProductName}" added successfully!`);
+    try {
+      // Write directly to Firebase at the specific product path
+      const productRef = ref(database, `assumptions/products/${productKey}`);
+      await set(productRef, newProduct);
+      
+      // Reset form
+      setNewProductName('');
+      setNewProductType('Credit');
+      setIsAddingProduct(false);
+      
+      console.log(`✅ Product "${newProductName}" added to Firebase successfully!`);
+      alert(`Product "${newProductName}" added successfully!`);
+    } catch (error) {
+      console.error('Error adding product to Firebase:', error);
+      alert(`Error adding product: ${error.message}`);
+    }
   };
 
   // Remove product
-  const handleRemoveProduct = (productKey, productName) => {
+  const handleRemoveProduct = async (productKey, productName) => {
     if (window.confirm(`Are you sure you want to remove "${productName}"?`)) {
-      // Create a copy of assumptions without this product
-      const updatedProducts = { ...assumptions.products };
-      delete updatedProducts[productKey];
-      
-      onAssumptionChange('products', updatedProducts);
-      alert(`Product "${productName}" removed successfully!`);
+      try {
+        // Remove directly from Firebase
+        const productRef = ref(database, `assumptions/products/${productKey}`);
+        await remove(productRef);
+        
+        console.log(`🗑️ Product "${productName}" removed from Firebase successfully!`);
+        alert(`Product "${productName}" removed successfully!`);
+      } catch (error) {
+        console.error('Error removing product from Firebase:', error);
+        alert(`Error removing product: ${error.message}`);
+      }
     }
   };
 
@@ -120,7 +134,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
   };
 
   // Save edited product
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editProductName.trim()) {
       alert('Product name cannot be empty');
       return;
@@ -128,28 +142,37 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
 
     const currentProduct = assumptions.products[editingProduct];
     
-    // If type changed, we need to update the product structure
-    if (currentProduct.productType !== editProductType) {
-      // Create new product with new type defaults
-      const newProduct = createDefaultProduct(editProductName.trim(), editProductType);
+    try {
+      let productToSave;
       
-      // Preserve volumes and cost of funding from old product
-      newProduct.volumes = currentProduct.volumes;
-      if (currentProduct.costOfFunding) {
-        newProduct.costOfFunding = currentProduct.costOfFunding;
+      // If type changed, we need to update the product structure
+      if (currentProduct.productType !== editProductType) {
+        // Create new product with new type defaults
+        productToSave = createDefaultProduct(editProductName.trim(), editProductType);
+        
+        // Preserve volumes and cost of funding from old product
+        productToSave.volumes = currentProduct.volumes;
+        if (currentProduct.costOfFunding) {
+          productToSave.costOfFunding = currentProduct.costOfFunding;
+        }
+      } else {
+        // Just update the name
+        productToSave = { ...currentProduct, name: editProductName.trim() };
       }
       
-      // Update the product
-      onAssumptionChange(`products.${editingProduct}`, newProduct);
-    } else {
-      // Just update the name
-      onAssumptionChange(`products.${editingProduct}.name`, editProductName.trim());
-    }
+      // Write directly to Firebase
+      const productRef = ref(database, `assumptions/products/${editingProduct}`);
+      await set(productRef, productToSave);
 
-    alert(`Product updated successfully!`);
-    setEditingProduct(null);
-    setEditProductName('');
-    setEditProductType('Credit');
+      console.log(`✏️ Product "${editProductName}" updated in Firebase successfully!`);
+      alert(`Product updated successfully!`);
+      setEditingProduct(null);
+      setEditProductName('');
+      setEditProductType('Credit');
+    } catch (error) {
+      console.error('Error updating product in Firebase:', error);
+      alert(`Error updating product: ${error.message}`);
+    }
   };
 
   // Cancel editing
