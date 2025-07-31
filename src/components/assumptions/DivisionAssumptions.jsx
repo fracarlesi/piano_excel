@@ -63,7 +63,7 @@ const DivisionAssumptions = ({
       {
         parameter: 'Loan Maturity',
         description: 'Contractual maturity of loans in years (used for amortization calculations)',
-        value: product.durata || 5,
+        value: product.durata !== undefined ? product.durata : 5,
         unit: 'years',
         key: `products.${productKey}.durata`,
         tooltip: 'Total loan duration for amortization calculation',
@@ -73,7 +73,7 @@ const DivisionAssumptions = ({
       {
         parameter: 'Grace Period Duration',
         description: 'Duration of grace period (pre-amortization) in years',
-        value: product.gracePeriod || 0,
+        value: product.gracePeriod !== undefined ? product.gracePeriod : 0,
         unit: 'years',
         key: `products.${productKey}.gracePeriod`
       },

@@ -674,6 +674,14 @@ export const calculateResults = (assumptions) => {
       const averagePerformingStock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       const newNPLs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       
+      // Debug loan parameters
+      if (product.type === 'bullet') {
+          console.log(`\n=== BULLET LOAN: ${product.name} ===`);
+          console.log(`Durata: ${product.durata}`);
+          console.log(`Volumes Y1: ${product.volumes?.y1}, Y10: ${product.volumes?.y10}`);
+          console.log(`Volumes10Y: ${volumes10Y.slice(0, 5).map(v => v.toFixed(1)).join(', ')}`);
+      }
+      
       // Apply credit classification impact on default rate (defined outside loop)
       const baseDefaultRate = product.dangerRate / 100;
       const classificationMultiplier = product.creditClassification === 'UTP' ? 2.5 : 1.0;
@@ -713,22 +721,12 @@ export const calculateResults = (assumptions) => {
                   if (isMaturity) {
                       repayments += cohortVolume;
                   }
-                  
-                  // Debug log for bullet loans
-                  if (year <= 3 && prevYear === 0) {
-                      console.log(`Bullet ${product.name}: year=${year}, ageInYears=${ageInYears}, totalDuration=${totalDuration}, isMaturity=${isMaturity}, cohortVolume=${cohortVolume}`);
-                  }
               }
           }
 
           const prevYearStock = year > 0 ? grossPerformingStock[year - 1] : 0;
           const totalEopStock = prevYearStock + volumes10Y[year] - repayments - newNPLs[year];
           grossPerformingStock[year] = totalEopStock;
-          
-          // Debug for bullet loans
-          if (product.type === 'bullet' && year <= 3) {
-              console.log(`Bullet ${product.name} Y${year}: Stock=${totalEopStock.toFixed(1)}, NewVol=${volumes10Y[year].toFixed(1)}, Repay=${repayments.toFixed(1)}`);
-          }
           
           // Calculate duration-weighted average stock
           let durationWeightedAvgStock = 0;

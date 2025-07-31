@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.30', // Smart merge: adds new fields but respects product deletions
+  version: '5.31', // Fixed Loan Maturity and Grace Period fields to properly handle zero values
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
