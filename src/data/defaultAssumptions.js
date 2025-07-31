@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.30', // Fixed double division by 100 in average stock calculation - now shows correct 100M instead of 10k
+  version: '10.31', // Removed €M unit from calculation formulas for cleaner display
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

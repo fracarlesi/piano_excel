@@ -115,11 +115,11 @@ export const createProductFormula = (year, product, formulaType, values) => {
       ],
       calculation: () => {
         if (isDepositProduct) {
-          return `${formatNumber(values.depositStock !== undefined ? values.depositStock : values.avgAssets, 2)} × ${formatNumber(values.depositRate !== undefined ? values.depositRate : (values.ftpRate !== undefined ? values.ftpRate : values.interestRate), 2)}% = ${formatNumber(values.result, 2)} €M`;
+          return `${formatNumber(values.depositStock !== undefined ? values.depositStock : values.avgAssets, 2)} × ${formatNumber(values.depositRate !== undefined ? values.depositRate : (values.ftpRate !== undefined ? values.ftpRate : values.interestRate), 2)}% = ${formatNumber(values.result, 2)}`;
         } else if (values.isFixed) {
-          return `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M`;
+          return `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.interestRate, 2)}% = ${formatNumber(values.result, 2)}`;
         } else {
-          return `${formatNumber(values.avgAssets, 2)} × (${formatNumber(values.euribor, 2)}% + ${formatNumber(values.spread, 2)}%) = ${formatNumber(values.result, 2)} €M`;
+          return `${formatNumber(values.avgAssets, 2)} × (${formatNumber(values.euribor, 2)}% + ${formatNumber(values.spread, 2)}%) = ${formatNumber(values.result, 2)}`;
         }
       }
     },
@@ -166,8 +166,8 @@ export const createProductFormula = (year, product, formulaType, values) => {
         }
       ],
       calculation: () => isDepositProduct ?
-        `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.interestRate || 0, 2)}% = ${formatNumber(Math.abs(values.result), 2)} €M` :
-        `${formatNumber(values.avgAssets, 2)} × (${formatNumber(values.euribor || 3.5, 2)}% + ${formatNumber(values.ftpSpread || 1.5, 2)}%) = ${formatNumber(Math.abs(values.result), 2)} €M`
+        `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.interestRate || 0, 2)}% = ${formatNumber(Math.abs(values.result), 2)}` :
+        `${formatNumber(values.avgAssets, 2)} × (${formatNumber(values.euribor || 3.5, 2)}% + ${formatNumber(values.ftpSpread || 1.5, 2)}%) = ${formatNumber(Math.abs(values.result), 2)}`
     },
     
     commissionIncome: {
@@ -239,14 +239,14 @@ export const createProductFormula = (year, product, formulaType, values) => {
       calculation: () => {
         if (isDigitalProduct) {
           if (values.isReferral) {
-            return `${formatNumber(values.newCustomers || 0, 0)} × ${formatNumber(values.adoptionRate || 0, 1)}% × €${formatNumber(values.referralFee || 0, 0)} = ${formatNumber(values.result, 2)} €M`;
+            return `${formatNumber(values.newCustomers || 0, 0)} × ${formatNumber(values.adoptionRate || 0, 1)}% × €${formatNumber(values.referralFee || 0, 0)} = ${formatNumber(values.result, 2)}`;
           } else if (values.isPremium) {
-            return `${formatNumber(values.activeCustomers || 0, 0)} × €${formatNumber(values.annualRevenue || 0, 0)} = ${formatNumber(values.result, 2)} €M`;
+            return `${formatNumber(values.activeCustomers || 0, 0)} × €${formatNumber(values.annualRevenue || 0, 0)} = ${formatNumber(values.result, 2)}`;
           } else if (values.isBaseAccount) {
-            return `${formatNumber(values.avgCustomers || 0, 0)} × €${formatNumber(values.monthlyFee || 0, 0)} × 12 = ${formatNumber(values.result, 2)} €M`;
+            return `${formatNumber(values.avgCustomers || 0, 0)} × €${formatNumber(values.monthlyFee || 0, 0)} × 12 = ${formatNumber(values.result, 2)}`;
           }
         }
-        return `${formatNumber(values.volume, 2)} × ${formatNumber(values.commissionRate, 2)}% = ${formatNumber(values.result, 2)} €M`;
+        return `${formatNumber(values.volume, 2)} × ${formatNumber(values.commissionRate, 2)}% = ${formatNumber(values.result, 2)}`;
       }
     },
     
@@ -281,9 +281,9 @@ export const createProductFormula = (year, product, formulaType, values) => {
       ],
       calculation: () => {
         if (isDigitalProduct && values.isCac) {
-          return `${formatNumber(values.newCustomers || 0, 0)} × €${formatNumber(values.cac || 0, 0)} = ${formatNumber(Math.abs(values.result), 2)} €M`;
+          return `${formatNumber(values.newCustomers || 0, 0)} × €${formatNumber(values.cac || 0, 0)} = ${formatNumber(Math.abs(values.result), 2)}`;
         }
-        return `${formatNumber(values.commissionIncome || 0, 2)} × ${formatNumber(values.expenseRate || 0, 2)}% = ${formatNumber(Math.abs(values.result), 2)} €M`;
+        return `${formatNumber(values.commissionIncome || 0, 2)} × ${formatNumber(values.expenseRate || 0, 2)}% = ${formatNumber(Math.abs(values.result), 2)}`;
       }
     },
     
@@ -363,7 +363,7 @@ export const createAggregateFormula = (year, formulaName, products, aggregationT
         .filter(p => p.value && p.value !== 0)
         .map(p => `${p.name}: ${formatNumber(p.value, 2)}`)
         .join('\n+ ');
-      return `${calculation}\n= ${formatNumber(total, 2)} €M`;
+      return `${calculation}\n= ${formatNumber(total, 2)}`;
     }
   );
 };
