@@ -158,6 +158,25 @@ const DivisionAssumptions = ({
         unit: 'text',
         key: `products.${productKey}.type`,
         options: ['bullet', 'french', 'interest-only']
+      },
+      {
+        parameter: 'Secured/Unsecured',
+        description: 'Whether the loan has collateral',
+        value: product.isUnsecured ? 'Unsecured' : 'Secured',
+        unit: 'text',
+        key: `products.${productKey}.isUnsecured`,
+        options: ['Secured', 'Unsecured'],
+        isBoolean: true
+      },
+      {
+        parameter: 'Unsecured LGD',
+        description: 'Loss Given Default for unsecured loans',
+        value: product.unsecuredLGD || 45,
+        unit: '%',
+        key: `products.${productKey}.unsecuredLGD`,
+        tooltip: 'Expected loss percentage in case of default for unsecured loans',
+        tooltipImpact: 'Higher LGD increases capital requirements and expected losses',
+        tooltipFormula: 'Only applies when loan is marked as Unsecured'
       }
     ];
 
@@ -996,8 +1015,17 @@ const DivisionAssumptions = ({
                             } else if (productAssumption.isDigitalService) {
                               return ['Average Deposit per Customer', 'Annual Churn Rate'].includes(row.parameter);
                             } else {
-                              return ['RWA Density', 'Default Rate', 'Loan-to-Value (LTV)', 
-                                     'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight', 'State Guarantee Coverage'].includes(row.parameter);
+                              // For credit products, filter based on secured/unsecured
+                              const isUnsecured = product.isUnsecured;
+                              const baseRiskParams = ['RWA Density', 'Default Rate', 'Credit Classification', 'Operational Risk Weight', 'State Guarantee Coverage', 'Secured/Unsecured'];
+                              const securedOnlyParams = ['Loan-to-Value (LTV)', 'Recovery Costs', 'Collateral Haircut'];
+                              const unsecuredOnlyParams = ['Unsecured LGD'];
+                              
+                              if (isUnsecured) {
+                                return [...baseRiskParams, ...unsecuredOnlyParams].includes(row.parameter);
+                              } else {
+                                return [...baseRiskParams, ...securedOnlyParams].includes(row.parameter);
+                              }
                             }
                           }).map((row, rowIndex) => (
                             <div key={rowIndex}>
@@ -1057,16 +1085,24 @@ const DivisionAssumptions = ({
                                   {(() => {
                                     // Get the current product values
                                     const currentProduct = divisionProducts[productKey] || {};
-                                    const ltv = currentProduct.ltv || 80;
-                                    const collateralHaircut = currentProduct.collateralHaircut || 15;
-                                    const recoveryCosts = currentProduct.recoveryCosts || 10;
+                                    const isUnsecured = currentProduct.isUnsecured;
                                     const stateGuarantee = currentProduct.stateGuaranteePercentage || 0;
                                     
-                                    // Calculate base LGD using the same formula as in calculations.js
-                                    const collateralValue = 1 / (ltv / 100);
-                                    const discountedCollateralValue = collateralValue * (1 - (collateralHaircut / 100));
-                                    const netRecoveryValue = discountedCollateralValue * (1 - (recoveryCosts / 100));
-                                    const baseLgd = Math.max(0, 1 - netRecoveryValue);
+                                    let baseLgd;
+                                    if (isUnsecured || currentProduct.ltv === 0 || currentProduct.ltv === undefined) {
+                                      // Unsecured loan
+                                      baseLgd = (currentProduct.unsecuredLGD || 45) / 100;
+                                    } else {
+                                      // Secured loan - calculate based on collateral
+                                      const ltv = currentProduct.ltv || 80;
+                                      const collateralHaircut = currentProduct.collateralHaircut || 15;
+                                      const recoveryCosts = currentProduct.recoveryCosts || 10;
+                                      
+                                      const collateralValue = 1 / (ltv / 100);
+                                      const discountedCollateralValue = collateralValue * (1 - (collateralHaircut / 100));
+                                      const netRecoveryValue = discountedCollateralValue * (1 - (recoveryCosts / 100));
+                                      baseLgd = Math.max(0, 1 - netRecoveryValue);
+                                    }
                                     
                                     // Apply state guarantee mitigation: LGD applies only to unguaranteed portion
                                     const finalLgd = baseLgd * (1 - (stateGuarantee / 100)) * 100; // Convert to percentage
@@ -1075,11 +1111,16 @@ const DivisionAssumptions = ({
                                   })()}
                                 </div>
                                 <div className="text-xs text-blue-600 mt-1">
-                                  Formula: LGD = [max(0, 1 - (1/LTV × (1-Haircut) × (1-RecoveryCosts)))] × (1 - StateGuarantee%)
                                   {(() => {
                                     const currentProduct = divisionProducts[productKey] || {};
+                                    const isUnsecured = currentProduct.isUnsecured;
                                     const stateGuarantee = currentProduct.stateGuaranteePercentage || 0;
-                                    return stateGuarantee > 0 ? ` | State guarantee reduces LGD by ${stateGuarantee}%` : '';
+                                    
+                                    if (isUnsecured) {
+                                      return `Formula: LGD = Unsecured LGD × (1 - StateGuarantee%)${stateGuarantee > 0 ? ` | State guarantee reduces LGD by ${stateGuarantee}%` : ''}`;
+                                    } else {
+                                      return `Formula: LGD = [max(0, 1 - (1/LTV × (1-Haircut) × (1-RecoveryCosts)))] × (1 - StateGuarantee%)${stateGuarantee > 0 ? ` | State guarantee reduces LGD by ${stateGuarantee}%` : ''}`;
+                                    }
                                   })()}
                                 </div>
                               </div>

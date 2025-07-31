@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.16', // Changed "Bank Navigation" to "Model Navigation" in UI
+  version: '5.17', // Added support for unsecured loans with configurable LGD
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

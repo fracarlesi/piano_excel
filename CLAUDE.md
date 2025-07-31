@@ -27,6 +27,13 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v5.17 (2025-07-31)
+- Added support for unsecured loans:
+  - New "Secured/Unsecured" toggle for credit products
+  - Configurable LGD for unsecured loans (default 45%)
+  - Dynamic UI that shows relevant fields based on loan type
+  - Proper LGD calculation for both secured and unsecured loans
+
 ### v5.16 (2025-07-31)
 - UI improvement: Changed "Bank Navigation" to "Model Navigation" for clarity
 - Minor interface enhancement

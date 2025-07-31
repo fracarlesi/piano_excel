@@ -747,10 +747,18 @@ export const calculateResults = (assumptions) => {
           nplStock[year] = prevNplStock + newNPLs[year];
       }
 
-      const collateralValue = 1 / (product.ltv / 100);
-      const discountedCollateralValue = collateralValue * (1 - (product.collateralHaircut / 100));
-      const netRecoveryValue = discountedCollateralValue * (1 - (product.recoveryCosts / 100));
-      const baseLgd = Math.max(0, 1 - netRecoveryValue);
+      // Calculate LGD based on whether loan is secured or unsecured
+      let baseLgd;
+      if (product.isUnsecured || product.ltv === 0 || product.ltv === undefined) {
+        // Unsecured loans: higher LGD (typically 45-75% for corporate, 85% for retail)
+        baseLgd = product.unsecuredLGD ? (product.unsecuredLGD / 100) : 0.45; // Default 45% LGD for unsecured
+      } else {
+        // Secured loans: calculate based on collateral
+        const collateralValue = 1 / (product.ltv / 100);
+        const discountedCollateralValue = collateralValue * (1 - (product.collateralHaircut / 100));
+        const netRecoveryValue = discountedCollateralValue * (1 - (product.recoveryCosts / 100));
+        baseLgd = Math.max(0, 1 - netRecoveryValue);
+      }
       
       // Apply state guarantee mitigation: LGD applies only to unguaranteed portion
       const stateGuaranteePercentage = (product.stateGuaranteePercentage || 0) / 100;
