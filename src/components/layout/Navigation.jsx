@@ -1,9 +1,9 @@
 import React from 'react';
-import { Settings, TrendingUp, Sliders } from 'lucide-react';
+import { Settings, TrendingUp, Sliders, Building, Wallet } from 'lucide-react';
 
 const Navigation = ({ activeSheet, setActiveSheet }) => {
-  // Divisioni con vista finanziaria e assumptions
-  const divisions = [
+  // Divisioni business con vista finanziaria e assumptions
+  const businessDivisions = [
     {
       key: 'reFinancing',
       name: 'Real Estate',
@@ -47,7 +47,26 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
       assumptionKey: 'incentiveAssumptions'
     }
   ];
+  
+  // Divisioni strutturali con vista finanziaria e assumptions
+  const structuralDivisions = [
+    {
+      key: 'centralFunctions',
+      name: 'Central Functions',
+      shortName: 'Central',
+      icon: Building,
+      assumptionKey: 'centralAssumptions'
+    },
+    {
+      key: 'treasury',
+      name: 'Treasury / ALM',
+      shortName: 'Treasury',
+      icon: Wallet,
+      assumptionKey: 'treasuryAssumptions'
+    }
+  ];
 
+  const allDivisions = [...businessDivisions, ...structuralDivisions];
 
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -58,7 +77,7 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
         </div>
         
         {/* Riga superiore - Bank Consolidated + Divisioni Financial */}
-        <div className="grid grid-cols-7 gap-0">
+        <div className="grid grid-cols-9 gap-0">
           {/* Bank Consolidated View */}
           <button
             onClick={() => setActiveSheet('bankConsolidated')}
@@ -73,8 +92,8 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
             <span className="text-xs text-gray-500">Consolidated</span>
           </button>
 
-          {/* Divisioni Financial */}
-          {divisions.map((division) => {
+          {/* Tutte le Divisioni Financial */}
+          {allDivisions.map((division) => {
             const Icon = division.icon;
             return (
               <button
@@ -94,8 +113,8 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
           })}
         </div>
 
-        {/* Riga inferiore - General Settings + Assumptions divisioni */}
-        <div className="grid grid-cols-7 gap-0 border-t border-gray-200">
+        {/* Riga inferiore - General Settings + Assumptions divisioni business */}
+        <div className="grid grid-cols-9 gap-0 border-t border-gray-200">
           {/* General Settings sotto Bank Consolidated */}
           <button
             onClick={() => setActiveSheet('assumptions')}
@@ -110,8 +129,8 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
             <span className="text-xs text-gray-500">Settings</span>
           </button>
 
-          {/* Assumptions divisioni */}
-          {divisions.map((division) => {
+          {/* Assumptions per tutte le divisioni */}
+          {allDivisions.map((division) => {
             return (
               <button
                 key={division.assumptionKey}

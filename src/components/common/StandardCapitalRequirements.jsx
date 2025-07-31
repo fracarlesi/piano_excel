@@ -24,8 +24,8 @@ const StandardCapitalRequirements = ({
   });
 
   // Calculate derived values
-  const totalRWA = divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0];
-  const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0,0,0,0,0,0];
+  const totalRWA = divisionResults?.capital?.totalRWA || [0,0,0,0,0,0,0,0,0,0];
+  const allocatedEquity = divisionResults?.bs?.allocatedEquity || [0,0,0,0,0,0,0,0,0,0];
   
   // Calculate CET1 ratio
   const cet1Ratio = totalRWA.map((rwa, i) => 
@@ -33,7 +33,7 @@ const StandardCapitalRequirements = ({
   );
 
   // RWA breakdown by risk type
-  const creditRiskRWA = divisionResults.capital.rwaCreditRisk || totalRWA.map(rwa => rwa * 0.85);
+  const creditRiskRWA = divisionResults?.capital?.rwaCreditRisk || totalRWA.map(rwa => rwa * 0.85);
   const operationalRiskRWA = totalRWA.map(rwa => rwa * 0.10);
   const marketRiskRWA = totalRWA.map(rwa => rwa * 0.05);
 

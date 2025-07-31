@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.8', // Added expandable/collapsible rows in financial tables with drill-down functionality
+  version: '5.9', // Added Central Functions and Treasury divisions for realistic bank structure
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -16,6 +16,33 @@ export const defaultAssumptions = {
   otherCostsY1: 0.5,
   provisionsY1: 0.2, 
   commissionExpenseRate: 0.0,
+  
+  // Central Functions Division - Non-allocated costs
+  centralFunctions: {
+    boardAndExecutiveCostsY1: 3.5, // Board, CEO, executive management costs
+    complianceCostsY1: 2.8, // Compliance, regulatory reporting, AML
+    auditCostsY1: 1.2, // Internal and external audit
+    legalCostsY1: 1.5, // Legal department and external counsel
+    riskManagementCostsY1: 2.0, // Central risk management function
+    strategyAndPlanningCostsY1: 1.0, // Strategic planning, M&A, investor relations
+    hrCentralCostsY1: 1.5, // Central HR, training, recruitment
+    facilitiesCostsY1: 3.0, // Headquarters, central facilities
+    fteY1: 120, // Central functions headcount
+    fteY5: 150  // Target headcount by year 5
+  },
+  
+  // Treasury / ALM Division
+  treasury: {
+    interbankFundingRate: 4.0, // Cost of interbank funding (%)
+    liquidityBufferRequirement: 20, // % of deposits to hold as liquidity buffer
+    liquidAssetReturnRate: 2.5, // Return on liquid assets (%)
+    tradingBookSize: 50, // Initial trading book size (€M)
+    tradingBookGrowthRate: 5, // Annual growth rate (%)
+    tradingBookReturnTarget: 8, // Target return on trading book (%)
+    tradingBookVolatility: 15, // Trading book return volatility (%)
+    fteY1: 25, // Treasury headcount
+    fteY5: 35  // Target headcount by year 5
+  },
   fundingMix: {
     sightDeposits: 40,
     termDeposits: 40,

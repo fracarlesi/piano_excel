@@ -14,6 +14,8 @@ import WealthManagementSheet from './components/sheets/WealthManagementSheet';
 import TechPlatformSheet from './components/sheets/TechPlatformSheet';
 import IncentiveFinanceSheet from './components/sheets/IncentiveFinanceSheet';
 import DigitalBankingSheet from './components/sheets/DigitalBankingSheet';
+import CentralFunctionsSheet from './components/divisions/CentralFunctionsSheet';
+import TreasurySheet from './components/divisions/TreasurySheet';
 
 // Utils
 import { calculateResults } from './utils/calculations';
@@ -158,6 +160,26 @@ const ExcelLikeBankPlan = () => {
             results={results} 
           />
         );
+      
+      // ========== STRUCTURAL DIVISIONS ==========
+      case 'centralFunctions':
+        return (
+          <CentralFunctionsSheet 
+            divisionResults={results.divisions.central || {}}
+            assumptions={assumptions}
+            globalResults={results}
+          />
+        );
+      
+      case 'treasury':
+        return (
+          <TreasurySheet 
+            divisionResults={results.divisions.treasury || {}}
+            assumptions={assumptions}
+            globalResults={results}
+            productResults={results.productResults || {}}
+          />
+        );
 
       // ========== DIVISION ASSUMPTIONS VIEWS ==========
       case 'reAssumptions':
@@ -212,6 +234,26 @@ const ExcelLikeBankPlan = () => {
             setAssumptions={setAssumptions} 
             editMode={editMode}
             initialTab="incentive"
+          />
+        );
+      
+      case 'centralAssumptions':
+        return (
+          <AssumptionsSheet 
+            assumptions={assumptions} 
+            setAssumptions={setAssumptions} 
+            editMode={editMode}
+            initialTab="central"
+          />
+        );
+      
+      case 'treasuryAssumptions':
+        return (
+          <AssumptionsSheet 
+            assumptions={assumptions} 
+            setAssumptions={setAssumptions} 
+            editMode={editMode}
+            initialTab="treasury"
           />
         );
 

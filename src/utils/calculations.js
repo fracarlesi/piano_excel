@@ -852,7 +852,9 @@ export const calculateResults = (assumptions) => {
   }
   
   // Define all available divisions dynamically based on product prefixes
-  const divisionPrefixes = ['re', 'sme', 'digital', 'wealth', 'tech', 'incentive'];
+  const businessDivisionPrefixes = ['re', 'sme', 'digital', 'wealth', 'tech', 'incentive'];
+  const structuralDivisionPrefixes = ['central', 'treasury'];
+  const divisionPrefixes = [...businessDivisionPrefixes, ...structuralDivisionPrefixes];
   
   // Create division-specific product results
   const divisionProductResults = {};
@@ -875,8 +877,8 @@ export const calculateResults = (assumptions) => {
     };
   });
 
-  // Calculate aggregates for all divisions dynamically
-  divisionPrefixes.forEach(prefix => {
+  // Calculate aggregates for all business divisions first
+  businessDivisionPrefixes.forEach(prefix => {
     const divisionProducts = divisionProductResults[prefix];
     
     results.divisions[prefix].bs.performingAssets = years.map(i => 
@@ -888,8 +890,14 @@ export const calculateResults = (assumptions) => {
     results.divisions[prefix].pnl.interestIncome = years.map(i => 
       Object.values(divisionProducts).reduce((sum, p) => sum + p.interestIncome[i], 0)
     );
+    results.divisions[prefix].pnl.interestExpenses = years.map(i => 
+      Object.values(divisionProducts).reduce((sum, p) => sum + (p.interestExpense || 0), 0)
+    );
     results.divisions[prefix].pnl.commissionIncome = years.map(i => 
       Object.values(divisionProducts).reduce((sum, p) => sum + p.commissionIncome[i], 0)
+    );
+    results.divisions[prefix].pnl.commissionExpenses = years.map(i => 
+      Object.values(divisionProducts).reduce((sum, p) => sum + (p.commissionExpense || 0), 0)
     );
     results.divisions[prefix].pnl.totalLLP = years.map(i => 
       Object.values(divisionProducts).reduce((sum, p) => sum + p.llp[i], 0)
@@ -899,19 +907,40 @@ export const calculateResults = (assumptions) => {
     );
   });
 
-  // First calculate total balance sheet items to get accurate weights
+  // Initialize structural divisions' balance sheet properties early
+  // Central Functions has no assets
+  results.divisions.central.bs.performingAssets = years.map(() => 0);
+  results.divisions.central.bs.nonPerformingAssets = years.map(() => 0);
+  results.divisions.central.capital.rwaCreditRisk = years.map(() => 0);
+  results.divisions.central.pnl.totalLLP = years.map(() => 0);
+  results.divisions.central.pnl.interestIncome = years.map(() => 0);
+  results.divisions.central.pnl.interestExpenses = years.map(() => 0);
+  results.divisions.central.pnl.commissionIncome = years.map(() => 0);
+  results.divisions.central.pnl.totalCentralCosts = years.map(() => 0); // Will be updated later
+
+  // Treasury will be calculated later, but initialize to zero for now
+  results.divisions.treasury.bs.performingAssets = years.map(() => 0);
+  results.divisions.treasury.bs.nonPerformingAssets = years.map(() => 0);
+  results.divisions.treasury.capital.rwaCreditRisk = years.map(() => 0);
+  results.divisions.treasury.pnl.totalLLP = years.map(() => 0);
+  results.divisions.treasury.pnl.interestIncome = years.map(() => 0);
+  results.divisions.treasury.pnl.interestExpenses = years.map(() => 0);
+  results.divisions.treasury.pnl.commissionIncome = years.map(() => 0);
+
+  // First calculate total balance sheet items from business divisions only
+  // (Treasury assets will be added after they are calculated)
   results.bs.performingAssets = years.map(i => 
-    divisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].bs.performingAssets[i], 0)
+    businessDivisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].bs.performingAssets[i], 0)
   );
   results.bs.nonPerformingAssets = years.map(i => 
-    divisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].bs.nonPerformingAssets[i], 0)
+    businessDivisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].bs.nonPerformingAssets[i], 0)
   );
   const totalLoans = years.map(i => results.bs.performingAssets[i] + results.bs.nonPerformingAssets[i]);
   results.bs.totalAssets = totalLoans;
   
-  // Calculate total RWA components first
+  // Calculate total RWA components from business divisions first
   results.capital.rwaCreditRisk = years.map(i => 
-    divisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].capital.rwaCreditRisk[i], 0)
+    businessDivisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].capital.rwaCreditRisk[i], 0)
   );
   results.capital.rwaOperationalRisk = results.bs.totalAssets.map(assets => assets * 0.1);
   results.capital.rwaMarketRisk = years.map(() => 0);
@@ -919,19 +948,19 @@ export const calculateResults = (assumptions) => {
 
   // Calculate P&L first to get net profit for equity calculation
   results.pnl.interestIncome = years.map(i => 
-    divisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].pnl.interestIncome[i], 0)
+    businessDivisionPrefixes.reduce((sum, prefix) => sum + (results.divisions[prefix].pnl.interestIncome[i] || 0), 0)
   );
-  // Calculate interest expenses using product-specific cost of funding
+  // Calculate interest expenses from business divisions only for now
   results.pnl.interestExpenses = years.map(i => 
-    Object.values(productResults).reduce((sum, product) => {
-      const productInterestExpense = (product.interestExpense || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-      return sum + productInterestExpense;
+    businessDivisionPrefixes.reduce((sum, prefix) => {
+      const divisionExpenses = (results.divisions[prefix].pnl.interestExpenses || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+      return sum + divisionExpenses;
     }, 0)
   );
   results.pnl.netInterestIncome = years.map(i => results.pnl.interestIncome[i] + results.pnl.interestExpenses[i]);
   
   results.pnl.commissionIncome = years.map(i => 
-    divisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].pnl.commissionIncome[i], 0)
+    businessDivisionPrefixes.reduce((sum, prefix) => sum + (results.divisions[prefix].pnl.commissionIncome[i] || 0), 0)
   );
   results.pnl.commissionExpenses = results.pnl.commissionIncome.map(c => -c * assumptions.commissionExpenseRate / 100);
   results.pnl.netCommissions = years.map(i => results.pnl.commissionIncome[i] + results.pnl.commissionExpenses[i]);
@@ -945,7 +974,9 @@ export const calculateResults = (assumptions) => {
     'digital': 'digitalBankingDivision',
     'wealth': 'wealthManagementDivision',
     'tech': 'techPlatformDivision',
-    'incentive': 'incentiveFinanceDivision'
+    'incentive': 'incentiveFinanceDivision',
+    'central': 'centralFunctions',
+    'treasury': 'treasury'
   };
   
   let totalFte = years.map(() => 0);
@@ -974,6 +1005,8 @@ export const calculateResults = (assumptions) => {
   results.pnl.hqAllocation = years.map(i => -assumptions.hqAllocationY1 * costGrowth[i]);
   results.pnl.itCosts = years.map(i => -assumptions.itCostsY1 * costGrowth[i]);
   const otherOpex = years.map(i => results.pnl.adminCosts[i] + results.pnl.marketingCosts[i] + results.pnl.hqAllocation[i] + results.pnl.itCosts[i]);
+  // Note: otherOpex now only includes costs allocated to business divisions
+  // Central Functions costs are tracked separately
   results.pnl.totalOpex = years.map(i => results.pnl.personnelCostsTotal[i] + otherOpex[i]);
 
   results.pnl.otherCosts = years.map(i => -assumptions.otherCostsY1 * costGrowth[i]);
@@ -981,7 +1014,14 @@ export const calculateResults = (assumptions) => {
   results.pnl.totalLLP = years.map(i => 
     divisionPrefixes.reduce((sum, prefix) => sum + results.divisions[prefix].pnl.totalLLP[i], 0)
   );
-  results.pnl.preTaxProfit = years.map(i => results.pnl.totalRevenues[i] + results.pnl.totalOpex[i] + results.pnl.totalLLP[i] + results.pnl.otherCosts[i]);
+  
+  // Calculate pre-tax profit before central functions costs
+  const preTaxBeforeCentral = years.map(i => results.pnl.totalRevenues[i] + results.pnl.totalOpex[i] + results.pnl.totalLLP[i] + results.pnl.otherCosts[i]);
+  
+  // Add Central Functions costs to get final pre-tax profit
+  results.pnl.centralFunctionsCosts = results.divisions.central.pnl.totalCentralCosts;
+  
+  results.pnl.preTaxProfit = years.map(i => preTaxBeforeCentral[i] + (results.pnl.centralFunctionsCosts[i] || 0));
   results.pnl.taxes = years.map(i => results.pnl.preTaxProfit[i] > 0 ? -results.pnl.preTaxProfit[i] * (assumptions.taxRate / 100) : 0);
   results.pnl.netProfit = years.map(i => results.pnl.preTaxProfit[i] + results.pnl.taxes[i]);
 
@@ -991,6 +1031,219 @@ export const calculateResults = (assumptions) => {
       .filter(product => product.depositStock) // Only products with deposit stock
       .reduce((sum, product) => sum + (product.depositStock[i] || 0), 0)
   );
+
+  // ======== CENTRAL FUNCTIONS DIVISION ========
+  // Central Functions has only costs, no revenues or assets
+  const cf = results.divisions.central;
+  
+  // Initialize balance sheet items for Central Functions (no assets)
+  cf.bs.performingAssets = years.map(() => 0);
+  cf.bs.nonPerformingAssets = years.map(() => 0);
+  
+  // Calculate Central Functions FTE (already calculated above)
+  const centralFte = results.kpi.centralFte || years.map(() => 0);
+  
+  // Calculate Central Functions costs
+  cf.pnl.boardAndExecutiveCosts = years.map(i => -(assumptions.centralFunctions.boardAndExecutiveCostsY1 || 0) * costGrowth[i]);
+  cf.pnl.complianceCosts = years.map(i => -(assumptions.centralFunctions.complianceCostsY1 || 0) * costGrowth[i]);
+  cf.pnl.auditCosts = years.map(i => -(assumptions.centralFunctions.auditCostsY1 || 0) * costGrowth[i]);
+  cf.pnl.legalCosts = years.map(i => -(assumptions.centralFunctions.legalCostsY1 || 0) * costGrowth[i]);
+  cf.pnl.riskManagementCosts = years.map(i => -(assumptions.centralFunctions.riskManagementCostsY1 || 0) * costGrowth[i]);
+  cf.pnl.strategyAndPlanningCosts = years.map(i => -(assumptions.centralFunctions.strategyAndPlanningCostsY1 || 0) * costGrowth[i]);
+  cf.pnl.hrCentralCosts = years.map(i => -(assumptions.centralFunctions.hrCentralCostsY1 || 0) * costGrowth[i]);
+  cf.pnl.facilitiesCosts = years.map(i => -(assumptions.centralFunctions.facilitiesCostsY1 || 0) * costGrowth[i]);
+  
+  // Personnel costs for Central Functions
+  cf.pnl.personnelCosts = centralFte.map(fte => -(fte * assumptions.avgCostPerFte) / 1000);
+  
+  // Total Central Functions costs
+  cf.pnl.totalCentralCosts = years.map(i => 
+    cf.pnl.boardAndExecutiveCosts[i] +
+    cf.pnl.complianceCosts[i] +
+    cf.pnl.auditCosts[i] +
+    cf.pnl.legalCosts[i] +
+    cf.pnl.riskManagementCosts[i] +
+    cf.pnl.strategyAndPlanningCosts[i] +
+    cf.pnl.hrCentralCosts[i] +
+    cf.pnl.facilitiesCosts[i] +
+    cf.pnl.personnelCosts[i]
+  );
+  
+  // Central Functions has no interest income/expense
+  cf.pnl.interestIncome = years.map(() => 0);
+  cf.pnl.interestExpenses = years.map(() => 0);
+  cf.pnl.commissionIncome = years.map(() => 0);
+  cf.pnl.commissionExpenses = years.map(() => 0);
+  cf.pnl.totalLLP = years.map(() => 0);
+  
+  // Central Functions P&L
+  cf.pnl.totalRevenues = years.map(() => 0);
+  cf.pnl.totalOpex = cf.pnl.totalCentralCosts;
+  cf.pnl.preTaxProfit = cf.pnl.totalCentralCosts;
+  cf.pnl.netProfit = cf.pnl.preTaxProfit; // Simplified - no separate tax calculation
+  
+  // Central Functions has minimal RWA (operational risk only)
+  cf.capital.rwaCreditRisk = years.map(() => 0);
+  cf.capital.totalRWA = years.map(() => 10); // Minimal operational RWA
+  
+  // ======== TREASURY / ALM DIVISION ========
+  const treasury = results.divisions.treasury;
+  
+  // Calculate funding gap: Total loans - Total deposits
+  const fundingGap = years.map(i => 
+    results.bs.totalAssets[i] - results.bs.digitalServiceDeposits[i]
+  );
+  
+  // Calculate liquidity buffer requirement
+  const liquidityBuffer = years.map(i => 
+    results.bs.digitalServiceDeposits[i] * (assumptions.treasury.liquidityBufferRequirement / 100)
+  );
+  
+  // Treasury assets
+  treasury.bs.liquidAssets = liquidityBuffer;
+  treasury.bs.tradingBook = years.map(i => 
+    assumptions.treasury.tradingBookSize * Math.pow(1 + assumptions.treasury.tradingBookGrowthRate / 100, i)
+  );
+  treasury.bs.totalAssets = years.map(i => 
+    treasury.bs.liquidAssets[i] + treasury.bs.tradingBook[i]
+  );
+  
+  // Treasury funding
+  treasury.bs.interbankFunding = years.map(i => 
+    Math.max(0, fundingGap[i]) // Only positive funding gaps
+  );
+  
+  // Treasury P&L
+  // Interest income from liquidity buffer
+  treasury.pnl.liquidityBufferIncome = years.map(i => 
+    liquidityBuffer[i] * (assumptions.treasury.liquidAssetReturnRate / 100)
+  );
+  
+  // Trading income (simplified)
+  treasury.pnl.tradingIncome = years.map(i => 
+    treasury.bs.tradingBook[i] * (assumptions.treasury.tradingBookReturnTarget / 100)
+  );
+  
+  // Interest expense on interbank funding
+  treasury.pnl.interbankFundingCost = years.map(i => 
+    -treasury.bs.interbankFunding[i] * (assumptions.treasury.interbankFundingRate / 100)
+  );
+  
+  // FTP spread income/cost (Treasury acts as intermediary)
+  // Income: receives FTP rate from lending divisions
+  // Cost: pays deposit rate to Digital Bank
+  // Net: keeps the spread
+  treasury.pnl.ftpSpreadIncome = years.map(i => {
+    const totalLoans = results.bs.totalAssets[i];
+    const totalDeposits = results.bs.digitalServiceDeposits[i];
+    const ftpRate = (assumptions.euribor + assumptions.ftpSpread) / 100;
+    const depositRate = assumptions.depositRate / 100;
+    
+    // Income from lending divisions at FTP rate
+    const ftpIncome = totalLoans * ftpRate;
+    // Cost to Digital Bank at deposit rate
+    const depositCost = totalDeposits * depositRate;
+    // Net spread income
+    return ftpIncome - depositCost;
+  });
+  
+  // Treasury personnel costs
+  const treasuryFte = results.kpi.treasuryFte || years.map(() => 0);
+  treasury.pnl.personnelCosts = treasuryFte.map(fte => -(fte * assumptions.avgCostPerFte) / 1000);
+  
+  // Treasury other costs (allocated portion)
+  treasury.pnl.otherOpex = years.map(i => -2); // Simplified allocation
+  
+  // Treasury totals
+  treasury.pnl.interestIncome = years.map(i => 
+    treasury.pnl.liquidityBufferIncome[i] + 
+    (treasury.pnl.ftpSpreadIncome[i] > 0 ? treasury.pnl.ftpSpreadIncome[i] : 0)
+  );
+  
+  treasury.pnl.interestExpenses = years.map(i => 
+    treasury.pnl.interbankFundingCost[i] + 
+    (treasury.pnl.ftpSpreadIncome[i] < 0 ? treasury.pnl.ftpSpreadIncome[i] : 0)
+  );
+  
+  treasury.pnl.commissionIncome = treasury.pnl.tradingIncome;
+  treasury.pnl.commissionExpenses = years.map(() => 0);
+  treasury.pnl.totalLLP = years.map(() => 0);
+  
+  treasury.pnl.totalRevenues = years.map(i => 
+    treasury.pnl.interestIncome[i] + 
+    treasury.pnl.interestExpenses[i] + 
+    treasury.pnl.commissionIncome[i]
+  );
+  
+  treasury.pnl.totalOpex = years.map(i => 
+    treasury.pnl.personnelCosts[i] + treasury.pnl.otherOpex[i]
+  );
+  
+  treasury.pnl.preTaxProfit = years.map(i => 
+    treasury.pnl.totalRevenues[i] + treasury.pnl.totalOpex[i]
+  );
+  
+  treasury.pnl.netProfit = treasury.pnl.preTaxProfit; // Simplified
+  
+  // Treasury RWA (liquidity buffer has low RWA, trading book has market risk RWA)
+  treasury.capital.rwaCreditRisk = years.map(i => 
+    treasury.bs.liquidAssets[i] * 0.20 + // 20% RWA for liquid assets
+    treasury.bs.tradingBook[i] * 1.00 // 100% RWA for trading book
+  );
+  
+  treasury.capital.totalRWA = treasury.capital.rwaCreditRisk;
+  
+  // Update balance sheet items
+  treasury.bs.performingAssets = treasury.bs.totalAssets;
+  treasury.bs.nonPerformingAssets = years.map(() => 0);
+
+  // Now update the total balance sheet to include Treasury assets
+  results.bs.performingAssets = years.map(i => 
+    divisionPrefixes.reduce((sum, prefix) => sum + (results.divisions[prefix].bs.performingAssets[i] || 0), 0)
+  );
+  results.bs.nonPerformingAssets = years.map(i => 
+    divisionPrefixes.reduce((sum, prefix) => sum + (results.divisions[prefix].bs.nonPerformingAssets[i] || 0), 0)
+  );
+  results.bs.totalAssets = years.map(i => results.bs.performingAssets[i] + results.bs.nonPerformingAssets[i]);
+
+  // Update total RWA to include all divisions
+  results.capital.rwaCreditRisk = years.map(i => 
+    divisionPrefixes.reduce((sum, prefix) => sum + (results.divisions[prefix].capital.rwaCreditRisk[i] || 0), 0)
+  );
+  results.capital.rwaOperationalRisk = results.bs.totalAssets.map(assets => assets * 0.1);
+  results.capital.totalRWA = years.map(i => results.capital.rwaCreditRisk[i] + results.capital.rwaOperationalRisk[i] + results.capital.rwaMarketRisk[i]);
+
+  // Update P&L totals to include all divisions (including Treasury and Central Functions)
+  results.pnl.interestIncome = years.map(i => 
+    divisionPrefixes.reduce((sum, prefix) => sum + (results.divisions[prefix].pnl.interestIncome[i] || 0), 0)
+  );
+  results.pnl.interestExpenses = years.map(i => 
+    divisionPrefixes.reduce((sum, prefix) => sum + (results.divisions[prefix].pnl.interestExpenses[i] || 0), 0)
+  );
+  results.pnl.netInterestIncome = years.map(i => results.pnl.interestIncome[i] + results.pnl.interestExpenses[i]);
+  
+  results.pnl.commissionIncome = years.map(i => 
+    divisionPrefixes.reduce((sum, prefix) => sum + (results.divisions[prefix].pnl.commissionIncome[i] || 0), 0)
+  );
+  // Recalculate commission expenses based on updated commission income
+  results.pnl.commissionExpenses = results.pnl.commissionIncome.map(c => -c * assumptions.commissionExpenseRate / 100);
+  results.pnl.netCommissions = years.map(i => results.pnl.commissionIncome[i] + results.pnl.commissionExpenses[i]);
+  
+  results.pnl.totalRevenues = years.map(i => results.pnl.netInterestIncome[i] + results.pnl.netCommissions[i]);
+
+  // Update total OPEX to include Central Functions costs
+  const centralOpex = results.divisions.central.pnl.totalOpex || years.map(() => 0);
+  const treasuryOpex = results.divisions.treasury.pnl.totalOpex || years.map(() => 0);
+  results.pnl.totalOpex = years.map(i => 
+    results.pnl.personnelCostsTotal[i] + otherOpex[i] + centralOpex[i] + treasuryOpex[i]
+  );
+
+  // Recalculate pre-tax profit and net profit
+  results.pnl.preTaxProfit = years.map(i => 
+    results.pnl.totalRevenues[i] + results.pnl.totalOpex[i] + results.pnl.totalLLP[i]
+  );
+  results.pnl.taxes = results.pnl.preTaxProfit.map(profit => profit > 0 ? -profit * assumptions.taxRate / 100 : 0);
+  results.pnl.netProfit = years.map(i => results.pnl.preTaxProfit[i] + results.pnl.taxes[i]);
 
   // Calculate total equity first
   results.bs.equity = years.map(i => assumptions.initialEquity + results.pnl.netProfit.slice(0, i + 1).reduce((a, b) => a + b, 0));

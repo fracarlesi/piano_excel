@@ -6,6 +6,8 @@ import DigitalAssumptions from '../assumptions/DigitalAssumptions';
 import WealthAssumptions from '../assumptions/WealthAssumptions';
 import IncentiveAssumptions from '../assumptions/IncentiveAssumptions';
 import TechAssumptions from '../assumptions/TechAssumptions';
+import CentralAssumptions from '../assumptions/CentralAssumptions';
+import TreasuryAssumptions from '../assumptions/TreasuryAssumptions';
 
 const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 'general' }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -42,7 +44,9 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
     { id: 'digital', label: 'Digital Banking', icon: '📱' },
     { id: 'wealth', label: 'Wealth Management', icon: '💎' },
     { id: 'incentive', label: 'Finanza Agevolata', icon: '🌱' },
-    { id: 'tech', label: 'Tech Platform', icon: '🔧' }
+    { id: 'tech', label: 'Tech Platform', icon: '🔧' },
+    { id: 'central', label: 'Central Functions', icon: '🏛️' },
+    { id: 'treasury', label: 'Treasury / ALM', icon: '💰' }
   ];
 
   const renderGeneralAssumptions = () => (
@@ -228,6 +232,10 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
         return <IncentiveAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
       case 'tech':
         return <TechAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
+      case 'central':
+        return <CentralAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
+      case 'treasury':
+        return <TreasuryAssumptions assumptions={assumptions} onAssumptionChange={handleAssumptionChange} />;
       default:
         return renderGeneralAssumptions();
     }
