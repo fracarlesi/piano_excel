@@ -27,6 +27,13 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v5.15 (2025-07-31)
+- Implemented smart merge logic for Firebase sync:
+  - Structure and new fields come from code (defaultAssumptions.js)
+  - Existing values are preserved from Firebase (user modifications)
+  - Best of both worlds: updated structure + preserved user data
+- Added detailed logging to show what's being kept/added
+
 ### v5.14 (2025-07-31)
 - Fixed version comparison logic to handle semantic versioning correctly
 - Now properly compares versions like 5.9 vs 5.13 (was treating as decimals)

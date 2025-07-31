@@ -1,11 +1,12 @@
 export const defaultAssumptions = {
-  version: '5.14', // Fixed version comparison logic for proper semantic versioning
+  version: '5.15', // Implemented smart merge: structure from code, values from user
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
   euribor: 3.5, // EURIBOR base rate
   ftpSpread: 1.5, // Spread over EURIBOR for FTP rate (FTP = EURIBOR + ftpSpread)
   depositRate: 0.5, // Rate paid to customers on deposit accounts
+  testNewField: 999, // TEST: Nuovo campo per verificare smart merge
   avgCostPerFte: 100, 
   backOfficeCostsY1: 2, 
   adminCostsY1: 1.5,

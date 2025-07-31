@@ -86,15 +86,64 @@ export const useFirebaseState = () => {
             
             // Check if local version is newer than Firebase version
             if (defaultAssumptions.version && data.version && versionComparison > 0) {
-              console.log(`🔄 Updating Firebase version from ${data.version} to ${defaultAssumptions.version}`);
-              // Update only the version in Firebase
-              const updatedData = { ...data, version: defaultAssumptions.version };
-              set(assumptionsRef.current, cleanDataForFirebase(updatedData))
+              console.log(`🔄 Updating Firebase from version ${data.version} to ${defaultAssumptions.version}`);
+              
+              // Smart merge: structure from local, values from Firebase
+              const mergeData = (localData, firebaseData) => {
+                // Recursive merge function
+                const deepMerge = (local, firebase, path = '') => {
+                  const merged = {};
+                  
+                  // For each key in local structure
+                  Object.keys(local).forEach(key => {
+                    const localValue = local[key];
+                    const firebaseValue = firebase?.[key];
+                    const currentPath = path ? `${path}.${key}` : key;
+                    
+                    // If it's an object (not array), recurse
+                    if (localValue && typeof localValue === 'object' && !Array.isArray(localValue)) {
+                      merged[key] = deepMerge(localValue, firebaseValue, currentPath);
+                    } else {
+                      // For primitive values or arrays:
+                      // - If exists in Firebase, keep Firebase value (user modifications)
+                      // - If new field, use local default value
+                      if (firebaseValue !== undefined) {
+                        merged[key] = firebaseValue;
+                        if (localValue !== firebaseValue && key !== 'version') {
+                          console.log(`📌 Keeping user value for ${currentPath}: ${firebaseValue} (local default: ${localValue})`);
+                        }
+                      } else {
+                        merged[key] = localValue;
+                        console.log(`✨ Adding new field ${currentPath}: ${localValue}`);
+                      }
+                    }
+                  });
+                  
+                  // Preserve any Firebase fields not in local (backwards compatibility)
+                  if (firebase && typeof firebase === 'object' && !Array.isArray(firebase)) {
+                    Object.keys(firebase).forEach(key => {
+                      if (!(key in local)) {
+                        merged[key] = firebase[key];
+                        console.log(`🔒 Preserving Firebase-only field ${path ? path + '.' : ''}${key}`);
+                      }
+                    });
+                  }
+                  
+                  return merged;
+                };
+                
+                return deepMerge(localData, firebaseData);
+              };
+              
+              const mergedData = mergeData(defaultAssumptions, data);
+              mergedData.version = defaultAssumptions.version; // Ensure version is updated
+              
+              set(assumptionsRef.current, cleanDataForFirebase(mergedData))
                 .then(() => {
-                  console.log('✅ Version updated in Firebase');
+                  console.log('✅ Firebase updated with smart merge');
                 })
                 .catch((error) => {
-                  console.error('❌ Error updating version:', error);
+                  console.error('❌ Error updating Firebase:', error);
                 });
             } else {
               console.log('ℹ️ Version update not needed or condition not met');
