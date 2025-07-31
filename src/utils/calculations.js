@@ -1076,15 +1076,50 @@ export const calculateResults = (assumptions) => {
   cf.pnl.commissionExpenses = years.map(() => 0);
   cf.pnl.totalLLP = years.map(() => 0);
   
-  // Central Functions P&L
+  // Central Functions P&L - Complete structure for StandardPnL
+  cf.pnl.netInterestIncome = years.map(() => 0);
+  cf.pnl.netCommissions = years.map(() => 0);
   cf.pnl.totalRevenues = years.map(() => 0);
+  cf.pnl.personnelCosts = cf.pnl.personnelCosts || years.map(() => 0);
+  cf.pnl.otherOpex = years.map(i => cf.pnl.totalCentralCosts[i] - cf.pnl.personnelCosts[i]);
   cf.pnl.totalOpex = cf.pnl.totalCentralCosts;
   cf.pnl.preTaxProfit = cf.pnl.totalCentralCosts;
+  cf.pnl.taxes = years.map(() => 0); // No taxes for cost center
   cf.pnl.netProfit = cf.pnl.preTaxProfit; // Simplified - no separate tax calculation
   
   // Central Functions has minimal RWA (operational risk only)
   cf.capital.rwaCreditRisk = years.map(() => 0);
   cf.capital.totalRWA = years.map(() => 10); // Minimal operational RWA
+  
+  // Central Functions Balance Sheet - Empty structure for consistency
+  cf.bs.loans = years.map(() => 0);
+  cf.bs.securities = years.map(() => 0);
+  cf.bs.cashAndEquivalents = years.map(() => 0);
+  cf.bs.otherAssets = years.map(() => 0);
+  cf.bs.totalAssets = years.map(() => 0);
+  
+  cf.bs.customerDeposits = years.map(() => 0);
+  cf.bs.interbankLiabilities = years.map(() => 0);
+  cf.bs.debtSecurities = years.map(() => 0);
+  cf.bs.otherLiabilities = years.map(() => 0);
+  cf.bs.totalLiabilities = years.map(() => 0);
+  cf.bs.equity = years.map(() => 0); // Will be allocated based on RWA
+  
+  // Central Functions KPIs
+  cf.kpi = {};
+  cf.kpi.costToIncomeRatio = years.map(() => 100); // Pure cost center
+  cf.kpi.fteCount = years.map(i => {
+    const fteY1 = assumptions.centralFunctions?.fteY1 || 0;
+    const fteY5 = assumptions.centralFunctions?.fteY5 || 0;
+    const fteGrowth = (fteY5 - fteY1) / 4;
+    return fteY1 + (fteGrowth * Math.min(i, 4));
+  });
+  cf.kpi.costPerFte = years.map(i => {
+    const fte = cf.kpi.fteCount[i];
+    const totalCosts = Math.abs(cf.pnl.totalCentralCosts[i] || 0);
+    return fte > 0 ? (totalCosts / fte) * 1000 : 0; // in €k
+  });
+  cf.kpi.percentOfTotalBankCosts = years.map(() => 0); // Will calculate later
   
   // ======== TREASURY / ALM DIVISION ========
   const treasury = results.divisions.treasury;
@@ -1183,7 +1218,8 @@ export const calculateResults = (assumptions) => {
     treasury.pnl.totalRevenues[i] + treasury.pnl.totalOpex[i]
   );
   
-  treasury.pnl.netProfit = treasury.pnl.preTaxProfit; // Simplified
+  treasury.pnl.taxes = treasury.pnl.preTaxProfit.map(profit => profit > 0 ? -profit * assumptions.taxRate / 100 : 0);
+  treasury.pnl.netProfit = years.map(i => treasury.pnl.preTaxProfit[i] + treasury.pnl.taxes[i]);
   
   // Treasury RWA (liquidity buffer has low RWA, trading book has market risk RWA)
   treasury.capital.rwaCreditRisk = years.map(i => 
@@ -1196,6 +1232,41 @@ export const calculateResults = (assumptions) => {
   // Update balance sheet items
   treasury.bs.performingAssets = treasury.bs.totalAssets;
   treasury.bs.nonPerformingAssets = years.map(() => 0);
+  
+  // Treasury Balance Sheet - Full structure for StandardBalanceSheet component
+  // Assets
+  treasury.bs.loans = years.map(() => 0); // Treasury doesn't make loans
+  treasury.bs.securities = treasury.bs.tradingBook; // Trading book securities
+  treasury.bs.cashAndEquivalents = treasury.bs.liquidAssets; // Liquidity buffer
+  treasury.bs.otherAssets = years.map(() => 0);
+  
+  // Liabilities  
+  treasury.bs.customerDeposits = years.map(() => 0); // Treasury doesn't take deposits
+  treasury.bs.interbankLiabilities = treasury.bs.interbankFunding;
+  treasury.bs.debtSecurities = years.map(() => 0);
+  treasury.bs.otherLiabilities = years.map(() => 0);
+  treasury.bs.totalLiabilities = treasury.bs.interbankFunding;
+  
+  // Equity (will be allocated based on RWA)
+  treasury.bs.equity = years.map(() => 0); // Will be calculated later
+  
+  // Treasury KPIs
+  treasury.kpi = {};
+  treasury.kpi.fundingGap = years.map(i => fundingGap[i]);
+  treasury.kpi.fundingGapPercent = years.map(i => {
+    const totalAssets = results.bs.totalAssets[i];
+    return totalAssets > 0 ? (fundingGap[i] / totalAssets) * 100 : 0;
+  });
+  treasury.kpi.liquidityRatio = years.map(i => {
+    const deposits = results.bs.digitalServiceDeposits[i];
+    return deposits > 0 ? (treasury.bs.liquidAssets[i] / deposits) * 100 : 0;
+  });
+  treasury.kpi.netFtpMargin = years.map(i => {
+    const ftpSpreadIncome = treasury.pnl.ftpSpreadIncome[i] || 0;
+    const totalAssets = results.bs.totalAssets[i];
+    return totalAssets > 0 ? (ftpSpreadIncome / totalAssets) * 10000 : 0; // in basis points
+  });
+  treasury.kpi.treasuryRoe = years.map(() => 0); // Will be calculated after equity allocation
 
   // Now update the total balance sheet to include Treasury assets
   results.bs.performingAssets = years.map(i => 
@@ -1281,6 +1352,20 @@ export const calculateResults = (assumptions) => {
       results.divisions[prefix].capital.totalRWA[i] > 0 ? 
       (results.divisions[prefix].bs.allocatedEquity[i] / results.divisions[prefix].capital.totalRWA[i]) * 100 : 0
     );
+  });
+  
+  // Update Treasury ROE after equity allocation
+  treasury.kpi.treasuryRoe = years.map(i => {
+    const netProfit = treasury.pnl.netProfit[i] || 0;
+    const allocatedEquity = treasury.bs.allocatedEquity[i] || 0;
+    return allocatedEquity > 0 ? (netProfit / allocatedEquity) * 100 : 0;
+  });
+  
+  // Update Central Functions percentage of total bank costs
+  cf.kpi.percentOfTotalBankCosts = years.map(i => {
+    const centralCosts = Math.abs(cf.pnl.totalCentralCosts[i] || 0);
+    const totalBankCosts = Math.abs(results.pnl.totalOpex[i] || 0);
+    return totalBankCosts > 0 ? (centralCosts / totalBankCosts) * 100 : 0;
   });
 
   // KPIs and remaining calculations
