@@ -7,17 +7,15 @@ import StandardDivisionSheet from '../common/StandardDivisionSheet';
  * Uses standard 4-tab structure for consistency
  */
 const CentralFunctionsSheet = ({ divisionResults, assumptions, globalResults }) => {
-  // Central Functions is a pure cost center with no products
-  const productResults = {};
-  
   return (
     <StandardDivisionSheet
-      divisionName="Central Functions"
-      divisionEmoji="🏛️"
-      divisionResults={divisionResults}
-      productResults={productResults}
       assumptions={assumptions}
-      globalResults={globalResults}
+      results={globalResults}
+      divisionKey="central"
+      divisionDisplayName="Central Functions"
+      divisionDescription="Non-allocated central costs including board, compliance, risk management, and corporate functions"
+      divisionIcon="🏛️"
+      showProductDetail={false}
     />
   );
 };

@@ -7,17 +7,15 @@ import StandardDivisionSheet from '../common/StandardDivisionSheet';
  * Uses standard 4-tab structure for consistency
  */
 const TreasurySheet = ({ divisionResults, assumptions, globalResults, productResults }) => {
-  // Treasury has no products, it's a structural division
-  const treasuryProductResults = {};
-  
   return (
     <StandardDivisionSheet
-      divisionName="Treasury / ALM"
-      divisionEmoji="💰"
-      divisionResults={divisionResults}
-      productResults={treasuryProductResults}
       assumptions={assumptions}
-      globalResults={globalResults}
+      results={globalResults}
+      divisionKey="treasury"
+      divisionDisplayName="Treasury / ALM"
+      divisionDescription="Asset Liability Management, liquidity buffer, and funding operations"
+      divisionIcon="💰"
+      showProductDetail={false}
     />
   );
 };
