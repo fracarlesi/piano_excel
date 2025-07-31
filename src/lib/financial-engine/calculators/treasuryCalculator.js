@@ -18,19 +18,19 @@
  */
 export const calculateTreasuryResults = (assumptions, bankData, years) => {
   const treasury = assumptions.treasury || {};
-  const ftpSpread = assumptions.ftpSpread || 1.5;
-  const euribor = assumptions.euribor || 3.5;
+  const ftpSpread = assumptions.ftpSpread;
+  const euribor = assumptions.euribor;
   const ftpRate = (euribor + ftpSpread) / 100;
-  const depositRate = (assumptions.depositRate || 0.5) / 100;
+  const depositRate = assumptions.depositRate / 100;
   
   // Extract treasury parameters
-  const interbankFundingRate = (treasury.interbankFundingRate || 4.0) / 100;
-  const liquidityBufferRequirement = (treasury.liquidityBufferRequirement || 20) / 100;
-  const liquidAssetReturnRate = (treasury.liquidAssetReturnRate || 2.5) / 100;
-  const tradingBookSize = treasury.tradingBookSize || 50;
-  const tradingBookGrowthRate = (treasury.tradingBookGrowthRate || 5) / 100;
-  const tradingBookReturnTarget = (treasury.tradingBookReturnTarget || 8) / 100;
-  const tradingBookVolatility = (treasury.tradingBookVolatility || 15) / 100;
+  const interbankFundingRate = treasury.interbankFundingRate / 100;
+  const liquidityBufferRequirement = treasury.liquidityBufferRequirement / 100;
+  const liquidAssetReturnRate = treasury.liquidAssetReturnRate / 100;
+  const tradingBookSize = treasury.tradingBookSize;
+  const tradingBookGrowthRate = treasury.tradingBookGrowthRate / 100;
+  const tradingBookReturnTarget = treasury.tradingBookReturnTarget / 100;
+  const tradingBookVolatility = treasury.tradingBookVolatility / 100;
   
   // Initialize result structure
   const results = {

@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.21', // Complete codebase cleanup: removed all obsolete files, empty directories, and broken imports
+  version: '10.24', // Removed hardcoded fallback values from financial engine calculators - Firebase is single source of truth
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -222,7 +222,6 @@ export const defaultAssumptions = {
       ltv: 65.0, // LTV conservativo
       recoveryCosts: 8.0, // Costi di recupero bassi
       collateralHaircut: 15.0, // Haircut moderato
-      quarterlyDist: [25, 25, 25, 25],
       type: 'amortizing',
       gracePeriod: 0 // Nessun periodo di preammortamento
     },
@@ -238,7 +237,6 @@ export const defaultAssumptions = {
       ltv: 80.0, // LTV standard per mutui
       recoveryCosts: 12.0, // Costi procedura standard
       collateralHaircut: 20.0, // Haircut standard
-      quarterlyDist: [25, 25, 25, 25],
       type: 'french', // Ammortamento alla francese
       gracePeriod: 0 // Nessun periodo di preammortamento
     },
@@ -254,7 +252,6 @@ export const defaultAssumptions = {
       ltv: 70.0, // LTV prudenziale
       recoveryCosts: 18.0, // Costi più elevati per corporate
       collateralHaircut: 25.0, // Haircut prudenziale
-      quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Rimborso bullet tipico
       gracePeriod: 0 // Non applicabile per bullet loans
     },
@@ -271,7 +268,6 @@ export const defaultAssumptions = {
       ltv: 70.0,
       recoveryCosts: 15.0,
       collateralHaircut: 25.0,
-      quarterlyDist: [25, 25, 25, 25],
       type: 'amortizing', // After 2 years grace period
       gracePeriod: 2 // Grace period for interest only
     },
@@ -287,7 +283,6 @@ export const defaultAssumptions = {
       ltv: 60.0,
       recoveryCosts: 20.0,
       collateralHaircut: 30.0,
-      quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Bullet repayment
       gracePeriod: 0 // Non applicabile per bullet loans
     },
@@ -303,7 +298,6 @@ export const defaultAssumptions = {
       ltv: 50.0,
       recoveryCosts: 25.0,
       collateralHaircut: 40.0,
-      quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Bullet repayment
       gracePeriod: 0 // Non applicabile per bullet loans
     },
@@ -319,7 +313,6 @@ export const defaultAssumptions = {
       ltv: 40.0,
       recoveryCosts: 30.0,
       collateralHaircut: 50.0,
-      quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Bullet repayment
       gracePeriod: 0, // Non applicabile per bullet loans
       isFixedRate: true // Fixed rate
@@ -336,7 +329,6 @@ export const defaultAssumptions = {
       ltv: 30.0,
       recoveryCosts: 35.0,
       collateralHaircut: 60.0,
-      quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Bullet repayment
       gracePeriod: 0, // Non applicabile per bullet loans
       equityUpside: 2.5 // 2.5% equity upside

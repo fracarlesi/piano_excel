@@ -18,14 +18,14 @@ export const calculateCommissionProduct = (product, assumptions, years) => {
     let yearVolume;
     
     if (product.volumeArray && Array.isArray(product.volumeArray) && product.volumeArray.length === 10) {
-      yearVolume = product.volumeArray[i] || 0;
+      yearVolume = product.volumeArray[i];
     } else if (product.volumes) {
       const yearKey = `y${i + 1}`;
       if (product.volumes[yearKey] !== undefined) {
         yearVolume = product.volumes[yearKey];
       } else {
-        const y1 = product.volumes.y1 || 0;
-        const y10 = product.volumes.y10 || 0;
+        const y1 = product.volumes.y1;
+        const y10 = product.volumes.y10;
         yearVolume = y1 + ((y10 - y1) * i / 9);
       }
     } else {
@@ -36,7 +36,7 @@ export const calculateCommissionProduct = (product, assumptions, years) => {
   });
   
   // Commission income based on volume and rate
-  const commissionRate = (product.commissionRate || 0) / 100;
+  const commissionRate = product.commissionRate / 100;
   const commissionIncome = volumes10Y.map(volume => volume * commissionRate);
   
   // No balance sheet impact for pure commission products
@@ -53,6 +53,6 @@ export const calculateCommissionProduct = (product, assumptions, years) => {
     volumes: volumes10Y,
     // Special fields for commission products
     isCommissionOnly: true,
-    requiresBaseProduct: product.requiresBaseProduct || null
+    requiresBaseProduct: product.requiresBaseProduct
   };
 };

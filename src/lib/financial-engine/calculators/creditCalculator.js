@@ -30,21 +30,21 @@ export const calculateCreditProduct = (product, assumptions, years) => {
       let yearVolume;
       
       if (product.volumeArray && Array.isArray(product.volumeArray) && product.volumeArray.length === 10) {
-        yearVolume = product.volumeArray[i] || 0;
+        yearVolume = product.volumeArray[i];
       } else if (product.volumes) {
         const yearKey = `y${i + 1}`;
         if (product.volumes[yearKey] !== undefined) {
           yearVolume = product.volumes[yearKey];
         } else {
-          const y1 = product.volumes.y1 || 0;
-          const y10 = product.volumes.y10 || 0;
+          const y1 = product.volumes.y1;
+          const y10 = product.volumes.y10;
           yearVolume = y1 + ((y10 - y1) * i / 9);
         }
       } else {
         yearVolume = 0;
       }
       
-      const quarterlyDist = product.quarterlyDist || [25, 25, 25, 25];
+      const quarterlyDist = assumptions.quarterlyAllocation;
       const quarterlyMultiplier = quarterlyDist.reduce((sum, q) => sum + q, 0) / 100;
       return yearVolume * quarterlyMultiplier;
     });
@@ -69,14 +69,14 @@ export const calculateCreditProduct = (product, assumptions, years) => {
   
   // Normalize product type for consistent comparison
   const productType = (product.type || 'french').toLowerCase();
-  const durata = Number(product.durata || 7);
-  const gracePeriod = Number(product.gracePeriod || 0);
-  const spread = product.spread || 0;
+  const durata = Number(product.durata);
+  const gracePeriod = Number(product.gracePeriod);
+  const spread = product.spread;
   
   // Create quarterly vintages with detailed amortization schedule
   for (let year = 0; year < years.length; year++) {
     if (volumes10Y[year] > 0) {
-      const quarterlyDist = product.quarterlyDist || [25, 25, 25, 25];
+      const quarterlyDist = assumptions.quarterlyAllocation;
       
       // Create 4 quarterly vintages for each year
       for (let quarter = 0; quarter < 4; quarter++) {
@@ -92,7 +92,7 @@ export const calculateCreditProduct = (product, assumptions, years) => {
             durata: durata,
             gracePeriod: gracePeriod,
             spread: spread,
-            isFixedRate: product.isFixedRate || false,
+            isFixedRate: product.isFixedRate,
             hasDefaulted: false,
             // Calculate maturity quarter (start + duration in quarters)
             maturityYear: year + Math.floor((quarter + durata * 4) / 4),
@@ -238,14 +238,14 @@ export const calculateCreditProduct = (product, assumptions, years) => {
   // Commission income
   const commissionIncome = years.map((_, i) => {
     const newLoans = volumes10Y[i];
-    return newLoans * (product.commissionRate || 0) / 100;
+    return newLoans * product.commissionRate / 100;
   });
   
   // RWA calculation
   const rwa = years.map((_, i) => {
     const performing = grossPerformingStock[i];
     const npl = nplStock[i];
-    const performingRWA = performing * (product.rwaDensity || 100) / 100;
+    const performingRWA = performing * product.rwaDensity / 100;
     const nplRWA = npl * 1.5; // 150% for NPLs
     return performingRWA + nplRWA;
   });

@@ -23,21 +23,21 @@ export const calculateDigitalProduct = (product, assumptions, years, ftpRate, de
     let yearVolume;
     
     if (product.volumeArray && Array.isArray(product.volumeArray) && product.volumeArray.length === 10) {
-      yearVolume = product.volumeArray[i] || 0;
+      yearVolume = product.volumeArray[i];
     } else if (product.volumes) {
       const yearKey = `y${i + 1}`;
       if (product.volumes[yearKey] !== undefined) {
         yearVolume = product.volumes[yearKey];
       } else {
-        const y1 = product.volumes.y1 || 0;
-        const y10 = product.volumes.y10 || 0;
+        const y1 = product.volumes.y1;
+        const y10 = product.volumes.y10;
         yearVolume = y1 + ((y10 - y1) * i / 9);
       }
     } else {
       yearVolume = 0;
     }
     
-    const quarterlyDist = product.quarterlyDist || [25, 25, 25, 25];
+    const quarterlyDist = assumptions.quarterlyAllocation;
     const quarterlyMultiplier = quarterlyDist.reduce((sum, q) => sum + q, 0) / 100;
     return yearVolume * quarterlyMultiplier;
   });
@@ -109,18 +109,18 @@ export const calculateDigitalCustomerModel = (product, assumptions, years, ftpRa
   // Customer base evolution
   const customerBase = [];
   const newCustomers = [];
-  const churnRate = (acquisition.churnRate || 5) / 100;
+  const churnRate = acquisition.churnRate / 100;
   
   for (let i = 0; i < years.length; i++) {
     // New customer acquisition
     if (i < 5) {
       // Linear growth for first 5 years
-      const y1Customers = acquisition.newCustomers?.y1 || 0;
-      const y5Customers = acquisition.newCustomers?.y5 || 0;
+      const y1Customers = acquisition.newCustomers?.y1;
+      const y5Customers = acquisition.newCustomers?.y5;
       newCustomers[i] = y1Customers + ((y5Customers - y1Customers) * i / 4);
     } else {
       // Stable acquisition after year 5
-      newCustomers[i] = acquisition.newCustomers?.y5 || 0;
+      newCustomers[i] = acquisition.newCustomers?.y5;
     }
     
     // Customer base calculation
@@ -132,27 +132,27 @@ export const calculateDigitalCustomerModel = (product, assumptions, years, ftpRa
   }
   
   // Base account deposits
-  const avgDepositPerCustomer = (baseAccount.avgDeposit || 0) / 1000000; // Convert to €M
+  const avgDepositPerCustomer = baseAccount.avgDeposit / 1000000; // Convert to €M
   const baseDeposits = customerBase.map(customers => customers * avgDepositPerCustomer);
   
   // Savings module adoption
-  const savingsAdoptionRate = (savingsModule.adoptionRate || 0) / 100;
+  const savingsAdoptionRate = savingsModule.adoptionRate / 100;
   const savingsCustomers = customerBase.map(customers => customers * savingsAdoptionRate);
-  const avgAdditionalDeposit = (savingsModule.avgAdditionalDeposit || 0) / 1000000; // Convert to €M
+  const avgAdditionalDeposit = savingsModule.avgAdditionalDeposit / 1000000; // Convert to €M
   const savingsDeposits = savingsCustomers.map(customers => customers * avgAdditionalDeposit);
   
   // Total deposits
   const totalDeposits = years.map((_, i) => baseDeposits[i] + savingsDeposits[i]);
   
   // Interest calculations
-  const baseInterestRate = (baseAccount.interestRate || 0) / 100;
+  const baseInterestRate = baseAccount.interestRate / 100;
   const savingsMix = savingsModule.depositMix || [];
   
   // Calculate weighted average savings rate
   let weightedSavingsRate = 0;
   savingsMix.forEach(product => {
-    const percentage = (product.percentage || 0) / 100;
-    const rate = (product.interestRate || 0) / 100;
+    const percentage = product.percentage / 100;
+    const rate = product.interestRate / 100;
     weightedSavingsRate += percentage * rate;
   });
   
@@ -165,19 +165,19 @@ export const calculateDigitalCustomerModel = (product, assumptions, years, ftpRa
   const interestIncome = totalDeposits.map(deposits => deposits * ftpRate);
   
   // Commission and fee income
-  const monthlyFee = (baseAccount.monthlyFee || 0) * 12 / 1000000; // Annual fee in €M
+  const monthlyFee = baseAccount.monthlyFee * 12 / 1000000; // Annual fee in €M
   const accountFees = customerBase.map(customers => customers * monthlyFee);
   
   // Premium services revenue
-  const premiumAdoptionRate = (premiumServices.adoptionRate || 0) / 100;
+  const premiumAdoptionRate = premiumServices.adoptionRate / 100;
   const premiumCustomers = customerBase.map(customers => customers * premiumAdoptionRate);
-  const avgPremiumRevenue = (premiumServices.avgAnnualRevenue || 0) / 1000000; // Convert to €M
+  const avgPremiumRevenue = premiumServices.avgAnnualRevenue / 1000000; // Convert to €M
   const premiumRevenue = premiumCustomers.map(customers => customers * avgPremiumRevenue);
   
   // Wealth management referral fees
-  const wealthAdoptionRate = (wealthReferral.adoptionRate || 0) / 100;
+  const wealthAdoptionRate = wealthReferral.adoptionRate / 100;
   const wealthReferrals = customerBase.map(customers => customers * wealthAdoptionRate);
-  const referralFee = (wealthReferral.referralFee || 0) / 1000000; // Convert to €M
+  const referralFee = wealthReferral.referralFee / 1000000; // Convert to €M
   const referralRevenue = wealthReferrals.map(referrals => referrals * referralFee);
   
   // Total commission income
@@ -186,7 +186,7 @@ export const calculateDigitalCustomerModel = (product, assumptions, years, ftpRa
   );
   
   // Customer acquisition costs
-  const cac = (acquisition.cac || 0) / 1000000; // Convert to €M
+  const cac = acquisition.cac / 1000000; // Convert to €M
   const acquisitionCosts = newCustomers.map(customers => -customers * cac);
   
   return {

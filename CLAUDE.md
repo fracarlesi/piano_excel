@@ -16,9 +16,14 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
    - Nuove feature/modifiche sostanziali: incrementa di 0.1 (es: 5.10 → 5.20)
    - Cambiamenti major/breaking changes: incrementa di 1.0 (es: 5.10 → 6.00)
    - Aggiorna anche il commento accanto alla versione descrivendo il cambiamento
-3. All assumptions should have descriptive tooltips
-4. Maintain Italian language for business terms where appropriate
-5. Test Firebase sync after major changes
+3. **FIREBASE SINGLE SOURCE OF TRUTH RULE**: ❌ NEVER use fallback values in business logic
+   - No `|| defaultValue` patterns for business parameters
+   - No hardcoded rates, percentages, or amounts in calculators
+   - Firebase data must be trusted as the only source of truth
+   - If data is missing, fix Firebase - don't add fallbacks
+4. All assumptions should have descriptive tooltips
+5. Maintain Italian language for business terms where appropriate
+6. Test Firebase sync after major changes
 
 ## Project Structure (v10.00 - Enterprise Architecture)
 ```

@@ -218,9 +218,9 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <EditableNumberField 
             label="Q1 Allocation" 
-            value={assumptions.quarterlyAllocation?.[0] || 25} 
+            value={assumptions.quarterlyAllocation?.[0]} 
             onChange={val => {
-              const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
+              const newAllocation = [...assumptions.quarterlyAllocation];
               newAllocation[0] = val;
               // console.log('Q1 changed to:', val, 'New allocation:', newAllocation);
               setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
@@ -234,9 +234,9 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
           />
           <EditableNumberField 
             label="Q2 Allocation" 
-            value={assumptions.quarterlyAllocation?.[1] || 25} 
+            value={assumptions.quarterlyAllocation?.[1]} 
             onChange={val => {
-              const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
+              const newAllocation = [...assumptions.quarterlyAllocation];
               newAllocation[1] = val;
               setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
             }} 
@@ -248,9 +248,9 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
           />
           <EditableNumberField 
             label="Q3 Allocation" 
-            value={assumptions.quarterlyAllocation?.[2] || 25} 
+            value={assumptions.quarterlyAllocation?.[2]} 
             onChange={val => {
-              const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
+              const newAllocation = [...assumptions.quarterlyAllocation];
               newAllocation[2] = val;
               setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
             }} 
@@ -262,9 +262,9 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
           />
           <EditableNumberField 
             label="Q4 Allocation" 
-            value={assumptions.quarterlyAllocation?.[3] || 25} 
+            value={assumptions.quarterlyAllocation?.[3]} 
             onChange={val => {
-              const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
+              const newAllocation = [...assumptions.quarterlyAllocation];
               newAllocation[3] = val;
               setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
             }} 

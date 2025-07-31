@@ -40,8 +40,8 @@ export const calculateResults = (assumptions) => {
   const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   
   // Calculate rates
-  const ftpRate = (assumptions.euribor + (assumptions.ftpSpread || 1.5)) / 100;
-  const depositRate = (assumptions.depositRate || 0.5) / 100;
+  const ftpRate = (assumptions.euribor + assumptions.ftpSpread) / 100;
+  const depositRate = assumptions.depositRate / 100;
   
   // Step 1: Calculate all personnel costs upfront
   results.allPersonnelCosts = calculateAllPersonnelCosts(assumptions, years);
@@ -150,16 +150,16 @@ export const calculateResults = (assumptions) => {
   const costGrowth = years.map(i => Math.pow(1 + assumptions.costGrowthRate / 100, i));
   
   cf.pnl.facilitiesCosts = years.map(i => 
-    -(assumptions.centralFunctions.facilitiesCostsY1 || 0) * costGrowth[i]
+    -assumptions.centralFunctions.facilitiesCostsY1 * costGrowth[i]
   );
   cf.pnl.externalServices = years.map(i => 
-    -(assumptions.centralFunctions.externalServicesY1 || 0) * costGrowth[i]
+    -assumptions.centralFunctions.externalServicesY1 * costGrowth[i]
   );
   cf.pnl.regulatoryFees = years.map(i => 
-    -(assumptions.centralFunctions.regulatoryFeesY1 || 0) * costGrowth[i]
+    -assumptions.centralFunctions.regulatoryFeesY1 * costGrowth[i]
   );
   cf.pnl.otherCentralCosts = years.map(i => 
-    -(assumptions.centralFunctions.otherCentralCostsY1 || 0) * costGrowth[i]
+    -assumptions.centralFunctions.otherCentralCostsY1 * costGrowth[i]
   );
   
   cf.pnl.totalCentralCosts = years.map(i => 

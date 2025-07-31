@@ -52,8 +52,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
       isFixedRate: false,
       type: 'french',
       commissionRate: 0.5,
-      equityUpside: 0,
-      quarterlyDist: [25, 25, 25, 25]
+      equityUpside: 0
     };
 
     const defaultCommission = {
@@ -73,8 +72,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
       avgClientLifecycle: 5,
       serviceType: 'Advisory',
       revenueRecognition: 'Upfront',
-      operationalRiskWeight: 15,
-      quarterlyDist: [25, 25, 25, 25]
+      operationalRiskWeight: 15
     };
 
     return type === 'Credit' ? defaultCredit : defaultCommission;
