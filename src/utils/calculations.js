@@ -714,8 +714,12 @@ export const calculateResults = (assumptions) => {
                       let vintageAvgStock = 0;
                       
                       if (product.type === 'bullet') {
-                          // Bullet: full amount until maturity
-                          vintageAvgStock = vintageVolume;
+                          // Bullet: full amount until maturity, then zero
+                          if (ageInYears < totalDuration) {
+                              vintageAvgStock = vintageVolume;
+                          } else {
+                              vintageAvgStock = 0; // Loan fully repaid at maturity
+                          }
                       } else if (product.type === 'interest-only') {
                           // Interest-only: full amount until final repayment
                           vintageAvgStock = ageInYears < (totalDuration - 1) ? vintageVolume : vintageVolume / 2;
@@ -733,8 +737,11 @@ export const calculateResults = (assumptions) => {
                       }
                       
                       // Apply default adjustments (reduce stock for cumulative defaults)
-                      const cumulativeDefaultRate = Math.min(0.95, adjustedDefaultRate * ageInYears);
-                      vintageAvgStock *= (1 - cumulativeDefaultRate);
+                      // For bullet loans, we don't apply gradual default reduction to the principal
+                      if (product.type !== 'bullet') {
+                          const cumulativeDefaultRate = Math.min(0.95, adjustedDefaultRate * ageInYears);
+                          vintageAvgStock *= (1 - cumulativeDefaultRate);
+                      }
                       
                       durationWeightedAvgStock += vintageAvgStock;
                   }

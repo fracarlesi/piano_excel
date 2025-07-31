@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.17', // Added support for unsecured loans with configurable LGD
+  version: '5.21', // Fixed bullet loan amortization to maintain constant capital until maturity
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

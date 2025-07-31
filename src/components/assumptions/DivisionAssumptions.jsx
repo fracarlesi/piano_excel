@@ -167,7 +167,11 @@ const DivisionAssumptions = ({
         key: `products.${productKey}.isUnsecured`,
         options: ['Secured', 'Unsecured'],
         isBoolean: true
-      },
+      }
+    ];
+    
+    // Unsecured-specific rows (only shown when loan is unsecured)
+    const unsecuredCreditRows = [
       {
         parameter: 'Unsecured LGD',
         description: 'Loss Given Default for unsecured loans',
@@ -176,7 +180,7 @@ const DivisionAssumptions = ({
         key: `products.${productKey}.unsecuredLGD`,
         tooltip: 'Expected loss percentage in case of default for unsecured loans',
         tooltipImpact: 'Higher LGD increases capital requirements and expected losses',
-        tooltipFormula: 'Only applies when loan is marked as Unsecured'
+        tooltipFormula: 'Applies to the unguaranteed portion of the loan'
       }
     ];
 
@@ -471,7 +475,8 @@ const DivisionAssumptions = ({
     } else if (productType === 'DigitalService') {
       specificRows = digitalServiceRows;
     } else if (productType === 'Credit') {
-      specificRows = creditRows;
+      // For credit products, include unsecured rows when needed
+      specificRows = [...creditRows, ...unsecuredCreditRows];
     } else {
       // Commission products
       if (product.requiresBaseProduct) {
@@ -961,10 +966,15 @@ const DivisionAssumptions = ({
                                     {row.parameter}
                                   </label>
                                   <select
-                                    value={row.isBoolean ? (row.value === 'Fixed' ? 'Fixed' : 'Variable') : row.value}
+                                    value={row.value}
                                     onChange={(e) => {
                                       if (row.key && row.isBoolean) {
-                                        onAssumptionChange(row.key, e.target.value === 'Fixed');
+                                        // Handle different boolean fields
+                                        if (row.parameter === 'Interest Rate Type') {
+                                          onAssumptionChange(row.key, e.target.value === 'Fixed');
+                                        } else if (row.parameter === 'Secured/Unsecured') {
+                                          onAssumptionChange(row.key, e.target.value === 'Unsecured');
+                                        }
                                       } else if (row.key) {
                                         onAssumptionChange(row.key, e.target.value);
                                       }
@@ -1035,10 +1045,15 @@ const DivisionAssumptions = ({
                                     {row.parameter}
                                   </label>
                                   <select
-                                    value={row.isBoolean ? (row.value === 'Fixed' ? 'Fixed' : 'Variable') : row.value}
+                                    value={row.value}
                                     onChange={(e) => {
                                       if (row.key && row.isBoolean) {
-                                        onAssumptionChange(row.key, e.target.value === 'Fixed');
+                                        // Handle different boolean fields
+                                        if (row.parameter === 'Interest Rate Type') {
+                                          onAssumptionChange(row.key, e.target.value === 'Fixed');
+                                        } else if (row.parameter === 'Secured/Unsecured') {
+                                          onAssumptionChange(row.key, e.target.value === 'Unsecured');
+                                        }
                                       } else if (row.key) {
                                         onAssumptionChange(row.key, e.target.value);
                                       }
@@ -1147,7 +1162,8 @@ const DivisionAssumptions = ({
                                       'RWA Density', 'Default Rate', 'Loan-to-Value (LTV)', 
                                       'Recovery Costs', 'Collateral Haircut', 'Credit Classification', 'Operational Risk Weight', 'State Guarantee Coverage',
                                       'Customer Acquisition Cost (CAC)', 'Average Deposit per Customer', 'Annual Churn Rate',
-                                      'Monthly Fee', 'Annual Service Revenue per Customer', 'Deposit Interest Rate'].includes(row.parameter);
+                                      'Monthly Fee', 'Annual Service Revenue per Customer', 'Deposit Interest Rate',
+                                      'Secured/Unsecured', 'Unsecured LGD'].includes(row.parameter);
                             }
                           }).map((row, rowIndex) => (
                             <div key={rowIndex}>
@@ -1157,10 +1173,15 @@ const DivisionAssumptions = ({
                                     {row.parameter}
                                   </label>
                                   <select
-                                    value={row.isBoolean ? (row.value === 'Fixed' ? 'Fixed' : 'Variable') : row.value}
+                                    value={row.value}
                                     onChange={(e) => {
                                       if (row.key && row.isBoolean) {
-                                        onAssumptionChange(row.key, e.target.value === 'Fixed');
+                                        // Handle different boolean fields
+                                        if (row.parameter === 'Interest Rate Type') {
+                                          onAssumptionChange(row.key, e.target.value === 'Fixed');
+                                        } else if (row.parameter === 'Secured/Unsecured') {
+                                          onAssumptionChange(row.key, e.target.value === 'Unsecured');
+                                        }
                                       } else if (row.key) {
                                         onAssumptionChange(row.key, e.target.value);
                                       }

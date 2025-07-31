@@ -27,6 +27,18 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v5.20 (2025-07-31)
+- Fixed unsecured fields appearing in Structure & Operations section
+- Properly filtered fields to show only in Risk & RWA section
+
+### v5.19 (2025-07-31)
+- Fixed duplicate display of Unsecured LGD field
+- Properly organized unsecured-specific fields
+
+### v5.18 (2025-07-31)
+- Fixed unsecured loan selection dropdown functionality
+- Corrected boolean handling for Secured/Unsecured toggle
+
 ### v5.17 (2025-07-31)
 - Added support for unsecured loans:
   - New "Secured/Unsecured" toggle for credit products
