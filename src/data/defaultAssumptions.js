@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.34', // Fixed bullet loan duration parsing - ensure durata is treated as number for correct maturity calculations
+  version: '5.40', // Implementato motore di calcolo crediti con logica vintage - gestione corretta di piani ammortamento complessi (Francese con preammortamento, Bullet) e tracciamento separato di ogni annata di finanziamenti
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -75,7 +75,8 @@ export const defaultAssumptions = {
       recoveryCosts: 8.0, // Costi di recupero bassi
       collateralHaircut: 15.0, // Haircut moderato
       quarterlyDist: [25, 25, 25, 25],
-      type: 'amortizing'
+      type: 'amortizing',
+      gracePeriod: 0 // Nessun periodo di preammortamento
     },
     reMortgage: {
       name: 'Finanziamenti Ipotecari',
@@ -90,7 +91,8 @@ export const defaultAssumptions = {
       recoveryCosts: 12.0, // Costi procedura standard
       collateralHaircut: 20.0, // Haircut standard
       quarterlyDist: [25, 25, 25, 25],
-      type: 'french' // Ammortamento alla francese
+      type: 'french', // Ammortamento alla francese
+      gracePeriod: 0 // Nessun periodo di preammortamento
     },
     reBridge: {
       name: 'Finanziamenti Corporate Bridge Loan',
@@ -105,7 +107,8 @@ export const defaultAssumptions = {
       recoveryCosts: 18.0, // Costi più elevati per corporate
       collateralHaircut: 25.0, // Haircut prudenziale
       quarterlyDist: [25, 25, 25, 25],
-      type: 'bullet' // Rimborso bullet tipico
+      type: 'bullet', // Rimborso bullet tipico
+      gracePeriod: 0 // Non applicabile per bullet loans
     },
     // SME Division Products
     smeRefinancing: {
@@ -137,7 +140,8 @@ export const defaultAssumptions = {
       recoveryCosts: 20.0,
       collateralHaircut: 30.0,
       quarterlyDist: [25, 25, 25, 25],
-      type: 'bullet' // Bullet repayment
+      type: 'bullet', // Bullet repayment
+      gracePeriod: 0 // Non applicabile per bullet loans
     },
     smeSpecialSituation: {
       name: 'Special Situation',
@@ -152,7 +156,8 @@ export const defaultAssumptions = {
       recoveryCosts: 25.0,
       collateralHaircut: 40.0,
       quarterlyDist: [25, 25, 25, 25],
-      type: 'bullet' // Bullet repayment
+      type: 'bullet', // Bullet repayment
+      gracePeriod: 0 // Non applicabile per bullet loans
     },
     smeNuovaFinanza: {
       name: 'Nuova Finanza',
@@ -168,6 +173,7 @@ export const defaultAssumptions = {
       collateralHaircut: 50.0,
       quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Bullet repayment
+      gracePeriod: 0, // Non applicabile per bullet loans
       isFixedRate: true // Fixed rate
     },
     smeRestructuring: {
@@ -184,6 +190,7 @@ export const defaultAssumptions = {
       collateralHaircut: 60.0,
       quarterlyDist: [25, 25, 25, 25],
       type: 'bullet', // Bullet repayment
+      gracePeriod: 0, // Non applicabile per bullet loans
       equityUpside: 2.5 // 2.5% equity upside
     },
     // Digital Banking Division - Unified Customer Model with Modular Services

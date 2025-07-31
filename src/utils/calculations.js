@@ -631,7 +631,11 @@ export const calculateResults = (assumptions) => {
         continue;
       }
       
-      // Use volumeArray if available, otherwise fallback to interpolation
+      // VINTAGE-BASED CREDIT CALCULATION ENGINE
+      // Initialize vintages array to track each loan cohort
+      const vintages = [];
+      
+      // Extract volume information with same logic as before
       const volumes10Y = years.map(i => {
         let yearVolume;
         
@@ -647,11 +651,11 @@ export const calculateResults = (assumptions) => {
           } else {
             // Priority 3: Fallback to linear interpolation between y1 and y10
             const y1 = product.volumes.y1 || 0;
-            const y10 = product.volumes.y10 !== undefined ? product.volumes.y10 : 0; // Default y10 to 0 if not specified
+            const y10 = product.volumes.y10 !== undefined ? product.volumes.y10 : 0;
             
             // Special case for bullet loans with short duration: only originate in year 1
             if ((product.type || '').toLowerCase() === 'bullet' && product.durata <= 2 && y10 === 0 && i > 0) {
-              yearVolume = 0; // No new originations after year 1
+              yearVolume = 0;
             } else {
               yearVolume = y1 + ((y10 - y1) * i / 9);
             }
@@ -669,132 +673,134 @@ export const calculateResults = (assumptions) => {
         return yearVolume * quarterlyMultiplier;
       });
 
+      // Initialize result arrays
       const grossPerformingStock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       const nplStock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       const averagePerformingStock = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       const newNPLs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      const totalInterestIncome = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      const totalPrincipalRepayments = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       
-      // Debug loan parameters
-      if ((product.type || '').toLowerCase() === 'bullet') {
-          console.log(`\n=== BULLET LOAN: ${product.name} ===`);
-          console.log(`Durata: ${product.durata}`);
-          console.log(`Volumes Y1: ${product.volumes?.y1}, Y10: ${product.volumes?.y10}`);
-          console.log(`Volumes10Y: ${volumes10Y.slice(0, 5).map(v => v.toFixed(1)).join(', ')}`);
-      }
-      
-      // Apply credit classification impact on default rate (defined outside loop)
+      // Apply credit classification impact on default rate
       const baseDefaultRate = product.dangerRate / 100;
       const classificationMultiplier = product.creditClassification === 'UTP' ? 2.5 : 1.0;
       const adjustedDefaultRate = baseDefaultRate * classificationMultiplier;
       
+      // Normalize product type for consistent comparison
+      const productType = (product.type || 'french').toLowerCase();
+      const durata = Number(product.durata || 7);
+      const gracePeriod = Number(product.gracePeriod || 0);
+      const spread = product.spread || 0;
+      
+      // MAIN CALCULATION LOOP - Process each year
       for (let year = 0; year < years.length; year++) {
           
-          const defaultsFromStock = year > 0 ? grossPerformingStock[year - 1] * adjustedDefaultRate : 0;
-          newNPLs[year] = defaultsFromStock;
-
-          let repayments = 0;
-          for (let prevYear = 0; prevYear < year; prevYear++) {
-              const cohortVolume = volumes10Y[prevYear];
-              const ageInYears = year - prevYear;
-              
-              // Apply grace period logic
-              const gracePeriod = product.gracePeriod || 0;
-              const effectiveAge = Math.max(0, ageInYears - gracePeriod);
-              
-              // Use totalDuration if available, otherwise fall back to durata
-              // Ensure durata is a number
-              const totalDuration = Number(product.totalDuration || product.durata || 7);
-              
-              // Normalize product type to lowercase for comparison
-              const productType = (product.type || '').toLowerCase();
-              
-              // Debug duration values
-              if (productType === 'bullet' && year === 0 && prevYear === 0) {
-                  console.log(`  Product: ${product.name}, durata=${product.durata}, totalDuration=${totalDuration}, type=${product.type}`);
-              }
-              
-              if (effectiveAge > 0 && effectiveAge <= totalDuration && productType !== 'bullet') {
-                  // During grace period, no repayments
-                  if (ageInYears > gracePeriod) {
-                      repayments += cohortVolume / (totalDuration - gracePeriod);
-                  }
-              }
-              // For bullet loans, repay exactly at maturity
-              if (productType === 'bullet' && cohortVolume > 0) {
-                  // Check if this cohort matures in the current year
-                  if (ageInYears === totalDuration) {
-                      repayments += cohortVolume;
-                      console.log(`    >>> REPAYING Bullet Cohort Y${prevYear}: ${cohortVolume.toFixed(1)} at year ${year} (age=${ageInYears}, duration=${totalDuration})`);
-                  }
-                  
-                  // Debug: log each cohort check
-                  if (cohortVolume > 0) {
-                      console.log(`  Bullet Cohort Y${prevYear}: volume=${cohortVolume.toFixed(1)}, age=${ageInYears}, duration=${totalDuration}, matures at year ${prevYear + totalDuration}`);
-                  }
-              }
-          }
-
-          const prevYearStock = year > 0 ? grossPerformingStock[year - 1] : 0;
-          const totalEopStock = prevYearStock + volumes10Y[year] - repayments - newNPLs[year];
-          grossPerformingStock[year] = totalEopStock;
-          
-          // Debug for bullet loans
-          if ((product.type || '').toLowerCase() === 'bullet') {
-              console.log(`Year ${year}: prevStock=${prevYearStock.toFixed(1)}, newVol=${volumes10Y[year].toFixed(1)}, repayments=${repayments.toFixed(1)}, stock=${totalEopStock.toFixed(1)}, durata=${product.durata}`);
+          // Step 1: Create new vintage for current year's originations
+          if (volumes10Y[year] > 0) {
+              vintages.push({
+                  startYear: year,
+                  initialAmount: volumes10Y[year],
+                  outstandingPrincipal: volumes10Y[year],
+                  type: productType,
+                  durata: durata,
+                  gracePeriod: gracePeriod,
+                  spread: spread,
+                  isFixedRate: product.isFixedRate || false,
+                  hasDefaulted: false // Track if this vintage has defaulted
+              });
           }
           
-          // Calculate duration-weighted average stock
-          let durationWeightedAvgStock = 0;
+          // Step 2: Initialize aggregates for current year
+          let totalInterestIncomeForYear = 0;
+          let totalPrincipalRepaymentsForYear = 0;
+          let totalOutstandingStockForYear = 0;
+          let totalAverageStockForYear = 0;
+          let defaultsForYear = 0;
           
-          // For each vintage (year of origination), calculate its contribution to average stock
-          for (let originYear = 0; originYear <= year; originYear++) {
-              const vintageVolume = volumes10Y[originYear] || 0;
-              if (vintageVolume > 0) {
-                  const ageInYears = year - originYear;
-                  const totalDuration = Number(product.totalDuration || product.durata || 7);
-                  const gracePeriod = product.gracePeriod || 0;
-                  
-                  let vintageAvgStock = 0;
-                  
-                  if ((product.type || '').toLowerCase() === 'bullet') {
-                      // Bullet: full amount until maturity, then zero
-                      if (ageInYears < totalDuration) {
-                          vintageAvgStock = vintageVolume;
-                      } else {
-                          vintageAvgStock = 0; // Loan fully repaid at maturity
-                      }
-                  } else if (ageInYears < totalDuration) {
-                      // For non-bullet loans, only calculate if within duration
-                      if ((product.type || '').toLowerCase() === 'interest-only') {
-                          // Interest-only: full amount until final repayment
-                          vintageAvgStock = ageInYears < (totalDuration - 1) ? vintageVolume : vintageVolume / 2;
-                      } else {
-                          // French amortization: linear repayment after grace period
-                          if (ageInYears <= gracePeriod) {
-                              vintageAvgStock = vintageVolume; // Full amount during grace period
-                          } else {
-                              const effectiveAge = ageInYears - gracePeriod;
-                              const amortizationPeriod = totalDuration - gracePeriod;
-                              const remainingPct = Math.max(0, (amortizationPeriod - effectiveAge) / amortizationPeriod);
-                              const startYearPct = Math.max(0, (amortizationPeriod - effectiveAge + 1) / amortizationPeriod);
-                              vintageAvgStock = vintageVolume * (startYearPct + remainingPct) / 2;
-                          }
-                      }
+          // Step 3: Process each active vintage
+          vintages.forEach(vintage => {
+              const age = year - vintage.startYear;
+              
+              // Skip if vintage hasn't started yet or is fully repaid
+              if (age < 0 || vintage.outstandingPrincipal <= 0.01) return;
+              
+              // Calculate interest for this vintage
+              const interestRate = vintage.isFixedRate ? 
+                  (vintage.spread + 2.0) / 100 : // Fixed rate assumption
+                  (assumptions.euribor + vintage.spread) / 100;
+              
+              const interestIncome = vintage.outstandingPrincipal * interestRate;
+              totalInterestIncomeForYear += interestIncome;
+              
+              // Calculate principal repayment based on loan type
+              let principalRepayment = 0;
+              
+              if (vintage.type === 'bullet') {
+                  // Bullet loan: repay entire principal at maturity
+                  if (age === vintage.durata) {
+                      principalRepayment = vintage.outstandingPrincipal;
+                  }
+              } else if (vintage.type === 'french' || vintage.type === 'amortizing') {
+                  // French/Amortizing: repay after grace period
+                  if (age > vintage.gracePeriod) {
+                      const remainingPeriods = vintage.durata - vintage.gracePeriod;
+                      const periodsElapsed = age - vintage.gracePeriod;
                       
-                      // Apply default adjustments (reduce stock for cumulative defaults)
-                      // For bullet loans, we don't apply gradual default reduction to the principal
-                      const cumulativeDefaultRate = Math.min(0.95, adjustedDefaultRate * ageInYears);
-                      vintageAvgStock *= (1 - cumulativeDefaultRate);
+                      if (periodsElapsed <= remainingPeriods) {
+                          // Calculate payment using French amortization formula
+                          const r = interestRate;
+                          const n = remainingPeriods;
+                          const PV = vintage.initialAmount;
+                          
+                          // PMT = PV * r * (1 + r)^n / ((1 + r)^n - 1)
+                          const annuityPayment = PV * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+                          
+                          // Interest portion of current payment
+                          const interestPortion = vintage.outstandingPrincipal * r;
+                          
+                          // Principal portion is annuity minus interest
+                          principalRepayment = Math.min(annuityPayment - interestPortion, vintage.outstandingPrincipal);
+                          
+                          // Ensure we don't overpay
+                          if (principalRepayment < 0) principalRepayment = 0;
+                      }
                   }
-                  
-                  durationWeightedAvgStock += vintageAvgStock;
               }
-          }
+              
+              totalPrincipalRepaymentsForYear += principalRepayment;
+              
+              // Update vintage outstanding principal
+              vintage.outstandingPrincipal -= principalRepayment;
+              
+              // Apply defaults to this vintage (proportional to outstanding)
+              if (!vintage.hasDefaulted && vintage.outstandingPrincipal > 0) {
+                  const defaultAmount = vintage.outstandingPrincipal * adjustedDefaultRate;
+                  defaultsForYear += defaultAmount;
+                  vintage.outstandingPrincipal -= defaultAmount;
+                  
+                  // Mark as defaulted if significant portion has defaulted
+                  if (defaultAmount > vintage.outstandingPrincipal * 0.5) {
+                      vintage.hasDefaulted = true;
+                  }
+              }
+              
+              // Add to total outstanding
+              totalOutstandingStockForYear += vintage.outstandingPrincipal;
+              
+              // Calculate average stock contribution (simplified - could be refined)
+              totalAverageStockForYear += vintage.outstandingPrincipal;
+          });
           
-          averagePerformingStock[year] = durationWeightedAvgStock;
+          // Step 4: Update result arrays
+          grossPerformingStock[year] = totalOutstandingStockForYear;
+          averagePerformingStock[year] = totalAverageStockForYear;
+          totalInterestIncome[year] = totalInterestIncomeForYear;
+          totalPrincipalRepayments[year] = totalPrincipalRepaymentsForYear;
+          newNPLs[year] = defaultsForYear;
           
+          // Update NPL stock
           const prevNplStock = year > 0 ? nplStock[year - 1] : 0;
-          nplStock[year] = prevNplStock + newNPLs[year];
+          nplStock[year] = prevNplStock + defaultsForYear;
       }
 
       // Calculate LGD based on whether loan is secured or unsecured
@@ -825,49 +831,59 @@ export const calculateResults = (assumptions) => {
       const adjustedRwaDensity = (guaranteedPortionRwa * stateGuaranteePercentage) + 
                                 (unguaranteedPortionRwa * (1 - stateGuaranteePercentage));
       
-      const expectedLossOnNewBusiness = volumes10Y.map(v => -v * (product.dangerRate / 100) * lgd);
-      const lossOnStockDefaults = newNPLs.map(v => -v * lgd);
-
-      // Calculate number of loans granted per year
-      const avgLoanSize = product.avgLoanSize || 1.0;
-      const numberOfLoans = volumes10Y.map(v => Math.round(v / avgLoanSize));
-
-      // Calculate interest income considering fixed vs variable rates
-      const baseInterestRate = assumptions.euribor + product.spread;
-      const interestRate = product.isFixedRate ? product.spread + 2.0 : baseInterestRate; // Fixed rate assumption
-      
-      // Calculate interest expense using FTP rate for all credit products
+      // Calculate interest expense using FTP rate
       const interestExpense = averagePerformingStock.map(v => -v * ftpRate);
+      
+      // Calculate commission income on new business
+      const commissionIncome = volumes10Y.map(v => v * (product.commissionRate || 0) / 100);
       
       // Calculate equity upside potential
       const equityUpsideIncome = volumes10Y.map(v => v * (product.equityUpside || 0) / 100);
+      
+      // Calculate LLP (loan loss provisions)
+      const expectedLossOnNewBusiness = volumes10Y.map(v => -v * adjustedDefaultRate * lgd);
+      const lossOnStockDefaults = newNPLs.map(v => -v * lgd);
+      const llp = years.map(i => lossOnStockDefaults[i] + expectedLossOnNewBusiness[i]);
+      
+      // Calculate number of loans
+      const avgLoanSize = product.avgLoanSize || 1.0;
+      const numberOfLoans = volumes10Y.map(v => Math.round(v / avgLoanSize));
+      
+      // For display purposes, calculate average interest rate
+      const displayInterestRate = product.isFixedRate ? 
+          product.spread + 2.0 : 
+          assumptions.euribor + product.spread;
       
       productResults[key] = {
           name: product.name,
           performingAssets: grossPerformingStock,
           averagePerformingAssets: averagePerformingStock,
           nonPerformingAssets: nplStock,
-          interestIncome: averagePerformingStock.map(v => v * interestRate / 100),
+          interestIncome: totalInterestIncome, // Use the vintage-calculated interest income
           interestExpense: interestExpense,
-          commissionIncome: volumes10Y.map(v => v * (product.commissionRate || 0) / 100),
+          commissionIncome: commissionIncome,
           equityUpsideIncome: equityUpsideIncome,
-          llp: years.map(i => lossOnStockDefaults[i] + expectedLossOnNewBusiness[i]),
+          llp: llp,
           rwa: grossPerformingStock.map(v => v * adjustedRwaDensity),
           numberOfLoans: numberOfLoans,
           newBusiness: volumes10Y,
+          principalRepayments: totalPrincipalRepayments, // New field for tracking repayments
           assumptions: {
-              interestRate: interestRate, // Keep as percentage for display (6.3 for 6.3%)
-              commissionRate: (product.commissionRate || 0), // Keep as percentage for display (0.8 for 0.8%)
+              interestRate: displayInterestRate,
+              commissionRate: (product.commissionRate || 0),
               pd: adjustedDefaultRate,
               lgd: lgd,
-              baseLgd: baseLgd, // LGD before state guarantee mitigation
+              baseLgd: baseLgd,
               riskWeight: adjustedRwaDensity,
-              baseRiskWeight: classificationAdjustedRwaDensity, // RWA before state guarantee mitigation
+              baseRiskWeight: classificationAdjustedRwaDensity,
               stateGuaranteePercentage: stateGuaranteePercentage,
-              ftpRate: ftpRate * 100, // Store FTP rate as percentage for display
+              ftpRate: ftpRate * 100,
               isFixedRate: product.isFixedRate || false,
               creditClassification: product.creditClassification || 'Bonis',
-              equityUpside: (product.equityUpside || 0) / 100
+              equityUpside: (product.equityUpside || 0) / 100,
+              gracePeriod: gracePeriod,
+              durata: durata,
+              type: productType
           }
       };
   }
