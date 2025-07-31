@@ -274,11 +274,11 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
       {/* Tab Content */}
       {renderTabContent()}
       
-      {/* Auto-save status */}
+      {/* Real-time sync status */}
       {editMode && (
-        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <p className="text-gray-600 text-xs">
-            ✅ Auto-save enabled: All changes are automatically saved to server every 3 seconds<br/>
+            🔄 Real-time collaboration enabled: All changes are synchronized across all users via Firebase<br/>
             Version: {assumptions.version} | RE Products: {Object.keys(assumptions.products || {}).filter(k => k.startsWith('re')).join(', ')}
           </p>
         </div>

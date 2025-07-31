@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // Hooks
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { useFirebaseState } from './hooks/useFirebaseState';
 
 // Components
 import { TooltipProvider } from './components/common/TooltipProvider';
@@ -24,7 +24,7 @@ const ExcelLikeBankPlan = () => {
   const [activeSheet, setActiveSheet] = useState('reFinancing');
   const [editMode, setEditMode] = useState(true);
   
-  // Use custom hooks for localStorage management
+  // Use custom hooks for Firebase state management
   const { 
     assumptions, 
     setAssumptions, 
@@ -35,23 +35,23 @@ const ExcelLikeBankPlan = () => {
     isLoading,
     importData, 
     exportToFile 
-  } = useLocalStorage();
+  } = useFirebaseState();
   
-  // Calculate results using the extracted calculation engine
-  const results = calculateResults(assumptions);
-
-  // Show loading screen while data is being loaded from server
-  if (isLoading) {
+  // Show loading screen while data is being loaded from Firebase
+  if (isLoading || !assumptions) {
     return (
       <div className="min-h-screen bg-gray-200 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Bank Plan</h2>
-          <p className="text-gray-600">Retrieving latest data from server...</p>
+          <p className="text-gray-600">Connecting to Firebase...</p>
         </div>
       </div>
     );
   }
+
+  // Calculate results using the extracted calculation engine
+  const results = calculateResults(assumptions);
 
   // Note: Auto-saving is now enabled, so no beforeunload warning needed
 

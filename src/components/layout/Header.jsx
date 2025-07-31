@@ -19,20 +19,20 @@ const Header = ({
             <p className="text-xs text-gray-600">New Bank S.p.A. | Financial Model</p>
           </div>
           <div className="flex items-center gap-2">
-            {/* Auto-saving status */}
+            {/* Real-time sync status */}
             {isAutoSaving && (
               <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 border border-blue-300 rounded-md">
                 <span className="text-xs text-blue-800 font-medium">
-                  💾 Auto-saving...
+                  🔄 Syncing...
                 </span>
               </div>
             )}
             
-            {/* Show success status when no unsaved changes and not auto-saving */}
-            {!hasUnsavedChanges && !isAutoSaving && lastFileExport && (
+            {/* Show success status when synced */}
+            {!hasUnsavedChanges && !isAutoSaving && lastSaved && (
               <div className="flex items-center gap-1 px-3 py-1 bg-green-100 border border-green-300 rounded-md">
                 <span className="text-xs text-green-800 font-medium">
-                  ✅ Auto-saved
+                  ✅ Synced with Firebase
                 </span>
               </div>
             )}
@@ -40,13 +40,7 @@ const Header = ({
             {lastSaved && (
               <span className="text-xs text-gray-500">
                 <Save className="w-3 h-3 inline mr-1" />
-                Loaded: {lastSaved.toLocaleTimeString('it-IT')}
-              </span>
-            )}
-            
-            {lastFileExport && (
-              <span className="text-xs text-green-600">
-                💾 File: {lastFileExport.toLocaleTimeString('it-IT')}
+                Last sync: {lastSaved.toLocaleTimeString('it-IT')}
               </span>
             )}
             <button 
