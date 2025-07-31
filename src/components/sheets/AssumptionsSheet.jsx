@@ -8,6 +8,7 @@ import IncentiveAssumptions from '../assumptions/IncentiveAssumptions';
 import TechAssumptions from '../assumptions/TechAssumptions';
 import CentralAssumptions from '../assumptions/CentralAssumptions';
 import TreasuryAssumptions from '../assumptions/TreasuryAssumptions';
+import PersonnelAssumptions from '../assumptions/PersonnelAssumptions';
 
 const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 'general' }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -324,6 +325,13 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
           />
         </div>
       </div>
+      
+      {/* Personnel Section */}
+      <PersonnelAssumptions 
+        assumptions={assumptions}
+        handleAssumptionChange={handleAssumptionChange}
+        editMode={editMode}
+      />
     </div>
   );
 

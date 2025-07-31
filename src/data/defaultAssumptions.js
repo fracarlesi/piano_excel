@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '6.11', // Calculation Trace esteso a tutte le tabelle finanziarie: Balance Sheet, KPIs e Capital Requirements ora mostrano i valori numerici per ogni componente del calcolo
+  version: '7.00', // Modello bottom-up granulare per i costi del personale: struttura organizzativa completa con divisioni business, strutturali e funzioni centrali
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -8,7 +8,6 @@ export const defaultAssumptions = {
   depositRate: 0.5, // Rate paid to customers on deposit accounts
   testNewField: 999, // TEST: Nuovo campo per verificare smart merge
   quarterlyAllocation: [25, 25, 25, 25], // % di erogazioni per Q1, Q2, Q3, Q4
-  avgCostPerFte: 100, 
   backOfficeCostsY1: 2, 
   adminCostsY1: 1.5,
   marketingCostsY1: 1, 
@@ -19,18 +18,181 @@ export const defaultAssumptions = {
   provisionsY1: 0.2, 
   commissionExpenseRate: 0.0,
   
-  // Central Functions Division - Non-allocated costs
+  // NEW: Bottom-up Personnel Cost Model
+  personnel: {
+    // Global drivers
+    annualSalaryReview: 2.5, // % annual salary increase
+    
+    // Business Divisions
+    businessDivisions: {
+      RealEstateFinancing: {
+        headcountGrowth: 5, // % annual headcount growth
+        staffing: [
+          { level: 'Junior', count: 40, costPerHead: 45 },
+          { level: 'Mid-Level', count: 30, costPerHead: 70 },
+          { level: 'Senior', count: 20, costPerHead: 100 },
+          { level: 'Manager', count: 8, costPerHead: 150 },
+          { level: 'Director', count: 2, costPerHead: 250 }
+        ]
+      },
+      SMEFinancing: {
+        headcountGrowth: 6, // % annual headcount growth
+        staffing: [
+          { level: 'Junior', count: 32, costPerHead: 45 },
+          { level: 'Mid-Level', count: 24, costPerHead: 70 },
+          { level: 'Senior', count: 16, costPerHead: 100 },
+          { level: 'Manager', count: 6, costPerHead: 150 },
+          { level: 'Director', count: 2, costPerHead: 250 }
+        ]
+      },
+      WealthAndAssetManagement: {
+        headcountGrowth: 8, // % annual headcount growth
+        staffing: [
+          { level: 'Junior', count: 15, costPerHead: 50 },
+          { level: 'Mid-Level', count: 20, costPerHead: 80 },
+          { level: 'Senior', count: 12, costPerHead: 120 },
+          { level: 'Manager', count: 5, costPerHead: 180 },
+          { level: 'Director', count: 2, costPerHead: 300 }
+        ]
+      },
+      Incentives: {
+        headcountGrowth: 4, // % annual headcount growth
+        staffing: [
+          { level: 'Junior', count: 8, costPerHead: 45 },
+          { level: 'Mid-Level', count: 10, costPerHead: 70 },
+          { level: 'Senior', count: 6, costPerHead: 100 },
+          { level: 'Manager', count: 3, costPerHead: 150 },
+          { level: 'Director', count: 1, costPerHead: 250 }
+        ]
+      },
+      DigitalBanking: {
+        headcountGrowth: 15, // % annual headcount growth - high growth
+        staffing: [
+          { level: 'Junior', count: 15, costPerHead: 50 },
+          { level: 'Mid-Level', count: 15, costPerHead: 75 },
+          { level: 'Senior', count: 8, costPerHead: 110 },
+          { level: 'Manager', count: 2, costPerHead: 160 }
+        ]
+      }
+    },
+    
+    // Structural Divisions
+    structuralDivisions: {
+      Tech: {
+        headcountGrowth: 10, // % annual headcount growth
+        staffing: [
+          { level: 'Junior Developer', count: 20, costPerHead: 55 },
+          { level: 'Mid Developer', count: 25, costPerHead: 85 },
+          { level: 'Senior Developer', count: 15, costPerHead: 120 },
+          { level: 'Tech Lead', count: 8, costPerHead: 150 },
+          { level: 'Architect', count: 4, costPerHead: 180 },
+          { level: 'IT Manager', count: 3, costPerHead: 200 }
+        ]
+      },
+      Treasury: {
+        headcountGrowth: 3, // % annual headcount growth
+        staffing: [
+          { level: 'Junior Trader', count: 8, costPerHead: 60 },
+          { level: 'Mid Trader', count: 10, costPerHead: 100 },
+          { level: 'Senior Trader', count: 5, costPerHead: 150 },
+          { level: 'Head of Desk', count: 2, costPerHead: 250 }
+        ]
+      },
+      CentralFunctions: {
+        CEOOffice: {
+          headcountGrowth: 2, // % annual headcount growth
+          staffing: [
+            { level: 'Executive Assistant', count: 3, costPerHead: 60 },
+            { level: 'Chief of Staff', count: 1, costPerHead: 150 },
+            { level: 'CEO', count: 1, costPerHead: 800 },
+            { level: 'Deputy CEO', count: 2, costPerHead: 500 }
+          ]
+        },
+        Operations: {
+          headcountGrowth: 3, // % annual headcount growth
+          staffing: [
+            { level: 'Junior Ops', count: 25, costPerHead: 40 },
+            { level: 'Mid Ops', count: 20, costPerHead: 55 },
+            { level: 'Senior Ops', count: 10, costPerHead: 75 },
+            { level: 'Ops Manager', count: 5, costPerHead: 100 },
+            { level: 'Head of Ops', count: 1, costPerHead: 200 }
+          ]
+        },
+        HR: {
+          headcountGrowth: 4, // % annual headcount growth
+          staffing: [
+            { level: 'HR Assistant', count: 5, costPerHead: 40 },
+            { level: 'HR Specialist', count: 8, costPerHead: 60 },
+            { level: 'HR Manager', count: 3, costPerHead: 90 },
+            { level: 'HR Director', count: 1, costPerHead: 180 }
+          ]
+        },
+        AFC: { // Administration, Finance & Control
+          headcountGrowth: 3, // % annual headcount growth
+          staffing: [
+            { level: 'Junior Analyst', count: 10, costPerHead: 50 },
+            { level: 'Senior Analyst', count: 8, costPerHead: 75 },
+            { level: 'Controller', count: 5, costPerHead: 100 },
+            { level: 'Finance Manager', count: 2, costPerHead: 150 },
+            { level: 'CFO', count: 1, costPerHead: 400 }
+          ]
+        },
+        RiskManagement: {
+          headcountGrowth: 5, // % annual headcount growth
+          staffing: [
+            { level: 'Risk Analyst', count: 12, costPerHead: 60 },
+            { level: 'Senior Risk Analyst', count: 8, costPerHead: 90 },
+            { level: 'Risk Manager', count: 4, costPerHead: 130 },
+            { level: 'Head of Risk', count: 1, costPerHead: 250 }
+          ]
+        },
+        ComplianceAndAML: {
+          headcountGrowth: 6, // % annual headcount growth
+          staffing: [
+            { level: 'Compliance Analyst', count: 10, costPerHead: 55 },
+            { level: 'Senior Compliance', count: 6, costPerHead: 85 },
+            { level: 'Compliance Manager', count: 3, costPerHead: 120 },
+            { level: 'Head of Compliance', count: 1, costPerHead: 220 }
+          ]
+        },
+        Legal: {
+          headcountGrowth: 2, // % annual headcount growth
+          staffing: [
+            { level: 'Junior Legal', count: 4, costPerHead: 60 },
+            { level: 'Legal Counsel', count: 5, costPerHead: 100 },
+            { level: 'Senior Legal Counsel', count: 3, costPerHead: 150 },
+            { level: 'General Counsel', count: 1, costPerHead: 300 }
+          ]
+        },
+        MarketingAndCommunication: {
+          headcountGrowth: 7, // % annual headcount growth
+          staffing: [
+            { level: 'Marketing Assistant', count: 6, costPerHead: 45 },
+            { level: 'Marketing Specialist', count: 5, costPerHead: 65 },
+            { level: 'Marketing Manager', count: 2, costPerHead: 100 },
+            { level: 'Head of Marketing', count: 1, costPerHead: 180 }
+          ]
+        },
+        InternalAudit: {
+          headcountGrowth: 3, // % annual headcount growth
+          staffing: [
+            { level: 'Junior Auditor', count: 6, costPerHead: 50 },
+            { level: 'Senior Auditor', count: 5, costPerHead: 75 },
+            { level: 'Audit Manager', count: 2, costPerHead: 110 },
+            { level: 'Head of Audit', count: 1, costPerHead: 200 }
+          ]
+        }
+      }
+    }
+  },
+  
+  // Central Functions Division - Non-personnel costs only
   centralFunctions: {
-    boardAndExecutiveCostsY1: 3.5, // Board, CEO, executive management costs
-    complianceCostsY1: 2.8, // Compliance, regulatory reporting, AML
-    auditCostsY1: 1.2, // Internal and external audit
-    legalCostsY1: 1.5, // Legal department and external counsel
-    riskManagementCostsY1: 2.0, // Central risk management function
-    strategyAndPlanningCostsY1: 1.0, // Strategic planning, M&A, investor relations
-    hrCentralCostsY1: 1.5, // Central HR, training, recruitment
+    // These are non-personnel costs that remain separate
     facilitiesCostsY1: 3.0, // Headquarters, central facilities
-    fteY1: 120, // Central functions headcount
-    fteY5: 150  // Target headcount by year 5
+    externalServicesY1: 2.5, // External consultants, legal services, etc.
+    regulatoryFeesY1: 1.8, // Regulatory fees and contributions
+    otherCentralCostsY1: 1.2 // Other central costs
   },
   
   // Treasury / ALM Division
@@ -42,25 +204,11 @@ export const defaultAssumptions = {
     tradingBookGrowthRate: 5, // Annual growth rate (%)
     tradingBookReturnTarget: 8, // Target return on trading book (%)
     tradingBookVolatility: 15, // Trading book return volatility (%)
-    fteY1: 25, // Treasury headcount
-    fteY5: 35  // Target headcount by year 5
   },
   fundingMix: {
     sightDeposits: 40,
     termDeposits: 40,
     groupFunding: 20,
-  },
-  realEstateDivision: {
-    fteY1: 100,
-    fteY5: 150,
-  },
-  smeDivision: {
-    fteY1: 80,
-    fteY5: 120,
-  },
-  digitalBankingDivision: {
-    fteY1: 40,
-    fteY5: 80,
   },
   products: {
     reSecuritization: {

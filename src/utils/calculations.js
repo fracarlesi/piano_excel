@@ -553,6 +553,177 @@ const calculateDepositAndServiceProduct = (product, assumptions, years, ftpRate,
 };
 
 /**
+ * Calculate personnel costs using bottom-up approach
+ * 
+ * @param {Object} personnel - Personnel structure from assumptions
+ * @param {Array} years - Array of year indices
+ * @returns {Object} Personnel costs by division and total
+ */
+const calculatePersonnelCosts = (personnel, years) => {
+  if (!personnel) {
+    // Return empty structure if personnel data not available
+    return {
+      byDivision: {},
+      centralFunctionsTotal: years.map(() => 0),
+      totalCosts: years.map(() => 0),
+      totalHeadcount: years.map(() => 0),
+      byDepartment: {}
+    };
+  }
+
+  const { annualSalaryReview = 2.5, businessDivisions = {}, structuralDivisions = {} } = personnel;
+  const salaryGrowth = years.map(i => Math.pow(1 + annualSalaryReview / 100, i));
+  
+  const results = {
+    byDivision: {},
+    centralFunctionsTotal: years.map(() => 0),
+    totalCosts: years.map(() => 0),
+    totalHeadcount: years.map(() => 0),
+    byDepartment: {}
+  };
+
+  // Calculate costs for business divisions
+  Object.entries(businessDivisions).forEach(([divisionKey, divisionData]) => {
+    const { headcountGrowth = 0, staffing = [] } = divisionData;
+    const headcountMultiplier = years.map(i => Math.pow(1 + headcountGrowth / 100, i));
+    
+    const divisionCosts = years.map((_, yearIndex) => {
+      let totalCost = 0;
+      let totalHeadcount = 0;
+      
+      staffing.forEach(level => {
+        const headcount = level.count * headcountMultiplier[yearIndex];
+        const costPerHead = level.costPerHead * salaryGrowth[yearIndex];
+        totalCost += headcount * costPerHead / 1000; // Convert to €M
+        totalHeadcount += headcount;
+      });
+      
+      return { cost: totalCost, headcount: totalHeadcount };
+    });
+    
+    results.byDivision[divisionKey] = {
+      costs: divisionCosts.map(d => -d.cost), // Negative for P&L
+      headcount: divisionCosts.map(d => d.headcount)
+    };
+  });
+
+  // Calculate costs for Tech division
+  if (structuralDivisions.Tech) {
+    const { headcountGrowth = 0, staffing = [] } = structuralDivisions.Tech;
+    const headcountMultiplier = years.map(i => Math.pow(1 + headcountGrowth / 100, i));
+    
+    const techCosts = years.map((_, yearIndex) => {
+      let totalCost = 0;
+      let totalHeadcount = 0;
+      
+      staffing.forEach(level => {
+        const headcount = level.count * headcountMultiplier[yearIndex];
+        const costPerHead = level.costPerHead * salaryGrowth[yearIndex];
+        totalCost += headcount * costPerHead / 1000; // Convert to €M
+        totalHeadcount += headcount;
+      });
+      
+      return { cost: totalCost, headcount: totalHeadcount };
+    });
+    
+    results.byDivision.Tech = {
+      costs: techCosts.map(d => -d.cost), // Negative for P&L
+      headcount: techCosts.map(d => d.headcount)
+    };
+  }
+
+  // Calculate costs for Treasury division
+  if (structuralDivisions.Treasury) {
+    const { headcountGrowth = 0, staffing = [] } = structuralDivisions.Treasury;
+    const headcountMultiplier = years.map(i => Math.pow(1 + headcountGrowth / 100, i));
+    
+    const treasuryCosts = years.map((_, yearIndex) => {
+      let totalCost = 0;
+      let totalHeadcount = 0;
+      
+      staffing.forEach(level => {
+        const headcount = level.count * headcountMultiplier[yearIndex];
+        const costPerHead = level.costPerHead * salaryGrowth[yearIndex];
+        totalCost += headcount * costPerHead / 1000; // Convert to €M
+        totalHeadcount += headcount;
+      });
+      
+      return { cost: totalCost, headcount: totalHeadcount };
+    });
+    
+    results.byDivision.Treasury = {
+      costs: treasuryCosts.map(d => -d.cost), // Negative for P&L
+      headcount: treasuryCosts.map(d => d.headcount)
+    };
+  }
+
+  // Calculate costs for Central Functions departments
+  if (structuralDivisions.CentralFunctions) {
+    Object.entries(structuralDivisions.CentralFunctions).forEach(([deptKey, deptData]) => {
+      const { headcountGrowth = 0, staffing = [] } = deptData;
+      const headcountMultiplier = years.map(i => Math.pow(1 + headcountGrowth / 100, i));
+      
+      const deptCosts = years.map((_, yearIndex) => {
+        let totalCost = 0;
+        let totalHeadcount = 0;
+        
+        staffing.forEach(level => {
+          const headcount = level.count * headcountMultiplier[yearIndex];
+          const costPerHead = level.costPerHead * salaryGrowth[yearIndex];
+          totalCost += headcount * costPerHead / 1000; // Convert to €M
+          totalHeadcount += headcount;
+        });
+        
+        return { cost: totalCost, headcount: totalHeadcount };
+      });
+      
+      results.byDepartment[deptKey] = {
+        costs: deptCosts.map(d => -d.cost), // Negative for P&L
+        headcount: deptCosts.map(d => d.headcount)
+      };
+      
+      // Add to central functions total
+      results.centralFunctionsTotal = results.centralFunctionsTotal.map((total, i) => 
+        total - deptCosts[i].cost
+      );
+    });
+  }
+
+  // Calculate total costs and headcount
+  results.totalCosts = years.map((_, i) => {
+    let totalCost = 0;
+    
+    // Add business and structural division costs
+    Object.values(results.byDivision).forEach(division => {
+      totalCost += division.costs[i];
+    });
+    
+    // Add central functions costs
+    totalCost += results.centralFunctionsTotal[i];
+    
+    return totalCost;
+  });
+
+  results.totalHeadcount = years.map((_, i) => {
+    let totalHeadcount = 0;
+    
+    // Add business and structural division headcount
+    Object.values(results.byDivision).forEach(division => {
+      totalHeadcount += division.headcount[i];
+    });
+    
+    // Add central functions headcount
+    Object.values(results.byDepartment).forEach(dept => {
+      totalHeadcount += dept.headcount[i];
+    });
+    
+    return totalHeadcount;
+  });
+
+  return results;
+};
+
+/**
  * Advanced calculation engine for bank business plan
  * 
  * @param {Object} assumptions - The financial assumptions object
@@ -1095,7 +1266,14 @@ export const calculateResults = (assumptions) => {
   
   results.kpi.fte = totalFte;
   
-  results.pnl.personnelCostsTotal = results.kpi.fte.map(fte => - (fte * assumptions.avgCostPerFte) / 1000);
+  // Calculate personnel costs using new bottom-up model
+  const personnelResults = calculatePersonnelCosts(assumptions.personnel, years);
+  results.pnl.personnelCostsTotal = personnelResults.totalCosts;
+  results.kpi.fte = personnelResults.totalHeadcount;
+  
+  // Store detailed personnel costs for divisions
+  results.personnelCostsByDivision = personnelResults.byDivision;
+  results.personnelCostsByCentralDept = personnelResults.byDepartment;
 
   const costGrowth = years.map(i => Math.pow(1 + assumptions.costGrowthRate / 100, i));
   results.pnl.adminCosts = years.map(i => -assumptions.adminCostsY1 * costGrowth[i]);
@@ -1138,32 +1316,23 @@ export const calculateResults = (assumptions) => {
   cf.bs.performingAssets = years.map(() => 0);
   cf.bs.nonPerformingAssets = years.map(() => 0);
   
-  // Calculate Central Functions FTE (already calculated above)
-  const centralFte = results.kpi.centralFte || years.map(() => 0);
+  // Central Functions FTE is already calculated above and stored in results.kpi.centralFte
   
-  // Calculate Central Functions costs
-  cf.pnl.boardAndExecutiveCosts = years.map(i => -(assumptions.centralFunctions.boardAndExecutiveCostsY1 || 0) * costGrowth[i]);
-  cf.pnl.complianceCosts = years.map(i => -(assumptions.centralFunctions.complianceCostsY1 || 0) * costGrowth[i]);
-  cf.pnl.auditCosts = years.map(i => -(assumptions.centralFunctions.auditCostsY1 || 0) * costGrowth[i]);
-  cf.pnl.legalCosts = years.map(i => -(assumptions.centralFunctions.legalCostsY1 || 0) * costGrowth[i]);
-  cf.pnl.riskManagementCosts = years.map(i => -(assumptions.centralFunctions.riskManagementCostsY1 || 0) * costGrowth[i]);
-  cf.pnl.strategyAndPlanningCosts = years.map(i => -(assumptions.centralFunctions.strategyAndPlanningCostsY1 || 0) * costGrowth[i]);
-  cf.pnl.hrCentralCosts = years.map(i => -(assumptions.centralFunctions.hrCentralCostsY1 || 0) * costGrowth[i]);
+  // Calculate Central Functions non-personnel costs
   cf.pnl.facilitiesCosts = years.map(i => -(assumptions.centralFunctions.facilitiesCostsY1 || 0) * costGrowth[i]);
+  cf.pnl.externalServices = years.map(i => -(assumptions.centralFunctions.externalServicesY1 || 0) * costGrowth[i]);
+  cf.pnl.regulatoryFees = years.map(i => -(assumptions.centralFunctions.regulatoryFeesY1 || 0) * costGrowth[i]);
+  cf.pnl.otherCentralCosts = years.map(i => -(assumptions.centralFunctions.otherCentralCostsY1 || 0) * costGrowth[i]);
   
-  // Personnel costs for Central Functions
-  cf.pnl.personnelCosts = centralFte.map(fte => -(fte * assumptions.avgCostPerFte) / 1000);
+  // Personnel costs for Central Functions (from bottom-up model)
+  cf.pnl.personnelCosts = personnelResults.centralFunctionsTotal;
   
   // Total Central Functions costs
   cf.pnl.totalCentralCosts = years.map(i => 
-    cf.pnl.boardAndExecutiveCosts[i] +
-    cf.pnl.complianceCosts[i] +
-    cf.pnl.auditCosts[i] +
-    cf.pnl.legalCosts[i] +
-    cf.pnl.riskManagementCosts[i] +
-    cf.pnl.strategyAndPlanningCosts[i] +
-    cf.pnl.hrCentralCosts[i] +
     cf.pnl.facilitiesCosts[i] +
+    cf.pnl.externalServices[i] +
+    cf.pnl.regulatoryFees[i] +
+    cf.pnl.otherCentralCosts[i] +
     cf.pnl.personnelCosts[i]
   );
   
@@ -1280,9 +1449,8 @@ export const calculateResults = (assumptions) => {
     return ftpIncome - depositCost;
   });
   
-  // Treasury personnel costs
-  const treasuryFte = results.kpi.treasuryFte || years.map(() => 0);
-  treasury.pnl.personnelCosts = treasuryFte.map(fte => -(fte * assumptions.avgCostPerFte) / 1000);
+  // Treasury personnel costs (from bottom-up model)
+  treasury.pnl.personnelCosts = personnelResults.byDivision.Treasury?.costs || years.map(() => 0);
   
   // Treasury other costs (allocated portion)
   treasury.pnl.otherOpex = years.map(i => -2); // Simplified allocation
@@ -1483,7 +1651,30 @@ export const calculateResults = (assumptions) => {
       }
       
       product.commissionExpense = years.map(i => results.pnl.commissionExpenses[i] * assetWeight[i]);
-      product.personnelCosts = years.map(i => results.pnl.personnelCostsTotal[i] * rwaWeight[i]);
+      // Allocate personnel costs based on division
+      let divisionPersonnelCosts = years.map(() => 0);
+      
+      // Map product to division
+      if (key.startsWith('re')) {
+        divisionPersonnelCosts = personnelResults.byDivision.RealEstateFinancing?.costs || years.map(() => 0);
+      } else if (key.startsWith('sme')) {
+        divisionPersonnelCosts = personnelResults.byDivision.SMEFinancing?.costs || years.map(() => 0);
+      } else if (key.startsWith('digital')) {
+        divisionPersonnelCosts = personnelResults.byDivision.DigitalBanking?.costs || years.map(() => 0);
+      } else if (key.startsWith('wealth')) {
+        divisionPersonnelCosts = personnelResults.byDivision.WealthAndAssetManagement?.costs || years.map(() => 0);
+      } else if (key.startsWith('incentive')) {
+        divisionPersonnelCosts = personnelResults.byDivision.Incentives?.costs || years.map(() => 0);
+      } else if (key.startsWith('tech')) {
+        divisionPersonnelCosts = personnelResults.byDivision.Tech?.costs || years.map(() => 0);
+      }
+      
+      // Calculate product's share of division RWA
+      const divisionPrefix = key.match(/^(re|sme|digital|wealth|incentive|tech)/)?.[1];
+      const divisionRWA = divisionPrefix ? results.divisions[divisionPrefix]?.capital?.totalRWA || years.map(() => 0) : years.map(() => 0);
+      const productRWAWeight = years.map(i => divisionRWA[i] > 0 ? product.rwa[i] / divisionRWA[i] : 0);
+      
+      product.personnelCosts = years.map(i => divisionPersonnelCosts[i] * productRWAWeight[i]);
       product.allocatedEquity = years.map(i => results.bs.equity[i] * rwaWeight[i]);
       product.cet1Ratio = years.map(i => product.rwa[i] > 0 ? (product.allocatedEquity[i] / product.rwa[i]) * 100 : 0);
       
@@ -1576,6 +1767,9 @@ export const calculateResults = (assumptions) => {
         ),
         totalLLP: years.map(i => 
           divisionProducts.reduce((sum, p) => sum + p.llp[i], 0)
+        ),
+        personnelCosts: years.map(i => 
+          divisionProducts.reduce((sum, p) => sum + p.personnelCosts[i], 0)
         ),
         netProfit: years.map(i => 
           divisionProducts.reduce((sum, p) => sum + p.netProfit[i], 0)
