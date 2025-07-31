@@ -631,9 +631,17 @@ export const calculateResults = (assumptions) => {
         continue;
       }
       
-      // VINTAGE-BASED CREDIT CALCULATION ENGINE
+      // VINTAGE-BASED CREDIT CALCULATION ENGINE WITH QUARTERLY ALLOCATION
       // Initialize vintages array to track each loan cohort
       const vintages = [];
+      
+      // Calculate first year adjustment factor based on quarterly allocation
+      const quarterlyAllocation = assumptions.quarterlyAllocation || [25, 25, 25, 25];
+      const firstYearAdjustmentFactor = 
+        (quarterlyAllocation[0] / 100 * 0.875) +  // Q1: ~87.5% of year
+        (quarterlyAllocation[1] / 100 * 0.625) +  // Q2: ~62.5% of year
+        (quarterlyAllocation[2] / 100 * 0.375) +  // Q3: ~37.5% of year
+        (quarterlyAllocation[3] / 100 * 0.125);   // Q4: ~12.5% of year
       
       // Extract volume information with same logic as before
       const volumes10Y = years.map(i => {
@@ -718,19 +726,14 @@ export const calculateResults = (assumptions) => {
           let defaultsForYear = 0;
           
           // Step 3: Process each active vintage
-          vintages.forEach(vintage => {
+          vintages.forEach((vintage, vintageIndex) => {
               const age = year - vintage.startYear;
               
               // Skip if vintage hasn't started yet or is fully repaid
               if (age < 0 || vintage.outstandingPrincipal <= 0.01) return;
               
-              // Calculate interest for this vintage
-              const interestRate = vintage.isFixedRate ? 
-                  (vintage.spread + 2.0) / 100 : // Fixed rate assumption
-                  (assumptions.euribor + vintage.spread) / 100;
-              
-              const interestIncome = vintage.outstandingPrincipal * interestRate;
-              totalInterestIncomeForYear += interestIncome;
+              // Store beginning of year principal for average calculation
+              const beginningPrincipal = vintage.outstandingPrincipal;
               
               // Calculate principal repayment based on loan type
               let principalRepayment = 0;
@@ -742,24 +745,28 @@ export const calculateResults = (assumptions) => {
                   }
               } else if (vintage.type === 'french' || vintage.type === 'amortizing') {
                   // French/Amortizing: repay after grace period
-                  if (age > vintage.gracePeriod) {
+                  if (age > vintage.gracePeriod && age <= vintage.durata) {
                       const remainingPeriods = vintage.durata - vintage.gracePeriod;
                       const periodsElapsed = age - vintage.gracePeriod;
                       
-                      if (periodsElapsed <= remainingPeriods) {
-                          // Calculate payment using French amortization formula
+                      if (periodsElapsed > 0 && periodsElapsed <= remainingPeriods) {
+                          // Calculate using French amortization formula
+                          const interestRate = vintage.isFixedRate ? 
+                              (vintage.spread + 2.0) / 100 : 
+                              (assumptions.euribor + vintage.spread) / 100;
+                          
                           const r = interestRate;
                           const n = remainingPeriods;
                           const PV = vintage.initialAmount;
                           
-                          // PMT = PV * r * (1 + r)^n / ((1 + r)^n - 1)
+                          // Calculate fixed payment amount
                           const annuityPayment = PV * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
                           
                           // Interest portion of current payment
-                          const interestPortion = vintage.outstandingPrincipal * r;
+                          const interestPortion = beginningPrincipal * r;
                           
                           // Principal portion is annuity minus interest
-                          principalRepayment = Math.min(annuityPayment - interestPortion, vintage.outstandingPrincipal);
+                          principalRepayment = Math.min(annuityPayment - interestPortion, beginningPrincipal);
                           
                           // Ensure we don't overpay
                           if (principalRepayment < 0) principalRepayment = 0;
@@ -769,26 +776,43 @@ export const calculateResults = (assumptions) => {
               
               totalPrincipalRepaymentsForYear += principalRepayment;
               
-              // Update vintage outstanding principal
-              vintage.outstandingPrincipal -= principalRepayment;
-              
-              // Apply defaults to this vintage (proportional to outstanding)
-              if (!vintage.hasDefaulted && vintage.outstandingPrincipal > 0) {
-                  const defaultAmount = vintage.outstandingPrincipal * adjustedDefaultRate;
+              // Apply defaults before updating principal
+              let defaultAmount = 0;
+              if (!vintage.hasDefaulted && beginningPrincipal > 0) {
+                  defaultAmount = beginningPrincipal * adjustedDefaultRate;
                   defaultsForYear += defaultAmount;
-                  vintage.outstandingPrincipal -= defaultAmount;
                   
                   // Mark as defaulted if significant portion has defaulted
-                  if (defaultAmount > vintage.outstandingPrincipal * 0.5) {
+                  if (defaultAmount > beginningPrincipal * 0.5) {
                       vintage.hasDefaulted = true;
                   }
               }
               
-              // Add to total outstanding
-              totalOutstandingStockForYear += vintage.outstandingPrincipal;
+              // Update vintage outstanding principal (after repayment and defaults)
+              vintage.outstandingPrincipal = beginningPrincipal - principalRepayment - defaultAmount;
+              const endingPrincipal = vintage.outstandingPrincipal;
               
-              // Calculate average stock contribution (simplified - could be refined)
-              totalAverageStockForYear += vintage.outstandingPrincipal;
+              // Calculate average stock for interest calculation
+              let avgStock = 0;
+              if (age === 0) {
+                  // First year: apply quarterly allocation adjustment
+                  avgStock = beginningPrincipal * firstYearAdjustmentFactor;
+              } else {
+                  // Subsequent years: average of beginning and ending balances
+                  avgStock = (beginningPrincipal + endingPrincipal) / 2;
+              }
+              
+              // Calculate interest income on average stock
+              const interestRate = vintage.isFixedRate ? 
+                  (vintage.spread + 2.0) / 100 : 
+                  (assumptions.euribor + vintage.spread) / 100;
+              
+              const interestIncome = avgStock * interestRate;
+              totalInterestIncomeForYear += interestIncome;
+              
+              // Add to total outstanding and average stock
+              totalOutstandingStockForYear += endingPrincipal;
+              totalAverageStockForYear += avgStock;
           });
           
           // Step 4: Update result arrays

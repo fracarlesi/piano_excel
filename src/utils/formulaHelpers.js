@@ -52,7 +52,9 @@ export const createProductFormula = (year, product, formulaType, values) => {
   
   const baseFormulas = {
     interestIncome: {
-      formula: isDepositProduct ? 'Deposit Stock × Deposit Rate (FTP = Deposit Rate)' : 'Average Performing Assets × Interest Rate',
+      formula: isDepositProduct ? 'Deposit Stock × Deposit Rate (FTP = Deposit Rate)' : 
+                values.isFixed ? 'Average Performing Assets × Fixed Interest Rate' :
+                'Average Performing Assets × (EURIBOR + Spread)',
       precedents: isDepositProduct ? [
         {
           name: 'Deposit Stock',
@@ -66,6 +68,25 @@ export const createProductFormula = (year, product, formulaType, values) => {
           unit: '%',
           calculation: 'Equal to deposit rate paid to customers (no margin)'
         }
+      ] : values.isFixed ? [
+        {
+          name: 'Average Performing Assets',
+          value: values.avgAssets,
+          unit: '€M',
+          calculation: 'Weighted average of performing loan stock'
+        },
+        {
+          name: 'Fixed Interest Rate',
+          value: values.interestRate,
+          unit: '%',
+          calculation: 'Fixed rate = Spread + 2%'
+        },
+        {
+          name: 'Spread',
+          value: values.spread,
+          unit: '%',
+          calculation: 'Margin over base rate'
+        }
       ] : [
         {
           name: 'Average Performing Assets',
@@ -74,24 +95,37 @@ export const createProductFormula = (year, product, formulaType, values) => {
           calculation: 'Weighted average of performing loan stock'
         },
         {
-          name: 'Interest Rate',
-          value: values.interestRate,
+          name: 'EURIBOR',
+          value: values.euribor,
           unit: '%',
-          calculation: values.isFixed ? 'Fixed Rate (Spread + 2%)' : `EURIBOR (${formatNumber(values.euribor, 1)}%) + Spread (${formatNumber(values.spread, 1)}%)`
+          calculation: 'European interbank reference rate'
         },
         {
-          name: 'Product Type',
-          value: product.type || 'amortizing',
-          calculation: `${product.gracePeriod ? `Grace period: ${product.gracePeriod} years` : 'No grace period'}`
+          name: 'Spread',
+          value: values.spread,
+          unit: '%',
+          calculation: 'Margin over EURIBOR'
+        },
+        {
+          name: 'Total Interest Rate',
+          value: values.interestRate,
+          unit: '%',
+          calculation: `${formatNumber(values.euribor, 2)}% + ${formatNumber(values.spread, 2)}% = ${formatNumber(values.interestRate, 2)}%`
         }
       ],
-      calculation: () => isDepositProduct ? 
-        `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.ftpRate || values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M` :
-        `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M`
+      calculation: () => {
+        if (isDepositProduct) {
+          return `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.ftpRate || values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M`;
+        } else if (values.isFixed) {
+          return `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M`;
+        } else {
+          return `${formatNumber(values.avgAssets, 2)} × (${formatNumber(values.euribor, 2)}% + ${formatNumber(values.spread, 2)}%) = ${formatNumber(values.result, 2)} €M`;
+        }
+      }
     },
     
     interestExpense: {
-      formula: isDepositProduct ? 'Deposit Stock × Deposit Interest Rate' : 'Average Performing Assets × FTP Rate',
+      formula: isDepositProduct ? 'Deposit Stock × Deposit Interest Rate' : 'Average Performing Assets × FTP Rate (EURIBOR + FTP Spread)',
       precedents: isDepositProduct ? [
         {
           name: 'Deposit Stock',
@@ -113,15 +147,27 @@ export const createProductFormula = (year, product, formulaType, values) => {
           calculation: 'Weighted average of performing loan stock'
         },
         {
-          name: 'FTP Rate',
+          name: 'EURIBOR',
+          value: values.euribor || 3.5,
+          unit: '%',
+          calculation: 'European interbank reference rate'
+        },
+        {
+          name: 'FTP Spread',
+          value: values.ftpSpread || 1.5,
+          unit: '%',
+          calculation: 'Internal funding margin over EURIBOR'
+        },
+        {
+          name: 'Total FTP Rate',
           value: values.ftpRate || 5.0,
           unit: '%',
-          calculation: 'Internal funds transfer pricing rate'
+          calculation: `${formatNumber(values.euribor || 3.5, 2)}% + ${formatNumber(values.ftpSpread || 1.5, 2)}% = ${formatNumber(values.ftpRate || 5.0, 2)}%`
         }
       ],
       calculation: () => isDepositProduct ?
         `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.interestRate || 0, 2)}% = ${formatNumber(Math.abs(values.result), 2)} €M` :
-        `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.ftpRate || 5.0, 2)}% = ${formatNumber(Math.abs(values.result), 2)} €M`
+        `${formatNumber(values.avgAssets, 2)} × (${formatNumber(values.euribor || 3.5, 2)}% + ${formatNumber(values.ftpSpread || 1.5, 2)}%) = ${formatNumber(Math.abs(values.result), 2)} €M`
     },
     
     commissionIncome: {

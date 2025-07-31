@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.50', // Gestione prodotti completamente data-driven: aggiunta/rimozione/modifica prodotti ora scrive direttamente su Firebase per sincronizzazione automatica tra tutti gli utenti
+  version: '6.10', // Calculation Trace migliorato: tutte le formule ora mostrano i valori numerici di ogni variabile (EURIBOR, Spread, FTP Rate) per completa trasparenza dei calcoli
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -7,6 +7,7 @@ export const defaultAssumptions = {
   ftpSpread: 1.5, // Spread over EURIBOR for FTP rate (FTP = EURIBOR + ftpSpread)
   depositRate: 0.5, // Rate paid to customers on deposit accounts
   testNewField: 999, // TEST: Nuovo campo per verificare smart merge
+  quarterlyAllocation: [25, 25, 25, 25], // % di erogazioni per Q1, Q2, Q3, Q4
   avgCostPerFte: 100, 
   backOfficeCostsY1: 2, 
   adminCostsY1: 1.5,

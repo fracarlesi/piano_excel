@@ -206,6 +206,78 @@ const AssumptionsSheet = ({ assumptions, setAssumptions, editMode, initialTab = 
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold text-gray-800 mb-6">Quarterly Allocation of New Business</h3>
+        <p className="text-gray-600 text-sm mb-4">
+          Distribute new loan originations across quarters. Values must sum to 100%.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <EditableNumberField 
+            label="Q1 Allocation" 
+            value={assumptions.quarterlyAllocation?.[0] || 25} 
+            onChange={val => {
+              const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
+              newAllocation[0] = val;
+              setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
+            }} 
+            unit="%" 
+            disabled={!editMode} 
+            isPercentage
+            tooltip="Percentage of annual new business originated in Q1 (Jan-Mar)"
+            tooltipImpact="Affects interest income calculation for first year - loans originated later in the year generate less annual interest"
+            tooltipFormula="Q1 loans generate interest for ~87.5% of the year"
+          />
+          <EditableNumberField 
+            label="Q2 Allocation" 
+            value={assumptions.quarterlyAllocation?.[1] || 25} 
+            onChange={val => {
+              const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
+              newAllocation[1] = val;
+              setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
+            }} 
+            unit="%" 
+            disabled={!editMode} 
+            isPercentage
+            tooltip="Percentage of annual new business originated in Q2 (Apr-Jun)"
+            tooltipImpact="Q2 loans generate interest for ~62.5% of the year"
+          />
+          <EditableNumberField 
+            label="Q3 Allocation" 
+            value={assumptions.quarterlyAllocation?.[2] || 25} 
+            onChange={val => {
+              const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
+              newAllocation[2] = val;
+              setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
+            }} 
+            unit="%" 
+            disabled={!editMode} 
+            isPercentage
+            tooltip="Percentage of annual new business originated in Q3 (Jul-Sep)"
+            tooltipImpact="Q3 loans generate interest for ~37.5% of the year"
+          />
+          <EditableNumberField 
+            label="Q4 Allocation" 
+            value={assumptions.quarterlyAllocation?.[3] || 25} 
+            onChange={val => {
+              const newAllocation = [...(assumptions.quarterlyAllocation || [25, 25, 25, 25])];
+              newAllocation[3] = val;
+              setAssumptions({...assumptions, quarterlyAllocation: newAllocation});
+            }} 
+            unit="%" 
+            disabled={!editMode} 
+            isPercentage
+            tooltip="Percentage of annual new business originated in Q4 (Oct-Dec)"
+            tooltipImpact="Q4 loans generate interest for only ~12.5% of the year"
+          />
+        </div>
+        {assumptions.quarterlyAllocation && 
+         assumptions.quarterlyAllocation.reduce((a, b) => a + b, 0) !== 100 && (
+          <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm text-yellow-700">
+            ⚠️ Warning: Quarterly allocations must sum to 100% (current sum: {assumptions.quarterlyAllocation.reduce((a, b) => a + b, 0)}%)
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow-md">
         <h3 className="text-xl font-bold text-gray-800 mb-6">Funding Mix (Liabilities)</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <EditableNumberField 

@@ -162,6 +162,8 @@ const StandardPnL = ({
             interestRate: product.assumptions?.interestRate || 0,
             depositRate: depositRate,
             ftpRate: ((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5)),
+            euribor: assumptions.euribor || 3.5,
+            ftpSpread: assumptions.ftpSpread || 1.5,
             result: val
           });
         })
