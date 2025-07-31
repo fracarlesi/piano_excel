@@ -220,3 +220,5 @@ export const defaultAssumptions = {
     }
   }
 };
+
+export default defaultAssumptions;
