@@ -39,6 +39,7 @@ const DivisionAssumptions = ({
 
   // Handle volume changes
   const handleVolumeChange = (productKey, volumes) => {
+    console.log('📊 Volume change for product:', productKey, 'new volumes:', volumes);
     onAssumptionChange(`products.${productKey}.volumeArray`, volumes);
   };
 
@@ -170,9 +171,15 @@ const DivisionAssumptions = ({
                   <div className="mb-6">
                     <h4 className="text-sm font-medium mb-2">📊 Volumi (€M)</h4>
                     <VolumeInputGrid
-                      volumes={product.volumeArray || []}
-                      onChange={(volumes) => handleVolumeChange(productKey, volumes)}
-                      editMode={true}
+                      values={(product.volumeArray || []).slice(0, 5)} // Only first 5 years for editing
+                      onChange={(volumes) => {
+                        // Extend to 10 years for financial engine
+                        const extended = [...volumes];
+                        while (extended.length < 10) {
+                          extended.push(extended[extended.length - 1] || 0);
+                        }
+                        handleVolumeChange(productKey, extended);
+                      }}
                     />
                   </div>
 

@@ -35,6 +35,7 @@ const BankPlanApp = () => {
     initialize,
     cleanup,
     updateAssumption,
+    setAssumptions,
     exportToFile,
     importData
   } = useAssumptionsStore();
@@ -217,12 +218,14 @@ const BankPlanApp = () => {
       case 'wealthAssumptions':
       case 'techAssumptions':
       case 'incentiveAssumptions':
+      case 'assumptions':
       case 'centralAssumptions':
       case 'treasuryAssumptions':
         return (
           <AssumptionsSheet 
             assumptions={assumptions} 
             onAssumptionsChange={updateAssumption}
+            setAssumptions={setAssumptions}
             editMode={editMode}
             initialTab={activeSheet.replace('Assumptions', '')}
           />

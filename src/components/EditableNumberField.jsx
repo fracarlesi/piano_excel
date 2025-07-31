@@ -15,7 +15,7 @@ const EditableNumberField = ({
   tooltipImpact,
   tooltipFormula
 }) => {
-  const [inputValue, setInputValue] = useState(value.toString());
+  const [inputValue, setInputValue] = useState((value ?? 0).toString());
   const [isFocused, setIsFocused] = useState(false);
 
   const formatOptions = {
@@ -25,13 +25,13 @@ const EditableNumberField = ({
 
   useEffect(() => {
     if (!isFocused) {
-      setInputValue(value.toLocaleString('it-IT', formatOptions));
+      setInputValue((value ?? 0).toLocaleString('it-IT', formatOptions));
     }
   }, [value, isFocused, formatOptions]);
 
   const handleFocus = () => {
     setIsFocused(true);
-    setInputValue(value.toString());
+    setInputValue((value ?? 0).toString());
   };
 
   const handleBlur = () => {
@@ -61,7 +61,7 @@ const EditableNumberField = ({
       <div className="relative">
         <input
           type="text"
-          value={isFocused ? inputValue : value.toLocaleString('it-IT', formatOptions)}
+          value={isFocused ? inputValue : (value ?? 0).toLocaleString('it-IT', formatOptions)}
           onFocus={handleFocus}
           onBlur={handleBlur}
           onChange={handleChange}

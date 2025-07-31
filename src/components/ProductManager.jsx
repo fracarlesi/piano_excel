@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionChange }) => {
+const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionChange, saveToFirebase }) => {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [newProductName, setNewProductName] = useState('');
   const [newProductType, setNewProductType] = useState('Credit');
@@ -35,6 +35,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
       name: name,
       productType: 'Credit',
       volumes: { y1: 50, y10: 400 },
+      volumeArray: [50, 125, 200, 300, 400, 400, 400, 400, 400, 400], // 10-year volume progression
       spread: 3.0,
       costOfFunding: assumptions.costOfFundsRate || 3.0,
       totalDuration: 5,
@@ -59,6 +60,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
       name: name,
       productType: 'Commission',
       volumes: { y1: 10, y10: 100 },
+      volumeArray: [10, 25, 50, 75, 100, 100, 100, 100, 100, 100], // 10-year volume progression
       commissionRate: 2.0,
       feeIncomeRate: 1.5,
       setupFeeRate: 0.5,
@@ -95,7 +97,13 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
     };
 
     // Update through Zustand store
+    console.log('Adding product with volumeArray:', newProduct.volumeArray);
     onAssumptionChange('products', updatedProducts);
+    
+    // Force immediate save to Firebase
+    if (saveToFirebase) {
+      setTimeout(() => saveToFirebase(), 100); // Small delay to let state update
+    }
     
     // Reset form
     setNewProductName('');

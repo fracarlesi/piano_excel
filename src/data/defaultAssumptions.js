@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.01', // Fixed unused variables warnings in StandardDivisionSheet, StandardPnL, treasuryCalculator, and financial-engine index
+  version: '10.12', // REVOLUTIONARY FIX: Implemented correct quarterly rolling stock interest calculation
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
