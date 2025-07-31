@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '7.24', // Implementato calculation trace dettagliato per costi del personale con breakdown bottom-up per livello e dipartimento
+  version: '7.31', // Fixed division structure overwrite bug that was clearing personnel costs
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

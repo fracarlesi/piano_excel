@@ -6,9 +6,23 @@
  * @returns {Object} Personnel costs by division and total
  */
 export const calculatePersonnelCosts = (assumptions, years) => {
+  console.log('=== calculatePersonnelCosts START ===');
+  console.log('Years:', years);
+  console.log('Years is array:', Array.isArray(years));
+  console.log('Years length:', years?.length);
+  console.log('Assumptions:', assumptions ? 'exists' : 'null');
+  console.log('Assumptions keys:', Object.keys(assumptions || {}));
+  
+  // Test simple calculation
+  const testCost = -1.5; // €1.5M for testing
+  console.log('Test cost:', testCost);
+  
   const personnel = assumptions.personnel || {};
   const { annualSalaryReview = 2.5, companyTaxMultiplier = 1.4 } = personnel;
   const salaryGrowth = years.map(i => Math.pow(1 + annualSalaryReview / 100, i));
+  
+  console.log('Salary growth factors:', salaryGrowth);
+  
   
   const results = {
     byDivision: {},
@@ -43,9 +57,21 @@ export const calculatePersonnelCosts = (assumptions, years) => {
           : 1; // Senior and Head of remain constant
         
         const headcount = level.count * growthMultiplier;
-        const ralPerHead = (level.ralPerHead || 0) * salaryGrowth[yearIndex];
+        const ralPerHead = (level.ralPerHead || 0) * 1000 * salaryGrowth[yearIndex]; // ralPerHead is in thousands
         const companyCostPerHead = ralPerHead * companyTaxMultiplier;
-        const levelCost = headcount * companyCostPerHead / 1000; // Convert to €M
+        const levelCost = headcount * companyCostPerHead / 1000000; // Convert to €M
+        
+        if (yearIndex === 0 && level.level === 'Junior') {
+          console.log('Junior calculation detail:', {
+            count: level.count,
+            ralPerHead_input: level.ralPerHead,
+            ralPerHead_calculated: ralPerHead,
+            companyCostPerHead,
+            headcount,
+            levelCost
+          });
+        }
+        
         
         totalCost += levelCost;
         totalHeadcount += headcount;
@@ -54,8 +80,8 @@ export const calculatePersonnelCosts = (assumptions, years) => {
         levelDetails.push({
           level: level.level,
           headcount: headcount,
-          ralPerHead: ralPerHead,
-          companyCostPerHead: companyCostPerHead,
+          ralPerHead: ralPerHead / 1000, // Show in thousands for display
+          companyCostPerHead: companyCostPerHead / 1000, // Show in thousands for display
           totalCost: levelCost
         });
       });
@@ -70,13 +96,21 @@ export const calculatePersonnelCosts = (assumptions, years) => {
 
   // Business Divisions
   // Real Estate Division
+  console.log('RE Division check:', {
+    hasRealEstateDivision: !!assumptions.realEstateDivision,
+    staffing: assumptions.realEstateDivision?.staffing
+  });
+  
   if (assumptions.realEstateDivision) {
     const divisionCosts = calculateDivisionCosts(assumptions.realEstateDivision, salaryGrowth, companyTaxMultiplier, years);
+    console.log('RE Division costs calculated:', divisionCosts[0]);
+    
     results.byDivision.RealEstateFinancing = {
       costs: divisionCosts.map(d => -d.cost), // Negative for P&L
       headcount: divisionCosts.map(d => d.headcount),
       details: divisionCosts.map(d => d.details) // Store details for calculation trace
     };
+    
   }
 
   // SME Division
@@ -188,5 +222,13 @@ export const calculatePersonnelCosts = (assumptions, years) => {
     return totalHeadcount;
   });
 
+  
+  console.log('=== calculatePersonnelCosts END ===');
+  console.log('Final results summary:', {
+    totalCostsY1: results.totalCosts[0],
+    divisionCount: Object.keys(results.byDivision).length,
+    divisions: Object.keys(results.byDivision)
+  });
+  
   return results;
 };

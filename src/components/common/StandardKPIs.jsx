@@ -25,19 +25,12 @@ const StandardKPIs = ({
     return ii + ci + ie + ce; // ie and ce are negative
   });
   
-  // Calculate operating expenses (allocated based on RWA)
-  const totalOpex = [0,0,0,0,0,0,0,0,0,0].map((_, i) => {
-    const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const totalRwa = globalResults.capital.totalRWA[i] || 1;
-    const rwaWeight = divisionRwa / totalRwa;
-    
-    const personnelCosts = (globalResults.pnl.personnelCostsTotal || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const adminCosts = (globalResults.pnl.adminCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const marketingCosts = (globalResults.pnl.marketingCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const itCosts = (globalResults.pnl.itCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const hqAllocation = (globalResults.pnl.hqAllocation || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    
-    return (personnelCosts + adminCosts + marketingCosts + itCosts + hqAllocation) * rwaWeight;
+  // Use pre-calculated total OPEX from division results
+  const totalOpex = divisionResults.pnl.totalOpex || [0,0,0,0,0,0,0,0,0,0].map((_, i) => {
+    // Fallback calculation if totalOpex not available
+    const personnelCosts = (divisionResults.pnl.personnelCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+    const otherOpex = (divisionResults.pnl.otherOpex || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
+    return personnelCosts + otherOpex;
   });
 
   // Cost/Income Ratio

@@ -27,6 +27,11 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v7.31 (2025-07-31)
+- Fixed critical bug where division structure was being recreated, wiping out personnel costs
+- Personnel costs now properly preserved when calculating division-level results
+- Added extensive logging to trace data flow for debugging
+
 ### v7.23 (2025-07-31)
 - Personnel costs from bottom-up model now correctly reflected in P&L for each division
 - Division FTE in KPIs now shows actual headcount from staffing tables

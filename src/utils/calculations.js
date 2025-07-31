@@ -732,8 +732,16 @@ const calculatePersonnelCostsOld = (personnel, years) => {
  * @returns {Object} Complete calculation results including P&L, Balance Sheet, Capital, and KPIs
  */
 export const calculateResults = (assumptions) => {
+  console.log('🔵 calculateResults START');
+  console.log('🔵 assumptions received:', assumptions ? 'YES' : 'NO');
+  console.log('🔵 assumptions.version:', assumptions?.version);
+  console.log('🔵 assumptions.realEstateDivision exists:', !!assumptions?.realEstateDivision);
+  console.log('🔵 assumptions.realEstateDivision.staffing:', assumptions?.realEstateDivision?.staffing);
+  
   const results = { pnl: {}, bs: {}, capital: {}, kpi: {}, formulas: {} };
   const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  
+  console.log('🔵 years array:', years);
   
   // Calculate FTP (Funds Transfer Pricing) rate: EURIBOR + FTP Spread
   const ftpRate = (assumptions.euribor + (assumptions.ftpSpread || 1.5)) / 100;
@@ -1269,13 +1277,40 @@ export const calculateResults = (assumptions) => {
   results.kpi.fte = totalFte;
   
   // Calculate personnel costs using new bottom-up model
+  console.log('🔵 About to call calculatePersonnelCosts');
   const personnelResults = calculatePersonnelCosts(assumptions, years);
+  console.log('🔵 personnelCosts returned:', personnelResults);
+  console.log('🔵 personnelCosts.byDivision:', personnelResults?.byDivision);
+  console.log('🔵 personnelCosts.byDivision.RealEstateFinancing:', personnelResults?.byDivision?.RealEstateFinancing);
+  console.log('🔵 RE costs Y1:', personnelResults?.byDivision?.RealEstateFinancing?.costs?.[0]);
+  
   results.pnl.personnelCostsTotal = personnelResults.totalCosts;
   results.kpi.fte = personnelResults.totalHeadcount;
+  
+  
   
   // Store detailed personnel costs for divisions
   results.personnelCostsByDivision = personnelResults.byDivision;
   results.personnelCostsByCentralDept = personnelResults.byDepartment;
+  
+  // Assign personnel costs to each business division
+  const divisionPersonnelMappingForAssignment = {
+    're': 'RealEstateFinancing',
+    'sme': 'SMEFinancing',
+    'digital': 'DigitalBanking',
+    'wealth': 'WealthAndAssetManagement',
+    'incentive': 'Incentives',
+    'tech': 'Tech'
+  };
+  
+  // Ensure divisions have personnel costs assigned
+  Object.entries(divisionPersonnelMappingForAssignment).forEach(([prefix, divisionKey]) => {
+    if (results.divisions[prefix] && personnelResults.byDivision[divisionKey]) {
+      results.divisions[prefix].pnl.personnelCosts = personnelResults.byDivision[divisionKey].costs;
+      results.divisions[prefix].pnl.personnelCostDetails = personnelResults.byDivision[divisionKey].details;
+      console.log(`🔵 Assigned personnel costs to ${prefix}: Y1 = ${results.divisions[prefix].pnl.personnelCosts[0]}`);
+    }
+  });
   
   // Update division-level FTE from personnel results
   const divisionPersonnelKeys = {
@@ -1678,30 +1713,9 @@ export const calculateResults = (assumptions) => {
       }
       
       product.commissionExpense = years.map(i => results.pnl.commissionExpenses[i] * assetWeight[i]);
-      // Allocate personnel costs based on division
-      let divisionPersonnelCosts = years.map(() => 0);
+      // Set personnel costs to zero for all products (no allocation to products)
+      product.personnelCosts = years.map(() => 0);
       
-      // Map product to division
-      if (key.startsWith('re')) {
-        divisionPersonnelCosts = personnelResults.byDivision.RealEstateFinancing?.costs || years.map(() => 0);
-      } else if (key.startsWith('sme')) {
-        divisionPersonnelCosts = personnelResults.byDivision.SMEFinancing?.costs || years.map(() => 0);
-      } else if (key.startsWith('digital')) {
-        divisionPersonnelCosts = personnelResults.byDivision.DigitalBanking?.costs || years.map(() => 0);
-      } else if (key.startsWith('wealth')) {
-        divisionPersonnelCosts = personnelResults.byDivision.WealthAndAssetManagement?.costs || years.map(() => 0);
-      } else if (key.startsWith('incentive')) {
-        divisionPersonnelCosts = personnelResults.byDivision.Incentives?.costs || years.map(() => 0);
-      } else if (key.startsWith('tech')) {
-        divisionPersonnelCosts = personnelResults.byDivision.Tech?.costs || years.map(() => 0);
-      }
-      
-      // Calculate product's share of division RWA
-      const divisionPrefix = key.match(/^(re|sme|digital|wealth|incentive|tech)/)?.[1];
-      const divisionRWA = divisionPrefix ? results.divisions[divisionPrefix]?.capital?.totalRWA || years.map(() => 0) : years.map(() => 0);
-      const productRWAWeight = years.map(i => divisionRWA[i] > 0 ? product.rwa[i] / divisionRWA[i] : 0);
-      
-      product.personnelCosts = years.map(i => divisionPersonnelCosts[i] * productRWAWeight[i]);
       product.allocatedEquity = years.map(i => results.bs.equity[i] * rwaWeight[i]);
       product.cet1Ratio = years.map(i => product.rwa[i] > 0 ? (product.allocatedEquity[i] / product.rwa[i]) * 100 : 0);
       
@@ -1717,7 +1731,7 @@ export const calculateResults = (assumptions) => {
       // Store allocated other OPEX in product for visibility
       product.otherOpex = allocatedOtherOpex;
       
-      product.netProfit = years.map(i => revenues[i] + product.interestExpense[i] + product.llp[i] + product.personnelCosts[i] + allocatedOtherOpex[i] + allocatedTaxes[i] + product.commissionExpense[i]);
+      product.netProfit = years.map(i => revenues[i] + product.interestExpense[i] + product.llp[i] + allocatedOtherOpex[i] + allocatedTaxes[i] + product.commissionExpense[i]);
       
       product.roe = years.map(i => {
           const startEquity = i > 0 ? product.allocatedEquity[i-1] : 0;
@@ -1760,7 +1774,7 @@ export const calculateResults = (assumptions) => {
   });
 
   // Calculate division-level results
-  results.divisions = {};
+  // NOTE: DO NOT reset results.divisions here - it already has data!
   
   // Mapping from division prefixes to personnel cost division keys
   const divisionPersonnelMapping = {
@@ -1781,9 +1795,17 @@ export const calculateResults = (assumptions) => {
     
     // Get personnel costs from the new bottom-up calculation
     const personnelDivisionKey = divisionPersonnelMapping[prefix];
+    console.log(`🔵 Division ${prefix} - mapping to ${personnelDivisionKey}`);
+    
     const divisionPersonnelCosts = prefix === 'central' 
       ? personnelResults.centralFunctionsTotal
       : (personnelResults.byDivision[personnelDivisionKey]?.costs || years.map(() => 0));
+    
+    console.log(`🔵 Division ${prefix} personnel costs Y1:`, divisionPersonnelCosts?.[0]);
+    
+    // Preserve existing personnel costs if they were already assigned
+    const existingPersonnelCosts = results.divisions[prefix]?.pnl?.personnelCosts;
+    const existingPersonnelCostDetails = results.divisions[prefix]?.pnl?.personnelCostDetails;
     
     results.divisions[prefix] = {
       bs: {
@@ -1813,13 +1835,93 @@ export const calculateResults = (assumptions) => {
         totalLLP: years.map(i => 
           divisionProducts.reduce((sum, p) => sum + p.llp[i], 0)
         ),
-        personnelCosts: divisionPersonnelCosts,
-        personnelCostDetails: prefix === 'central' 
+        personnelCosts: existingPersonnelCosts || divisionPersonnelCosts,
+        personnelCostDetails: existingPersonnelCostDetails || (prefix === 'central' 
           ? personnelResults.byDepartment 
-          : (personnelResults.byDivision[personnelDivisionKey]?.details || []),
-        netProfit: years.map(i => 
-          divisionProducts.reduce((sum, p) => sum + p.netProfit[i], 0)
-        )
+          : (personnelResults.byDivision[personnelDivisionKey]?.details || [])),
+        // Calculate division's share of other OPEX based on RWA
+        otherOpex: years.map((_, i) => {
+          const divisionRWA = divisionProducts.reduce((sum, p) => sum + p.rwa[i], 0);
+          const totalRWA = results.capital.totalRWA[i] || 1;
+          const rwaWeight = divisionRWA / totalRWA;
+          return otherOpex[i] * rwaWeight;
+        }),
+        // Calculate total OPEX for division
+        totalOpex: years.map((_, i) => {
+          const pc = divisionPersonnelCosts[i] || 0;
+          const divisionRWA = divisionProducts.reduce((sum, p) => sum + p.rwa[i], 0);
+          const totalRWA = results.capital.totalRWA[i] || 1;
+          const rwaWeight = divisionRWA / totalRWA;
+          const allocatedOtherOpex = otherOpex[i] * rwaWeight;
+          return pc + allocatedOtherOpex;
+        }),
+        // Calculate pre-tax profit for division
+        preTaxProfit: years.map((_, i) => {
+          const interestIncome = divisionProducts.reduce((sum, p) => sum + p.interestIncome[i], 0);
+          const interestExpense = divisionProducts.reduce((sum, p) => sum + p.interestExpense[i], 0);
+          const commissionIncome = divisionProducts.reduce((sum, p) => sum + p.commissionIncome[i], 0);
+          const commissionExpense = divisionProducts.reduce((sum, p) => sum + p.commissionExpense[i], 0);
+          const totalRevenues = interestIncome + interestExpense + commissionIncome + commissionExpense;
+          
+          const pc = divisionPersonnelCosts[i] || 0;
+          const divisionRWA = divisionProducts.reduce((sum, p) => sum + p.rwa[i], 0);
+          const totalRWA = results.capital.totalRWA[i] || 1;
+          const rwaWeight = divisionRWA / totalRWA;
+          const allocatedOtherOpex = otherOpex[i] * rwaWeight;
+          const totalOpex = pc + allocatedOtherOpex;
+          
+          const llp = divisionProducts.reduce((sum, p) => sum + p.llp[i], 0);
+          
+          return totalRevenues + totalOpex + llp;
+        }),
+        // Calculate taxes for division
+        taxes: years.map((_, i) => {
+          const interestIncome = divisionProducts.reduce((sum, p) => sum + p.interestIncome[i], 0);
+          const interestExpense = divisionProducts.reduce((sum, p) => sum + p.interestExpense[i], 0);
+          const commissionIncome = divisionProducts.reduce((sum, p) => sum + p.commissionIncome[i], 0);
+          const commissionExpense = divisionProducts.reduce((sum, p) => sum + p.commissionExpense[i], 0);
+          const totalRevenues = interestIncome + interestExpense + commissionIncome + commissionExpense;
+          
+          const pc = divisionPersonnelCosts[i] || 0;
+          const divisionRWA = divisionProducts.reduce((sum, p) => sum + p.rwa[i], 0);
+          const totalRWA = results.capital.totalRWA[i] || 1;
+          const rwaWeight = divisionRWA / totalRWA;
+          const allocatedOtherOpex = otherOpex[i] * rwaWeight;
+          const totalOpex = pc + allocatedOtherOpex;
+          
+          const llp = divisionProducts.reduce((sum, p) => sum + p.llp[i], 0);
+          const preTaxProfit = totalRevenues + totalOpex + llp;
+          
+          return preTaxProfit > 0 ? -preTaxProfit * (assumptions.taxRate / 100) : 0;
+        }),
+        // Calculate net profit at division level
+        netProfit: years.map((_, i) => {
+          // Revenues
+          const interestIncome = divisionProducts.reduce((sum, p) => sum + p.interestIncome[i], 0);
+          const interestExpense = divisionProducts.reduce((sum, p) => sum + p.interestExpense[i], 0);
+          const commissionIncome = divisionProducts.reduce((sum, p) => sum + p.commissionIncome[i], 0);
+          const commissionExpense = divisionProducts.reduce((sum, p) => sum + p.commissionExpense[i], 0);
+          const totalRevenues = interestIncome + interestExpense + commissionIncome + commissionExpense;
+          
+          // Costs
+          const pc = divisionPersonnelCosts[i] || 0;
+          const divisionRWA = divisionProducts.reduce((sum, p) => sum + p.rwa[i], 0);
+          const totalRWA = results.capital.totalRWA[i] || 1;
+          const rwaWeight = divisionRWA / totalRWA;
+          const allocatedOtherOpex = otherOpex[i] * rwaWeight;
+          const totalOpex = pc + allocatedOtherOpex;
+          
+          // LLP
+          const llp = divisionProducts.reduce((sum, p) => sum + p.llp[i], 0);
+          
+          // Pre-tax profit
+          const preTaxProfit = totalRevenues + totalOpex + llp;
+          
+          // Tax calculation
+          const taxes = preTaxProfit > 0 ? -preTaxProfit * (assumptions.taxRate / 100) : 0;
+          
+          return preTaxProfit + taxes;
+        })
       },
       capital: {
         rwaCreditRisk: years.map(i => 

@@ -16,6 +16,13 @@ const StandardPnL = ({
   showProductDetail = true,
   customRowTransformations = {}
 }) => {
+  
+  // SIMPLE DEBUG
+  console.log(`PnL for ${divisionName}:`, {
+    hasPersonnelCosts: !!divisionResults.pnl?.personnelCosts,
+    firstValue: divisionResults.pnl?.personnelCosts?.[0]
+  });
+  
 
   // Calculate derived values
   const netInterestIncome = (divisionResults.pnl.interestIncome || [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
@@ -36,27 +43,10 @@ const StandardPnL = ({
 
   const totalRevenues = netInterestIncome.map((nii, i) => nii + netCommissionIncome[i] + otherIncome[i]);
 
-  // Calculate total operating expenses
-  const personnelCosts = divisionResults.pnl.personnelCosts || 
-    globalResults.pnl.personnelCostsTotal.map((cost, i) => {
-      const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-      const totalRwa = globalResults.capital.totalRWA[i] || 1;
-      return cost * (divisionRwa / totalRwa);
-    });
-
-  const otherOpex = divisionResults.pnl.otherOpex || [0,0,0,0,0,0,0,0,0,0].map((_, i) => {
-    const adminCosts = (globalResults.pnl.adminCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const marketingCosts = (globalResults.pnl.marketingCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const itCosts = (globalResults.pnl.itCosts || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const hqAllocation = (globalResults.pnl.hqAllocation || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const totalOtherOpex = adminCosts + marketingCosts + itCosts + hqAllocation;
-    
-    const divisionRwa = (divisionResults.capital.totalRWA || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-    const totalRwa = globalResults.capital.totalRWA[i] || 1;
-    return totalOtherOpex * (divisionRwa / totalRwa);
-  });
-
-  const totalOpex = personnelCosts.map((pc, i) => pc + otherOpex[i]);
+  // Use pre-calculated values from division results
+  const personnelCosts = divisionResults.pnl.personnelCosts || [0,0,0,0,0,0,0,0,0,0];
+  const otherOpex = divisionResults.pnl.otherOpex || [0,0,0,0,0,0,0,0,0,0];
+  const totalOpex = divisionResults.pnl.totalOpex || personnelCosts.map((pc, i) => pc + otherOpex[i]);
 
   const preTaxProfit = totalRevenues.map((rev, i) => 
     rev + totalOpex[i] + (divisionResults.pnl.totalLLP || [0,0,0,0,0,0,0,0,0,0])[i]
@@ -565,40 +555,8 @@ const StandardPnL = ({
             ]
           );
         }
-      }),
-      // Add product breakdown as subRows
-      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-        label: `o/w ${product.name}`,
-        data: product.personnelCosts || [0,0,0,0,0,0,0,0,0,0],
-        decimals: 2,
-        formula: (product.personnelCosts || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
-          createFormula(
-            i,
-            'Total Personnel Costs × RWA Weight',
-            [
-              {
-                name: 'Total Personnel Costs',
-                value: personnelCosts[i] || 0,
-                unit: '€M',
-                calculation: 'Division total personnel costs'
-              },
-              {
-                name: 'Product RWA Weight',
-                value: globalResults.capital.totalRWA[i] > 0 ? 
-                  ((product.rwa || [0,0,0,0,0,0,0,0,0,0])[i] / globalResults.capital.totalRWA[i] * 100) : 0,
-                unit: '%',
-                calculation: 'Product RWA as % of total RWA'
-              }
-            ],
-            year => {
-              const totalPersonnel = personnelCosts[year] || 0;
-              const rwaWeight = globalResults.capital.totalRWA[year] > 0 ? 
-                ((product.rwa || [0,0,0,0,0,0,0,0,0,0])[year] / globalResults.capital.totalRWA[year]) : 0;
-              return `${formatNumber(totalPersonnel, 2)} × ${formatNumber(rwaWeight * 100, 2)}% = ${formatNumber(Math.abs(val), 2)} €M`;
-            }
-          )
-        )
-      })) : []
+      })
+      // No product breakdown for personnel costs - shown only at division level
     },
 
     // ========== OTHER OPEX ==========
