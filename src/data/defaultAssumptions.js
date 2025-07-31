@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.12', // Auto-sync version to Firebase on production deployment
+  version: '5.13', // Added anonymous authentication for auto-sync capability
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

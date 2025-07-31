@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ref, onValue, set, off } from 'firebase/database';
-import { database } from '../config/firebase';
+import { signInAnonymously } from 'firebase/auth';
+import { database, auth } from '../config/firebase';
 import defaultAssumptions from '../data/defaultAssumptions';
 
 // Function to clean data before sending to Firebase (remove undefined values)
@@ -50,56 +51,70 @@ export const useFirebaseState = () => {
       return; // Skip Firebase connection in development
     }
     
-    // Production mode: Use Firebase
-    const unsubscribe = onValue(assumptionsRef.current, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Check if local version is newer than Firebase version
-        if (defaultAssumptions.version && data.version && 
-            parseFloat(defaultAssumptions.version) > parseFloat(data.version)) {
-          console.log(`🔄 Updating Firebase version from ${data.version} to ${defaultAssumptions.version}`);
-          // Update only the version in Firebase
-          const updatedData = { ...data, version: defaultAssumptions.version };
-          set(assumptionsRef.current, cleanDataForFirebase(updatedData))
-            .then(() => {
-              console.log('✅ Version updated in Firebase');
-            })
-            .catch((error) => {
-              console.error('Error updating version:', error);
-            });
-        }
-        setLocalAssumptions(data);
-        lastSyncedDataRef.current = JSON.stringify(data);
-        setLastSaved(new Date());
-        setHasUnsavedChanges(false);
-      } else {
-        // If no data exists in Firebase, save the default assumptions
-        const cleanedDefaults = cleanDataForFirebase(defaultAssumptions);
-        set(assumptionsRef.current, cleanedDefaults)
-          .then(() => {
-            setLocalAssumptions(cleanedDefaults);
+    // Production mode: Sign in anonymously first, then use Firebase
+    const initializeFirebase = async () => {
+      try {
+        // Sign in anonymously to get write permissions
+        await signInAnonymously(auth);
+        console.log('🔐 Signed in anonymously to Firebase');
+        
+        // Now set up the real-time listener
+        const unsubscribe = onValue(assumptionsRef.current, (snapshot) => {
+          const data = snapshot.val();
+          if (data) {
+            // Check if local version is newer than Firebase version
+            if (defaultAssumptions.version && data.version && 
+                parseFloat(defaultAssumptions.version) > parseFloat(data.version)) {
+              console.log(`🔄 Updating Firebase version from ${data.version} to ${defaultAssumptions.version}`);
+              // Update only the version in Firebase
+              const updatedData = { ...data, version: defaultAssumptions.version };
+              set(assumptionsRef.current, cleanDataForFirebase(updatedData))
+                .then(() => {
+                  console.log('✅ Version updated in Firebase');
+                })
+                .catch((error) => {
+                  console.error('Error updating version:', error);
+                });
+            }
+            setLocalAssumptions(data);
+            lastSyncedDataRef.current = JSON.stringify(data);
             setLastSaved(new Date());
-            lastSyncedDataRef.current = JSON.stringify(cleanedDefaults);
-          })
-          .catch((error) => {
-            console.error('Error saving default assumptions:', error);
-          });
-      }
-      setIsLoading(false);
-    }, (error) => {
-      console.error('Firebase read error:', error);
-      setIsLoading(false);
-    });
-
-    // Cleanup listener on unmount
-    return () => {
-      if (!isDevelopment) {
-        off(assumptionsRef.current);
-      }
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+            setHasUnsavedChanges(false);
+          } else {
+            // If no data exists in Firebase, save the default assumptions
+            const cleanedDefaults = cleanDataForFirebase(defaultAssumptions);
+            set(assumptionsRef.current, cleanedDefaults)
+              .then(() => {
+                setLocalAssumptions(cleanedDefaults);
+                setLastSaved(new Date());
+                lastSyncedDataRef.current = JSON.stringify(cleanedDefaults);
+              })
+              .catch((error) => {
+                console.error('Error saving default assumptions:', error);
+              });
+          }
+          setIsLoading(false);
+        }, (error) => {
+          console.error('Firebase read error:', error);
+          setIsLoading(false);
+        });
+        
+        // Store unsubscribe function for cleanup
+        return () => {
+          off(assumptionsRef.current);
+          if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+          }
+        };
+      } catch (error) {
+        console.error('Error initializing Firebase:', error);
+        setIsLoading(false);
       }
     };
+    
+    // Initialize Firebase connection
+    initializeFirebase();
+    
   }, [isDevelopment]);
 
   // Auto-save function with debouncing

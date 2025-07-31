@@ -27,6 +27,11 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 - Firebase config in `/src/config/firebase.js`
 
 ## Version Changelog
+### v5.13 (2025-07-31)
+- Added anonymous authentication for Firebase write permissions
+- Enables automatic version sync from code to database
+- No user login required - authentication happens automatically
+
 ### v5.12 (2025-07-31)
 - Auto-sync version from defaultAssumptions.js to Firebase on production deployment
 - No manual intervention needed: version updates automatically when deployed
