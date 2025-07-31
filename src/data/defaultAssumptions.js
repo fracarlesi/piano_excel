@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '5.13', // Added anonymous authentication for auto-sync capability
+  version: '5.14', // Fixed version comparison logic for proper semantic versioning
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

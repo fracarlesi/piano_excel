@@ -66,11 +66,26 @@ export const useFirebaseState = () => {
             console.log('📊 Firebase data loaded');
             console.log('📌 Local version:', defaultAssumptions.version);
             console.log('🔥 Firebase version:', data.version);
-            console.log('📐 Comparison:', parseFloat(defaultAssumptions.version), '>', parseFloat(data.version), '=', parseFloat(defaultAssumptions.version) > parseFloat(data.version));
+            
+            // Compare versions properly (split by dot and compare parts)
+            const compareVersions = (v1, v2) => {
+              const parts1 = v1.split('.').map(Number);
+              const parts2 = v2.split('.').map(Number);
+              
+              for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+                const part1 = parts1[i] || 0;
+                const part2 = parts2[i] || 0;
+                if (part1 > part2) return 1;
+                if (part1 < part2) return -1;
+              }
+              return 0;
+            };
+            
+            const versionComparison = compareVersions(defaultAssumptions.version, data.version);
+            console.log('📐 Version comparison result:', versionComparison > 0 ? 'Local is newer' : versionComparison < 0 ? 'Firebase is newer' : 'Same version');
             
             // Check if local version is newer than Firebase version
-            if (defaultAssumptions.version && data.version && 
-                parseFloat(defaultAssumptions.version) > parseFloat(data.version)) {
+            if (defaultAssumptions.version && data.version && versionComparison > 0) {
               console.log(`🔄 Updating Firebase version from ${data.version} to ${defaultAssumptions.version}`);
               // Update only the version in Firebase
               const updatedData = { ...data, version: defaultAssumptions.version };
