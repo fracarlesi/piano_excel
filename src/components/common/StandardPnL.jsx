@@ -102,11 +102,17 @@ const StandardPnL = ({
         );
         const originalProduct = productKey ? assumptions.products[productKey] : {};
         
+        // Check if this is a digital product
+        const isDigitalProduct = product.depositStock && product.depositStock.some(v => v > 0);
+        
         return createProductFormula(i, product, 'interestIncome', {
           avgAssets: (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+          depositStock: isDigitalProduct ? (product.depositStock || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
           interestRate: product.assumptions?.interestRate || 0,
+          ftpRate: product.assumptions?.ftpRate || 5.0,
           isFixed: product.assumptions?.isFixedRate || false,
           euribor: assumptions.euribor || 3.5,
+          ftpSpread: assumptions.ftpSpread || 1.5,
           spread: originalProduct.spread || 0,
           result: val
         });
@@ -140,29 +146,33 @@ const StandardPnL = ({
         );
         const originalProduct = productKey ? assumptions.products[productKey] : {};
         
-        return createFormula(
-          i,
-          'Average Performing Assets × FTP Rate',
-          [
-            {
-              name: 'Average Performing Assets',
-              value: (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
-              unit: '€M',
-              calculation: 'Weighted average of performing loan stock'
-            },
-            {
-              name: 'FTP Rate',
-              value: ((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5)),
-              unit: '%',
-              calculation: 'Internal funds transfer pricing rate (EURIBOR + FTP Spread)'
-            }
-          ],
-          year => {
-            const avgAssets = (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
-            const ftpRate = ((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5));
-            return `${formatNumber(avgAssets, 2)} × ${formatNumber(ftpRate, 2)}% = ${formatNumber(Math.abs(val), 2)} €M (FTP cost)`;
+        // Check if this is a digital product
+        const isDigitalProduct = product.depositStock && product.depositStock.some(v => v > 0);
+        
+        // Determine the deposit interest rate based on product type
+        let depositRate = 0;
+        if (product.name && product.name.includes('Conto Corrente Base')) {
+          depositRate = 0.1; // Base account rate
+        } else if (product.name && product.name.includes('Conto Deposito')) {
+          // For savings account, calculate weighted average rate
+          const baseProduct = assumptions.products.digitalRetailCustomer;
+          if (baseProduct && baseProduct.savingsModule && baseProduct.savingsModule.depositMix) {
+            depositRate = baseProduct.savingsModule.depositMix.reduce((sum, deposit) => 
+              sum + (deposit.percentage / 100) * deposit.interestRate, 0
+            );
+          } else {
+            depositRate = 3.0; // Default savings rate
           }
-        );
+        }
+        
+        return createProductFormula(i, product, 'interestExpense', {
+          avgAssets: (product.averagePerformingAssets || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+          depositStock: isDigitalProduct ? (product.depositStock || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
+          interestRate: product.assumptions?.interestRate || 0,
+          depositRate: depositRate,
+          ftpRate: ((assumptions.euribor || 3.5) + (assumptions.ftpSpread || 1.5)),
+          result: val
+        });
       })
     })) : []),
 
@@ -271,9 +281,28 @@ const StandardPnL = ({
         );
         const originalProduct = productKey ? assumptions.products[productKey] : {};
         
+        // Check product type for digital products
+        const isBaseAccount = product.name && product.name.includes('Conto Corrente Base');
+        const isPremium = product.name && product.name.includes('Servizi Premium');
+        const isReferral = product.name && product.name.includes('Referral Wealth Management');
+        
+        // Get base assumptions for digital products
+        const baseProduct = assumptions.products.digitalRetailCustomer;
+        
         return createProductFormula(i, product, 'commissionIncome', {
           volume: (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
-          commissionRate: (originalProduct.commissionRate || 0), // Keep as percentage value (e.g., 2.5 for 2.5%)
+          commissionRate: (originalProduct.commissionRate || 0),
+          // Digital product specific values
+          isBaseAccount: isBaseAccount,
+          isPremium: isPremium,
+          isReferral: isReferral,
+          avgCustomers: isBaseAccount ? (product.avgCustomers || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
+          monthlyFee: isBaseAccount && baseProduct ? baseProduct.baseAccount.monthlyFee : 0,
+          activeCustomers: isPremium ? ((product.totalCustomers || [0,0,0,0,0,0,0,0,0,0])[i] * 0.2) : 0,
+          annualRevenue: isPremium && baseProduct ? baseProduct.premiumServicesModule.avgAnnualRevenue : 0,
+          newCustomers: isReferral ? (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] : 0,
+          adoptionRate: isReferral && baseProduct ? baseProduct.wealthManagementReferral.adoptionRate : 0,
+          referralFee: isReferral && baseProduct ? baseProduct.wealthManagementReferral.referralFee : 0,
           result: val
         });
       })
@@ -318,31 +347,24 @@ const StandardPnL = ({
       data: product.commissionExpense || [0,0,0,0,0,0,0,0,0,0],
       decimals: 2,
       isSubItem: true,
-      formula: (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
-        createFormula(
-          i,
-          'Product Commission Income × Expense Rate',
-          [
-            {
-              name: 'Product Commission Income',
-              value: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
-              unit: '€M',
-              calculation: 'This product\'s commission income'
-            },
-            {
-              name: 'Commission Expense Rate',
-              value: assumptions.commissionExpenseRate || 0,
-              unit: '%',
-              calculation: 'General commission expense rate'
-            }
-          ],
-          year => {
-            const income = (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0])[year] || 0;
-            const rate = assumptions.commissionExpenseRate || 0;
-            return `${formatNumber(income, 2)} × ${formatNumber(rate, 2)}% = ${formatNumber(Math.abs(val), 2)} €M (expense)`;
-          }
-        )
-      )
+      formula: (product.commissionExpense || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+        // Check if this is a CAC expense for digital products
+        const isBaseAccount = product.name && product.name.includes('Conto Corrente Base');
+        const isCacExpense = isBaseAccount && val < 0; // CAC is negative
+        
+        // Get base assumptions for digital products
+        const baseProduct = assumptions.products.digitalRetailCustomer;
+        
+        return createProductFormula(i, product, 'commissionExpense', {
+          commissionIncome: (product.commissionIncome || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+          expenseRate: assumptions.commissionExpenseRate || 0,
+          // CAC specific values
+          isCac: isCacExpense,
+          newCustomers: isCacExpense ? ((product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] * 1000) : 0, // Convert from thousands
+          cac: isCacExpense && baseProduct ? baseProduct.acquisition.cac : 0,
+          result: val
+        });
+      })
     })) : []),
 
     // ========== NET COMMISSION INCOME ==========

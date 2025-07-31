@@ -252,6 +252,174 @@ const calculateDigitalServiceProduct = (product, assumptions, years, ftpRate) =>
  * Handles products with customer-based metrics and deposit funding
  */
 const calculateDepositAndServiceProduct = (product, assumptions, years, ftpRate, baseProductResults = null) => {
+  // Handle special case for unified digitalRetailCustomer
+  if (product.acquisition && product.baseAccount && product.savingsModule) {
+    // This is the new unified customer model
+    const newCustomers = years.map(i => {
+      const y1 = product.acquisition.newCustomers.y1 || 0;
+      const y5 = product.acquisition.newCustomers.y5 || 0;
+      if (i < 5) {
+        return y1 + ((y5 - y1) * i / 4);
+      } else {
+        return y5;
+      }
+    });
+
+    // Calculate total customer stock
+    const totalCustomers = [];
+    const churnRate = (product.acquisition.churnRate || 5) / 100;
+    
+    for (let i = 0; i < years.length; i++) {
+      if (i === 0) {
+        totalCustomers[i] = newCustomers[i];
+      } else {
+        totalCustomers[i] = totalCustomers[i-1] * (1 - churnRate) + newCustomers[i];
+      }
+    }
+
+    // Calculate average customers for revenue calculations
+    const avgCustomers = totalCustomers.map((current, i) => {
+      if (i === 0) return current / 2;
+      return (totalCustomers[i-1] + current) / 2;
+    });
+
+    // Create sub-products for detailed reporting
+    const subProducts = [];
+
+    // 1. Base Account Product
+    const baseAccountDeposits = totalCustomers.map(customers => 
+      customers * (product.baseAccount.avgDeposit / 1000000)
+    );
+    const baseAccountInterestRate = (product.baseAccount.interestRate / 100);
+    const baseAccountInterestExpense = baseAccountDeposits.map(stock => 
+      -stock * baseAccountInterestRate
+    );
+    // FTP income = expense (no margin)
+    const baseAccountFtpIncome = baseAccountDeposits.map(stock => stock * baseAccountInterestRate);
+    const baseAccountFees = avgCustomers.map(customers => 
+      (customers * product.baseAccount.monthlyFee * 12) / 1000000
+    );
+
+    subProducts.push({
+      name: product.name + ' - Conto Corrente Base',
+      depositStock: baseAccountDeposits,
+      interestIncome: baseAccountFtpIncome,
+      interestExpense: baseAccountInterestExpense,
+      commissionIncome: baseAccountFees,
+      rwa: baseAccountDeposits.map(stock => stock * 0.10)
+    });
+
+    // 2. Savings Module Product
+    const savingsAdoptionRate = (product.savingsModule.adoptionRate || 0) / 100;
+    const savingsCustomers = totalCustomers.map(c => c * savingsAdoptionRate);
+    const savingsDeposits = savingsCustomers.map(customers => 
+      customers * (product.savingsModule.avgAdditionalDeposit / 1000000)
+    );
+    
+    // Calculate weighted average rate for savings deposits
+    let weightedSavingsRate = 0;
+    if (product.savingsModule.depositMix && Array.isArray(product.savingsModule.depositMix)) {
+      product.savingsModule.depositMix.forEach(deposit => {
+        const percentage = (deposit.percentage || 0) / 100;
+        const rate = (deposit.interestRate || 0) / 100;
+        weightedSavingsRate += percentage * rate;
+      });
+    }
+    
+    const savingsInterestExpense = savingsDeposits.map(stock => -stock * weightedSavingsRate);
+    // FTP income = expense (no margin)
+    const savingsFtpIncome = savingsDeposits.map(stock => stock * weightedSavingsRate);
+
+    subProducts.push({
+      name: product.name + ' - Conto Deposito',
+      depositStock: savingsDeposits,
+      interestIncome: savingsFtpIncome,
+      interestExpense: savingsInterestExpense,
+      commissionIncome: years.map(() => 0),
+      rwa: savingsDeposits.map(stock => stock * 0.05) // Lower RWA for savings
+    });
+
+    // 3. Premium Services Module
+    const premiumAdoptionRate = (product.premiumServicesModule.adoptionRate || 0) / 100;
+    const premiumCustomers = avgCustomers.map(c => c * premiumAdoptionRate);
+    const premiumRevenue = premiumCustomers.map(customers => 
+      (customers * product.premiumServicesModule.avgAnnualRevenue) / 1000000
+    );
+
+    subProducts.push({
+      name: product.name + ' - Servizi Premium',
+      depositStock: years.map(() => 0),
+      interestIncome: years.map(() => 0),
+      interestExpense: years.map(() => 0),
+      commissionIncome: premiumRevenue,
+      rwa: premiumRevenue.map(rev => rev * 12.5 * 0.15) // Operational risk RWA
+    });
+
+    // 4. Wealth Management Referral
+    const referralAdoptionRate = (product.wealthManagementReferral.adoptionRate || 0) / 100;
+    const referralRevenue = newCustomers.map(customers => 
+      (customers * referralAdoptionRate * product.wealthManagementReferral.referralFee) / 1000000
+    );
+
+    subProducts.push({
+      name: product.name + ' - Referral Wealth Management',
+      depositStock: years.map(() => 0),
+      interestIncome: years.map(() => 0),
+      interestExpense: years.map(() => 0),
+      commissionIncome: referralRevenue,
+      rwa: referralRevenue.map(rev => rev * 12.5 * 0.10) // Lower operational risk
+    });
+
+    // Calculate acquisition costs
+    const cac = product.acquisition.cac || 0;
+    const marketingCosts = newCustomers.map(customers => 
+      -(customers * cac) / 1000000
+    );
+
+    // Return structure with sub-products
+    return {
+      name: product.name,
+      isModular: true,
+      subProducts: subProducts,
+      volumes: newCustomers,
+      totalCustomers: totalCustomers,
+      avgCustomers: avgCustomers,
+      // Aggregated values for backward compatibility
+      depositStock: subProducts.reduce((acc, sp) => 
+        acc.map((v, i) => v + (sp.depositStock[i] || 0)), years.map(() => 0)
+      ),
+      performingAssets: years.map(() => 0),
+      averagePerformingAssets: years.map(() => 0),
+      nonPerformingAssets: years.map(() => 0),
+      interestIncome: subProducts.reduce((acc, sp) => 
+        acc.map((v, i) => v + sp.interestIncome[i]), years.map(() => 0)
+      ),
+      interestExpense: subProducts.reduce((acc, sp) => 
+        acc.map((v, i) => v + sp.interestExpense[i]), years.map(() => 0)
+      ),
+      commissionIncome: subProducts.reduce((acc, sp) => 
+        acc.map((v, i) => v + sp.commissionIncome[i]), years.map(() => 0)
+      ),
+      commissionExpense: marketingCosts,
+      llp: years.map(() => 0),
+      rwa: subProducts.reduce((acc, sp) => 
+        acc.map((v, i) => v + sp.rwa[i]), years.map(() => 0)
+      ),
+      newBusiness: newCustomers,
+      numberOfLoans: years.map(() => 0),
+      assumptions: {
+        cac: cac,
+        churnRate: product.acquisition.churnRate,
+        baseAccount: product.baseAccount,
+        savingsModule: product.savingsModule,
+        premiumServicesModule: product.premiumServicesModule,
+        wealthManagementReferral: product.wealthManagementReferral,
+        ftpRate: ftpRate * 100
+      }
+    };
+  }
+
+  // Original logic for standard products follows...
   // Handle dependency on base product
   let effectiveCustomers = [];
   let newCustomers = [];
@@ -323,51 +491,11 @@ const calculateDepositAndServiceProduct = (product, assumptions, years, ftpRate,
   const ftpIncome = depositStock.map(stock => stock * ftpRate);
   
   // Calculate revenues from fees and services
-  let commissionIncome;
-  
-  if (false) { // Remove old modular logic
-    // Modular structure calculations
-    
-    // Current account deposits
-    const caAvgDeposit = (product.currentAccount.avgDeposit || 0) / 1000000;
-    currentAccountDeposits = totalCustomers.map(customers => customers * caAvgDeposit);
-    
-    // Savings deposits (based on adoption rate)
-    const savingsAdoptionRate = (product.savingsModule.adoptionRate || 0) / 100;
-    const savingsAvgDeposit = (product.savingsModule.avgAdditionalDeposit || 0) / 1000000;
-    savingsDeposits = totalCustomers.map(customers => 
-      customers * savingsAdoptionRate * savingsAvgDeposit
-    );
-    
-    // Total deposits
-    totalDepositStock = currentAccountDeposits.map((ca, i) => ca + savingsDeposits[i]);
-    
-    // Interest expenses
-    const caInterestRate = (product.currentAccount.interestRate || 0) / 100;
-    currentAccountInterestExpense = currentAccountDeposits.map(stock => -stock * caInterestRate);
-    
-    // Calculate weighted average interest rate for savings deposits
-    let weightedSavingsRate = 0;
-    if (product.savingsModule.depositMix && Array.isArray(product.savingsModule.depositMix)) {
-      product.savingsModule.depositMix.forEach(deposit => {
-        const percentage = (deposit.percentage || 0) / 100;
-        const rate = (deposit.interestRate || 0) / 100;
-        weightedSavingsRate += percentage * rate;
-      });
-    }
-    savingsInterestExpense = savingsDeposits.map(stock => -stock * weightedSavingsRate);
-    
-    totalInterestExpense = currentAccountInterestExpense.map((ca, i) => 
-      ca + savingsInterestExpense[i]
-    );
-  } else {
-    // Standard fee calculation
-    const monthlyFee = product.monthlyFee || 0;
-    const annualServiceRevenue = product.annualServiceRevenue || 0;
-    commissionIncome = avgCustomers.map(customers => 
-      (customers * monthlyFee * 12 + customers * annualServiceRevenue) / 1000000 // Convert to millions
-    );
-  }
+  const monthlyFee = product.monthlyFee || 0;
+  const annualServiceRevenue = product.annualServiceRevenue || 0;
+  const commissionIncome = avgCustomers.map(customers => 
+    (customers * monthlyFee * 12 + customers * annualServiceRevenue) / 1000000 // Convert to millions
+  );
 
   // Calculate costs
   let marketingCosts;
@@ -386,7 +514,6 @@ const calculateDepositAndServiceProduct = (product, assumptions, years, ftpRate,
       -(Math.max(0, customers) * cac) / 1000000 // Convert to millions, negative as cost
     );
   }
-
 
   return {
     name: product.name,
@@ -455,7 +582,40 @@ export const calculateResults = (assumptions) => {
       
       // Handle Deposit and Service products (Digital Banking model)
       if (product.productType === 'DepositAndService') {
-        productResults[key] = calculateDepositAndServiceProduct(product, assumptions, years, ftpRate);
+        const result = calculateDepositAndServiceProduct(product, assumptions, years, ftpRate);
+        
+        // If it's a modular product, expand it into separate products
+        if (result.isModular && result.subProducts) {
+          // Don't include the parent product
+          // Instead, add each sub-product as a separate product
+          result.subProducts.forEach((subProduct, index) => {
+            const subProductKey = `${key}_sub${index}`;
+            productResults[subProductKey] = {
+              name: subProduct.name,
+              performingAssets: years.map(() => 0),
+              averagePerformingAssets: years.map(() => 0),
+              nonPerformingAssets: years.map(() => 0),
+              interestIncome: subProduct.interestIncome || years.map(() => 0),
+              interestExpense: subProduct.interestExpense || years.map(() => 0),
+              commissionIncome: subProduct.commissionIncome || years.map(() => 0),
+              commissionExpense: index === 0 ? result.commissionExpense : years.map(() => 0), // CAC only on base account
+              llp: years.map(() => 0),
+              rwa: subProduct.rwa || years.map(() => 0),
+              newBusiness: index === 0 ? result.newBusiness : years.map(() => 0),
+              numberOfLoans: years.map(() => 0),
+              depositStock: subProduct.depositStock || years.map(() => 0),
+              totalCustomers: result.totalCustomers,
+              avgCustomers: result.avgCustomers,
+              assumptions: {
+                ...result.assumptions,
+                subProductType: index === 0 ? 'base' : index === 1 ? 'savings' : index === 2 ? 'premium' : 'referral'
+              }
+            };
+          });
+        } else {
+          // Standard non-modular product
+          productResults[key] = result;
+        }
         continue;
       }
       
@@ -698,7 +858,9 @@ export const calculateResults = (assumptions) => {
   const divisionProductResults = {};
   divisionPrefixes.forEach(prefix => {
     divisionProductResults[prefix] = Object.fromEntries(
-      Object.entries(productResults).filter(([key]) => key.startsWith(prefix))
+      Object.entries(productResults).filter(([key]) => 
+        key.startsWith(prefix) || key.startsWith(`${prefix}RetailCustomer_sub`)
+      )
     );
   });
 

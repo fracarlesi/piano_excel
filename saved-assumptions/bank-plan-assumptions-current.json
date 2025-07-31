@@ -1,5 +1,5 @@
 {
-  "version": "5.3",
+  "version": "5.5",
   "initialEquity": 200,
   "taxRate": 28,
   "costOfFundsRate": 3,
@@ -221,67 +221,59 @@
       "type": "bullet",
       "equityUpside": 2.5
     },
-    "digitalBaseAccount": {
-      "name": "Conto Corrente Base",
+    "digitalRetailCustomer": {
+      "name": "Cliente Retail Digitale",
       "productType": "DepositAndService",
       "isDigital": true,
-      "isBaseProduct": true,
-      "customers": {
-        "y1": 5000,
-        "y5": 25000
+      "acquisition": {
+        "newCustomers": {
+          "y1": 50000,
+          "y5": 250000
+        },
+        "cac": 30,
+        "churnRate": 5
       },
-      "cac": 250,
-      "churnRate": 5,
-      "avgDeposit": 35000,
-      "depositInterestRate": 0.1,
-      "monthlyFee": 1,
-      "annualServiceRevenue": 25,
+      "baseAccount": {
+        "avgDeposit": 1500,
+        "interestRate": 0.1,
+        "monthlyFee": 0
+      },
+      "savingsModule": {
+        "adoptionRate": 30,
+        "avgAdditionalDeposit": 5000,
+        "depositMix": [
+          {
+            "name": "Svincolato",
+            "percentage": 40,
+            "interestRate": 2.5
+          },
+          {
+            "name": "Vincolato 12M",
+            "percentage": 60,
+            "interestRate": 3.5
+          }
+        ]
+      },
+      "premiumServicesModule": {
+        "adoptionRate": 20,
+        "avgAnnualRevenue": 80
+      },
+      "wealthManagementReferral": {
+        "adoptionRate": 5,
+        "referralFee": 150
+      },
       "customerArray": [
-        5000,
-        10000,
-        15000,
-        20000,
-        25000,
-        30000,
-        35000,
-        40000,
-        45000,
-        50000
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000,
+        1000
       ]
-    },
-    "digitalSavingsAccount": {
-      "name": "Conto Deposito Digitale",
-      "productType": "DepositAndService",
-      "isDigital": true,
-      "requiresBaseProduct": "digitalBaseAccount",
-      "adoptionRate": 30,
-      "avgDeposit": 5000,
-      "depositInterestRate": 3,
-      "monthlyFee": 0,
-      "annualServiceRevenue": 0
-    },
-    "digitalPremiumServices": {
-      "name": "Servizi Premium",
-      "productType": "Commission",
-      "isDigital": true,
-      "requiresBaseProduct": "digitalBaseAccount",
-      "adoptionRate": 20,
-      "commissionRate": 0,
-      "monthlyFee": 5,
-      "annualServiceRevenue": 100,
-      "operationalRiskWeight": 10
-    },
-    "digitalInvestmentPlatform": {
-      "name": "Piattaforma Investimenti",
-      "productType": "Commission",
-      "isDigital": true,
-      "requiresBaseProduct": "digitalBaseAccount",
-      "adoptionRate": 15,
-      "avgAUM": 15000,
-      "managementFeeRate": 1.2,
-      "performanceFeeRate": 10,
-      "avgAnnualGains": 8,
-      "operationalRiskWeight": 15
     }
   }
 }

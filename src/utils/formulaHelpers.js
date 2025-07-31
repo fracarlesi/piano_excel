@@ -46,10 +46,27 @@ export const createFormula = (year, formula, precedents, calculationFn) => {
  * Create a product-level formula with automatic precedent tracing
  */
 export const createProductFormula = (year, product, formulaType, values) => {
+  // Check if this is a digital product
+  const isDigitalProduct = product.name && product.name.includes('Cliente Retail Digitale');
+  const isDepositProduct = product.depositStock && product.depositStock.some(v => v > 0);
+  
   const baseFormulas = {
     interestIncome: {
-      formula: 'Average Performing Assets × Interest Rate',
-      precedents: [
+      formula: isDepositProduct ? 'Deposit Stock × Deposit Rate (FTP = Deposit Rate)' : 'Average Performing Assets × Interest Rate',
+      precedents: isDepositProduct ? [
+        {
+          name: 'Deposit Stock',
+          value: values.depositStock || values.avgAssets,
+          unit: '€M',
+          calculation: 'Total customer deposits'
+        },
+        {
+          name: 'FTP Rate',
+          value: values.depositRate || values.ftpRate || values.interestRate,
+          unit: '%',
+          calculation: 'Equal to deposit rate paid to customers (no margin)'
+        }
+      ] : [
         {
           name: 'Average Performing Assets',
           value: values.avgAssets,
@@ -68,24 +85,160 @@ export const createProductFormula = (year, product, formulaType, values) => {
           calculation: `${product.gracePeriod ? `Grace period: ${product.gracePeriod} years` : 'No grace period'}`
         }
       ],
-      calculation: () => `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M`
+      calculation: () => isDepositProduct ? 
+        `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.ftpRate || values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M` :
+        `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.interestRate, 2)}% = ${formatNumber(values.result, 2)} €M`
+    },
+    
+    interestExpense: {
+      formula: isDepositProduct ? 'Deposit Stock × Deposit Interest Rate' : 'Average Performing Assets × FTP Rate',
+      precedents: isDepositProduct ? [
+        {
+          name: 'Deposit Stock',
+          value: values.depositStock || values.avgAssets,
+          unit: '€M',
+          calculation: 'Total customer deposits'
+        },
+        {
+          name: 'Deposit Interest Rate',
+          value: values.depositRate || values.interestRate || 0,
+          unit: '%',
+          calculation: values.depositMix ? 'Weighted average of deposit mix rates' : 'Rate paid to customers'
+        }
+      ] : [
+        {
+          name: 'Average Performing Assets',
+          value: values.avgAssets,
+          unit: '€M',
+          calculation: 'Weighted average of performing loan stock'
+        },
+        {
+          name: 'FTP Rate',
+          value: values.ftpRate || 5.0,
+          unit: '%',
+          calculation: 'Internal funds transfer pricing rate'
+        }
+      ],
+      calculation: () => isDepositProduct ?
+        `${formatNumber(values.depositStock || values.avgAssets, 2)} × ${formatNumber(values.depositRate || values.interestRate || 0, 2)}% = ${formatNumber(Math.abs(values.result), 2)} €M` :
+        `${formatNumber(values.avgAssets, 2)} × ${formatNumber(values.ftpRate || 5.0, 2)}% = ${formatNumber(Math.abs(values.result), 2)} €M`
     },
     
     commissionIncome: {
-      formula: 'New Business Volume × Commission Rate',
-      precedents: [
+      formula: isDigitalProduct ? 
+        (values.isReferral ? 'New Customers × Adoption Rate × Referral Fee' : 
+         values.isPremium ? 'Active Customers × Annual Revenue' :
+         values.isBaseAccount ? 'Average Customers × Monthly Fee × 12' :
+         'New Business Volume × Commission Rate') :
+        'New Business Volume × Commission Rate',
+      precedents: isDigitalProduct ? 
+        (values.isReferral ? [
+          {
+            name: 'New Customers',
+            value: values.newCustomers || 0,
+            unit: 'customers',
+            calculation: 'New customer acquisitions'
+          },
+          {
+            name: 'Adoption Rate',
+            value: values.adoptionRate || 0,
+            unit: '%',
+            calculation: 'Percentage referred to wealth management'
+          },
+          {
+            name: 'Referral Fee',
+            value: values.referralFee || 0,
+            unit: '€',
+            calculation: 'One-time fee per referral'
+          }
+        ] : values.isPremium ? [
+          {
+            name: 'Active Customers',
+            value: values.activeCustomers || 0,
+            unit: 'customers',
+            calculation: 'Customers with premium services'
+          },
+          {
+            name: 'Annual Revenue',
+            value: values.annualRevenue || 0,
+            unit: '€/customer',
+            calculation: 'Revenue per customer per year'
+          }
+        ] : values.isBaseAccount ? [
+          {
+            name: 'Average Customers',
+            value: values.avgCustomers || 0,
+            unit: 'customers',
+            calculation: 'Average customer base'
+          },
+          {
+            name: 'Monthly Fee',
+            value: values.monthlyFee || 0,
+            unit: '€/month',
+            calculation: 'Monthly account fee'
+          }
+        ] : []) :
+        [
+          {
+            name: 'New Business Volume',
+            value: values.volume,
+            unit: '€M'
+          },
+          {
+            name: 'Commission Rate',
+            value: values.commissionRate,
+            unit: '%'
+          }
+        ],
+      calculation: () => {
+        if (isDigitalProduct) {
+          if (values.isReferral) {
+            return `${formatNumber(values.newCustomers || 0, 0)} × ${formatNumber(values.adoptionRate || 0, 1)}% × €${formatNumber(values.referralFee || 0, 0)} = ${formatNumber(values.result, 2)} €M`;
+          } else if (values.isPremium) {
+            return `${formatNumber(values.activeCustomers || 0, 0)} × €${formatNumber(values.annualRevenue || 0, 0)} = ${formatNumber(values.result, 2)} €M`;
+          } else if (values.isBaseAccount) {
+            return `${formatNumber(values.avgCustomers || 0, 0)} × €${formatNumber(values.monthlyFee || 0, 0)} × 12 = ${formatNumber(values.result, 2)} €M`;
+          }
+        }
+        return `${formatNumber(values.volume, 2)} × ${formatNumber(values.commissionRate, 2)}% = ${formatNumber(values.result, 2)} €M`;
+      }
+    },
+    
+    commissionExpense: {
+      formula: isDigitalProduct && values.isCac ? 'New Customers × CAC' : 'Commission Income × Expense Rate',
+      precedents: isDigitalProduct && values.isCac ? [
         {
-          name: 'New Business Volume',
-          value: values.volume,
-          unit: '€M'
+          name: 'New Customers',
+          value: values.newCustomers || 0,
+          unit: 'customers',
+          calculation: 'New customer acquisitions'
         },
         {
-          name: 'Commission Rate',
-          value: values.commissionRate,
-          unit: '%'
+          name: 'Customer Acquisition Cost',
+          value: values.cac || 0,
+          unit: '€/customer',
+          calculation: 'Cost to acquire each customer'
+        }
+      ] : [
+        {
+          name: 'Commission Income',
+          value: values.commissionIncome || 0,
+          unit: '€M',
+          calculation: 'Total commission income'
+        },
+        {
+          name: 'Commission Expense Rate',
+          value: values.expenseRate || 0,
+          unit: '%',
+          calculation: 'General commission expense rate'
         }
       ],
-      calculation: () => `${formatNumber(values.volume, 2)} × ${formatNumber(values.commissionRate, 2)}% = ${formatNumber(values.result, 2)} €M`
+      calculation: () => {
+        if (isDigitalProduct && values.isCac) {
+          return `${formatNumber(values.newCustomers || 0, 0)} × €${formatNumber(values.cac || 0, 0)} = ${formatNumber(Math.abs(values.result), 2)} €M`;
+        }
+        return `${formatNumber(values.commissionIncome || 0, 2)} × ${formatNumber(values.expenseRate || 0, 2)}% = ${formatNumber(Math.abs(values.result), 2)} €M`;
+      }
     },
     
     llp: {

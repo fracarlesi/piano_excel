@@ -292,7 +292,7 @@ const DivisionAssumptions = ({
     ];
 
     // Deposit and Service-specific assumptions (modular model)
-    const isModularDepositService = product.acquisition && product.currentAccount;
+    const isModularDepositService = product.acquisition && product.baseAccount;
     
     // Acquisition module rows
     const acquisitionRows = [
@@ -312,28 +312,28 @@ const DivisionAssumptions = ({
       }
     ];
     
-    // Current Account module rows
+    // Base Account module rows
     const currentAccountRows = [
       {
         parameter: 'Average Deposit per Customer',
-        description: 'Average deposit amount in current account',
-        value: isModularDepositService ? (product.currentAccount.avgDeposit || 1500) : (product.avgDeposit || 3000),
+        description: 'Average deposit amount in base account',
+        value: isModularDepositService ? (product.baseAccount.avgDeposit || 1500) : (product.avgDeposit || 3000),
         unit: '€',
-        key: isModularDepositService ? `products.${productKey}.currentAccount.avgDeposit` : `products.${productKey}.avgDeposit`
+        key: isModularDepositService ? `products.${productKey}.baseAccount.avgDeposit` : `products.${productKey}.avgDeposit`
       },
       {
-        parameter: 'Current Account Interest Rate',
-        description: 'Interest rate paid on current accounts',
-        value: isModularDepositService ? (product.currentAccount.interestRate || 0.1) : (product.depositInterestRate || 0.5),
+        parameter: 'Base Account Interest Rate',
+        description: 'Interest rate paid on base accounts',
+        value: isModularDepositService ? (product.baseAccount.interestRate || 0.1) : (product.depositInterestRate || 0.5),
         unit: '%',
-        key: isModularDepositService ? `products.${productKey}.currentAccount.interestRate` : `products.${productKey}.depositInterestRate`
+        key: isModularDepositService ? `products.${productKey}.baseAccount.interestRate` : `products.${productKey}.depositInterestRate`
       },
       {
         parameter: 'Monthly Fee',
         description: 'Monthly account fee per customer',
-        value: isModularDepositService ? (product.currentAccount.monthlyFee || 1) : (product.monthlyFee || 1),
+        value: isModularDepositService ? (product.baseAccount.monthlyFee || 0) : (product.monthlyFee || 1),
         unit: '€',
-        key: isModularDepositService ? `products.${productKey}.currentAccount.monthlyFee` : `products.${productKey}.monthlyFee`
+        key: isModularDepositService ? `products.${productKey}.baseAccount.monthlyFee` : `products.${productKey}.monthlyFee`
       }
     ];
     
@@ -355,23 +355,44 @@ const DivisionAssumptions = ({
       }
     ] : [];
     
-    // Service module rows
-    const serviceRows = isModularDepositService ? [
+    // Premium Services module rows
+    const premiumServiceRows = isModularDepositService ? [
       {
-        parameter: 'Service Adoption Rate',
-        description: 'Percentage of customers who activate value-added services',
-        value: product.servicesModule?.adoptionRate || 40,
+        parameter: 'Premium Services Adoption Rate',
+        description: 'Percentage of customers who activate premium services',
+        value: product.premiumServicesModule?.adoptionRate || 20,
         unit: '%',
-        key: `products.${productKey}.servicesModule.adoptionRate`
+        key: `products.${productKey}.premiumServicesModule.adoptionRate`
       },
       {
         parameter: 'Average Annual Revenue',
-        description: 'Average annual revenue per customer with active services',
-        value: product.servicesModule?.avgAnnualRevenue || 50,
+        description: 'Average annual revenue per customer with premium services',
+        value: product.premiumServicesModule?.avgAnnualRevenue || 80,
         unit: '€',
-        key: `products.${productKey}.servicesModule.avgAnnualRevenue`
+        key: `products.${productKey}.premiumServicesModule.avgAnnualRevenue`
       }
-    ] : [
+    ] : [];
+
+    // Wealth Management Referral rows
+    const referralRows = isModularDepositService ? [
+      {
+        parameter: 'Referral Adoption Rate',
+        description: 'Percentage of new customers referred to wealth management',
+        value: product.wealthManagementReferral?.adoptionRate || 5,
+        unit: '%',
+        key: `products.${productKey}.wealthManagementReferral.adoptionRate`
+      },
+      {
+        parameter: 'Referral Fee',
+        description: 'One-time fee per referred customer',
+        value: product.wealthManagementReferral?.referralFee || 150,
+        unit: '€',
+        key: `products.${productKey}.wealthManagementReferral.referralFee`
+      }
+    ] : [];
+    
+    // Service module rows for legacy compatibility
+    const serviceRows = !isModularDepositService ? [
       {
         parameter: 'Annual Service Revenue per Customer',
         description: 'Additional service revenue per customer per year',
@@ -379,10 +400,10 @@ const DivisionAssumptions = ({
         unit: '€',
         key: `products.${productKey}.annualServiceRevenue`
       }
-    ];
+    ] : [];
     
     // Combine all rows for legacy compatibility
-    const depositAndServiceRows = [...acquisitionRows, ...currentAccountRows, ...savingsRows, ...serviceRows];
+    const depositAndServiceRows = [...acquisitionRows, ...currentAccountRows, ...savingsRows, ...premiumServiceRows, ...referralRows, ...serviceRows];
 
     // Determine which rows to show based on product type
     const productType = product.productType || 'Credit';
@@ -631,8 +652,8 @@ const DivisionAssumptions = ({
                     {/* Organized Cards Layout */}
                     {/* Check if this is a modular DepositAndService product */}
                     {productAssumption.isDepositAndService && productAssumption.isModular ? (
-                      // Modular DepositAndService Layout - 4 cards
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      // Modular DepositAndService Layout - 5 cards
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                         
                         {/* Card 1: Acquisizione e Churn */}
                         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -671,7 +692,7 @@ const DivisionAssumptions = ({
                           </h4>
                           <div className="space-y-4">
                             {productAssumption.rows.filter(row => 
-                              ['Average Deposit per Customer', 'Current Account Interest Rate', 'Monthly Fee'].includes(row.parameter)
+                              ['Average Deposit per Customer', 'Base Account Interest Rate', 'Monthly Fee'].includes(row.parameter)
                             ).map((row, rowIndex) => (
                               <EditableNumberField
                                 key={rowIndex}
@@ -778,15 +799,44 @@ const DivisionAssumptions = ({
                           </div>
                         </div>
                         
-                        {/* Card 4: Modulo Servizi a Valore Aggiunto */}
+                        {/* Card 4: Modulo Servizi Premium */}
                         <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                           <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
                             <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
-                            Modulo Servizi a Valore Aggiunto
+                            Modulo Servizi Premium
                           </h4>
                           <div className="space-y-4">
                             {productAssumption.rows.filter(row => 
-                              ['Service Adoption Rate', 'Average Annual Revenue'].includes(row.parameter)
+                              ['Premium Services Adoption Rate', 'Average Annual Revenue'].includes(row.parameter)
+                            ).map((row, rowIndex) => (
+                              <EditableNumberField
+                                key={rowIndex}
+                                label={row.parameter}
+                                value={row.value}
+                                onChange={(value) => {
+                                  if (row.key) {
+                                    onAssumptionChange(row.key, value);
+                                  }
+                                }}
+                                unit={row.unit === 'text' ? '' : row.unit}
+                                disabled={false}
+                                isPercentage={row.unit === '%'}
+                                isInteger={row.unit === '€' && !row.parameter.includes('Rate')}
+                                tooltip={row.description}
+                              />
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Card 5: Referral Wealth Management */}
+                        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                          <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                            <span className="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
+                            Referral Wealth Management
+                          </h4>
+                          <div className="space-y-4">
+                            {productAssumption.rows.filter(row => 
+                              ['Referral Adoption Rate', 'Referral Fee'].includes(row.parameter)
                             ).map((row, rowIndex) => (
                               <EditableNumberField
                                 key={rowIndex}
