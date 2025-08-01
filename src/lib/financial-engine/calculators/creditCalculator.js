@@ -1,8 +1,8 @@
 /**
  * Credit Product Calculator Module
  * 
- * This file now exports the aligned quarterly version that applies
- * default rates only on beginning-of-quarter stock
+ * This file exports the quarterly version with full quarterly data exposure
+ * and correct interest calculation logic
  */
 
 export { calculateCreditProductQuarterly as calculateCreditProduct } from './creditCalculatorQuarterly.js';

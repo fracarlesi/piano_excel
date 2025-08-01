@@ -103,7 +103,7 @@ export const calculateResults = (assumptions) => {
     const divisionProducts = Object.values(divisionProductResults[prefix]);
     const division = results.divisions[prefix];
     
-    // Balance sheet aggregates
+    // Balance sheet aggregates - Annual
     division.bs.performingAssets = years.map(i => 
       divisionProducts.reduce((sum, p) => sum + (p.performingAssets?.[i] || 0), 0)
     );
@@ -111,7 +111,18 @@ export const calculateResults = (assumptions) => {
       divisionProducts.reduce((sum, p) => sum + (p.nonPerformingAssets?.[i] || 0), 0)
     );
     
-    // P&L aggregates
+    // Balance sheet aggregates - Quarterly
+    const quarterlyPeriods = 40; // 10 years * 4 quarters
+    division.bs.quarterly = {
+      performingAssets: Array.from({ length: quarterlyPeriods }, (_, q) => 
+        divisionProducts.reduce((sum, p) => sum + (p.quarterly?.performingStock?.[q] || 0), 0)
+      ),
+      nonPerformingAssets: Array.from({ length: quarterlyPeriods }, (_, q) => 
+        divisionProducts.reduce((sum, p) => sum + (p.quarterly?.nplStock?.[q] || 0), 0)
+      )
+    };
+    
+    // P&L aggregates - Annual
     division.pnl.interestIncome = years.map(i => 
       divisionProducts.reduce((sum, p) => sum + (p.interestIncome?.[i] || 0), 0)
     );
@@ -127,6 +138,19 @@ export const calculateResults = (assumptions) => {
     division.pnl.totalLLP = years.map(i => 
       divisionProducts.reduce((sum, p) => sum + (p.llp?.[i] || 0), 0)
     );
+    
+    // P&L aggregates - Quarterly
+    division.pnl.quarterly = {
+      interestIncome: Array.from({ length: quarterlyPeriods }, (_, q) => 
+        divisionProducts.reduce((sum, p) => sum + (p.quarterly?.interestIncome?.[q] || 0), 0)
+      ),
+      interestExpenses: Array.from({ length: quarterlyPeriods }, (_, q) => 
+        divisionProducts.reduce((sum, p) => sum + (p.quarterly?.interestExpense?.[q] || 0), 0)
+      ),
+      totalLLP: Array.from({ length: quarterlyPeriods }, (_, q) => 
+        divisionProducts.reduce((sum, p) => sum + (p.quarterly?.llp?.[q] || 0), 0)
+      )
+    };
     
     // Personnel costs - explicit assignment
     const personnelKey = getPersonnelKey(prefix);

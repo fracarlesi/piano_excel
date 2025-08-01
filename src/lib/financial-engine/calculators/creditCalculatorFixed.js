@@ -1,8 +1,8 @@
 /**
- * Credit Product Calculator Module - Quarterly Granularity
+ * Credit Product Calculator - FIXED VERSION
  * 
- * This version exposes quarterly data for all calculations
- * instead of just annual aggregates
+ * Corrects the interest calculation to ensure defaults properly reduce
+ * the interest-bearing base within each quarter
  */
 
 import { createVintages, getInterestRate } from './vintageManager.js';
@@ -21,8 +21,6 @@ import {
   calculateCommissionIncome,
   calculateEquityUpsideIncome 
 } from './volumeCalculator.js';
-import { calculateNetPerformingAssets } from './netPerformingAssetsCalculator.js';
-import { calculateInterestByType } from './interestCalculators/interestCalculatorOrchestrator.js';
 
 /**
  * Calculate RWA (Risk Weighted Assets)
@@ -37,43 +35,50 @@ const calculateRWA = (performingAssets, nplStock, product) => {
 };
 
 /**
- * Calculate quarterly interest using specialized microservices
- * This function is now a wrapper around the orchestrator
+ * Calculate quarterly interest with proper timing
+ * Interest is calculated AFTER defaults are processed
  */
 const calculateQuarterlyInterestFixed = (vintages, currentQuarter, nplStock, quarterlyRate, product) => {
-  const result = calculateInterestByType(vintages, currentQuarter, quarterlyRate, nplStock);
+  let performingInterest = 0;
+  let totalPerformingStock = 0;
+  
+  // Calculate interest on current performing stock (AFTER defaults)
+  vintages.forEach(vintage => {
+    const vintageStartQuarter = vintage.startYear * 4 + vintage.startQuarter;
+    const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
+    
+    // Check if vintage is active and interest-bearing
+    if (vintageStartQuarter <= currentQuarter && currentQuarter < vintageMaturityQuarter) {
+      // Interest starts from quarter AFTER disbursement
+      if (currentQuarter > vintageStartQuarter) {
+        performingInterest += vintage.outstandingPrincipal * quarterlyRate;
+        totalPerformingStock += vintage.outstandingPrincipal;
+      }
+    }
+  });
+  
+  // Calculate NPL interest on NBV
+  const nplInterest = nplStock * quarterlyRate;
   
   return {
-    performingInterest: result.performingInterest,
-    nplInterest: result.nplInterest,
-    totalInterest: result.totalInterest,
-    performingStock: result.performingPrincipal,
-    breakdown: result.breakdown,
-    details: result.allDetails
+    performingInterest,
+    nplInterest,
+    totalInterest: performingInterest + nplInterest,
+    performingStock: totalPerformingStock
   };
 };
 
 /**
- * Main calculation function with QUARTERLY data exposure
+ * Main calculation function with FIXED interest logic
  */
-export const calculateCreditProductQuarterly = (product, assumptions, years) => {
-  // Calculate volumes
+export const calculateCreditProductFixed = (product, assumptions, years) => {
+  // Step 1: Calculate volumes
   const volumes10Y = calculateVolumes(product, years);
   
-  // Create vintages
+  // Step 2: Create vintages
   const vintages = createVintages(product, assumptions, volumes10Y);
   
-  // Initialize quarterly arrays (40 quarters for 10 years)
-  const totalQuarters = years.length * 4;
-  const quarterlyPerformingStock = new Array(totalQuarters).fill(0);
-  const quarterlyNPLStock = new Array(totalQuarters).fill(0);
-  const quarterlyNewNPLs = new Array(totalQuarters).fill(0);
-  const quarterlyInterestIncome = new Array(totalQuarters).fill(0);
-  const quarterlyLLP = new Array(totalQuarters).fill(0);
-  const quarterlyNewBusiness = new Array(totalQuarters).fill(0);
-  const quarterlyPrincipalRepayments = new Array(totalQuarters).fill(0);
-  
-  // Annual arrays for backward compatibility
+  // Step 3: Initialize result arrays
   const grossPerformingStock = new Array(10).fill(0);
   const nplStock = new Array(10).fill(0);
   const averagePerformingStock = new Array(10).fill(0);
@@ -82,42 +87,40 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
   const totalPrincipalRepayments = new Array(10).fill(0);
   const totalLLP = new Array(10).fill(0);
   
-  // Track state
+  // Track state across quarters
   let cumulativeNPLStockNet = 0;
   const nplCohorts = [];
   
+  // Get quarterly rate for interest
   const quarterlyRate = getInterestRate(product, assumptions) / 4;
   
-  // Process each quarter
+  // Main calculation loop by year
   for (let year = 0; year < years.length; year++) {
     let annualLLP = 0;
     let annualNewDefaults = 0;
     let annualInterest = 0;
-    let quarterlyPerformingStocksForAvg = [];
+    let quarterlyPerformingStocks = [];
     
+    // Process each quarter
     for (let quarter = 0; quarter < 4; quarter++) {
       const currentQuarter = year * 4 + quarter;
       
-      // Save vintage states
+      // STEP 1: Save vintage states BEFORE any processing
       saveVintageStatesBeforeQuarter(vintages);
       
-      // Calculate new business this quarter
-      const yearVolume = volumes10Y[year] || 0;
-      const quarterAllocation = (assumptions.quarterlyAllocation?.[quarter] || 25) / 100;
-      quarterlyNewBusiness[currentQuarter] = yearVolume * quarterAllocation;
-      
-      // Process NPL recoveries
+      // STEP 2: Process NPL recoveries
       const { quarterlyRecoveries, recoveredCohortIndices } = processQuarterlyRecoveries(
         nplCohorts, 
         currentQuarter
       );
       cumulativeNPLStockNet -= quarterlyRecoveries;
       
+      // Remove recovered cohorts
       for (let i = recoveredCohortIndices.length - 1; i >= 0; i--) {
         nplCohorts.splice(recoveredCohortIndices[i], 1);
       }
       
-      // Process defaults
+      // STEP 3: Process defaults (this reduces vintage.outstandingPrincipal)
       const { newDefaults, newNPLCohorts } = processQuarterlyDefaultsAligned(
         vintages,
         currentQuarter,
@@ -126,10 +129,9 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
         product
       );
       
-      quarterlyNewNPLs[currentQuarter] = newDefaults;
       annualNewDefaults += newDefaults;
       
-      // Calculate LLP
+      // STEP 4: Calculate LLP on new defaults
       let totalPerformingStockBeforeDefaults = 0;
       vintages.forEach(vintage => {
         const vintageStartQuarter = vintage.startYear * 4 + vintage.startQuarter;
@@ -148,10 +150,10 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
         quarterlyInterestRate: quarterlyRate
       });
       
-      quarterlyLLP[currentQuarter] = llpResult.llp;
       annualLLP += llpResult.llp;
       cumulativeNPLStockNet += llpResult.recoveryNPV;
       
+      // Add recovery cohorts
       if (llpResult.newDefaults > 0) {
         const recoveryQuarter = currentQuarter + Math.round((product.timeToRecover || 3) * 4);
         nplCohorts.push({
@@ -162,7 +164,7 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
         });
       }
       
-      // Calculate interest AFTER defaults
+      // STEP 5: Calculate interest AFTER defaults are processed
       const interestResult = calculateQuarterlyInterestFixed(
         vintages,
         currentQuarter,
@@ -171,58 +173,32 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
         product
       );
       
-      quarterlyInterestIncome[currentQuarter] = interestResult.totalInterest;
       annualInterest += interestResult.totalInterest;
-      quarterlyPerformingStocksForAvg.push(interestResult.performingStock);
+      quarterlyPerformingStocks.push(interestResult.performingStock);
       
-      // Calculate total principal BEFORE updates
-      let principalBefore = 0;
-      vintages.forEach(vintage => {
-        const vintageStartQuarter = vintage.startYear * 4 + vintage.startQuarter;
-        const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
-        if (vintageStartQuarter <= currentQuarter && currentQuarter < vintageMaturityQuarter) {
-          principalBefore += vintage.outstandingPrincipal;
-        }
-      });
-      
-      // Update principal for amortizing loans
+      // STEP 6: Update principal for amortizing loans (includes new disbursements)
       updateAllVintagePrincipals(vintages, currentQuarter, product, assumptions);
-      
-      // Calculate total principal AFTER updates
-      let principalAfter = 0;
-      vintages.forEach(vintage => {
-        const vintageStartQuarter = vintage.startYear * 4 + vintage.startQuarter;
-        const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
-        if (vintageStartQuarter <= currentQuarter && currentQuarter < vintageMaturityQuarter) {
-          principalAfter += vintage.outstandingPrincipal;
-        }
-      });
-      
-      // The repayment is the difference
-      quarterlyPrincipalRepayments[currentQuarter] = principalBefore - principalAfter;
-      
-      // Calculate quarter-end performing stock AFTER principal updates
-      const assetCalculation = calculateNetPerformingAssets(vintages, currentQuarter, cumulativeNPLStockNet);
-      
-      quarterlyPerformingStock[currentQuarter] = assetCalculation.performingStock;
-      quarterlyNPLStock[currentQuarter] = assetCalculation.nplStock;
     }
     
-    // Store annual aggregates
-    const yearEndQuarter = (year + 1) * 4 - 1;
-    grossPerformingStock[year] = quarterlyPerformingStock[yearEndQuarter];
-    nplStock[year] = quarterlyNPLStock[yearEndQuarter];
+    // Calculate year-end performing stock
+    const yearEndPerformingStock = calculateYearEndPerformingStock(vintages, year);
+    
+    // Store annual results
+    grossPerformingStock[year] = yearEndPerformingStock;
+    nplStock[year] = cumulativeNPLStockNet;
     totalInterestIncome[year] = annualInterest;
-    totalLLP[year] = -annualLLP;
+    totalPrincipalRepayments[year] = 0; // Will be calculated separately
+    totalLLP[year] = -annualLLP; // Negative sign for cost
     newNPLs[year] = annualNewDefaults;
-    averagePerformingStock[year] = quarterlyPerformingStocksForAvg.reduce((sum, stock) => sum + stock, 0) / 4;
     
-    // Sum quarterly repayments for annual total
-    let annualRepayments = 0;
-    for (let q = 0; q < 4; q++) {
-      annualRepayments += quarterlyPrincipalRepayments[year * 4 + q];
-    }
-    totalPrincipalRepayments[year] = annualRepayments;
+    // Calculate average performing stock for the year
+    averagePerformingStock[year] = quarterlyPerformingStocks.reduce((sum, stock) => sum + stock, 0) / 4;
+  }
+  
+  // Calculate annual repayments
+  for (let year = 0; year < years.length; year++) {
+    const { totalRepayments } = calculateAnnualRepayments(vintages, year, product, assumptions);
+    totalPrincipalRepayments[year] = Math.abs(totalRepayments);
   }
   
   // Calculate derived metrics
@@ -231,18 +207,12 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
   const equityUpsideIncome = calculateEquityUpsideIncome(grossPerformingStock, product.equityUpside, years);
   const rwa = calculateRWA(grossPerformingStock, nplStock, product);
   
+  // Calculate interest expense (FTP)
   const interestExpense = averagePerformingStock.map(avgStock => 
     calculateFTPExpense(avgStock, assumptions)
   );
   
-  // Calculate quarterly interest expense
-  const quarterlyInterestExpense = quarterlyPerformingStock.map((stock, q) => {
-    const ftpRate = (assumptions.euribor + assumptions.ftpSpread) / 100 / 4; // Quarterly rate
-    return -stock * ftpRate;
-  });
-  
   return {
-    // Annual data (backward compatibility)
     performingAssets: grossPerformingStock,
     nonPerformingAssets: nplStock,
     averagePerformingAssets: averagePerformingStock,
@@ -256,19 +226,6 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
     numberOfLoans: numberOfLoans,
     volumes: volumes10Y,
     equityUpsideIncome: equityUpsideIncome,
-    principalRepayments: totalPrincipalRepayments,
-    
-    // NEW: Quarterly data
-    quarterly: {
-      performingStock: quarterlyPerformingStock,
-      nplStock: quarterlyNPLStock,
-      newNPLs: quarterlyNewNPLs,
-      interestIncome: quarterlyInterestIncome,
-      interestExpense: quarterlyInterestExpense,
-      llp: quarterlyLLP,
-      newBusiness: quarterlyNewBusiness,
-      principalRepayments: quarterlyPrincipalRepayments,
-      quarters: totalQuarters
-    }
+    principalRepayments: totalPrincipalRepayments
   };
 };

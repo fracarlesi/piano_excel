@@ -15,7 +15,7 @@ import { getInterestRate } from './vintageManager.js';
  * @returns {number} Principal payment amount
  */
 export const calculateFrenchPrincipalPayment = (vintage, quarterlyRate, quartersElapsed) => {
-  const gracePeriodQuarters = vintage.gracePeriod * 4;
+  const gracePeriodQuarters = vintage.gracePeriod; // Already in quarters
   
   // During grace period, no principal repayment
   if (quartersElapsed <= gracePeriodQuarters) {
@@ -139,14 +139,12 @@ export const updateAllVintagePrincipals = (vintages, currentQuarter, product, as
     const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
     
     // Check if vintage should be updated
-    const isBeforeMaturity = vintage.type === 'bullet' ? 
-      currentQuarter < vintageMaturityQuarter : 
-      currentQuarter <= vintageMaturityQuarter;
+    const isBeforeMaturity = currentQuarter < vintageMaturityQuarter;
     
     if (currentQuarter > vintageStartQuarter && isBeforeMaturity) {
       if (vintage.type === 'french' || vintage.type === 'amortizing') {
         const quartersElapsed = currentQuarter - vintageStartQuarter;
-        const gracePeriodQuarters = vintage.gracePeriod * 4;
+        const gracePeriodQuarters = vintage.gracePeriod; // Already in quarters
         
         if (quartersElapsed > gracePeriodQuarters) {
           const quarterlyRate = getInterestRate(product, assumptions) / 4;

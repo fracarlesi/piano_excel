@@ -18,17 +18,18 @@ export const calculateVintageQuarterlyInterest = (vintage, quarterlyRate) => {
 };
 
 /**
- * Calculate interest on NPL stock
- * NPLs continue to generate interest at the original product rate
- * @param {number} nplStock - NPL stock amount
+ * Calculate interest on NPL stock (NBV basis)
+ * NPLs generate interest on Net Book Value, not gross amount
+ * @param {number} nplNBV - NPL Net Book Value (after LLP)
  * @param {Object} product - Product configuration
  * @param {Object} assumptions - Global assumptions
  * @returns {number} Quarterly interest on NPLs
  */
-export const calculateNPLInterest = (nplStock, product, assumptions) => {
+export const calculateNPLInterest = (nplNBV, product, assumptions) => {
+  // IMPORTANT: Interest is calculated on NBV (net of provisions)
   const productRate = getInterestRate(product, assumptions);
   const quarterlyProductRate = productRate / 4;
-  return nplStock * quarterlyProductRate;
+  return nplNBV * quarterlyProductRate;
 };
 
 /**

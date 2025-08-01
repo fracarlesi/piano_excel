@@ -65,16 +65,19 @@ export const createVintage = ({
     spread: product.spread,
     isFixedRate: product.isFixedRate,
     hasDefaulted: false,
-    // Calculate maturity quarter (start + duration in quarters)
-    maturityYear: year + Math.floor((quarter + durata * 4) / 4),
-    maturityQuarter: (quarter + durata * 4) % 4
+    // Calculate maturity quarter
+    // Duration represents quarters AFTER disbursement, so we don't count the disbursement quarter
+    // For a 12-quarter loan starting at Q4, maturity is Q4 + 12 = Q16
+    // The last payment will be at Q15, and the loan will be fully repaid by Q16
+    maturityYear: year + Math.floor((quarter + durata) / 4),
+    maturityQuarter: (quarter + durata) % 4
   };
   
   // For French loans, calculate quarterly payment
   if (productType === 'french' || productType === 'amortizing') {
     const quarterlyRate = getInterestRate(product, assumptions) / 4;
-    const totalQuarters = durata * 4;
-    const gracePeriodQuarters = gracePeriod * 4;
+    const totalQuarters = durata; // Already in quarters
+    const gracePeriodQuarters = gracePeriod; // Already in quarters
     
     vintage.quarterlyPayment = calculateQuarterlyPayment(
       volume,

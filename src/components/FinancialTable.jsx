@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import CalculationTooltip from './CalculationTooltip';
 import { formatNumber } from '../lib/utils/formatters';
 
-// Financial Table Component with expandable rows
+// Financial Table Component with expandable rows (Quarterly View Only)
 const FinancialTable = ({ title, rows }) => {
   // State to track which rows are expanded
   const [expandedRows, setExpandedRows] = useState(new Set());
@@ -46,11 +46,15 @@ const FinancialTable = ({ title, rows }) => {
         <thead className="bg-gray-100">
           <tr>
             <th className="px-6 py-3 text-left font-semibold text-gray-700 w-2/5">Item</th>
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(y => (
-              <th key={y} className="px-4 py-3 text-right font-semibold text-gray-700">
-                Year {y + 1}
-              </th>
-            ))}
+            {Array.from({ length: 40 }, (_, i) => {
+              const year = Math.floor(i / 4) + 1;
+              const quarter = (i % 4) + 1;
+              return (
+                <th key={i} className="px-2 py-3 text-right font-semibold text-gray-700 text-xs">
+                  Y{year}Q{quarter}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -114,7 +118,7 @@ const FinancialTable = ({ title, rows }) => {
               {row.data && row.data.map((value, i) => (
                 <td 
                   key={i} 
-                  className={`px-4 py-2 text-right ${
+                  className={`px-2 py-2 text-right text-xs ${
                     row.isTotal ? 'font-bold text-blue-900' : ''
                   } ${
                     row.isSubTotal ? 'font-semibold text-blue-800' : ''

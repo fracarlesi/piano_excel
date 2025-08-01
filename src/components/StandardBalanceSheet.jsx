@@ -17,15 +17,16 @@ const StandardBalanceSheet = ({
   customRowTransformations = {}
 }) => {
 
-  // Calculate derived values
-  const performingAssets = divisionResults.bs.performingAssets || [0,0,0,0,0,0,0,0,0,0];
-  const nonPerformingAssets = divisionResults.bs.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0];
+  // Use quarterly data directly (40 quarters)
+  const performingAssets = divisionResults.bs.quarterly?.performingAssets ?? Array(40).fill(0);
+  const nonPerformingAssets = divisionResults.bs.quarterly?.nonPerformingAssets ?? Array(40).fill(0);
+  const allocatedEquity = divisionResults.bs.quarterly?.allocatedEquity ?? Array(40).fill(0);
   
   const totalAssets = performingAssets.map((pa, i) => 
     pa + nonPerformingAssets[i]
   );
 
-  const allocatedEquity = divisionResults.bs.allocatedEquity || [0,0,0,0,0,0,0,0,0,0];
+  // Calculate derived values
   const totalLiabilities = totalAssets.map((ta, i) => ta - allocatedEquity[i]);
 
   // Breakdown of liabilities using configured funding mix
@@ -73,49 +74,49 @@ const StandardBalanceSheet = ({
         'Net Performing Assets',
         Object.entries(productResults).map(([key, product]) => ({
           name: product.name,
-          value: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i],
+          value: (product.quarterly?.performingStock || Array(40).fill(0))[i],
           unit: '€M'
         }))
       )),
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: product.performingAssets || [0,0,0,0,0,0,0,0,0,0],
+        data: product.quarterly?.performingStock ?? Array(40).fill(0),
         decimals: 0,
-        formula: (product.performingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(
+        formula: (product.quarterly?.performingStock ?? Array(40).fill(0)).map((val, i) => createFormula(
           i,
           'Stock = Previous + New Business - Repayments - Defaults',
           [
             {
               name: 'Previous Stock',
-              value: i > 0 ? (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i-1] || 0 : 0,
+              value: i > 0 ? (product.quarterly?.performingStock || Array(40).fill(0))[i-1] || 0 : 0,
               unit: '€M',
-              calculation: 'End of previous year balance'
+              calculation: 'End of previous quarter balance'
             },
             {
               name: 'New Business',
-              value: (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+              value: (product.quarterly?.newBusiness || Array(40).fill(0))[i] || 0,
               unit: '€M',
-              calculation: 'New loans originated this year'
+              calculation: 'New loans originated this quarter'
             },
             {
               name: 'Repayments',
-              value: (product.principalRepayments || [0,0,0,0,0,0,0,0,0,0])[i] || 0,
+              value: (product.quarterly?.principalRepayments || Array(40).fill(0))[i] || 0,
               unit: '€M',
               calculation: 'Principal repaid according to amortization schedule'
             },
             {
               name: 'Defaults',
-              value: i > 0 ? ((product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i-1] || 0) * ((product.assumptions?.pd || 0.015)) : 0,
+              value: i > 0 ? ((product.quarterly?.performingStock || Array(40).fill(0))[i-1] || 0) * ((product.assumptions?.pd || 0.015) / 4) : 0,
               unit: '€M',
-              calculation: `Previous Stock × Default Rate (${formatNumber((product.assumptions?.pd || 0.015) * 100, 2)}%)`
+              calculation: `Previous Stock × Default Rate (${formatNumber((product.assumptions?.pd || 0.015) * 100 / 4, 2)}% quarterly)`
             }
           ],
           () => {
-            const prev = i > 0 ? (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i-1] || 0 : 0;
-            const newBusiness = (product.newBusiness || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-            const repayments = (product.principalRepayments || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
-            const defaults = i > 0 ? prev * (product.assumptions?.pd || 0.015) : 0;
+            const prev = i > 0 ? (product.quarterly?.performingStock || Array(40).fill(0))[i-1] || 0 : 0;
+            const newBusiness = (product.quarterly?.newBusiness || Array(40).fill(0))[i] || 0;
+            const repayments = (product.quarterly?.principalRepayments || Array(40).fill(0))[i] || 0;
+            const defaults = i > 0 ? prev * (product.assumptions?.pd || 0.015) / 4 : 0;
             return `${formatNumber(prev, 0)} + ${formatNumber(newBusiness, 0)} - ${formatNumber(repayments, 0)} - ${formatNumber(defaults, 0)} = ${formatNumber(val, 0)} €M`;
           }
         ))
@@ -136,9 +137,9 @@ const StandardBalanceSheet = ({
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0],
+        data: product.quarterly?.nplStock || Array(40).fill(0),
         decimals: 0,
-        formula: (product.nonPerformingAssets || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
+        formula: (product.quarterly?.nplStock || Array(40).fill(0)).map((val, i) => 
           createFormula(
             i,
             'Cumulative defaults from loan portfolio',
@@ -150,7 +151,7 @@ const StandardBalanceSheet = ({
                 calculation: 'Accumulated non-performing loans'
               }
             ],
-            year => `Cumulative NPL stock: ${formatNumber(val, 0)} €M`
+            quarter => `Cumulative NPL stock: ${formatNumber(val, 0)} €M`
           )
         )
       })) : []
@@ -175,7 +176,7 @@ const StandardBalanceSheet = ({
     // ========== LIABILITIES SECTION ==========
     {
       label: 'Liabilities',
-      data: [null, null, null, null, null, null, null, null, null, null],
+      data: Array(40).fill(null),
       isHeader: true,
       bgColor: 'lightgreen'
     },

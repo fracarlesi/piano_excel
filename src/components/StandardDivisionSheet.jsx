@@ -24,7 +24,6 @@ const StandardDivisionSheet = ({
     kpis: {}
   }
 }) => {
-  
   // Get division-specific results
   const divisionResults = results?.divisions?.[divisionKey] || {
     bs: { performingAssets: [0,0,0,0,0,0,0,0,0,0], nonPerformingAssets: [0,0,0,0,0,0,0,0,0,0], equity: [0,0,0,0,0,0,0,0,0,0] },
@@ -64,6 +63,14 @@ const StandardDivisionSheet = ({
 
   return (
     <div className="p-4 md:p-6 space-y-8">
+      {/* Division Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">{divisionDisplayName || divisionKey}</h2>
+        <div className="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-lg">
+          Vista Trimestrale (40 Trimestri)
+        </div>
+      </div>
+      
       {/* Financial Statements Only */}
       <StandardPnL
         divisionResults={divisionResults}

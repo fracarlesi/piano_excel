@@ -214,14 +214,14 @@ const CreditProductAssumptions = ({
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <EditableNumberField
-            label="Durata (anni)"
+            label="Durata (trimestri)"
             value={product.durata}
             onChange={(value) => handleChange('durata', value)}
             editMode={editMode}
-            min={0.5}
-            max={30}
-            step={0.5}
-            tooltip="Durata media del prestito in anni"
+            min={1}
+            max={120}
+            step={1}
+            tooltip="Durata del prestito in trimestri"
           />
           
           <EditableSelectField
@@ -238,14 +238,14 @@ const CreditProductAssumptions = ({
           
           {product.type !== 'bullet' && (
             <EditableNumberField
-              label="Grace Period (anni)"
+              label="Grace Period (trimestri)"
               value={product.gracePeriod}
               onChange={(value) => handleChange('gracePeriod', value)}
               editMode={editMode}
               min={0}
-              max={5}
-              step={0.5}
-              tooltip="Periodo di pre-ammortamento (solo interessi)"
+              max={20}
+              step={1}
+              tooltip="Periodo di pre-ammortamento in trimestri (solo interessi)"
             />
           )}
           

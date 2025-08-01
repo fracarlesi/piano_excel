@@ -23,33 +23,35 @@ const StandardPnL = ({
   //   firstValue: divisionResults.pnl?.personnelCosts?.[0]
   // });
   
-  // Standard years array
-  const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  // Use quarterly data directly (40 quarters)
+  const interestIncomeData = divisionResults.pnl.quarterly?.interestIncome ?? Array(40).fill(0);
+  const interestExpensesData = divisionResults.pnl.quarterly?.interestExpenses ?? Array(40).fill(0);
+  const commissionIncomeData = divisionResults.pnl.quarterly?.commissionIncome ?? Array(40).fill(0);
+  const commissionExpensesData = divisionResults.pnl.quarterly?.commissionExpenses ?? Array(40).fill(0);
+  const llpData = divisionResults.pnl.quarterly?.totalLLP ?? Array(40).fill(0);
+  const personnelCostsData = divisionResults.pnl.quarterly?.personnelCosts ?? Array(40).fill(0);
+  const otherOpexData = divisionResults.pnl.quarterly?.otherOpex ?? Array(40).fill(0);
+  const totalOpexData = divisionResults.pnl.quarterly?.totalOpex ?? Array(40).fill(0);
 
   // Calculate derived values
-  const netInterestIncome = (divisionResults.pnl.interestIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
-    const expenses = (divisionResults.pnl.interestExpenses ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0;
+  const netInterestIncome = interestIncomeData.map((income, i) => {
+    const expenses = interestExpensesData[i] ?? 0;
     return income + expenses; // expenses are negative
   });
 
-  const netCommissionIncome = (divisionResults.pnl.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
-    const expenses = (divisionResults.pnl.commissionExpenses ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0;
+  const netCommissionIncome = commissionIncomeData.map((income, i) => {
+    const expenses = commissionExpensesData[i] ?? 0;
     return income + expenses; // expenses are negative
   });
 
   // Total revenues = NII + NCI (simplified, removed other income and trading income)
   const totalRevenues = netInterestIncome.map((nii, i) => nii + netCommissionIncome[i]);
 
-  // Use pre-calculated values from division results
-  const personnelCosts = divisionResults.pnl.personnelCosts ?? [0,0,0,0,0,0,0,0,0,0];
-  const otherOpex = divisionResults.pnl.otherOpex ?? [0,0,0,0,0,0,0,0,0,0];
-  const totalOpex = divisionResults.pnl.totalOpex ?? personnelCosts.map((pc, i) => pc + otherOpex[i]);
-
   // Calculate net revenues (risk-adjusted)
-  const netRevenuesRiskAdjusted = totalRevenues.map((rev, i) => rev + (divisionResults.pnl.totalLLP?.[i] || 0));
+  const netRevenuesRiskAdjusted = totalRevenues.map((rev, i) => rev + (llpData[i] || 0));
   
   // Pre-tax profit = Net Revenues (Risk-Adjusted) + Total OPEX
-  const preTaxProfit = netRevenuesRiskAdjusted.map((nrev, i) => nrev + totalOpex[i]);
+  const preTaxProfit = netRevenuesRiskAdjusted.map((nrev, i) => nrev + totalOpexData[i]);
 
   // const netProfit = divisionResults.pnl.netProfit || preTaxProfit.map((pbt, i) => {
   //   const taxRate = assumptions.taxRate || 0.3;
@@ -62,10 +64,10 @@ const StandardPnL = ({
     // ========== INTEREST INCOME SECTION ==========
     {
       label: 'Interest Income (IC)',
-      data: divisionResults.pnl.interestIncome ?? [0,0,0,0,0,0,0,0,0,0],
+      data: interestIncomeData,
       decimals: 2,
       isHeader: true,
-      formula: (divisionResults.pnl.interestIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
+      formula: interestIncomeData.map((val, i) => 
         createAggregateFormula(
           i,
           'Interest Income',
@@ -79,9 +81,9 @@ const StandardPnL = ({
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: product.interestIncome ?? [0,0,0,0,0,0,0,0,0,0],
+        data: product.quarterly?.interestIncome ?? Array(40).fill(0),
         decimals: 2,
-        formula: (product.interestIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+        formula: (product.quarterly?.interestIncome ?? Array(40).fill(0)).map((val, i) => {
           const productKey = Object.keys(assumptions.products || {}).find(k => 
             assumptions.products[k].name === product.name
           );
@@ -118,10 +120,10 @@ const StandardPnL = ({
     // ========== INTEREST EXPENSES SECTION ==========
     {
       label: 'FTP',
-      data: divisionResults.pnl.interestExpenses ?? [0,0,0,0,0,0,0,0,0,0],
+      data: interestExpensesData,
       decimals: 2,
       isHeader: true,
-      formula: (divisionResults.pnl.interestExpenses ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
+      formula: interestExpensesData.map((val, i) => createFormula(i,
         'Average Performing Assets × FTP Rate (EURIBOR + FTP Spread)',
         [
           year => `FTP Rate: ${((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)).toFixed(2)}% (EURIBOR ${(assumptions.euribor ?? 0).toFixed(1)}% + Spread ${(assumptions.ftpSpread ?? 0).toFixed(1)}%)`,
@@ -131,9 +133,9 @@ const StandardPnL = ({
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: product.interestExpense ?? [0,0,0,0,0,0,0,0,0,0],
+        data: product.quarterly?.interestExpense ?? Array(40).fill(0),
         decimals: 2,
-        formula: (product.interestExpense ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+        formula: (product.quarterly?.interestExpense ?? Array(40).fill(0)).map((val, i) => {
           // const productKey = Object.keys(assumptions.products || {}).find(k => 
           //   assumptions.products[k].name === product.name
           // ); // Currently unused in this context
@@ -428,9 +430,9 @@ const StandardPnL = ({
     // ========== LOAN LOSS PROVISIONS ==========
     {
       label: 'Loan loss provisions',
-      data: divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0],
+      data: llpData,
       decimals: 2,
-      formula: (divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
+      formula: llpData.map((val, i) => createFormula(i,
         'Expected Loss on New Business + NPL Provisions',
         [
           year => `Total LLP: ${formatNumber(val, 2)} €M`
@@ -439,7 +441,7 @@ const StandardPnL = ({
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: product.llp ?? [0,0,0,0,0,0,0,0,0,0],
+        data: product.quarterly?.llp ?? Array(40).fill(0),
         decimals: 2,
         formula: (product.llp ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
           const productKey = Object.keys(assumptions.products ?? {}).find(k => 
@@ -490,10 +492,10 @@ const StandardPnL = ({
     // ========== PERSONNEL COSTS ==========
     {
       label: 'Personnel cost',
-      data: personnelCosts,
+      data: personnelCostsData,
       decimals: 2,
       isHeader: true,
-      formula: personnelCosts.map((val, i) => {
+      formula: personnelCostsData.map((val, i) => {
         // Get personnel cost details for calculation trace
         const personnelDetails = divisionResults.pnl.personnelCostDetails;
         
@@ -567,10 +569,10 @@ const StandardPnL = ({
     // ========== OTHER OPEX ==========
     {
       label: 'Other OPEX',
-      data: otherOpex,
+      data: otherOpexData,
       decimals: 2,
       isHeader: true,
-      formula: otherOpex.map((val, i) => createFormula(i,
+      formula: otherOpexData.map((val, i) => createFormula(i,
         'IT Costs + HQ Allocation',
         [
           year => `Inter-division cost allocations`,
@@ -581,9 +583,9 @@ const StandardPnL = ({
       subRows: showProductDetail ? [
         {
           label: 'IT costs (from Tech Division)',
-          data: divisionResults.pnl.itCosts || years.map(() => 0),
+          data: divisionResults.pnl.quarterly?.itCosts ?? Array(40).fill(0),
           decimals: 2,
-          formula: (divisionResults.pnl.itCosts || years.map(() => 0)).map((val, i) => createFormula(
+          formula: (divisionResults.pnl.quarterly?.itCosts ?? Array(40).fill(0)).map((val, i) => createFormula(
             i,
             'Tech Division costs allocated to business divisions',
             [
@@ -599,9 +601,9 @@ const StandardPnL = ({
         },
         {
           label: 'HQ Allocation (from Central Functions)',
-          data: divisionResults.pnl.hqAllocation || years.map(() => 0),
+          data: divisionResults.pnl.quarterly?.hqAllocation ?? Array(40).fill(0),
           decimals: 2,
-          formula: (divisionResults.pnl.hqAllocation || years.map(() => 0)).map((val, i) => createFormula(
+          formula: (divisionResults.pnl.quarterly?.hqAllocation ?? Array(40).fill(0)).map((val, i) => createFormula(
             i,
             'Central Functions costs allocated to business divisions',
             [
@@ -621,18 +623,18 @@ const StandardPnL = ({
     // ========== TOTAL OPEX ==========
     {
       label: 'Total OPEX',
-      data: totalOpex,
+      data: totalOpexData,
       decimals: 2,
       isSubTotal: true,
       bgColor: 'gray',
-      formula: totalOpex.map((val, i) => createFormula(i,
+      formula: totalOpexData.map((val, i) => createFormula(i,
         'Personnel Costs + Other OPEX',
         [
-          year => `Personnel: ${formatNumber(personnelCosts[year], 2)} €M`,
-          year => `Other OPEX: ${formatNumber(otherOpex[year], 2)} €M`,
+          year => `Personnel: ${formatNumber(personnelCostsData[year], 2)} €M`,
+          year => `Other OPEX: ${formatNumber(otherOpexData[year], 2)} €M`,
           year => `Total: ${formatNumber(val, 2)} €M`
         ],
-        year => `${formatNumber(personnelCosts[year], 2)} + ${formatNumber(otherOpex[year], 2)} = ${formatNumber(val, 2)} €M`
+        year => `${formatNumber(personnelCostsData[year], 2)} + ${formatNumber(otherOpexData[year], 2)} = ${formatNumber(val, 2)} €M`
       ))
     },
 
@@ -675,11 +677,11 @@ const StandardPnL = ({
         'Net Revenues (Risk-Adjusted) + Total OPEX',
         [
           year => `Net Revenues (Risk-Adjusted): ${formatNumber(netRevenuesRiskAdjusted[year], 2)} €M`,
-          year => `OPEX: ${formatNumber(totalOpex[year], 2)} €M`,
+          year => `OPEX: ${formatNumber(totalOpexData[year], 2)} €M`,
           year => `PBT: ${formatNumber(val, 2)} €M`
         ],
         year => {
-          return `${formatNumber(netRevenuesRiskAdjusted[year], 2)} + (${formatNumber(Math.abs(totalOpex[year]), 2)}) = ${formatNumber(val, 2)} €M`;
+          return `${formatNumber(netRevenuesRiskAdjusted[year], 2)} + (${formatNumber(Math.abs(totalOpexData[year]), 2)}) = ${formatNumber(val, 2)} €M`;
         }
       ))
     }

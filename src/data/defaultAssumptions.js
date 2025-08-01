@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.63', // Created modular LLP calculator and reformatted P&L to show risk-adjusted revenues
+  version: '10.86', // Changed maturity (durata) from years to quarters for consistency
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -210,7 +210,7 @@ export const defaultAssumptions = {
       avgLoanSize: 25.0, // Finanziamenti di importo significativo
       spread: 2.8, // Spread contenuto per note senior sicure
       rwaDensity: 35, // Bassa rischiosità per note senior
-      durata: 7, // Durata media-lunga
+      durata: 28, // Durata in trimestri (7 anni)
       commissionRate: 0.3, // Commissione contenuta
       dangerRate: 0.8, // Rischio molto basso
       ltv: 65.0, // LTV conservativo
@@ -230,7 +230,7 @@ export const defaultAssumptions = {
       avgLoanSize: 0.8, // Finanziamenti retail di importo contenuto
       spread: 2.2, // Spread competitivo per ipoteche
       rwaDensity: 45, // RWA standard per mutui residenziali
-      durata: 25, // Durata tipica dei mutui
+      durata: 100, // Durata in trimestri (25 anni)
       commissionRate: 0.8, // Commissione di istruttoria
       dangerRate: 1.2, // Rischio contenuto
       ltv: 80.0, // LTV standard per mutui
@@ -250,7 +250,7 @@ export const defaultAssumptions = {
       avgLoanSize: 15.0, // Finanziamenti corporate di taglia media
       spread: 4.2, // Spread elevato per bridge loan
       rwaDensity: 85, // Alta rischiosità per natura temporanea
-      durata: 2, // Durata breve tipica dei bridge
+      durata: 8, // Durata in trimestri (2 anni)
       commissionRate: 2.5, // Commissioni elevate per complessità
       dangerRate: 3.5, // Rischio elevato per natura bridge
       ltv: 70.0, // LTV prudenziale
@@ -271,14 +271,14 @@ export const defaultAssumptions = {
       avgLoanSize: 15.0, // Average loan size in €M (as per description)
       spread: 3.5, // IRR Adj 7% - EURIBOR 3.5% = 3.5%
       rwaDensity: 80, // RWA 80% (Boris standard)
-      durata: 5,
+      durata: 20, // Durata in trimestri (5 anni)
       commissionRate: 0.0, // No initial commission mentioned
       dangerRate: 1.0, // Standard risk (Boris)
       ltv: 70.0,
       recoveryCosts: 15.0,
       collateralHaircut: 25.0,
-      type: 'french', // After 2 years grace period
-      gracePeriod: 2, // Grace period for interest only
+      type: 'french', // Amortizing after grace period
+      gracePeriod: 8, // Grace period in quarters (2 years = 8 quarters)
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
       stateGuaranteeType: 'present', // none, present
@@ -291,7 +291,7 @@ export const defaultAssumptions = {
       avgLoanSize: 15.0, // Average loan size in €M (as per description)
       spread: 4.5, // IRR Adj 8% - EURIBOR 3.5% = 4.5%
       rwaDensity: 80, // RWA 80% (Boris standard)
-      durata: 1.5,
+      durata: 6, // Durata in trimestri (1.5 anni)
       commissionRate: 3.0, // 3% commission
       dangerRate: 1.0, // Standard risk (Boris)
       ltv: 60.0,
@@ -311,7 +311,7 @@ export const defaultAssumptions = {
       avgLoanSize: 20.0, // Average loan size in €M (as per description)
       spread: 5.5, // IRR Adj 9% - EURIBOR 3.5% = 5.5%
       rwaDensity: 100, // RWA 100% (higher risk)
-      durata: 4,
+      durata: 16, // Durata in trimestri (4 anni)
       commissionRate: 2.0,
       dangerRate: 2.5, // Higher risk
       ltv: 50.0,
@@ -331,7 +331,7 @@ export const defaultAssumptions = {
       avgLoanSize: 10.0, // Average loan size in €M (as per description)
       spread: 8.5, // IRR Adj 12% - EURIBOR 3.5% = 8.5%
       rwaDensity: 136, // RWA 136% (UTP classification)
-      durata: 4,
+      durata: 16, // Durata in trimestri (4 anni)
       commissionRate: 1.5,
       dangerRate: 8.0, // Very high risk (UTP)
       ltv: 40.0,
@@ -352,7 +352,7 @@ export const defaultAssumptions = {
       avgLoanSize: 8.0, // Average loan size in €M
       spread: 11.5, // IRR Adj 15% - EURIBOR 3.5% = 11.5%
       rwaDensity: 100, // RWA 100% (UTP but restructured)
-      durata: 5,
+      durata: 20, // Durata in trimestri (5 anni)
       commissionRate: 0.0, // No initial commission
       dangerRate: 6.0, // High risk but restructured
       ltv: 30.0,
