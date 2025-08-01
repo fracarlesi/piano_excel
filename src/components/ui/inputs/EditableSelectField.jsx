@@ -1,5 +1,5 @@
 import React from 'react';
-import Tooltip from './Tooltip';
+import { Tooltip } from '../../tooltip-system';
 
 const EditableSelectField = ({ 
   label, 

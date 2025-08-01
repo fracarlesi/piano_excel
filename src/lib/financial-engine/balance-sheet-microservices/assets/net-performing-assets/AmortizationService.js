@@ -3,9 +3,15 @@
  * 
  * Handles principal repayment calculations for different loan types
  * including French amortization and bullet repayments
+ * 
+ * Uses Decimal.js for precise financial calculations
  */
 
+import Decimal from 'decimal.js';
 import { getInterestRate } from './vintageManager.js';
+
+// Configure Decimal for financial precision
+Decimal.set({ precision: 10, rounding: Decimal.ROUND_HALF_UP });
 
 /**
  * Calculate principal payment for French amortization
@@ -22,11 +28,15 @@ export const calculateFrenchPrincipalPayment = (vintage, quarterlyRate, quarters
     return 0;
   }
   
-  // Post grace period: normal amortization
-  const interestPayment = vintage.outstandingPrincipal * quarterlyRate;
-  const principalPayment = vintage.quarterlyPayment - interestPayment;
+  // Post grace period: normal amortization using Decimal for precision
+  const outstandingPrincipal = new Decimal(vintage.outstandingPrincipal);
+  const quarterlyPayment = new Decimal(vintage.quarterlyPayment);
+  const rate = new Decimal(quarterlyRate);
   
-  return Math.max(0, principalPayment);
+  const interestPayment = outstandingPrincipal.mul(rate);
+  const principalPayment = quarterlyPayment.minus(interestPayment);
+  
+  return Math.max(0, principalPayment.toNumber());
 };
 
 /**
@@ -70,7 +80,7 @@ export const processQuarterlyAmortization = (vintage, currentQuarter, product, a
  * @returns {Object} Annual repayment summary
  */
 export const calculateAnnualRepayments = (vintages, year, product, assumptions) => {
-  let annualPrincipalRepayments = 0;
+  let annualPrincipalRepayments = new Decimal(0);
   const repaymentsByVintage = new Map();
   
   // Track repayments during the year
@@ -86,8 +96,10 @@ export const calculateAnnualRepayments = (vintages, year, product, assumptions) 
       );
       
       if (principalPayment > 0) {
-        const currentRepayments = repaymentsByVintage.get(vintage) || 0;
-        repaymentsByVintage.set(vintage, currentRepayments + principalPayment);
+        const principalPaymentDecimal = new Decimal(principalPayment);
+        const currentRepayments = repaymentsByVintage.get(vintage) || new Decimal(0);
+        repaymentsByVintage.set(vintage, currentRepayments.plus(principalPaymentDecimal));
+        annualPrincipalRepayments = annualPrincipalRepayments.plus(principalPaymentDecimal);
       }
     });
   }
@@ -102,18 +114,17 @@ export const calculateAnnualRepayments = (vintages, year, product, assumptions) 
       
       // Check if bullet matures this year
       if (vintageMaturityQuarter >= yearStartQuarter && vintageMaturityQuarter < yearEndQuarter) {
-        annualPrincipalRepayments += vintage.initialAmount;
+        annualPrincipalRepayments = annualPrincipalRepayments.plus(new Decimal(vintage.initialAmount));
       }
-    } else {
-      // Add French/amortizing repayments
-      const vintageRepayments = repaymentsByVintage.get(vintage) || 0;
-      annualPrincipalRepayments += vintageRepayments;
     }
   });
   
   return {
-    totalRepayments: annualPrincipalRepayments,
-    repaymentsByVintage
+    totalRepayments: annualPrincipalRepayments.toNumber(),
+    repaymentsByVintage: Array.from(repaymentsByVintage.entries()).reduce((acc, [vintage, amount]) => {
+      acc.set(vintage, amount.toNumber());
+      return acc;
+    }, new Map())
   };
 };
 

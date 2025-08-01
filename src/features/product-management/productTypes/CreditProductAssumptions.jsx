@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/Card';
-import EditableNumberField from '../../../components/EditableNumberField';
-import EditableSelectField from '../../../components/EditableSelectField';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card/Card';
+import { EditableNumberField } from '../../../components/ui/inputs';
+import { EditableSelectField } from '../../../components/ui/inputs';
 
 const CreditProductAssumptions = ({ 
   product, 

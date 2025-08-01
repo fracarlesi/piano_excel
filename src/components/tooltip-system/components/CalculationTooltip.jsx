@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Info, X, Calculator, TrendingUp, Database } from 'lucide-react';
-import { TooltipContext } from '../lib/utils/useTooltip';
+import { TooltipContext } from '../hooks/useTooltip';
 
 // Tooltip component for showing calculation details with trace precedents functionality
 const CalculationTooltip = ({ children, formula, details, calculation, id, precedents, year }) => {

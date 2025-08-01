@@ -1,14 +1,11 @@
-// Helper function to format numbers
-export const formatNumber = (num, decimals = 1, unit = '') => {
-  if (num === null || typeof num !== 'number' || isNaN(num)) return '';
-  const formatted = num.toLocaleString('it-IT', { 
-    minimumFractionDigits: decimals, 
-    maximumFractionDigits: decimals 
-  });
-  return `${formatted}${unit}`;
-};
+/**
+ * Export Utilities
+ */
 
-// Export data utility functions
+/**
+ * Export data as JSON file
+ * @param {Object} data - Data to export
+ */
 export const exportData = (data) => {
   const dataStr = JSON.stringify(data, null, 2);
   const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);

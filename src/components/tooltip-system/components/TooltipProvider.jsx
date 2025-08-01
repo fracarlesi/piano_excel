@@ -1,5 +1,5 @@
 import React from 'react';
-import { TooltipContext, useTooltip } from '../lib/utils/useTooltip';
+import { TooltipContext, useTooltip } from '../hooks/useTooltip';
 
 // Tooltip provider component
 export const TooltipProvider = ({ children }) => {

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { HelpCircle } from 'lucide-react';
-import { TooltipContext } from '../lib/utils/useTooltip';
+import { TooltipContext } from '../hooks/useTooltip';
 
 /**
  * Tooltip component for displaying help information on assumptions

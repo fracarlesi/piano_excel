@@ -1,7 +1,7 @@
 import React from 'react';
 import FinancialTable from './FinancialTable';
-import { formatNumber } from '../../../lib/utils/formatters';
-import { createFormula } from '../../../lib/utils/formulaHelpers';
+import { formatNumber } from '../../../components/shared/formatters';
+import { createFormula } from '../../../components/tooltip-system';
 
 /**
  * Standardized Capital Requirements structure for all divisions

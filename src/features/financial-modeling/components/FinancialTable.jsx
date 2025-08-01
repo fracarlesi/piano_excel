@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import CalculationTooltip from '../../../components/CalculationTooltip';
-import { formatNumber } from '../../../lib/utils/formatters';
+import { CalculationTooltip } from '../../../components/tooltip-system';
+import { formatNumber } from '../../../components/shared/formatters';
 
 // Financial Table Component with expandable rows (Quarterly View Only)
 const FinancialTable = ({ title, rows }) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Tooltip from './Tooltip';
+import { Tooltip } from '../../tooltip-system';
 
 // A smarter input field that handles numeric formatting for better UX.
 const EditableNumberField = ({ 

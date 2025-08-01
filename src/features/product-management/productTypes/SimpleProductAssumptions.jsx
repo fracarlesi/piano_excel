@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/Card';
-import EditableNumberField from '../../../components/EditableNumberField';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card/Card';
+import { EditableNumberField } from '../../../components/ui/inputs';
 
 const SimpleProductAssumptions = ({ 
   product, 

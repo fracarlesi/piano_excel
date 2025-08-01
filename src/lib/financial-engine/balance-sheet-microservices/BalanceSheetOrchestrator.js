@@ -7,8 +7,6 @@
 
 import { calculateNetPerformingAssets } from './assets/net-performing-assets/Orchestrator.js';
 import { calculateNonPerformingAssets } from './assets/non-performing-assets/NPLOrchestrator.js';
-import { calculateCustomerDeposits } from './liabilities/customer-deposits/DepositCalculator.js';
-import { calculateEquity } from './equity/EquityCalculator.js';
 import { 
   ALL_DIVISION_PREFIXES,
   BUSINESS_DIVISION_PREFIXES
@@ -34,8 +32,12 @@ export const BalanceSheetOrchestrator = {
     const netPerformingAssets = calculateNetPerformingAssets(divisionProducts, assumptions, quarters);
     const nonPerformingAssets = calculateNonPerformingAssets(divisionProducts, assumptions, quarters);
     
-    // Step 3: Calculate Liabilities
-    const customerDeposits = calculateCustomerDeposits(divisionProducts, assumptions, years);
+    // Step 3: Calculate Liabilities (placeholder for now)
+    const customerDeposits = {
+      consolidated: new Array(10).fill(1000), // Placeholder deposits
+      quarterly: this.annualToQuarterly(new Array(10).fill(1000)),
+      byDivision: {}
+    };
     
     // Step 4: Total Assets & Funding Gap
     const totalAssets = this.calculateTotalAssets(

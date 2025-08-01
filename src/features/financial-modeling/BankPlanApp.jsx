@@ -3,7 +3,7 @@ import { useState } from 'react';
 import useAssumptionsStore from '../../store/assumptionsStore';
 
 // Components
-import { TooltipProvider } from '../../components/TooltipProvider';
+import { TooltipProvider } from '../../components/tooltip-system';
 import Header from '../layout/Header';
 import Navigation from '../layout/Navigation';
 import AssumptionsSheet from './AssumptionsSheet';

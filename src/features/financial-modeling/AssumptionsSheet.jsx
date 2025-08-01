@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import EditableNumberField from '../../components/EditableNumberField';
+import { EditableNumberField } from '../../components/ui/inputs';
 import REAssumptions from '../assumptions-editor/REAssumptions';
 import SMEAssumptions from '../assumptions-editor/SMEAssumptions';
 import DigitalAssumptions from '../assumptions-editor/DigitalAssumptions';

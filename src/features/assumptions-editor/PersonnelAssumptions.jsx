@@ -1,5 +1,5 @@
 import React from 'react';
-import EditableNumberField from '../../components/EditableNumberField';
+import { EditableNumberField } from '../../components/ui/inputs';
 
 const PersonnelAssumptions = ({ 
   assumptions, 
