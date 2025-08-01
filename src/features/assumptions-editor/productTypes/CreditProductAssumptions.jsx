@@ -174,7 +174,6 @@ const CreditProductAssumptions = ({
             editMode={editMode}
             options={[
               { value: 'french', label: 'Francese (rate costanti)' },
-              { value: 'amortizing', label: 'Ammortamento lineare' },
               { value: 'bullet', label: 'Bullet (capitale a scadenza)' }
             ]}
             tooltip="Modalità di rimborso del prestito"

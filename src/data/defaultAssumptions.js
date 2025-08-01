@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.47', // Removed product-level breakdown from Other OPEX section in P&L table
+  version: '10.48', // Removed linear amortization option from credit products
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -216,7 +216,7 @@ export const defaultAssumptions = {
       ltv: 65.0, // LTV conservativo
       recoveryCosts: 8.0, // Costi di recupero bassi
       collateralHaircut: 15.0, // Haircut moderato
-      type: 'amortizing',
+      type: 'french',
       gracePeriod: 0 // Nessun periodo di preammortamento
     },
     reMortgage: {
@@ -262,7 +262,7 @@ export const defaultAssumptions = {
       ltv: 70.0,
       recoveryCosts: 15.0,
       collateralHaircut: 25.0,
-      type: 'amortizing', // After 2 years grace period
+      type: 'french', // After 2 years grace period
       gracePeriod: 2 // Grace period for interest only
     },
     smeBridge: {

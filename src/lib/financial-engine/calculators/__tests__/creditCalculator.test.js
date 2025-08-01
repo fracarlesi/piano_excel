@@ -1,213 +1,275 @@
 import { calculateCreditProduct } from '../creditCalculator';
 
-describe('Credit Calculator - Core Logic Tests', () => {
-  // No need for Decimal conversion as the calculator returns regular numbers
-  const toNumbers = (array) => array;
+describe('Credit Calculator Interest Tests', () => {
+  
+  describe('Scenario 1: Bullet Loan with Q2 Disbursement', () => {
+    const product = {
+      name: 'Test Bullet Q2',
+      type: 'bullet',
+      durata: 3, // 3 years
+      spread: 6.5,
+      dangerRate: 0,
+      volumeArray: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0] // €100M in Y0 only
+    };
 
-  describe('Bullet Loan Stock Validation', () => {
-    test('should correctly accumulate and repay bullet loans with vintage logic', () => {
-      // Simplified test focusing on behavior rather than absolute values
-      const product = {
-        name: 'Test Bullet Loan',
-        type: 'bullet',
-        durata: 3,
-        spread: 1.5,
-        rwaDensity: 100,
-        dangerRate: 0,
-        avgLoanSize: 10,
-        volumes: { y1: 100, y10: 150 }
-      };
+    const assumptions = {
+      euribor: 3.5,
+      ftpSpread: 1.5,
+      quarterlyAllocation: [0, 50, 50, 0], // Q2 and Q3 disbursement
+      taxRate: 30
+    };
 
-      const assumptions = {
-        euribor: 3.5,
-        ftpSpread: 1.5,
-        quarterlyAllocation: [25, 25, 25, 25],
-        taxRate: 30
-      };
+    const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-      const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    test('Calculates correct interest income with quarterly convention', () => {
       const result = calculateCreditProduct(product, assumptions, years);
       
-      const performingAssets = toNumbers(result.performingAssets);
-      const volumes = toNumbers(result.volumes);
+      // Interest rate = 3.5% + 6.5% = 10%
+      // With [0, 50, 50, 0] allocation:
+      // Q2: 50€ disbursed, interest from Q3-Q4 = 50€ × 10% × (2/4) = 2.5€
+      // Q3: 50€ disbursed, interest from Q4 = 50€ × 10% × (1/4) = 1.25€
+      // Total Y0 interest = 3.75€
+      expect(result.interestIncome[0]).toBeCloseTo(3.75, 2);
       
-      // Test vintage accumulation behavior
-      // Year 0: Only Y0 vintage active
-      // Year 1: Y0 + Y1 vintages active  
-      // Year 2: Y0 + Y1 + Y2 vintages active
-      // Year 3: Y0 matures, only Y1 + Y2 + Y3 active
+      // Year 1: Full year = 100€ × 10% = 10€
+      expect(result.interestIncome[1]).toBeCloseTo(10, 2);
       
-      // Stock should increase for first 3 years
-      expect(performingAssets[1]).toBeGreaterThan(performingAssets[0]);
-      expect(performingAssets[2]).toBeGreaterThan(performingAssets[1]);
+      // Year 2: Full year = 100€ × 10% = 10€
+      expect(result.interestIncome[2]).toBeCloseTo(10, 2);
       
-      // After year 3, Y0 vintage matures, so stock should decrease
-      expect(performingAssets[3]).toBeLessThan(performingAssets[2]);
+      // Year 3: Interest until maturity
+      // Bullet loans include interest up to and including maturity quarter
+      // With Q2/Q3 disbursements and 3-year maturity, we get partial year interest
+      expect(result.interestIncome[3]).toBeCloseTo(6.25, 2);
       
-      // Volumes should increase linearly
-      expect(volumes[0]).toBeLessThan(volumes[1]);
-      expect(volumes[1]).toBeLessThan(volumes[2]);
+      // Year 4: No interest (loan matured)
+      expect(result.interestIncome[4]).toBe(0);
+    });
+
+    test('Principal repayment occurs only at maturity', () => {
+      const result = calculateCreditProduct(product, assumptions, years);
       
-      console.log('Bullet loan test passed - vintage logic working correctly');
+      // No principal repayments before maturity
+      expect(result.principalRepayments[0]).toBe(0);
+      expect(result.principalRepayments[1]).toBe(0);
+      expect(result.principalRepayments[2]).toBe(0);
+      
+      // Full repayment at maturity (Y3)
+      expect(result.principalRepayments[3]).toBe(100);
+      
+      // No repayments after maturity
+      expect(result.principalRepayments[4]).toBe(0);
+    });
+
+    test('Performing assets remain constant until maturity', () => {
+      const result = calculateCreditProduct(product, assumptions, years);
+      
+      // Stock = 100€ from Y0 to Y2
+      expect(result.performingAssets[0]).toBe(100);
+      expect(result.performingAssets[1]).toBe(100);
+      expect(result.performingAssets[2]).toBe(100);
+      
+      // Stock = 0 from Y3 onwards (matured)
+      expect(result.performingAssets[3]).toBe(0);
+      expect(result.performingAssets[4]).toBe(0);
     });
   });
 
-  describe('Grace Period Validation', () => {
-    test('should apply grace period correctly for amortizing loans', () => {
-      // Setup: 100M€ amortizing loan, 5-year duration, 2-year grace period
-      const product = {
-        name: 'Test Amortizing Loan',
-        type: 'amortizing',
-        durata: 5,
-        gracePeriod: 2,
-        interestRate: 5,
-        dangerRate: 0,
-        volumes: { y1: 100, y10: 100 } // Only Y1 for simplicity
-      };
+  describe('Scenario 2: French Amortization Standard', () => {
+    const product = {
+      name: 'Test French Standard',
+      type: 'french',
+      durata: 5, // 5 years
+      spread: 0.5,
+      dangerRate: 0,
+      volumeArray: [1000, 0, 0, 0, 0, 0, 0, 0, 0, 0] // €1000M in Y0 only
+    };
 
-      const assumptions = {
-        euribor: 3.5,
-        ftpSpread: 1.5,
-        quarterlyAllocation: [25, 25, 25, 25],
-        taxRate: 30
-      };
+    const assumptions = {
+      euribor: 3.5,
+      ftpSpread: 1.5,
+      quarterlyAllocation: [100, 0, 0, 0], // Q1 disbursement only
+      taxRate: 30
+    };
 
-      const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
+    test('Calculates decreasing interest over time', () => {
       const result = calculateCreditProduct(product, assumptions, years);
       
-      // Extract principal repayments
-      const principalRepayments = toNumbers(result.principalRepayments);
+      // Interest rate = 3.5% + 0.5% = 4%
+      // Interest should decrease as principal is repaid
+      expect(result.interestIncome[0]).toBeGreaterThan(0);
+      expect(result.interestIncome[1]).toBeGreaterThan(0);
       
-      // During grace period, principal repayments should be minimal
-      // Note: There might be small repayments from later vintages
-      const earlyRepayments = Math.abs(principalRepayments[0]) + Math.abs(principalRepayments[1]);
-      const laterRepayments = Math.abs(principalRepayments[2]) + Math.abs(principalRepayments[3]);
+      // Y0 is partial year (Q1 disbursement), so Y1 might have more interest
+      // But from Y1 onwards, interest should decrease
+      expect(result.interestIncome[2]).toBeLessThan(result.interestIncome[1]);
+      expect(result.interestIncome[3]).toBeLessThan(result.interestIncome[2]);
+      expect(result.interestIncome[4]).toBeLessThan(result.interestIncome[3]);
       
-      // After grace period, repayments should increase significantly
-      expect(laterRepayments).toBeGreaterThan(earlyRepayments * 2);
+      // Small interest in final year for last payment
+      expect(result.interestIncome[5]).toBeGreaterThan(0);
+      expect(result.interestIncome[5]).toBeLessThan(1); // Very small amount
       
-      console.log('Principal Repayments by Year:', principalRepayments.slice(0, 6));
+      // No interest after maturity
+      expect(result.interestIncome[6]).toBe(0);
+    });
+
+    test('Principal repayments increase over time', () => {
+      const result = calculateCreditProduct(product, assumptions, years);
+      
+      // French amortization has increasing principal repayments
+      expect(result.principalRepayments[0]).toBeGreaterThan(0);
+      expect(result.principalRepayments[1]).toBeGreaterThan(result.principalRepayments[0]);
+      expect(result.principalRepayments[2]).toBeGreaterThan(result.principalRepayments[1]);
+      
+      // Total repayments should be close to initial amount
+      // Some difference is expected due to Q1 disbursement timing
+      const totalRepayments = result.principalRepayments.reduce((sum, r) => sum + r, 0);
+      expect(totalRepayments).toBeGreaterThan(900); // Should repay most of the loan
+      expect(totalRepayments).toBeLessThan(1050); // But not significantly more
+    });
+
+    test('Performing assets decrease steadily', () => {
+      const result = calculateCreditProduct(product, assumptions, years);
+      
+      // Stock should decrease each year
+      expect(result.performingAssets[0]).toBeLessThan(1000);
+      expect(result.performingAssets[1]).toBeLessThan(result.performingAssets[0]);
+      expect(result.performingAssets[2]).toBeLessThan(result.performingAssets[1]);
+      expect(result.performingAssets[3]).toBeLessThan(result.performingAssets[2]);
+      
+      // Stock = 0 after maturity
+      expect(result.performingAssets[5]).toBe(0);
     });
   });
 
-  describe('Quarterly Allocation Impact', () => {
-    test('should correctly apply first year adjustment for Q4-only disbursement', () => {
-      // Setup: 100M€ loan at 10% rate, 100% disbursed in Q4
+  describe('Scenario 3: French Amortization with Grace Period', () => {
+    const product = {
+      name: 'Test French Grace',
+      type: 'french',
+      durata: 5, // 5 years total
+      gracePeriod: 2, // 2 years grace period
+      spread: 0.5,
+      dangerRate: 0,
+      volumeArray: [1000, 0, 0, 0, 0, 0, 0, 0, 0, 0] // €1000M in Y0 only
+    };
+
+    const assumptions = {
+      euribor: 3.5,
+      ftpSpread: 1.5,
+      quarterlyAllocation: [100, 0, 0, 0], // Q1 disbursement only
+      taxRate: 30
+    };
+
+    const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    test('No principal repayments during grace period', () => {
+      const result = calculateCreditProduct(product, assumptions, years);
+      
+      // No principal repayments in years 0 and 1 (grace period)
+      expect(result.principalRepayments[0]).toBe(0);
+      expect(result.principalRepayments[1]).toBe(0);
+      
+      // Principal repayments start in year 2
+      expect(result.principalRepayments[2]).toBeGreaterThan(0);
+      expect(result.principalRepayments[3]).toBeGreaterThan(0);
+      expect(result.principalRepayments[4]).toBeGreaterThan(0);
+    });
+
+    test('Performing assets remain constant during grace period', () => {
+      const result = calculateCreditProduct(product, assumptions, years);
+      
+      // Stock remains at 1000 during grace period
+      expect(result.performingAssets[0]).toBe(1000);
+      expect(result.performingAssets[1]).toBe(1000);
+      
+      // Stock decreases after grace period
+      expect(result.performingAssets[2]).toBeLessThan(1000);
+      expect(result.performingAssets[3]).toBeLessThan(result.performingAssets[2]);
+    });
+
+    test('Interest accrues during grace period', () => {
+      const result = calculateCreditProduct(product, assumptions, years);
+      
+      // Full interest during grace period (principal not reducing)
+      // Interest rate = 4%, so ~40€ per year on 1000€
+      expect(result.interestIncome[0]).toBeGreaterThan(25); // Partial year
+      expect(result.interestIncome[1]).toBeCloseTo(40, 5);
+      
+      // Interest decreases after grace period as principal is repaid
+      expect(result.interestIncome[2]).toBeLessThan(result.interestIncome[1]);
+    });
+
+    test('Comparison with standard French loan', () => {
+      const standardProduct = { ...product, gracePeriod: 0 };
+      const standardResult = calculateCreditProduct(standardProduct, assumptions, years);
+      const graceResult = calculateCreditProduct(product, assumptions, years);
+      
+      // Grace period loan should have:
+      // 1. Higher total interest (principal outstanding longer)
+      const totalInterestGrace = graceResult.interestIncome.reduce((sum, i) => sum + i, 0);
+      const totalInterestStandard = standardResult.interestIncome.reduce((sum, i) => sum + i, 0);
+      expect(totalInterestGrace).toBeGreaterThan(totalInterestStandard);
+      
+      // 2. Delayed principal repayments
+      expect(graceResult.principalRepayments[0]).toBe(0);
+      expect(standardResult.principalRepayments[0]).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Edge Cases and Validation', () => {
+    test('Handles zero interest rate', () => {
       const product = {
-        name: 'Test Q4 Loan',
+        name: 'Zero Rate',
         type: 'bullet',
-        durata: 3,
-        spread: 6.5, // Total rate will be 10% (3.5% EURIBOR + 6.5% spread)
+        durata: 2,
+        spread: -3.5, // Cancels out EURIBOR
         dangerRate: 0,
-        volumes: { y1: 100, y10: 100 }
+        volumeArray: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       };
 
       const assumptions = {
         euribor: 3.5,
         ftpSpread: 1.5,
-        quarterlyAllocation: [0, 0, 0, 100], // 100% in Q4
+        quarterlyAllocation: [100, 0, 0, 0],
         taxRate: 30
       };
 
-      const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-      const result = calculateCreditProduct(product, assumptions, years);
+      const result = calculateCreditProduct(product, assumptions, [0, 1, 2, 3, 4]);
       
-      // Extract interest income
-      const interestIncome = toNumbers(result.interestIncome);
-      
-      // Year 0: When disbursed 100% in Q4, loan generates interest only for Q4
-      // Q4 disbursement at end of Q3 = 3 months of interest = 0.25 years
-      // But the calculator actually starts interest from Q1 after disbursement
-      // So Q4 disbursement means no interest in Year 0!
-      expect(interestIncome[0]).toBeCloseTo(0, 0.5);
-      
-      // Year 1: Should be full year interest (100M * 10%)
-      expect(interestIncome[1]).toBeCloseTo(10, 1);
-      
-      console.log('Interest Income Y0 (Q4 disbursement):', interestIncome[0]);
-      console.log('Interest Income Y1 (full year):', interestIncome[1]);
-      console.log('First Year Adjustment Factor:', 1 - (interestIncome[0] / (100 * 0.10)));
+      // No interest with 0% rate
+      expect(result.interestIncome[0]).toBe(0);
+      expect(result.interestIncome[1]).toBe(0);
     });
 
-    test('should correctly apply first year adjustment for Q1-only disbursement', () => {
-      // Setup: Same loan but 100% disbursed in Q1
+    test('Handles quarterly allocation correctly', () => {
       const product = {
-        name: 'Test Q1 Loan',
+        name: 'Quarterly Test',
         type: 'bullet',
-        durata: 3,
+        durata: 1,
         spread: 6.5,
         dangerRate: 0,
-        volumes: { y1: 100, y10: 100 }
+        volumeArray: [100, 0, 0, 0, 0, 0, 0, 0, 0, 0]
       };
 
       const assumptions = {
         euribor: 3.5,
         ftpSpread: 1.5,
-        quarterlyAllocation: [100, 0, 0, 0], // 100% in Q1
+        quarterlyAllocation: [25, 25, 25, 25], // Even distribution
         taxRate: 30
       };
 
-      const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-      const result = calculateCreditProduct(product, assumptions, years);
+      const result = calculateCreditProduct(product, assumptions, [0, 1, 2]);
       
-      const interestIncome = toNumbers(result.interestIncome);
-      
-      // Year 0: Q1 disbursement means interest from Q2, Q3, Q4 = 9 months = 0.75 years
-      const expectedY0Interest = 100 * 0.10 * 0.75;
-      expect(interestIncome[0]).toBeCloseTo(expectedY0Interest, 1);
-      
-      console.log('Interest Income Y0 (Q1 disbursement):', interestIncome[0]);
-      console.log('Effective interest period:', interestIncome[0] / (100 * 0.10), 'years');
-    });
-  });
-
-  describe('French Amortization Validation', () => {
-    test('should calculate correct principal repayments for French amortization', () => {
-      // Setup: 100M€ French loan, 5-year duration, 5% rate
-      const product = {
-        name: 'Test French Loan',
-        type: 'french',
-        durata: 5,
-        spread: 1.5, // Total rate will be 5% (3.5% EURIBOR + 1.5% spread)
-        dangerRate: 0,
-        volumes: { y1: 100, y10: 100 }
-      };
-
-      const assumptions = {
-        euribor: 3.5,
-        ftpSpread: 1.5,
-        quarterlyAllocation: [25, 25, 25, 25],
-        taxRate: 30
-      };
-
-      const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-      const result = calculateCreditProduct(product, assumptions, years);
-      
-      const principalRepayments = toNumbers(result.principalRepayments);
-      const performingAssets = toNumbers(result.performingAssets);
-      
-      // For French amortization, test the key characteristics:
-      // 1. Constant total payment (principal + interest)
-      // 2. Increasing principal component over time
-      
-      // Interest should decrease over time as principal is repaid
-      const interestIncome = toNumbers(result.interestIncome);
-      expect(interestIncome[1]).toBeLessThan(interestIncome[0]);
-      expect(interestIncome[2]).toBeLessThan(interestIncome[1]);
-      
-      // Stock should decrease over time
-      expect(performingAssets[1]).toBeLessThan(performingAssets[0]);
-      expect(performingAssets[2]).toBeLessThan(performingAssets[1]);
-      
-      // After 5 years, most of the loan should be repaid
-      expect(performingAssets[4]).toBeLessThan(performingAssets[0] * 0.2);
-      
-      console.log('French Loan - Principal Repayments:', principalRepayments.slice(0, 6));
-      console.log('French Loan - Performing Assets:', performingAssets.slice(0, 6));
+      // With 10% rate and even distribution:
+      // Q1: 25€ × 10% × 3/4 year = 1.875€
+      // Q2: 25€ × 10% × 2/4 year = 1.25€
+      // Q3: 25€ × 10% × 1/4 year = 0.625€
+      // Q4: 25€ × 10% × 0/4 year = 0€
+      // Total Y0 interest = 3.75€
+      expect(result.interestIncome[0]).toBeCloseTo(3.75, 2);
     });
   });
 });
