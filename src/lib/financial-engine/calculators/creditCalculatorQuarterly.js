@@ -14,6 +14,7 @@ import {
 } from './defaultCalculatorAligned.js';
 import { processQuarterlyRecoveries } from './recoveryCalculator.js';
 import { processDangerRate } from './dangerRateCalculator.js';
+import { calculateNBV } from './nbvCalculator.js';
 import { 
   calculateVolumes, 
   calculateNumberOfLoans, 
@@ -117,7 +118,7 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
       }
       
       // Process danger rate defaults using new microservice
-      const dangerRateResult = processDangerRate(vintages, currentQuarter, product);
+      const dangerRateResult = processDangerRate(vintages, currentQuarter, product, quarterlyRate);
       
       quarterlyNewNPLs[currentQuarter] = dangerRateResult.newDefaults;
       annualNewDefaults += dangerRateResult.newDefaults;
@@ -125,17 +126,19 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
       quarterlyLLP[currentQuarter] = dangerRateResult.llp;
       annualLLP += dangerRateResult.llp;
       
-      // Update NPL stock with new defaults
-      cumulativeNPLStockNet += dangerRateResult.newDefaults;
+      // Update NPL stock with NBV of new defaults
+      cumulativeNPLStockNet += dangerRateResult.nbv;
       
       // Add NPL cohorts for recovery tracking
       if (dangerRateResult.newDefaults > 0) {
-        const recoveryQuarter = currentQuarter + Math.round((product.timeToRecover || 3) * 4);
+        const recoveryQuarter = currentQuarter + (product.timeToRecover || 12);
         nplCohorts.push({
           quarter: currentQuarter,
-          amount: dangerRateResult.newDefaults,
+          amount: dangerRateResult.nbv,  // Track NBV amount instead of nominal
           recoveryQuarter: recoveryQuarter,
-          type: 'vintage_default'
+          type: 'vintage_default',
+          nominalAmount: dangerRateResult.newDefaults,
+          expectedRecovery: dangerRateResult.nbv
         });
       }
       

@@ -136,7 +136,7 @@ export const createNPLFromDefault = ({
   }
 
   // Calculate recovery based on product parameters
-  const timeToRecover = product.timeToRecover || 3;
+  const timeToRecover = product.timeToRecover || 12; // In quarters
   const annualRate = quarterlyRate * 4;
   const cohorts = [];
   let totalNBV = 0;
@@ -144,14 +144,14 @@ export const createNPLFromDefault = ({
   // State guarantee recovery if applicable
   if (product.stateGuaranteeType === 'present' && product.stateGuaranteeCoverage > 0) {
     const guaranteedAmount = actualDefaultAmount * (product.stateGuaranteeCoverage / 100);
-    const stateRecoveryTime = product.stateGuaranteeRecoveryTime || 0.5;
-    const stateRecoveryNBV = guaranteedAmount / Math.pow(1 + annualRate, stateRecoveryTime);
+    const stateRecoveryTime = product.stateGuaranteeRecoveryTime || 2; // In quarters (default 6 months)
+    const stateRecoveryNBV = guaranteedAmount / Math.pow(1 + quarterlyRate, stateRecoveryTime);
     
     cohorts.push({
       creationQuarter: currentQuarter,
       nominalAmount: guaranteedAmount,
       nbvAmount: stateRecoveryNBV,
-      recoveryQuarter: currentQuarter + Math.round(stateRecoveryTime * 4),
+      recoveryQuarter: currentQuarter + stateRecoveryTime,
       expectedRecoveryAmount: guaranteedAmount,
       type: 'stateGuarantee'
     });
@@ -169,13 +169,13 @@ export const createNPLFromDefault = ({
       const valueAfterHaircut = collateralValue * (1 - product.collateralHaircut / 100);
       const recoveryCosts = nonGuaranteedAmount * (product.recoveryCosts / 100);
       const netRecovery = Math.max(0, valueAfterHaircut - recoveryCosts);
-      const recoveryNBV = netRecovery / Math.pow(1 + annualRate, timeToRecover);
+      const recoveryNBV = netRecovery / Math.pow(1 + quarterlyRate, timeToRecover);
       
       cohorts.push({
         creationQuarter: currentQuarter,
         nominalAmount: nonGuaranteedAmount,
         nbvAmount: recoveryNBV,
-        recoveryQuarter: currentQuarter + Math.round(timeToRecover * 4),
+        recoveryQuarter: currentQuarter + timeToRecover,
         expectedRecoveryAmount: netRecovery,
         type: 'collateral'
       });
@@ -186,13 +186,13 @@ export const createNPLFromDefault = ({
       const unsecuredLGD = product.unsecuredLGD || 45;
       const recoveryRate = (100 - unsecuredLGD) / 100;
       const recoveryAmount = nonGuaranteedAmount * recoveryRate;
-      const recoveryNBV = recoveryAmount / Math.pow(1 + annualRate, timeToRecover);
+      const recoveryNBV = recoveryAmount / Math.pow(1 + quarterlyRate, timeToRecover);
       
       cohorts.push({
         creationQuarter: currentQuarter,
         nominalAmount: nonGuaranteedAmount,
         nbvAmount: recoveryNBV,
-        recoveryQuarter: currentQuarter + Math.round(timeToRecover * 4),
+        recoveryQuarter: currentQuarter + timeToRecover,
         expectedRecoveryAmount: recoveryAmount,
         type: 'unsecured'
       });

@@ -6,6 +6,8 @@
  * after a specified number of quarters from disbursement
  */
 
+import { calculateNBV } from './nbvCalculator.js';
+
 /**
  * Calculate defaults for a specific quarter based on vintage-level danger rate
  * @param {Array} vintages - Array of all loan vintages
@@ -105,6 +107,7 @@ export const calculateNPLStock = (vintages, currentQuarter) => {
 
 /**
  * Calculate LLP (Loan Loss Provisions) for new defaults
+ * DEPRECATED: Use nbvCalculator.calculateNBV for proper NBV/LLP calculation
  * @param {number} newDefaults - Amount of new defaults this quarter
  * @param {Object} product - Product configuration
  * @returns {Object} LLP calculation results
@@ -126,15 +129,17 @@ export const calculateLLP = (newDefaults, product) => {
  * @param {Array} vintages - Array of all loan vintages
  * @param {number} currentQuarter - Current quarter index
  * @param {Object} product - Product configuration
+ * @param {number} quarterlyRate - Quarterly interest rate for NBV calculation
  * @returns {Object} Complete danger rate calculation results
  */
-export const processDangerRate = (vintages, currentQuarter, product) => {
+export const processDangerRate = (vintages, currentQuarter, product, quarterlyRate = 0.01875) => {
   // Skip if no danger rate is configured
   if (!product.dangerRate || product.dangerRate === 0) {
     return {
       newDefaults: 0,
       nplStock: 0,
       llp: 0,
+      nbv: 0,
       defaultingVintages: [],
       nplVintages: []
     };
@@ -146,16 +151,19 @@ export const processDangerRate = (vintages, currentQuarter, product) => {
   // Calculate cumulative NPL stock
   const nplResults = calculateNPLStock(vintages, currentQuarter);
   
-  // Calculate LLP for new defaults
-  const llpResults = calculateLLP(defaultResults.newDefaults, product);
+  // Calculate NBV and LLP using the new microservice
+  const nbvResults = calculateNBV(defaultResults.newDefaults, product, quarterlyRate);
   
   return {
     newDefaults: defaultResults.newDefaults,
     defaultingVintages: defaultResults.defaultingVintages,
     nplStock: nplResults.totalNPLStock,
     nplVintages: nplResults.nplVintages,
-    llp: llpResults.llp,
-    coverageRatio: llpResults.coverageRatio,
+    llp: nbvResults.totalLLP,
+    nbv: nbvResults.totalNBV,
+    impliedRecoveryRate: nbvResults.impliedRecoveryRate,
+    nbvComponents: nbvResults.components,
+    coverageRatio: defaultResults.newDefaults > 0 ? nbvResults.totalLLP / defaultResults.newDefaults : 0,
     defaultRate: defaultResults.defaultRate,
     defaultTiming: defaultResults.defaultTiming
   };

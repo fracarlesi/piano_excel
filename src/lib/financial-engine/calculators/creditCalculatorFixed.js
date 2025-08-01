@@ -155,7 +155,7 @@ export const calculateCreditProductFixed = (product, assumptions, years) => {
       
       // Add recovery cohorts
       if (llpResult.newDefaults > 0) {
-        const recoveryQuarter = currentQuarter + Math.round((product.timeToRecover || 3) * 4);
+        const recoveryQuarter = currentQuarter + (product.timeToRecover || 12);
         nplCohorts.push({
           quarter: currentQuarter,
           amount: llpResult.recoveryNPV,

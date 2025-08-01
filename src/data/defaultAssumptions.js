@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '11.00', // Nuovo microservizio danger rate con default per vintage
+  version: '11.30', // Microservizio Recovery separato da NBV per calcolo recuperi
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -219,11 +219,11 @@ export const defaultAssumptions = {
       collateralHaircut: 15.0, // Haircut moderato
       type: 'french',
       gracePeriod: 0, // Nessun periodo di preammortamento
-      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      timeToRecover: 12, // Tempo di recupero NPL in trimestri (3 anni)
       // Garanzie pubbliche
       stateGuaranteeType: 'none', // none, present
       stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
-      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
+      stateGuaranteeRecoveryTime: 2 // Tempo di recupero in trimestri (6 mesi)
     },
     reMortgage: {
       name: 'Finanziamenti Ipotecari',
@@ -240,11 +240,11 @@ export const defaultAssumptions = {
       collateralHaircut: 20.0, // Haircut standard
       type: 'french', // Ammortamento alla francese
       gracePeriod: 0, // Nessun periodo di preammortamento
-      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      timeToRecover: 12, // Tempo di recupero NPL in trimestri (3 anni)
       // Garanzie pubbliche
       stateGuaranteeType: 'none', // none, present
       stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
-      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
+      stateGuaranteeRecoveryTime: 2 // Tempo di recupero in trimestri (6 mesi)
     },
     reBridge: {
       name: 'Finanziamenti Corporate Bridge Loan',
@@ -261,11 +261,11 @@ export const defaultAssumptions = {
       collateralHaircut: 25.0, // Haircut prudenziale
       type: 'bullet', // Rimborso bullet tipico
       gracePeriod: 0, // Non applicabile per bullet loans
-      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      timeToRecover: 12, // Tempo di recupero NPL in trimestri (3 anni)
       // Garanzie pubbliche
       stateGuaranteeType: 'none', // none, present
       stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
-      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
+      stateGuaranteeRecoveryTime: 2 // Tempo di recupero in trimestri (6 mesi)
     },
     // SME Division Products
     smeRefinancing: {
@@ -283,11 +283,11 @@ export const defaultAssumptions = {
       collateralHaircut: 25.0,
       type: 'french', // Amortizing after grace period
       gracePeriod: 8, // Grace period in quarters (2 years = 8 quarters)
-      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      timeToRecover: 12, // Tempo di recupero NPL in trimestri (3 anni)
       // Garanzie pubbliche
       stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
-      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
+      stateGuaranteeRecoveryTime: 2 // Tempo di recupero in trimestri (6 mesi)
     },
     smeBridge: {
       name: 'Bridge (Ponte)',
@@ -304,11 +304,11 @@ export const defaultAssumptions = {
       collateralHaircut: 30.0,
       type: 'bullet', // Bullet repayment
       gracePeriod: 0, // Non applicabile per bullet loans
-      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      timeToRecover: 12, // Tempo di recupero NPL in trimestri (3 anni)
       // Garanzie pubbliche
       stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
-      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
+      stateGuaranteeRecoveryTime: 2 // Tempo di recupero in trimestri (6 mesi)
     },
     smeSpecialSituation: {
       name: 'Special Situation',
@@ -325,11 +325,11 @@ export const defaultAssumptions = {
       collateralHaircut: 40.0,
       type: 'bullet', // Bullet repayment
       gracePeriod: 0, // Non applicabile per bullet loans
-      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      timeToRecover: 12, // Tempo di recupero NPL in trimestri (3 anni)
       // Garanzie pubbliche
       stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
-      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
+      stateGuaranteeRecoveryTime: 2 // Tempo di recupero in trimestri (6 mesi)
     },
     smeNuovaFinanza: {
       name: 'Nuova Finanza',
@@ -347,11 +347,11 @@ export const defaultAssumptions = {
       type: 'bullet', // Bullet repayment
       gracePeriod: 0, // Non applicabile per bullet loans
       isFixedRate: true, // Fixed rate
-      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      timeToRecover: 12, // Tempo di recupero NPL in trimestri (3 anni)
       // Garanzie pubbliche
       stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
-      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
+      stateGuaranteeRecoveryTime: 2 // Tempo di recupero in trimestri (6 mesi)
     },
     smeRestructuring: {
       name: 'Restructuring (Ristrutturazione)',
@@ -369,11 +369,11 @@ export const defaultAssumptions = {
       type: 'bullet', // Bullet repayment
       gracePeriod: 0, // Non applicabile per bullet loans
       equityUpside: 2.5, // 2.5% equity upside
-      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      timeToRecover: 12, // Tempo di recupero NPL in trimestri (3 anni)
       // Garanzie pubbliche
       stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
-      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
+      stateGuaranteeRecoveryTime: 2 // Tempo di recupero in trimestri (6 mesi)
     },
     // Digital Banking Division - Unified Customer Model with Modular Services
     digitalRetailCustomer: {

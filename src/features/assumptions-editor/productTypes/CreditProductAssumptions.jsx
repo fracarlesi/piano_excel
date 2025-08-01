@@ -98,14 +98,14 @@ const CreditProductAssumptions = ({
           />
           
           <EditableNumberField
-            label="Tempo di Recupero (anni)"
-            value={product.timeToRecover || 3}
+            label="Tempo di Recupero (trimestri)"
+            value={product.timeToRecover || 12}
             onChange={(value) => handleChange('timeToRecover', value)}
             editMode={editMode}
             min={1}
-            max={10}
-            step={0.5}
-            tooltip="Anni medi necessari per completare il processo di recupero del credito tramite la garanzia. Questo valore è cruciale per l'attualizzazione dei flussi di cassa."
+            max={40}
+            step={1}
+            tooltip="Trimestri necessari per completare il processo di recupero del credito NPL. Questo valore è cruciale per l'attualizzazione dei flussi di cassa."
           />
           
           <EditableSelectField
@@ -204,14 +204,14 @@ const CreditProductAssumptions = ({
               />
               
               <EditableNumberField
-                label="Tempo Recupero Garanzia (anni)"
-                value={product.stateGuaranteeRecoveryTime || 0.5}
+                label="Tempo Recupero Garanzia (trimestri)"
+                value={product.stateGuaranteeRecoveryTime || 2}
                 onChange={(value) => handleChange('stateGuaranteeRecoveryTime', value)}
                 editMode={editMode}
-                min={0.25}
-                max={2}
-                step={0.25}
-                tooltip="Tempo medio per l'escussione della garanzia pubblica (tipicamente 6-12 mesi)"
+                min={1}
+                max={8}
+                step={1}
+                tooltip="Tempo medio per l'escussione della garanzia pubblica in trimestri (tipicamente 2-4 trimestri)"
               />
             </>
           )}
