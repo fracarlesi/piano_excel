@@ -1,7 +1,7 @@
 import React from 'react';
 import FinancialTable from './FinancialTable';
-import { formatNumber } from '../lib/utils/formatters';
-import { createFormula } from '../lib/utils/formulaHelpers';
+import { formatNumber } from '../../../lib/utils/formatters';
+import { createFormula } from '../../../lib/utils/formulaHelpers';
 
 /**
  * Standardized KPIs structure for all divisions

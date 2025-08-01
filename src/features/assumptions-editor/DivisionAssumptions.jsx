@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import ProductManager from '../../components/ProductManager';
-import VolumeInputGrid from '../../components/VolumeInputGrid';
+import ProductManager from './ProductManager';
+import VolumeInputGrid from '../financial-modeling/components/VolumeInputGrid';
 import StaffingTable from './StaffingTable';
 import CreditProductAssumptions from './productTypes/CreditProductAssumptions';
 import DigitalServiceAssumptions from './productTypes/DigitalServiceAssumptions';

@@ -1,23 +1,49 @@
-# Guida all'Architettura di NewBank
+# Architettura del Progetto
 
-Questo documento definisce i principi architetturali fondamentali che devono essere rispettati in ogni modifica o aggiunta di codice.
+Questa applicazione adotta un'architettura **basata sulle funzionalità** (*feature-based*). L'obiettivo è organizzare il codice in modo che rispecchi fedelmente le sezioni e le viste dell'interfaccia utente, rendendo il progetto più intuitivo, scalabile e facile da manutenere.
 
-### 1. Architettura a Funzionalità (Feature-Based)
+## Principi Fondamentali
 
-Il codice è organizzato per funzionalità di business, non per tipo di file.
-- **`src/features/`**: Contiene moduli UI auto-contenuti (es. `financial-modeling`, `assumptions-editor`).
-- **`src/lib/`**: Contiene la logica core disaccoppiata.
-  - **`src/lib/financial-engine/`**: È la sede del motore di calcolo.
-  - **`src/lib/firebase/`**: Gestisce la configurazione e l'interazione con Firebase.
-- **`src/components/`**: Contiene solo componenti UI generici e riutilizzabili (es. `Button`, `Table`).
+1.  **Separazione delle Responsabilità (Separation of Concerns)**: La logica di presentazione (UI), la logica di business (i calcoli finanziari) e lo stato dell'applicazione sono nettamente separati.
+2.  **Alta Coesione (High Cohesion)**: Tutti i file relativi a una singola funzionalità sono raggruppati nella stessa cartella.
+3.  **Basso Accoppiamento (Low Coupling)**: Le funzionalità sono il più possibile indipendenti tra loro.
 
-### 2. Motore di Calcolo Modulare e Accurato
+## Struttura delle Cartelle (`src`)
 
-- **Modularità**: La logica di calcolo in `financial-engine` deve essere suddivisa in "calcolatori" specializzati per ogni area di business (`personnelCalculator.js`, `creditCalculator.js`, etc.). Il file `calculations.js` è solo un **assemblatore** che orchestra le chiamate ai vari moduli.
-- **Precisione Assoluta**: Tutti i calcoli che coinvolgono valori monetari devono **obbligatoriamente** utilizzare la libreria **Decimal.js**. L'uso del tipo `Number` nativo di JavaScript per operazioni finanziarie è proibito.
+La struttura della cartella `src/` è organizzata come segue:
 
-### 3. Gestione dello Stato Globale con Zustand
+```
+src/
+│
+├── components/         # Componenti UI generici e riutilizzabili
+│
+├── data/               # Dati statici e configurazioni iniziali
+│
+├── features/           # FUNZIONALITÀ PRINCIPALI (le sezioni dell'app)
+│   │
+│   ├── layout/         #   (Header, Navigation)
+│   ├── assumptions-editor/ #   (Codice per la sezione "Assumptions")
+│   └── financial-modeling/ #   (Codice per le schede delle divisioni)
+│
+├── lib/                # Logica core, utility e servizi esterni
+│   │
+│   ├── financial-engine/ #   ("Cervello" dei calcoli, organizzato in microservizi)
+│   ├── firebase/       #   (Configurazione di Firebase)
+│   └── utils/          #   (Funzioni di utilità)
+│
+└── store/              # Gestione dello stato globale (Zustand)
+```
 
-- Lo stato globale dell'applicazione, in particolare l'oggetto `assumptions`, è gestito tramite uno **store Zustand**.
-- I componenti devono accedere allo stato tramite gli hook forniti da Zustand e **non** ricevere dati complessi tramite props ("prop drilling").
-- Lo store Zustand è responsabile della sincronizzazione dei dati con Firebase.
+### Descrizione delle Cartelle Principali
+
+* **`src/features`**: Il cuore dell'applicazione. Ogni sottocartella corrisponde a una sezione logica dell'UI.
+* **`src/lib`**: Contiene la logica di business pura. `lib/financial-engine` è il motore di calcolo e non deve contenere codice React.
+* **`src/components`**: Contiene componenti React "stupidi" e riutilizzabili che non contengono logica di business.
+* **`src/store`**: Contiene la definizione dello stato globale dell'applicazione (Zustand).
+
+## Flusso dei Dati
+
+1.  L'utente modifica un valore nella UI (`feature`).
+2.  L'azione aggiorna lo stato globale nello `store`.
+3.  Quando necessario, l'orchestratore in `lib/financial-engine` viene invocato per eseguire i ricalcoli.
+4.  I risultati vengono passati ai componenti `feature` per essere visualizzati.

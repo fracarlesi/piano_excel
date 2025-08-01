@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '11.30', // Microservizio Recovery separato da NBV per calcolo recuperi
+  version: '12.00', // Major architectural refactoring to feature-based structure
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

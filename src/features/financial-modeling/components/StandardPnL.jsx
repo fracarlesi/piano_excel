@@ -1,7 +1,7 @@
 import React from 'react';
 import FinancialTable from './FinancialTable';
-import { formatNumber } from '../lib/utils/formatters';
-import { createFormula, createProductFormula, createAggregateFormula } from '../lib/utils/formulaHelpers';
+import { formatNumber } from '../../../lib/utils/formatters';
+import { createFormula, createProductFormula, createAggregateFormula } from '../../../lib/utils/formulaHelpers';
 
 /**
  * Standardized P&L structure for all divisions

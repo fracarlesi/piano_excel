@@ -4,10 +4,10 @@ import useAssumptionsStore from '../../store/assumptionsStore';
 
 // Components
 import { TooltipProvider } from '../../components/TooltipProvider';
-import Header from '../../components/layout/Header';
-import Navigation from '../../components/layout/Navigation';
+import Header from '../layout/Header';
+import Navigation from '../layout/Navigation';
 import AssumptionsSheet from './AssumptionsSheet';
-import StandardDivisionSheet from '../../components/StandardDivisionSheet';
+import StandardDivisionSheet from './components/StandardDivisionSheet';
 
 // Division sheets (to be migrated)
 import REFinancingSheet from './REFinancingSheet';

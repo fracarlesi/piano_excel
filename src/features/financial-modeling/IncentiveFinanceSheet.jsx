@@ -1,5 +1,5 @@
 import React from 'react';
-import StandardDivisionSheet from '../../components/StandardDivisionSheet';
+import StandardDivisionSheet from './components/StandardDivisionSheet';
 
 const IncentiveFinanceSheet = ({ assumptions, results }) => {
   
