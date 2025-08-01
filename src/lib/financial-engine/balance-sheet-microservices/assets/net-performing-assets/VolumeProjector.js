@@ -1,7 +1,8 @@
 /**
- * Volume Calculator Module
+ * Volume Projector Module
  * 
- * Handles volume calculations and distributions for credit products
+ * Handles volume planning and projections for net performing assets
+ * Part of Net Performing Assets microservice
  */
 
 /**
@@ -52,29 +53,45 @@ export const calculateNumberOfLoans = (volumes, avgLoanSize) => {
 };
 
 /**
- * Calculate commission income based on new volumes
- * @param {Array} volumes - Array of yearly volumes
- * @param {number} commissionRate - Commission rate percentage
- * @returns {Array} Array of yearly commission income
+ * Project quarterly volumes from annual volumes
+ * @param {Array} annualVolumes - Annual volumes
+ * @param {Array} quarterlyAllocation - Quarterly allocation percentages
+ * @returns {Array} Quarterly volumes (40 quarters)
  */
-export const calculateCommissionIncome = (volumes, commissionRate) => {
-  return volumes.map(volume => volume * commissionRate / 100);
+export const projectQuarterlyVolumes = (annualVolumes, quarterlyAllocation = [25, 25, 25, 25]) => {
+  const quarterlyVolumes = [];
+  
+  annualVolumes.forEach((annualVolume, year) => {
+    quarterlyAllocation.forEach((allocation, quarter) => {
+      quarterlyVolumes.push(annualVolume * (allocation / 100));
+    });
+  });
+  
+  return quarterlyVolumes;
 };
 
 /**
- * Calculate equity upside income if applicable
- * @param {Array} performingAssets - Array of performing assets by year
- * @param {number} equityUpside - Equity upside percentage
- * @param {Array} years - Array of year indices
- * @returns {Array} Array of equity upside income
+ * Validate volume configuration
+ * @param {Object} product - Product configuration
+ * @returns {Object} Validation result
  */
-export const calculateEquityUpsideIncome = (performingAssets, equityUpside, years) => {
-  return years.map((_, i) => {
-    if (equityUpside && equityUpside > 0) {
-      // Assume exits happen after 3 years with 20% of loans exiting
-      const exitingLoans = i >= 3 ? performingAssets[i-3] * 0.2 : 0;
-      return exitingLoans * (equityUpside / 100);
-    }
-    return 0;
-  });
+export const validateVolumeConfig = (product) => {
+  const errors = [];
+  
+  if (!product.volumeArray && !product.volumes) {
+    errors.push('No volume configuration found');
+  }
+  
+  if (product.volumeArray && (!Array.isArray(product.volumeArray) || product.volumeArray.length !== 10)) {
+    errors.push('volumeArray must be an array of 10 elements');
+  }
+  
+  if (product.volumes && (!product.volumes.y1 || !product.volumes.y10)) {
+    errors.push('volumes must have at least y1 and y10 defined');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
 };

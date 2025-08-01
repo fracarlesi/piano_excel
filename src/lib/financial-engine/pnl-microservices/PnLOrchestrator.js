@@ -5,190 +5,458 @@
  * to produce the complete Profit & Loss statement
  */
 
-import { calculateInterestIncome } from './InterestIncomeCalculator.js';
-import { calculateInterestExpense, calculateNetInterestIncome } from './InterestExpenseCalculator.js';
-import { calculateCommissionIncome } from './CommissionIncomeCalculator.js';
-import { calculateCommissionExpense, calculateNetCommissionIncome } from './CommissionExpenseCalculator.js';
-import { calculateLoanLossProvisions } from './LoanLossProvisionCalculator.js';
-import { calculatePersonnelExpenses } from './PersonnelExpenseCalculator.js';
-import { calculateOperatingExpenses, calculateTotalOperatingExpenses } from './OperatingExpenseCalculator.js';
-import { calculateTaxes, calculatePreTaxProfit, calculateNetProfit } from './TaxCalculator.js';
+import { calculateAllPersonnelCosts } from './personnel-calculators/personnelCalculator.js';
+import { calculateCreditInterestIncome } from './interest-income/CreditInterestIncomeCalculator.js';
+import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
+import { calculateCommissionIncome } from './commission-calculators/commissionCalculator.js';
+import { calculateLoanLossProvisions } from './llp-calculators/defaultCalculator.js';
+import { 
+  ALL_DIVISION_PREFIXES,
+  getPersonnelKey
+} from '../divisionMappings.js';
 
 /**
- * Calculate complete P&L for all divisions
- * @param {Object} divisions - Division data with products
- * @param {Object} assumptions - Global assumptions
- * @param {Array} years - Array of year indices
- * @returns {Object} Complete P&L results
+ * Main P&L calculation - static method for clean interface
  */
-export const calculateProfitAndLoss = (divisions, assumptions, years) => {
-  // Step 1: Interest Income & Expense
-  const interestIncome = calculateInterestIncome(divisions, assumptions, years);
-  const interestExpense = calculateInterestExpense(divisions, assumptions, years);
-  const netInterestIncome = calculateNetInterestIncome(interestIncome, interestExpense);
-
-  // Step 2: Commission Income & Expense  
-  const commissionIncome = calculateCommissionIncome(divisions, assumptions, years);
-  const commissionExpense = calculateCommissionExpense(commissionIncome, divisions, assumptions, years);
-  const netCommissions = calculateNetCommissionIncome(commissionIncome, commissionExpense);
-
-  // Step 3: Total Revenues
-  const totalRevenues = {
-    consolidated: {
-      annual: netInterestIncome.consolidated.annual.map((nii, i) => 
-        nii + netCommissions.consolidated.annual[i]
+export const PnLOrchestrator = {
+  /**
+   * Calculate complete P&L
+   * @param {Object} assumptions - Complete assumptions
+   * @param {Object} balanceSheetResults - Balance sheet results for interest calculations
+   * @returns {Object} P&L results
+   */
+  calculate(assumptions, balanceSheetResults) {
+    const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    const quarters = 40;
+    
+    // Step 1: Personnel costs (calculated first as it's independent)
+    const personnelCosts = calculateAllPersonnelCosts(assumptions, years);
+    
+    // Step 2: Interest Income (based on performing assets)
+    const interestIncome = this.calculateInterestIncome(
+      balanceSheetResults,
+      assumptions,
+      years
+    );
+    
+    // Step 3: Interest Expense (based on deposits and funding)
+    const interestExpense = this.calculateInterestExpense(
+      balanceSheetResults,
+      assumptions,
+      years
+    );
+    
+    // Step 4: Net Interest Income
+    const netInterestIncome = this.calculateNetInterestIncome(
+      interestIncome,
+      interestExpense
+    );
+    
+    // Step 5: Commission Income & Expense
+    const commissionIncome = this.calculateCommissions(
+      balanceSheetResults,
+      assumptions,
+      years
+    );
+    
+    const commissionExpense = commissionIncome.consolidated.map(income => 
+      -income * (assumptions.commissionExpenseRate || 0) / 100
+    );
+    
+    const netCommissions = commissionIncome.consolidated.map((income, i) => 
+      income + commissionExpense[i]
+    );
+    
+    // Step 6: Total Revenues
+    const totalRevenues = netInterestIncome.consolidated.map((nii, i) => 
+      nii + netCommissions[i]
+    );
+    
+    // Step 7: Operating Expenses
+    const operatingExpenses = this.calculateOperatingExpenses(
+      personnelCosts,
+      assumptions,
+      years
+    );
+    
+    // Step 8: Loan Loss Provisions
+    const loanLossProvisions = this.calculateLLP(
+      balanceSheetResults,
+      assumptions,
+      years
+    );
+    
+    // Step 9: Pre-tax and Net Profit
+    const preTaxProfit = totalRevenues.map((revenue, i) => 
+      revenue + operatingExpenses.total[i] + loanLossProvisions.consolidated[i]
+    );
+    
+    const taxes = preTaxProfit.map(profit => 
+      profit > 0 ? -profit * assumptions.taxRate / 100 : 0
+    );
+    
+    const netProfit = preTaxProfit.map((profit, i) => 
+      profit + taxes[i]
+    );
+    
+    // Step 10: Organize results
+    return {
+      // Consolidated P&L
+      consolidated: {
+        // Revenue lines
+        interestIncome: interestIncome.consolidated,
+        interestExpenses: interestExpense.consolidated,
+        netInterestIncome: netInterestIncome.consolidated,
+        commissionIncome: commissionIncome.consolidated,
+        commissionExpenses: commissionExpense,
+        netCommissions: netCommissions,
+        totalRevenues: totalRevenues,
+        
+        // Expense lines
+        personnelCosts: personnelCosts.grandTotal.costs,
+        otherOpex: operatingExpenses.other,
+        totalOpex: operatingExpenses.total,
+        
+        // Provisions
+        totalLLP: loanLossProvisions.consolidated,
+        
+        // Profit lines
+        preTaxProfit: preTaxProfit,
+        taxes: taxes,
+        netProfit: netProfit
+      },
+      
+      // Quarterly data
+      quarterly: {
+        interestIncome: this.annualToQuarterly(interestIncome.consolidated),
+        interestExpenses: this.annualToQuarterly(interestExpense.consolidated),
+        netInterestIncome: this.annualToQuarterly(netInterestIncome.consolidated),
+        totalRevenues: this.annualToQuarterly(totalRevenues),
+        totalLLP: this.annualToQuarterly(loanLossProvisions.consolidated),
+        netProfit: this.annualToQuarterly(netProfit)
+      },
+      
+      // Division breakdown
+      byDivision: this.organizeDivisionPnL(
+        interestIncome,
+        interestExpense,
+        commissionIncome,
+        personnelCosts,
+        operatingExpenses,
+        loanLossProvisions,
+        assumptions
       ),
-      quarterly: netInterestIncome.consolidated.quarterly.map((nii, i) => 
-        nii + netCommissions.consolidated.quarterly[i]
-      )
-    },
-    byDivision: {}
-  };
-
-  Object.keys(netInterestIncome.byDivision).forEach(divKey => {
-    totalRevenues.byDivision[divKey] = {
-      annual: netInterestIncome.byDivision[divKey].annual.map((nii, i) => 
-        nii + (netCommissions.byDivision[divKey]?.annual[i] || 0)
-      ),
-      quarterly: netInterestIncome.byDivision[divKey].quarterly.map((nii, i) => 
-        nii + (netCommissions.byDivision[divKey]?.quarterly[i] || 0)
-      )
+      
+      // Personnel detail
+      personnelDetail: personnelCosts,
+      
+      // Component details
+      details: {
+        interestIncome,
+        interestExpense,
+        netInterestIncome,
+        commissionIncome,
+        operatingExpenses,
+        loanLossProvisions
+      }
     };
-  });
-
-  // Step 4: Operating Expenses
-  const personnelExpenses = calculatePersonnelExpenses(divisions, assumptions, years);
-  const operatingExpenses = calculateOperatingExpenses(divisions, assumptions, years);
-  const totalOpex = calculateTotalOperatingExpenses(personnelExpenses, operatingExpenses);
-
-  // Step 5: Operating Profit before Provisions
-  const operatingProfitBeforeLLP = {
-    consolidated: {
-      annual: totalRevenues.consolidated.annual.map((rev, i) => 
-        rev + totalOpex.consolidated.annual[i]
-      ),
-      quarterly: totalRevenues.consolidated.quarterly.map((rev, i) => 
-        rev + totalOpex.consolidated.quarterly[i]
-      )
-    },
-    byDivision: {}
-  };
-
-  Object.keys(totalRevenues.byDivision).forEach(divKey => {
-    operatingProfitBeforeLLP.byDivision[divKey] = {
-      annual: totalRevenues.byDivision[divKey].annual.map((rev, i) => 
-        rev + (totalOpex.byDivision[divKey]?.annual[i] || 0)
-      ),
-      quarterly: totalRevenues.byDivision[divKey].quarterly.map((rev, i) => 
-        rev + (totalOpex.byDivision[divKey]?.quarterly[i] || 0)
-      )
+  },
+  
+  /**
+   * Calculate interest income from assets
+   * @private
+   */
+  calculateInterestIncome(balanceSheetResults, assumptions, years) {
+    const consolidated = new Array(10).fill(0);
+    const byDivision = {};
+    
+    // Simplified calculation based on performing assets
+    const avgPerformingAssets = this.calculateAverageAssets(
+      balanceSheetResults.quarterly.netPerformingAssets
+    );
+    
+    // Apply average rate (spread + euribor)
+    const avgRate = (assumptions.euribor + 3.0) / 100; // Simplified avg spread
+    
+    avgPerformingAssets.forEach((avg, year) => {
+      consolidated[year] = avg * avgRate;
+    });
+    
+    // Division breakdown (simplified)
+    ALL_DIVISION_PREFIXES.forEach(divKey => {
+      const divisionAssets = balanceSheetResults.byDivision[divKey]?.annual?.netPerformingAssets || new Array(10).fill(0);
+      byDivision[divKey] = divisionAssets.map(assets => assets * avgRate);
+    });
+    
+    return { consolidated, byDivision };
+  },
+  
+  /**
+   * Calculate interest expense on liabilities
+   * @private
+   */
+  calculateInterestExpense(balanceSheetResults, assumptions, years) {
+    const consolidated = new Array(10).fill(0);
+    const byDivision = {};
+    
+    // Deposits cost
+    const depositRate = assumptions.depositRate / 100;
+    const deposits = balanceSheetResults.consolidated.customerDeposits;
+    
+    // Interbank funding cost
+    const ftpRate = (assumptions.euribor + assumptions.ftpSpread) / 100;
+    const interbankFunding = balanceSheetResults.consolidated.interbankFunding;
+    
+    years.forEach(year => {
+      consolidated[year] = -(
+        deposits[year] * depositRate +
+        interbankFunding[year] * ftpRate
+      );
+    });
+    
+    return { consolidated, byDivision };
+  },
+  
+  /**
+   * Calculate net interest income
+   * @private
+   */
+  calculateNetInterestIncome(interestIncome, interestExpense) {
+    const consolidated = interestIncome.consolidated.map((income, i) => 
+      income + interestExpense.consolidated[i]
+    );
+    
+    const byDivision = {};
+    Object.keys(interestIncome.byDivision).forEach(divKey => {
+      byDivision[divKey] = interestIncome.byDivision[divKey].map((income, i) => 
+        income + (interestExpense.byDivision[divKey]?.[i] || 0)
+      );
+    });
+    
+    return { consolidated, byDivision };
+  },
+  
+  /**
+   * Calculate commission income
+   * @private
+   */
+  calculateCommissions(balanceSheetResults, assumptions, years) {
+    const consolidated = new Array(10).fill(0);
+    const byDivision = {};
+    
+    // Simplified commission calculation based on new volumes
+    Object.entries(balanceSheetResults.productResults).forEach(([productKey, product]) => {
+      const commissionRate = product.originalProduct?.commissionRate || 0.5;
+      const volumes = product.originalProduct?.volumeArray || new Array(10).fill(0);
+      
+      volumes.forEach((volume, year) => {
+        const commission = volume * commissionRate / 100;
+        consolidated[year] += commission;
+        
+        // Add to division
+        const divKey = this.getDivisionFromProductKey(productKey);
+        if (divKey) {
+          byDivision[divKey] = byDivision[divKey] || new Array(10).fill(0);
+          byDivision[divKey][year] += commission;
+        }
+      });
+    });
+    
+    return { consolidated, byDivision };
+  },
+  
+  /**
+   * Calculate operating expenses
+   * @private
+   */
+  calculateOperatingExpenses(personnelCosts, assumptions, years) {
+    const costGrowth = years.map(i => Math.pow(1 + assumptions.costGrowthRate / 100, i));
+    
+    // HQ allocation
+    const hqAllocation = years.map(i => -assumptions.hqAllocationY1 * costGrowth[i]);
+    
+    // IT costs
+    const itCosts = years.map(i => -assumptions.itCostsY1 * costGrowth[i]);
+    
+    // Central function costs
+    const centralCosts = this.calculateCentralCosts(assumptions, costGrowth);
+    
+    // Other operating expenses
+    const other = years.map(i => 
+      hqAllocation[i] + itCosts[i] + centralCosts[i]
+    );
+    
+    // Total including personnel
+    const total = years.map(i => 
+      personnelCosts.grandTotal.costs[i] + other[i]
+    );
+    
+    return {
+      personnel: personnelCosts.grandTotal.costs,
+      other,
+      total,
+      breakdown: {
+        hqAllocation,
+        itCosts,
+        centralCosts
+      }
     };
-  });
-
-  // Step 6: Loan Loss Provisions
-  const loanLossProvisions = calculateLoanLossProvisions(divisions, assumptions, years);
-
-  // Step 7: Operating Profit after Provisions
-  const operatingProfit = {
-    consolidated: {
-      annual: operatingProfitBeforeLLP.consolidated.annual.map((op, i) => 
-        op + loanLossProvisions.consolidated.annual[i]
-      ),
-      quarterly: operatingProfitBeforeLLP.consolidated.quarterly.map((op, i) => 
-        op + loanLossProvisions.consolidated.quarterly[i]
-      )
-    },
-    byDivision: {}
-  };
-
-  Object.keys(operatingProfitBeforeLLP.byDivision).forEach(divKey => {
-    operatingProfit.byDivision[divKey] = {
-      annual: operatingProfitBeforeLLP.byDivision[divKey].annual.map((op, i) => 
-        op + (loanLossProvisions.byDivision[divKey]?.annual[i] || 0)
-      ),
-      quarterly: operatingProfitBeforeLLP.byDivision[divKey].quarterly.map((op, i) => 
-        op + (loanLossProvisions.byDivision[divKey]?.quarterly[i] || 0)
-      )
-    };
-  });
-
-  // Step 8: Pre-tax Profit (same as operating profit if no other items)
-  const preTaxProfit = calculatePreTaxProfit(operatingProfit);
-
-  // Step 9: Taxes
-  const taxes = calculateTaxes(preTaxProfit, assumptions, years);
-
-  // Step 10: Net Profit
-  const netProfit = calculateNetProfit(preTaxProfit, taxes);
-
-  // Return complete P&L structure
-  return {
-    // Revenue components
-    interestIncome: interestIncome.consolidated.annual,
-    interestExpense: interestExpense.consolidated.annual,
-    netInterestIncome: netInterestIncome.consolidated.annual,
-    commissionIncome: commissionIncome.consolidated.annual,
-    commissionExpense: commissionExpense.consolidated.annual,
-    netCommissions: netCommissions.consolidated.annual,
-    totalRevenues: totalRevenues.consolidated.annual,
+  },
+  
+  /**
+   * Calculate central function costs
+   * @private
+   */
+  calculateCentralCosts(assumptions, costGrowth) {
+    const cf = assumptions.centralFunctions || {};
     
-    // Expense components
-    personnelCosts: personnelExpenses.consolidated.annual,
-    otherOperatingExpenses: operatingExpenses.consolidated.annual,
-    totalOperatingExpenses: totalOpex.consolidated.annual,
+    return costGrowth.map(growth => -(
+      (cf.facilitiesCostsY1 || 0) * growth +
+      (cf.externalServicesY1 || 0) * growth +
+      (cf.regulatoryFeesY1 || 0) * growth +
+      (cf.otherCentralCostsY1 || 0) * growth
+    ));
+  },
+  
+  /**
+   * Calculate loan loss provisions
+   * @private
+   */
+  calculateLLP(balanceSheetResults, assumptions, years) {
+    const consolidated = new Array(10).fill(0);
+    const byDivision = {};
     
-    // Profit measures
-    operatingProfitBeforeLLP: operatingProfitBeforeLLP.consolidated.annual,
-    loanLossProvisions: loanLossProvisions.consolidated.annual,
-    operatingProfit: operatingProfit.consolidated.annual,
-    preTaxProfit: preTaxProfit.consolidated.annual,
-    taxes: taxes.consolidated.annual,
-    netProfit: netProfit.consolidated.annual,
+    // Simplified LLP based on new NPLs and performing assets
+    const avgPerformingAssets = this.calculateAverageAssets(
+      balanceSheetResults.quarterly.netPerformingAssets
+    );
     
-    // Quarterly data
-    quarterly: {
-      interestIncome: interestIncome.consolidated.quarterly,
-      interestExpense: interestExpense.consolidated.quarterly,
-      netInterestIncome: netInterestIncome.consolidated.quarterly,
-      commissionIncome: commissionIncome.consolidated.quarterly,
-      commissionExpense: commissionExpense.consolidated.quarterly,
-      totalRevenues: totalRevenues.consolidated.quarterly,
-      totalOperatingExpenses: totalOpex.consolidated.quarterly,
-      loanLossProvisions: loanLossProvisions.consolidated.quarterly,
-      netProfit: netProfit.consolidated.quarterly
-    },
+    // Average danger rate across products
+    const avgDangerRate = 1.5 / 100; // 1.5%
     
-    // Division breakdown
-    byDivision: Object.keys(divisions).reduce((acc, divKey) => {
-      acc[divKey] = {
-        interestIncome: interestIncome.byDivision[divKey]?.annual || new Array(10).fill(0),
-        interestExpense: interestExpense.byDivision[divKey]?.annual || new Array(10).fill(0),
-        netInterestIncome: netInterestIncome.byDivision[divKey]?.annual || new Array(10).fill(0),
-        commissionIncome: commissionIncome.byDivision[divKey]?.annual || new Array(10).fill(0),
-        commissionExpense: commissionExpense.byDivision[divKey]?.annual || new Array(10).fill(0),
-        netCommissions: netCommissions.byDivision[divKey]?.annual || new Array(10).fill(0),
-        totalRevenues: totalRevenues.byDivision[divKey]?.annual || new Array(10).fill(0),
-        personnelCosts: personnelExpenses.byDivision[divKey]?.annual || new Array(10).fill(0),
-        otherOperatingExpenses: operatingExpenses.byDivision[divKey]?.annual || new Array(10).fill(0),
-        totalOperatingExpenses: totalOpex.byDivision[divKey]?.annual || new Array(10).fill(0),
-        loanLossProvisions: loanLossProvisions.byDivision[divKey]?.annual || new Array(10).fill(0),
-        preTaxProfit: preTaxProfit.byDivision[divKey]?.annual || new Array(10).fill(0),
-        taxes: taxes.byDivision[divKey]?.annual || new Array(10).fill(0),
-        netProfit: netProfit.byDivision[divKey]?.annual || new Array(10).fill(0)
+    avgPerformingAssets.forEach((avg, year) => {
+      consolidated[year] = -avg * avgDangerRate * 0.45; // 45% LGD
+    });
+    
+    return { consolidated, byDivision };
+  },
+  
+  /**
+   * Organize P&L by division
+   * @private
+   */
+  organizeDivisionPnL(interestIncome, interestExpense, commissionIncome, 
+                      personnelCosts, operatingExpenses, llp, assumptions) {
+    const results = {};
+    
+    ALL_DIVISION_PREFIXES.forEach(divKey => {
+      const divisionInterestIncome = interestIncome.byDivision[divKey] || new Array(10).fill(0);
+      const divisionInterestExpense = interestExpense.byDivision[divKey] || new Array(10).fill(0);
+      const divisionCommissions = commissionIncome.byDivision[divKey] || new Array(10).fill(0);
+      
+      // Net interest income
+      const netInterestIncome = divisionInterestIncome.map((income, i) => 
+        income + divisionInterestExpense[i]
+      );
+      
+      // Total revenues
+      const totalRevenues = netInterestIncome.map((nii, i) => 
+        nii + divisionCommissions[i]
+      );
+      
+      // Personnel costs
+      const personnelKey = getPersonnelKey(divKey);
+      const divisionPersonnel = personnelCosts[personnelKey]?.costs || new Array(10).fill(0);
+      
+      // Other opex allocation (simplified)
+      const otherOpex = operatingExpenses.other.map(opex => opex * 0.1); // 10% allocation
+      
+      // Total opex
+      const totalOpex = divisionPersonnel.map((personnel, i) => 
+        personnel + otherOpex[i]
+      );
+      
+      // LLP
+      const divisionLLP = llp.byDivision[divKey] || new Array(10).fill(0);
+      
+      // Pre-tax profit
+      const preTaxProfit = totalRevenues.map((revenue, i) => 
+        revenue + totalOpex[i] + divisionLLP[i]
+      );
+      
+      // Taxes
+      const taxes = preTaxProfit.map(profit => 
+        profit > 0 ? -profit * assumptions.taxRate / 100 : 0
+      );
+      
+      // Net profit
+      const netProfit = preTaxProfit.map((profit, i) => 
+        profit + taxes[i]
+      );
+      
+      results[divKey] = {
+        interestIncome: divisionInterestIncome,
+        interestExpenses: divisionInterestExpense,
+        netInterestIncome,
+        commissionIncome: divisionCommissions,
+        commissionExpenses: divisionCommissions.map(c => -c * 0.1), // 10% expense rate
+        netCommissions: divisionCommissions.map(c => c * 0.9),
+        totalRevenues,
+        personnelCosts: divisionPersonnel,
+        otherOpex,
+        totalOpex,
+        totalLLP: divisionLLP,
+        preTaxProfit,
+        taxes,
+        netProfit
       };
-      return acc;
-    }, {}),
+    });
     
-    // Detailed breakdowns
-    details: {
-      interestIncome: interestIncome,
-      interestExpense: interestExpense,
-      commissionIncome: commissionIncome,
-      commissionExpense: commissionExpense,
-      personnelExpenses: personnelExpenses,
-      operatingExpenses: operatingExpenses,
-      loanLossProvisions: loanLossProvisions,
-      taxes: taxes
+    return results;
+  },
+  
+  /**
+   * Calculate average assets from quarterly data
+   * @private
+   */
+  calculateAverageAssets(quarterlyAssets) {
+    const annual = [];
+    
+    for (let year = 0; year < 10; year++) {
+      let sum = 0;
+      for (let q = 0; q < 4; q++) {
+        sum += quarterlyAssets[year * 4 + q] || 0;
+      }
+      annual.push(sum / 4);
     }
-  };
+    
+    return annual;
+  },
+  
+  /**
+   * Convert annual to quarterly
+   * @private
+   */
+  annualToQuarterly(annualData) {
+    const quarterly = [];
+    annualData.forEach(value => {
+      for (let q = 0; q < 4; q++) {
+        quarterly.push(value / 4); // Distribute evenly
+      }
+    });
+    return quarterly;
+  },
+  
+  /**
+   * Get division from product key
+   * @private
+   */
+  getDivisionFromProductKey(productKey) {
+    for (const prefix of ALL_DIVISION_PREFIXES) {
+      if (productKey.startsWith(prefix)) {
+        return prefix;
+      }
+    }
+    return null;
+  }
 };

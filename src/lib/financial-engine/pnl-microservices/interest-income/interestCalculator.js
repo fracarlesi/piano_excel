@@ -5,7 +5,7 @@
  * including performing loans and NPL interest
  */
 
-import { getInterestRate, getVintageActivityStatus } from '../../balance-sheet-microservices/loan-calculators/vintageManager.js';
+import { getInterestRate, getVintageActivityStatus } from '../../balance-sheet-microservices/assets/net-performing-assets/VintageManager.js';
 
 /**
  * Calculate quarterly interest for a single vintage

@@ -16,7 +16,6 @@ export { default as FinancialTable } from './FinancialTable';
 export { default as VolumeInputGrid } from './VolumeInputGrid';
 
 // Business Components
-export { default as ProductManager } from './ProductManager';
 export { default as StandardDivisionSheet } from './StandardDivisionSheet';
 export { default as StandardPnL } from './StandardPnL';
 export { default as StandardBalanceSheet } from './StandardBalanceSheet';

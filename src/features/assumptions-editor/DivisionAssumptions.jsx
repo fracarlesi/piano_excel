@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import ProductManager from './ProductManager';
+import ProductManager from '../product-management/ProductManager';
 import VolumeInputGrid from '../financial-modeling/components/VolumeInputGrid';
 import StaffingTable from './StaffingTable';
-import CreditProductAssumptions from './productTypes/CreditProductAssumptions';
-import DigitalServiceAssumptions from './productTypes/DigitalServiceAssumptions';
-import SimpleProductAssumptions from './productTypes/SimpleProductAssumptions';
+import CreditProductAssumptions from '../product-management/productTypes/CreditProductAssumptions';
+import DigitalServiceAssumptions from '../product-management/productTypes/DigitalServiceAssumptions';
+import SimpleProductAssumptions from '../product-management/productTypes/SimpleProductAssumptions';
 
 /**
  * Simplified Division Assumptions Component
