@@ -5,8 +5,8 @@
  * to produce the complete Statement of Financial Position
  */
 
-import { calculateNetPerformingAssets } from './assets/net-performing-assets/Orchestrator.js';
-import { calculateNonPerformingAssets } from './assets/non-performing-assets/NPLOrchestrator.js';
+import { calculateTotalAssets } from './assets/TotalAssetsOrchestrator.js';
+import { calculateRecoveryDefault } from './recovery-default/index.js';
 import { 
   ALL_DIVISION_PREFIXES,
   BUSINESS_DIVISION_PREFIXES
@@ -28,9 +28,14 @@ export const BalanceSheetOrchestrator = {
     // Step 1: Process products by division
     const divisionProducts = this.organizeProductsByDivision(assumptions.products);
     
-    // Step 2: Calculate Assets
-    const netPerformingAssets = calculateNetPerformingAssets(divisionProducts, assumptions, quarters);
-    const nonPerformingAssets = calculateNonPerformingAssets(divisionProducts, assumptions, quarters);
+    // Step 2: Calculate Recovery on Defaulted Assets first (needed for NPV calculation)
+    const initialAssetsResults = calculateTotalAssets(divisionProducts, assumptions, quarters);
+    const recoveryResults = calculateRecoveryDefault(divisionProducts, assumptions, quarters, initialAssetsResults);
+    
+    // Step 3: Calculate Assets with NPV-based Non-Performing Assets
+    const totalAssetsResults = calculateTotalAssets(divisionProducts, assumptions, quarters, recoveryResults);
+    const netPerformingAssets = totalAssetsResults.netPerformingAssets;
+    const nonPerformingAssets = totalAssetsResults.nonPerformingAssets;
     
     // Step 3: Calculate Liabilities (placeholder for now)
     const customerDeposits = {
@@ -64,6 +69,13 @@ export const BalanceSheetOrchestrator = {
         // Assets
         cashAndEquivalents: new Array(10).fill(50), // Placeholder
         liquidSecurities: new Array(10).fill(100), // Placeholder
+        
+        // Total Assets NBV and breakdown by type
+        totalAssetsNBV: this.quarterlyToAnnual(totalAssetsResults.totalAssets.quarterly),
+        bridgeLoansNBV: this.quarterlyToAnnual(totalAssetsResults.byProductType.bridgeLoans.quarterly),
+        frenchNoGraceNBV: this.quarterlyToAnnual(totalAssetsResults.byProductType.frenchNoGrace.quarterly),
+        frenchWithGraceNBV: this.quarterlyToAnnual(totalAssetsResults.byProductType.frenchWithGrace.quarterly),
+        
         netPerformingAssets: this.quarterlyToAnnual(netPerformingAssets.balanceSheetLine.quarterly),
         nonPerformingAssets: this.quarterlyToAnnual(nonPerformingAssets.balanceSheetLine.quarterly),
         otherAssets: new Array(10).fill(20), // Placeholder
@@ -80,10 +92,19 @@ export const BalanceSheetOrchestrator = {
       
       // Quarterly data for charts
       quarterly: {
+        totalAssetsNBV: totalAssetsResults.totalAssets.quarterly,
+        bridgeLoansNBV: totalAssetsResults.byProductType.bridgeLoans.quarterly,
+        frenchNoGraceNBV: totalAssetsResults.byProductType.frenchNoGrace.quarterly,
+        frenchWithGraceNBV: totalAssetsResults.byProductType.frenchWithGrace.quarterly,
+        gbvDefaulted: totalAssetsResults.gbvDefaulted?.gbvDefaulted?.quarterly || new Array(quarters).fill(0),
+        recoveryOnDefaultedAssets: recoveryResults.balanceSheetLine.quarterly,
         netPerformingAssets: netPerformingAssets.balanceSheetLine.quarterly,
         nonPerformingAssets: nonPerformingAssets.balanceSheetLine.quarterly,
         totalAssets: totalAssets.quarterly,
-        customerDeposits: customerDeposits.quarterly || this.annualToQuarterly(customerDeposits.consolidated)
+        customerDeposits: customerDeposits.quarterly || this.annualToQuarterly(customerDeposits.consolidated),
+        // New detailed data
+        newVolumes: totalAssetsResults.newVolumes?.totalNewVolumes?.quarterly || new Array(quarters).fill(0),
+        repayments: totalAssetsResults.repayments?.totalRepayments?.quarterly || new Array(quarters).fill(0)
       },
       
       // Division breakdown
@@ -97,17 +118,25 @@ export const BalanceSheetOrchestrator = {
       // Product-level detail
       productResults: this.extractProductResults(
         divisionProducts,
-        netPerformingAssets,
-        nonPerformingAssets
+        totalAssetsResults
       ),
       
       // Detailed components
       details: {
+        totalAssetsNBV: totalAssetsResults,
         netPerformingAssets,
+        gbvDefaulted: totalAssetsResults.gbvDefaulted,
+        recoveryOnDefaultedAssets: recoveryResults,
         nonPerformingAssets,
         customerDeposits,
         fundingGap,
-        equity
+        equity,
+        // Product-level volume and repayment details
+        newVolumesByProduct: totalAssetsResults.newVolumes?.byProduct || {},
+        repaymentsByProduct: totalAssetsResults.repayments?.byProduct || {},
+        // Full volumes and repayments data
+        newVolumesData: totalAssetsResults.newVolumes || {},
+        repaymentsData: totalAssetsResults.repayments || {}
       }
     };
   },
@@ -245,6 +274,14 @@ export const BalanceSheetOrchestrator = {
     
     divisionKeys.forEach(divKey => {
       results[divKey] = {
+        // Quarterly data expected by UI
+        quarterly: {
+          performingAssets: netPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0),
+          nonPerformingAssets: nonPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0),
+          allocatedEquity: new Array(40).fill(0) // TODO: Calculate allocated equity
+        },
+        
+        // Legacy structure for backward compatibility
         netPerformingAssets: netPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0),
         nonPerformingAssets: nonPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0),
         customerDeposits: deposits.byDivision?.[divKey] || new Array(10).fill(0),
@@ -265,21 +302,53 @@ export const BalanceSheetOrchestrator = {
    * Extract product-level results
    * @private
    */
-  extractProductResults(divisionProducts, netPerforming, nonPerforming) {
+  extractProductResults(divisionProducts, totalAssetsResults) {
     const productResults = {};
+    
+    // Get vintages for each product
+    const vintagesByProduct = totalAssetsResults.vintages || {};
+    
+    // Get new volumes and repayments by product
+    const volumesByProduct = totalAssetsResults.newVolumes?.byProduct || {};
+    const repaymentsByProduct = totalAssetsResults.repayments?.byProduct || {};
+    
+    // Get NBV by product (total assets stock)
+    const nbvByProduct = totalAssetsResults.byProduct || {};
+    
+    // Get Net Performing Assets by product
+    const netPerformingByProduct = totalAssetsResults.netPerformingAssets?.byProduct || {};
+    
+    // Get Non-Performing Assets by product
+    const nonPerformingByProduct = totalAssetsResults.nonPerformingAssets?.byProduct || {};
     
     Object.entries(divisionProducts).forEach(([divKey, products]) => {
       Object.entries(products).forEach(([productKey, product]) => {
+        // Get the calculated data for this product
+        const productVolumes = volumesByProduct[productKey];
+        const productRepayments = repaymentsByProduct[productKey];
+        const productNBV = nbvByProduct[productKey];
+        
         productResults[productKey] = {
           name: product.name,
           productType: product.productType || 'Credit',
           originalProduct: product,
           
-          // Add quarterly data
+          // Add quarterly data with actual calculated values
           quarterly: {
-            performingStock: netPerforming.byProduct[productKey]?.quarterly || new Array(40).fill(0),
-            nplStock: nonPerforming.byProduct[productKey]?.quarterly || new Array(40).fill(0)
-          }
+            totalStock: productNBV?.quarterlyNBV || new Array(40).fill(0), // Total NBV (gross asset stock)
+            performingStock: netPerformingByProduct[productKey]?.quarterly || new Array(40).fill(0), // Net Performing Assets
+            nplStock: nonPerformingByProduct[productKey]?.quarterlyNPV || new Array(40).fill(0), // Non-Performing Assets NPV
+            newBusiness: productVolumes?.quarterlyVolumes || new Array(40).fill(0),
+            principalRepayments: productRepayments?.quarterlyRepayments || new Array(40).fill(0),
+            nonPerformingStock: nonPerformingByProduct[productKey]?.quarterlyNPV || new Array(40).fill(0) // Also add as nonPerformingStock for compatibility
+          },
+          
+          // Add vintages if available
+          vintages: vintagesByProduct[productKey] || [],
+          
+          // Add volume and repayment data
+          volumeData: productVolumes,
+          repaymentData: productRepayments
         };
       });
     });

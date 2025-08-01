@@ -44,7 +44,11 @@ export const calculateResults = (assumptions) => {
     // Return complete results structure expected by UI
     return {
       // Consolidated results
-      bs: balanceSheetResults.consolidated,
+      bs: {
+        ...balanceSheetResults.consolidated,
+        // Include the details which contain product-level volumes and repayments
+        details: balanceSheetResults.details
+      },
       pnl: pnlResults.consolidated,
       capital: capitalResults.consolidated,
       kpi: kpiResults.consolidated,

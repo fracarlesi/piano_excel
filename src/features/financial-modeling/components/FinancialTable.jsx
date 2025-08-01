@@ -4,8 +4,14 @@ import { formatNumber } from '../../../components/shared/formatters';
 
 // Financial Table Component with expandable rows (Quarterly View Only)
 const FinancialTable = ({ title, rows }) => {
-  // State to track which rows are expanded
-  const [expandedRows, setExpandedRows] = useState(new Set());
+  // State to track which rows are expanded - initialize with all rows that have subRows
+  const initialExpandedRows = new Set();
+  rows.forEach((row, index) => {
+    if (row.subRows && row.subRows.length > 0) {
+      initialExpandedRows.add(index);
+    }
+  });
+  const [expandedRows, setExpandedRows] = useState(initialExpandedRows);
 
   // Toggle row expansion
   const toggleRow = (rowIndex) => {
@@ -128,7 +134,7 @@ const FinancialTable = ({ title, rows }) => {
                     row.isSubItem ? 'text-xs text-gray-600' : ''
                   } ${
                     !row.isTotal && !row.isSubTotal && !row.isHeader && !row.isSubItem ? 
-                      (value < 0 ? 'text-red-600' : 'text-gray-900') : ''
+                      'text-gray-900' : ''
                   }`}
                 >
                   {row.formula && row.formula[i] ? (

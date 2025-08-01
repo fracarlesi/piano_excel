@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '12.00', // Major architectural refactoring to feature-based structure
+  version: '12.68', // Fixed Total Assets calc & breakdown, renamed total-assets to stock-nbv, fixed NPV data mapping
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

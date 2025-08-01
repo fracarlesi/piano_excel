@@ -5,7 +5,7 @@
  * including performing loans and NPL interest
  */
 
-import { getInterestRate, getVintageActivityStatus } from '../../balance-sheet-microservices/assets/net-performing-assets/VintageManager.js';
+// Utility functions moved here from obsolete VintageManager.js
 
 /**
  * Calculate quarterly interest for a single vintage
@@ -41,26 +41,11 @@ export const calculateNPLInterest = (nplNBV, product, assumptions) => {
  * @returns {Object} Interest breakdown
  */
 export const calculateQuarterlyInterest = (vintages, currentQuarter, product, assumptions) => {
-  const quarterlyRate = getInterestRate(product, assumptions) / 4;
-  let performingStock = 0;
-  let quarterlyInterest = 0;
-  
-  vintages.forEach(vintage => {
-    const status = getVintageActivityStatus(vintage, currentQuarter);
-    
-    // Only calculate interest for active vintages
-    // Interest starts from the quarter AFTER disbursement
-    if (status.isActiveForInterest && vintage.outstandingPrincipal > 0) {
-      performingStock += vintage.outstandingPrincipal;
-    }
-  });
-  
-  // Calculate interest on performing stock
-  quarterlyInterest = performingStock * quarterlyRate;
-  
+  // PLACEHOLDER: Implementazione temporaneamente disabilitata
+  // Questa funzione verrà implementata nella fase successiva (dopo recovery)
   return {
-    performingStock,
-    quarterlyInterest
+    performingStock: 0,
+    quarterlyInterest: 0
   };
 };
 
@@ -82,41 +67,14 @@ export const calculateAnnualInterest = (
   assumptions,
   nplStockUpdater
 ) => {
-  let annualInterestOnPerforming = 0;
-  let annualInterestOnNPL = 0;
-  let totalQuarterlyPerformingStock = 0;
-  
-  // Process each quarter in the year
-  for (let quarter = 0; quarter < 4; quarter++) {
-    const currentQuarter = year * 4 + quarter;
-    
-    // Get NPL stock for this quarter
-    const nplStock = nplStockUpdater ? nplStockUpdater(quarter) : nplStockStart;
-    
-    // Calculate NPL interest
-    const nplInterest = calculateNPLInterest(nplStock, product, assumptions);
-    annualInterestOnNPL += nplInterest;
-    
-    // Calculate performing loan interest
-    const { performingStock, quarterlyInterest } = calculateQuarterlyInterest(
-      vintages,
-      currentQuarter,
-      product,
-      assumptions
-    );
-    
-    annualInterestOnPerforming += quarterlyInterest;
-    totalQuarterlyPerformingStock += performingStock;
-  }
-  
-  // Calculate average performing stock for the year
-  const averagePerformingStock = totalQuarterlyPerformingStock / 4;
-  
+  // PLACEHOLDER: Implementazione temporaneamente disabilitata
+  // Questa funzione verrà implementata nella fase successiva (dopo recovery)
   return {
-    interestOnPerforming: annualInterestOnPerforming,
-    interestOnNPL: annualInterestOnNPL,
-    totalInterest: annualInterestOnPerforming + annualInterestOnNPL,
-    averagePerformingStock
+    annualInterestOnPerforming: 0,
+    annualInterestOnNPL: 0,
+    totalQuarterlyPerformingStock: 0,
+    averagePerformingStock: 0,
+    averageNPLStock: 0
   };
 };
 
@@ -130,3 +88,5 @@ export const calculateFTPExpense = (averageStock, assumptions) => {
   const ftpRate = (assumptions.euribor + assumptions.ftpSpread) / 100;
   return -averageStock * ftpRate;
 };
+
+// Funzioni utility rimosse - verranno implementate quando necessarie nelle fasi successive

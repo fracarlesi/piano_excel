@@ -1,167 +1,50 @@
 /**
- * Default Calculator Module
+ * Default Calculator Module - LLP Support
  * 
- * Handles NPL formation, default rate calculations, and LLP calculations
+ * DEPRECATED: Main default calculations moved to GBVDefaultedOrchestrator
+ * This module only provides utility functions for LLP calculations
  */
 
+// Import default calculations from centralized microservice
+import { 
+  calculateGBVDefaulted,
+  getQuarterlyDefaultAmount,
+  getDefaultsForQuarter 
+} from '../../balance-sheet-microservices/assets/gbv-defaulted/GBVDefaultedOrchestrator.js';
+
 /**
- * Calculate adjusted default rate based on credit classification
- * @param {Object} product - Product configuration
- * @returns {number} Adjusted default rate as decimal
+ * Get quarterly defaults for LLP calculation
+ * Uses the centralized GBV Defaulted microservice
+ * @param {Object} divisionProducts - Products organized by division
+ * @param {Object} assumptions - Global assumptions
+ * @param {Object} totalAssetsResults - Results from TotalAssetsOrchestrator containing vintages
+ * @param {number} quarters - Number of quarters (default 40)
+ * @returns {Object} Default results for LLP calculation
  */
-export const getAdjustedDefaultRate = (product) => {
-  const baseDefaultRate = product.dangerRate / 100;
-  const classificationMultiplier = product.creditClassification === 'UTP' ? 2.5 : 1.0;
-  return baseDefaultRate * classificationMultiplier;
+export const getDefaultsForLLP = (divisionProducts, assumptions, totalAssetsResults, quarters = 40) => {
+  // Use centralized calculation
+  return calculateGBVDefaulted(divisionProducts, assumptions, totalAssetsResults, quarters);
 };
 
 /**
- * Calculate annual defaults for a vintage
- * @param {Object} vintage - Vintage object
- * @param {number} year - Current year
- * @param {number} adjustedDefaultRate - Adjusted annual default rate
- * @returns {number} Annual default amount
+ * Get quarterly default amount for a specific product (utility for LLP)
+ * @param {Object} gbvDefaultedResults - Results from GBV Defaulted microservice
+ * @param {string} productKey - Product identifier
+ * @param {number} quarter - Quarter index
+ * @returns {number} Default amount for that quarter
  */
-export const calculateVintageAnnualDefaults = (vintage, year, adjustedDefaultRate) => {
-  // Only calculate defaults on outstanding principal
-  if (vintage.outstandingPrincipal <= 0) {
-    return 0;
-  }
-  
-  const vintageStartYear = vintage.startYear;
-  const vintageStartQuarter = vintage.startQuarter;
-  
-  // For first year of vintage, adjust for partial year
-  if (year === vintageStartYear) {
-    const quartersActive = 4 - vintageStartQuarter;
-    const effectiveRate = adjustedDefaultRate * (quartersActive / 4);
-    return vintage.outstandingPrincipal * effectiveRate;
-  }
-  
-  // For subsequent years, use full annual rate
-  return vintage.outstandingPrincipal * adjustedDefaultRate;
+export const getQuarterlyDefaultForProduct = (gbvDefaultedResults, productKey, quarter) => {
+  return getQuarterlyDefaultAmount(gbvDefaultedResults, productKey, quarter);
 };
 
 /**
- * Calculate quarterly defaults based on annual allocation
- * @param {number} annualDefaults - Total annual defaults
- * @param {number} quarter - Current quarter (0-3)
- * @param {number} year - Current year
- * @param {Object} vintage - Vintage object
- * @param {number} defaultsAppliedSoFar - Defaults already applied this year
- * @returns {number} Quarterly default amount
+ * Get all defaults for a specific quarter (utility for LLP)
+ * @param {Object} gbvDefaultedResults - Results from GBV Defaulted microservice
+ * @param {number} quarter - Quarter index
+ * @returns {Array} Array of default events
  */
-export const calculateQuarterlyDefaults = (
-  annualDefaults,
-  quarter,
-  year,
-  vintage,
-  defaultsAppliedSoFar
-) => {
-  const remainingDefaults = annualDefaults - defaultsAppliedSoFar;
-  
-  if (remainingDefaults <= 0) {
-    return 0;
-  }
-  
-  const vintageStartYear = vintage.startYear;
-  const vintageStartQuarter = vintage.startQuarter;
-  
-  // Check if vintage is active in this quarter
-  if (year === vintageStartYear && quarter < vintageStartQuarter) {
-    return 0;
-  }
-  
-  // Calculate distribution
-  if (year === vintageStartYear) {
-    // First year: distribute across active quarters
-    const firstActiveQuarter = quarter - vintageStartQuarter;
-    const totalActiveQuarters = 4 - vintageStartQuarter;
-    const quartersRemaining = totalActiveQuarters - firstActiveQuarter;
-    return Math.min(remainingDefaults / quartersRemaining, vintage.outstandingPrincipal);
-  } else {
-    // Subsequent years: distribute evenly across remaining quarters
-    const quartersRemaining = 4 - quarter;
-    return Math.min(remainingDefaults / quartersRemaining, vintage.outstandingPrincipal);
-  }
-};
-
-/**
- * NPL Cohort tracking for recovery timing
- * @typedef {Object} NPLCohort
- * @property {number} quarter - Quarter when NPL was created
- * @property {number} amount - NPL amount
- * @property {number} recoveryQuarter - Quarter when recovery is expected
- * @property {string} type - Recovery type (stateGuarantee, collateral, unsecured)
- */
-
-/**
- * Process quarterly defaults and recovery for all vintages
- * @param {Array} vintages - Array of vintage objects
- * @param {number} currentQuarter - Current quarter (absolute)
- * @param {number} year - Current year
- * @param {number} quarter - Quarter within year (0-3)
- * @param {Object} product - Product configuration
- * @param {Map} annualDefaultsByVintage - Pre-calculated annual defaults
- * @param {Map} defaultsAppliedByVintage - Tracking applied defaults
- * @returns {Object} Quarterly default results
- */
-export const processQuarterlyDefaults = (
-  vintages,
-  currentQuarter,
-  year,
-  quarter,
-  product,
-  annualDefaultsByVintage,
-  defaultsAppliedByVintage
-) => {
-  let quarterlyNewDefaults = 0;
-  let quarterlyLLP = 0;
-  const newNPLCohorts = [];
-  
-  vintages.forEach(vintage => {
-    if (!annualDefaultsByVintage.has(vintage)) {
-      return;
-    }
-    
-    const annualDefaults = annualDefaultsByVintage.get(vintage);
-    const defaultsApplied = defaultsAppliedByVintage.get(vintage) || 0;
-    
-    const newDefaultsThisQuarter = calculateQuarterlyDefaults(
-      annualDefaults,
-      quarter,
-      year,
-      vintage,
-      defaultsApplied
-    );
-    
-    if (newDefaultsThisQuarter > 0) {
-      // CRITICAL: Cannot default more than outstanding principal
-      const actualDefaults = Math.min(newDefaultsThisQuarter, vintage.outstandingPrincipal);
-      
-      if (actualDefaults > 0) {
-        // Update tracking
-        defaultsAppliedByVintage.set(vintage, defaultsApplied + actualDefaults);
-        
-        // Reduce performing stock
-        vintage.outstandingPrincipal -= actualDefaults;
-        quarterlyNewDefaults += actualDefaults;
-        
-        // Note: NPV recovery calculation will be handled by recoveryCalculator
-        // Here we just track the new defaults
-        newNPLCohorts.push({
-          vintage,
-          amount: actualDefaults,
-          quarter: currentQuarter
-        });
-      }
-    }
-  });
-  
-  return {
-    newDefaults: quarterlyNewDefaults,
-    newNPLCohorts
-  };
+export const getQuarterlyDefaults = (gbvDefaultedResults, quarter) => {
+  return getDefaultsForQuarter(gbvDefaultedResults, quarter);
 };
 
 /**
