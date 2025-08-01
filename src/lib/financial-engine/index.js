@@ -5,11 +5,11 @@
  * and assembling the final results.
  */
 
-import { calculateAllPersonnelCosts, getDivisionPersonnelCosts } from './calculators/personnelCalculator';
-import { calculateCreditProduct } from './calculators/creditCalculator';
-import { calculateDigitalProduct, calculateDigitalCustomerModel } from './calculators/digitalCalculator';
-import { calculateTreasuryResults } from './calculators/treasuryCalculator';
-import { calculateCommissionProduct } from './calculators/commissionCalculator';
+import { calculateAllPersonnelCosts, getDivisionPersonnelCosts } from './pnl-microservices/personnel-calculators/personnelCalculator';
+import { calculateCreditProduct } from './balance-sheet-microservices/loan-calculators/creditCalculatorRefactored';
+import { calculateDigitalProduct, calculateDigitalCustomerModel } from './balance-sheet-microservices/deposit-calculators/digitalCalculator';
+import { calculateTreasuryResults } from './balance-sheet-microservices/treasury-calculators/treasuryCalculator';
+import { calculateCommissionProduct } from './pnl-microservices/commission-calculators/commissionCalculator';
 import { 
   ALL_DIVISION_PREFIXES,
   BUSINESS_DIVISION_PREFIXES,
