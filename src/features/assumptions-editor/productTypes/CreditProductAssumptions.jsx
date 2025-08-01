@@ -168,17 +168,15 @@ const CreditProductAssumptions = ({
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <EditableSelectField
-            label="Tipo Garanzia"
+            label="Garanzia Pubblica"
             value={product.stateGuaranteeType || 'none'}
             onChange={(value) => handleChange('stateGuaranteeType', value)}
             editMode={editMode}
             options={[
-              { value: 'none', label: 'Nessuna' },
-              { value: 'MCC', label: 'Fondo Centrale MCC' },
-              { value: 'SACE', label: 'SACE' },
-              { value: 'other', label: 'Altra garanzia pubblica' }
+              { value: 'none', label: 'Non presente' },
+              { value: 'present', label: 'Presente' }
             ]}
-            tooltip="Tipo di garanzia pubblica (MCC per PMI, SACE per export/grandi imprese)"
+            tooltip="Presenza di garanzia pubblica sul credito"
           />
           
           {product.stateGuaranteeType && product.stateGuaranteeType !== 'none' && (

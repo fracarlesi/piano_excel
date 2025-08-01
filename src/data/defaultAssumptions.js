@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.54', // Implemented state guarantee recovery logic in NPL calculations
+  version: '10.63', // Created modular LLP calculator and reformatted P&L to show risk-adjusted revenues
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -220,7 +220,7 @@ export const defaultAssumptions = {
       gracePeriod: 0, // Nessun periodo di preammortamento
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
-      stateGuaranteeType: 'none', // none, MCC, SACE, other
+      stateGuaranteeType: 'none', // none, present
       stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
       stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
@@ -240,7 +240,7 @@ export const defaultAssumptions = {
       gracePeriod: 0, // Nessun periodo di preammortamento
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
-      stateGuaranteeType: 'none', // none, MCC, SACE, other
+      stateGuaranteeType: 'none', // none, present
       stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
       stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
@@ -260,7 +260,7 @@ export const defaultAssumptions = {
       gracePeriod: 0, // Non applicabile per bullet loans
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
-      stateGuaranteeType: 'none', // none, MCC, SACE, other
+      stateGuaranteeType: 'none', // none, present
       stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
       stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
@@ -281,7 +281,7 @@ export const defaultAssumptions = {
       gracePeriod: 2, // Grace period for interest only
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
-      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
       stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
@@ -301,7 +301,7 @@ export const defaultAssumptions = {
       gracePeriod: 0, // Non applicabile per bullet loans
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
-      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
       stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
@@ -321,7 +321,7 @@ export const defaultAssumptions = {
       gracePeriod: 0, // Non applicabile per bullet loans
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
-      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
       stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
@@ -342,7 +342,7 @@ export const defaultAssumptions = {
       isFixedRate: true, // Fixed rate
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
-      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
       stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
@@ -363,7 +363,7 @@ export const defaultAssumptions = {
       equityUpside: 2.5, // 2.5% equity upside
       timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
       // Garanzie pubbliche
-      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeType: 'present', // none, present
       stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
       stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },

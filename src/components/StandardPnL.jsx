@@ -45,9 +45,11 @@ const StandardPnL = ({
   const otherOpex = divisionResults.pnl.otherOpex ?? [0,0,0,0,0,0,0,0,0,0];
   const totalOpex = divisionResults.pnl.totalOpex ?? personnelCosts.map((pc, i) => pc + otherOpex[i]);
 
-  const preTaxProfit = totalRevenues.map((rev, i) => 
-    rev + totalOpex[i] + (divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0])[i]
-  );
+  // Calculate net revenues (risk-adjusted)
+  const netRevenuesRiskAdjusted = totalRevenues.map((rev, i) => rev + (divisionResults.pnl.totalLLP?.[i] || 0));
+  
+  // Pre-tax profit = Net Revenues (Risk-Adjusted) + Total OPEX
+  const preTaxProfit = netRevenuesRiskAdjusted.map((nrev, i) => nrev + totalOpex[i]);
 
   // const netProfit = divisionResults.pnl.netProfit || preTaxProfit.map((pbt, i) => {
   //   const taxRate = assumptions.taxRate || 0.3;
@@ -423,6 +425,67 @@ const StandardPnL = ({
       ))
     },
 
+    // ========== LOAN LOSS PROVISIONS ==========
+    {
+      label: 'Loan loss provisions',
+      data: divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0],
+      decimals: 2,
+      formula: (divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
+        'Expected Loss on New Business + NPL Provisions',
+        [
+          year => `Total LLP: ${formatNumber(val, 2)} €M`
+        ]
+      )),
+      // Add product breakdown as subRows
+      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+        label: `o/w ${product.name}`,
+        data: product.llp ?? [0,0,0,0,0,0,0,0,0,0],
+        decimals: 2,
+        formula: (product.llp ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+          const productKey = Object.keys(assumptions.products ?? {}).find(k => 
+            assumptions.products[k].name === product.name
+          );
+          const originalProduct = productKey ? assumptions.products[productKey] : {};
+          
+          return createProductFormula(i, product, 'llp', {
+            pd: (originalProduct.dangerRate ?? 0) / 100,
+            lgd: 0.45, // Standard LGD assumption
+            ead: (product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
+            creditClass: 'Bonis',
+            result: val
+          });
+        })
+      })) : []
+    },
+
+    // ========== NET REVENUES (RISK-ADJUSTED) ==========
+    {
+      label: 'Net Revenues (Risk-Adjusted)',
+      data: totalRevenues.map((rev, i) => rev + (divisionResults.pnl.totalLLP?.[i] || 0)),
+      decimals: 2,
+      isSubTotal: true,
+      formula: totalRevenues.map((val, i) => createFormula(
+        i,
+        'Total Revenues + Loan Loss Provisions',
+        [
+          {
+            name: 'Total Revenues',
+            value: val,
+            unit: '€M'
+          },
+          {
+            name: 'Loan Loss Provisions',
+            value: divisionResults.pnl.totalLLP?.[i] || 0,
+            unit: '€M'
+          }
+        ],
+        (year) => {
+          const revenues = totalRevenues[year];
+          const llp = divisionResults.pnl.totalLLP?.[year] || 0;
+          return `${formatNumber(revenues, 2)} - ${formatNumber(Math.abs(llp), 2)} = ${formatNumber(revenues + llp, 2)} €M`;
+        }
+      ))
+    },
 
     // ========== PERSONNEL COSTS ==========
     {
@@ -581,37 +644,6 @@ const StandardPnL = ({
       // Add breakdown as subRows
       subRows: showProductDetail ? [
         {
-          label: 'Loan loss provisions',
-          data: divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0],
-          decimals: 2,
-          formula: (divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
-            'Expected Loss on New Business + NPL Provisions',
-            [
-              year => `Total LLP: ${formatNumber(val, 2)} €M`
-            ]
-          )),
-          // Add product breakdown as nested subRows
-          subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-            label: `o/w ${product.name}`,
-            data: product.llp ?? [0,0,0,0,0,0,0,0,0,0],
-            decimals: 2,
-            formula: (product.llp ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
-              const productKey = Object.keys(assumptions.products ?? {}).find(k => 
-                assumptions.products[k].name === product.name
-              );
-              const originalProduct = productKey ? assumptions.products[productKey] : {};
-              
-              return createProductFormula(i, product, 'llp', {
-                pd: (originalProduct.dangerRate ?? 0) / 100,
-                lgd: 0.45, // Standard LGD assumption
-                ead: (product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
-                creditClass: 'Bonis',
-                result: val
-              });
-            })
-          })) : []
-        },
-        {
           label: 'Provisions for liabilities and charges (TFR)',
           data: [0,0,0,0,0,0,0,0,0,0],
           decimals: 2,
@@ -640,16 +672,14 @@ const StandardPnL = ({
       isTotal: true,
       bgColor: 'gray',
       formula: preTaxProfit.map((val, i) => createFormula(i,
-        'Total Revenues - Total OPEX - Other Costs',
+        'Net Revenues (Risk-Adjusted) + Total OPEX',
         [
-          year => `Revenues: ${formatNumber(totalRevenues[year], 2)} €M`,
+          year => `Net Revenues (Risk-Adjusted): ${formatNumber(netRevenuesRiskAdjusted[year], 2)} €M`,
           year => `OPEX: ${formatNumber(totalOpex[year], 2)} €M`,
-          year => `LLP: ${formatNumber((divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0])[year], 2)} €M`,
           year => `PBT: ${formatNumber(val, 2)} €M`
         ],
         year => {
-          const llp = (divisionResults.pnl.totalLLP ?? [0,0,0,0,0,0,0,0,0,0])[year] ?? 0;
-          return `${formatNumber(totalRevenues[year], 2)} - ${formatNumber(Math.abs(totalOpex[year]), 2)} - ${formatNumber(Math.abs(llp), 2)} = ${formatNumber(val, 2)} €M`;
+          return `${formatNumber(netRevenuesRiskAdjusted[year], 2)} + (${formatNumber(Math.abs(totalOpex[year]), 2)}) = ${formatNumber(val, 2)} €M`;
         }
       ))
     }

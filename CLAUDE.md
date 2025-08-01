@@ -24,6 +24,7 @@ This is a financial planning application for New Bank S.p.A. with real-time coll
 4. All assumptions should have descriptive tooltips
 5. Maintain Italian language for business terms where appropriate
 6. Test Firebase sync after major changes
+7. **MICROSERVICE ARCHITECTURE RULE**: OGNI richiesta di modifica deve essere gestita come un microservizio separato per evitare di danneggiare il codice funzionante. Creare sempre moduli isolati per nuove funzionalità.
 
 ## Project Structure (v10.00 - Enterprise Architecture)
 ```
@@ -185,3 +186,32 @@ Key Technologies:
 - The app uses Firebase Realtime Database for persistence
 - Auto-save is enabled with 3-second debouncing
 - All financial calculations follow Italian banking standards
+
+## Recent Work Progress (2025-08-01)
+
+### Completed Tasks:
+1. **Fixed Linear Amortization Removal** - Removed linear amortization option from credit products as requested
+2. **Implemented NPL Impairment Model** - Quarterly discounted cash flow model for NPL recovery
+3. **Fixed NPL Stock Behavior** - NPLs now remain stable at net realizable value (no automatic 10% reduction)
+4. **NPL Interest Generation** - NPLs generate interest at original product rate (spread + euribor)
+5. **State Guarantees Implementation** - Implemented at product level (MCC, SACE) reducing LLP by ~70%
+6. **UI Simplification** - State guarantee type simplified to Present/Not Present
+7. **Default Rate Fix** - 50% danger rate now correctly produces 50% NPLs annually (v10.58)
+8. **Bullet Loan Interest Fix** - Fixed issue where bullet loans generated interest after maturity (v10.59)
+
+### Major Refactoring (v10.60):
+Refactored creditCalculator.js into microservice modules:
+- `vintageManager.js` - Vintage creation and tracking
+- `interestCalculator.js` - Interest calculations for performing and NPL
+- `amortizationCalculator.js` - Loan amortization (French & bullet)
+- `defaultCalculator.js` - NPL and default calculations
+- `recoveryCalculator.js` - Recovery calculations with state guarantees
+- `volumeCalculator.js` - Volume and commission calculations
+- `creditCalculatorRefactored.js` - Main orchestrator using all modules
+
+This modular approach prevents unintended side effects when making changes.
+
+### Cleanup completed:
+- Removed old test files
+- Removed creditCalculatorOriginal.js backup
+- All tests passing with new modular architecture
