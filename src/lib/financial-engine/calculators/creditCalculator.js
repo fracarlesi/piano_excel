@@ -63,6 +63,13 @@ export const calculateCreditProduct = (product, assumptions, years) => {
   const totalInterestIncome = new Array(10).fill(0);
   const totalPrincipalRepayments = new Array(10).fill(0);
   
+  // New variables for quarterly NPL impairment calculation
+  let cumulativeNPLStockNet = 0; // Net NPL stock value carried between quarters
+  const timeToRecover = product.timeToRecover || 3; // Default 3 years if not specified
+  
+  // Track NPL cohorts for future recovery
+  const nplCohorts = []; // Array of {quarter: number, amount: number, recoveryQuarter: number}
+  
   // Apply credit classification impact on default rate
   const baseDefaultRate = product.dangerRate / 100;
   const classificationMultiplier = product.creditClassification === 'UTP' ? 2.5 : 1.0;
@@ -134,13 +141,16 @@ export const calculateCreditProduct = (product, assumptions, years) => {
     }
   }
   
-  // Main calculation loop - calculate quarterly rolling stock
+  // Initialize LLP array that will be populated during calculation
+  const totalLLP = new Array(10).fill(0);
+  
+  // Main calculation loop - NEW QUARTERLY NPL IMPAIRMENT MODEL
   for (let year = 0; year < years.length; year++) {
-    let totalInterestIncomeForYear = 0;
-    let totalPrincipalRepaymentsForYear = 0;
-    let totalOutstandingStockForYear = 0;
-    let totalAverageStockForYear = 0;
-    let defaultsForYear = 0;
+    let annualInterestOnPerforming = 0;
+    let annualInterestOnNPL = 0;
+    let annualPrincipalRepayments = 0;
+    let annualLLP = 0;
+    let annualNewDefaults = 0;
     
     // Save the state of each vintage at the beginning of the year
     const vintageStateAtYearStart = new Map();
@@ -153,10 +163,39 @@ export const calculateCreditProduct = (product, assumptions, years) => {
     // Track principal repayments by vintage for this year
     const principalRepaidByVintage = new Map();
     
-    // Calculate quarterly interest and update amortization for each quarter
+    // Process each quarter in the year
     for (let quarter = 0; quarter < 4; quarter++) {
-      let quarterlyOutstandingStock = 0;
       const currentQuarter = year * 4 + quarter;
+      const quarterlyRate = getInterestRate(product, assumptions) / 4;
+      const quarterlyDefaultRate = adjustedDefaultRate / 4;
+      
+      // --- STEP 1: MANAGE EXISTING NPL STOCK ---
+      // NPLs generate interest at the original product rate (spread + euribor)
+      // This represents contractual interest that continues to accrue
+      const productRate = getInterestRate(product, assumptions);
+      const quarterlyProductRate = productRate / 4;
+      const interestOnNPLThisQuarter = cumulativeNPLStockNet * quarterlyProductRate;
+      annualInterestOnNPL += interestOnNPLThisQuarter;
+      
+      // Check for NPL cohorts that are ready for recovery
+      let quarterlyRecoveries = 0;
+      nplCohorts.forEach((cohort) => {
+        if (currentQuarter === cohort.recoveryQuarter) {
+          // This cohort is recovered this quarter
+          quarterlyRecoveries += cohort.amount;
+          cumulativeNPLStockNet -= cohort.amount;
+        }
+      });
+      
+      // Remove recovered cohorts
+      for (let i = nplCohorts.length - 1; i >= 0; i--) {
+        if (currentQuarter === nplCohorts[i].recoveryQuarter) {
+          nplCohorts.splice(i, 1);
+        }
+      }
+      
+      // --- STEP 2: PROCESS PERFORMING LOANS ---
+      let quarterlyPerformingStock = 0;
       
       // Process each vintage for this quarter
       vintages.forEach((vintage) => {
@@ -195,16 +234,89 @@ export const calculateCreditProduct = (product, assumptions, years) => {
             }
           }
           
-          quarterlyOutstandingStock += vintage.outstandingPrincipal;
+          // --- NEW DEFAULT AND IMPAIRMENT CALCULATION ---
+          if (vintage.outstandingPrincipal > 0) {
+            const newDefaultsThisQuarter = vintage.outstandingPrincipal * quarterlyDefaultRate;
+            
+            if (newDefaultsThisQuarter > 0) {
+              // Reduce performing stock of the vintage
+              vintage.outstandingPrincipal -= newDefaultsThisQuarter;
+              annualNewDefaults += newDefaultsThisQuarter;
+              
+              // Calculate NPV of recovery including state guarantees
+              let npvRecovery = 0;
+              let stateGuaranteeRecovery = 0;
+              let collateralRecovery = 0;
+              
+              // Step 1: Calculate state guarantee recovery if applicable
+              if (product.stateGuaranteeType && product.stateGuaranteeType !== 'none' && product.stateGuaranteeCoverage > 0) {
+                const guaranteedAmount = newDefaultsThisQuarter * (product.stateGuaranteeCoverage / 100);
+                const stateRecoveryTime = product.stateGuaranteeRecoveryTime || 0.5;
+                stateGuaranteeRecovery = guaranteedAmount / Math.pow(1 + (quarterlyRate * 4), stateRecoveryTime);
+                
+                // Track state guarantee recovery separately
+                const stateRecoveryQuarter = currentQuarter + Math.round(stateRecoveryTime * 4);
+                nplCohorts.push({
+                  quarter: currentQuarter,
+                  amount: stateGuaranteeRecovery,
+                  recoveryQuarter: stateRecoveryQuarter,
+                  type: 'stateGuarantee'
+                });
+              }
+              
+              // Step 2: Calculate collateral recovery on the non-guaranteed portion
+              const nonGuaranteedAmount = newDefaultsThisQuarter * (1 - (product.stateGuaranteeCoverage || 0) / 100);
+              
+              if (!product.isUnsecured && nonGuaranteedAmount > 0) {
+                const collateralValue = nonGuaranteedAmount / (product.ltv / 100);
+                const valueAfterHaircut = collateralValue * (1 - product.collateralHaircut / 100);
+                const recoveryCosts = nonGuaranteedAmount * (product.recoveryCosts / 100);
+                const estimatedRecoveryValue = Math.max(0, valueAfterHaircut - recoveryCosts);
+                collateralRecovery = estimatedRecoveryValue / Math.pow(1 + (quarterlyRate * 4), timeToRecover);
+                
+                // Track collateral recovery
+                const collateralRecoveryQuarter = currentQuarter + Math.round(timeToRecover * 4);
+                nplCohorts.push({
+                  quarter: currentQuarter,
+                  amount: collateralRecovery,
+                  recoveryQuarter: collateralRecoveryQuarter,
+                  type: 'collateral'
+                });
+              } else if (product.isUnsecured && nonGuaranteedAmount > 0) {
+                // For unsecured loans, use unsecured LGD
+                const unsecuredLGD = product.unsecuredLGD || 45;
+                const recoveryRate = (100 - unsecuredLGD) / 100;
+                collateralRecovery = nonGuaranteedAmount * recoveryRate / Math.pow(1 + (quarterlyRate * 4), timeToRecover);
+                
+                // Track unsecured recovery
+                const unsecuredRecoveryQuarter = currentQuarter + Math.round(timeToRecover * 4);
+                nplCohorts.push({
+                  quarter: currentQuarter,
+                  amount: collateralRecovery,
+                  recoveryQuarter: unsecuredRecoveryQuarter,
+                  type: 'unsecured'
+                });
+              }
+              
+              // Total NPV recovery is sum of state guarantee and collateral recoveries
+              npvRecovery = stateGuaranteeRecovery + collateralRecovery;
+              
+              // LLP is the difference between gross value and total discounted recovery
+              const llpForThisDefault = newDefaultsThisQuarter - npvRecovery;
+              annualLLP += llpForThisDefault;
+              
+              // Add net value to NPL stock
+              cumulativeNPLStockNet += npvRecovery;
+            }
+          }
+          
+          quarterlyPerformingStock += vintage.outstandingPrincipal;
         }
       });
       
-      // Calculate quarterly interest on actual outstanding stock
-      const interestRate = getInterestRate(product, assumptions);
-      const quarterlyInterestRate = interestRate / 4;
-      const quarterlyInterest = quarterlyOutstandingStock * quarterlyInterestRate;
-      
-      totalInterestIncomeForYear += quarterlyInterest;
+      // Calculate quarterly interest on performing loans stock
+      const quarterlyInterest = quarterlyPerformingStock * quarterlyRate;
+      annualInterestOnPerforming += quarterlyInterest;
       
       // Now update the outstanding principal for next quarter
       vintages.forEach((vintage) => {
@@ -239,7 +351,7 @@ export const calculateCreditProduct = (product, assumptions, years) => {
       // Outstanding stock at year end
       // Only include if the loan has started and is still active (not yet matured)
       if (vintageStartQuarter < currentYearEnd && vintageMaturityQuarter >= currentYearEnd) {
-        totalOutstandingStockForYear += vintage.outstandingPrincipal;
+        // This line is no longer needed as we calculate yearEndPerformingStock later
       }
     });
     
@@ -254,45 +366,40 @@ export const calculateCreditProduct = (product, assumptions, years) => {
         const yearStartQuarter = year * 4;
         const yearEndQuarter = (year + 1) * 4;
         if (vintageMaturityQuarter >= yearStartQuarter && vintageMaturityQuarter < yearEndQuarter) {
-          totalPrincipalRepaymentsForYear += vintage.initialAmount;
+          annualPrincipalRepayments += vintage.initialAmount;
           // Mark the loan as repaid by setting outstanding to 0
           vintage.outstandingPrincipal = 0;
         }
       } else if (vintage.type === 'french' || vintage.type === 'amortizing') {
         // For French/amortizing loans, use the tracked repayments
         if (principalRepaidByVintage.has(vintage)) {
-          totalPrincipalRepaymentsForYear += principalRepaidByVintage.get(vintage);
+          annualPrincipalRepayments += principalRepaidByVintage.get(vintage);
         }
       }
     });
     
-    // Calculate average stock (simplified as outstanding stock)
-    totalAverageStockForYear = totalOutstandingStockForYear;
+    // === END OF YEAR AGGREGATION ===
+    // Calculate year-end performing stock
+    let yearEndPerformingStock = 0;
+    vintages.forEach((vintage) => {
+      const currentYearEnd = (year + 1) * 4;
+      const vintageStartQuarter = vintage.startYear * 4 + vintage.startQuarter;
+      const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
+      
+      if (vintageStartQuarter < currentYearEnd && vintageMaturityQuarter >= currentYearEnd) {
+        yearEndPerformingStock += vintage.outstandingPrincipal;
+      }
+    });
     
-    // Step 4: Store results for this year
-    grossPerformingStock[year] = totalOutstandingStockForYear;
-    totalInterestIncome[year] = totalInterestIncomeForYear;
-    // Ensure principal repayments are positive (they represent cash outflows from borrower perspective)
-    totalPrincipalRepayments[year] = Math.abs(totalPrincipalRepaymentsForYear);
-    averagePerformingStock[year] = totalOutstandingStockForYear; // Use end-of-year stock as average
-    newNPLs[year] = defaultsForYear;
-    
-    // Update NPL stock (cumulative with recovery)
-    if (year === 0) {
-      nplStock[year] = newNPLs[year];
-    } else {
-      const recoveryRate = 0.10; // 10% annual recovery
-      nplStock[year] = nplStock[year-1] * (1 - recoveryRate) + newNPLs[year];
-    }
+    // Store annual results
+    grossPerformingStock[year] = yearEndPerformingStock;
+    nplStock[year] = cumulativeNPLStockNet;
+    totalInterestIncome[year] = annualInterestOnPerforming + annualInterestOnNPL;
+    totalPrincipalRepayments[year] = Math.abs(annualPrincipalRepayments);
+    totalLLP[year] = -annualLLP; // Negative sign for cost
+    newNPLs[year] = annualNewDefaults;
+    averagePerformingStock[year] = yearEndPerformingStock; // Simplified
   }
-  
-  // Calculate LLP using average performing assets
-  const totalLLP = years.map((_, i) => {
-    const avgAssets = averagePerformingStock[i];
-    const baseRate = (adjustedDefaultRate * 100); // Convert to percentage
-    const coverageRatio = 0.6; // 60% coverage
-    return -avgAssets * (baseRate / 100) * coverageRatio;
-  });
   
   // Commission income
   const commissionIncome = years.map((_, i) => {

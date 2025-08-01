@@ -86,6 +86,17 @@ const CreditProductAssumptions = ({
             tooltip="Risk Weighted Assets come % del valore nominale"
           />
           
+          <EditableNumberField
+            label="Tempo di Recupero (anni)"
+            value={product.timeToRecover || 3}
+            onChange={(value) => handleChange('timeToRecover', value)}
+            editMode={editMode}
+            min={1}
+            max={10}
+            step={0.5}
+            tooltip="Anni medi necessari per completare il processo di recupero del credito tramite la garanzia. Questo valore è cruciale per l'attualizzazione dei flussi di cassa."
+          />
+          
           <EditableSelectField
             label="Secured/Unsecured"
             value={product.isUnsecured ? 'unsecured' : 'secured'}
@@ -146,6 +157,54 @@ const CreditProductAssumptions = ({
               step={5}
               tooltip="Loss Given Default per prestiti non garantiti"
             />
+          )}
+        </CardContent>
+      </Card>
+
+      {/* State Guarantees Card */}
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">🛡️ Garanzie Pubbliche</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <EditableSelectField
+            label="Tipo Garanzia"
+            value={product.stateGuaranteeType || 'none'}
+            onChange={(value) => handleChange('stateGuaranteeType', value)}
+            editMode={editMode}
+            options={[
+              { value: 'none', label: 'Nessuna' },
+              { value: 'MCC', label: 'Fondo Centrale MCC' },
+              { value: 'SACE', label: 'SACE' },
+              { value: 'other', label: 'Altra garanzia pubblica' }
+            ]}
+            tooltip="Tipo di garanzia pubblica (MCC per PMI, SACE per export/grandi imprese)"
+          />
+          
+          {product.stateGuaranteeType && product.stateGuaranteeType !== 'none' && (
+            <>
+              <EditableNumberField
+                label="Copertura Garanzia (%)"
+                value={product.stateGuaranteeCoverage || 0}
+                onChange={(value) => handleChange('stateGuaranteeCoverage', value)}
+                editMode={editMode}
+                min={0}
+                max={100}
+                step={5}
+                tooltip="Percentuale del credito coperta dalla garanzia pubblica (tipicamente 80-90%)"
+              />
+              
+              <EditableNumberField
+                label="Tempo Recupero Garanzia (anni)"
+                value={product.stateGuaranteeRecoveryTime || 0.5}
+                onChange={(value) => handleChange('stateGuaranteeRecoveryTime', value)}
+                editMode={editMode}
+                min={0.25}
+                max={2}
+                step={0.25}
+                tooltip="Tempo medio per l'escussione della garanzia pubblica (tipicamente 6-12 mesi)"
+              />
+            </>
           )}
         </CardContent>
       </Card>

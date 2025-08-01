@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.48', // Removed linear amortization option from credit products
+  version: '10.54', // Implemented state guarantee recovery logic in NPL calculations
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -217,7 +217,12 @@ export const defaultAssumptions = {
       recoveryCosts: 8.0, // Costi di recupero bassi
       collateralHaircut: 15.0, // Haircut moderato
       type: 'french',
-      gracePeriod: 0 // Nessun periodo di preammortamento
+      gracePeriod: 0, // Nessun periodo di preammortamento
+      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      // Garanzie pubbliche
+      stateGuaranteeType: 'none', // none, MCC, SACE, other
+      stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
+      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
     reMortgage: {
       name: 'Finanziamenti Ipotecari',
@@ -232,7 +237,12 @@ export const defaultAssumptions = {
       recoveryCosts: 12.0, // Costi procedura standard
       collateralHaircut: 20.0, // Haircut standard
       type: 'french', // Ammortamento alla francese
-      gracePeriod: 0 // Nessun periodo di preammortamento
+      gracePeriod: 0, // Nessun periodo di preammortamento
+      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      // Garanzie pubbliche
+      stateGuaranteeType: 'none', // none, MCC, SACE, other
+      stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
+      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
     reBridge: {
       name: 'Finanziamenti Corporate Bridge Loan',
@@ -247,7 +257,12 @@ export const defaultAssumptions = {
       recoveryCosts: 18.0, // Costi più elevati per corporate
       collateralHaircut: 25.0, // Haircut prudenziale
       type: 'bullet', // Rimborso bullet tipico
-      gracePeriod: 0 // Non applicabile per bullet loans
+      gracePeriod: 0, // Non applicabile per bullet loans
+      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      // Garanzie pubbliche
+      stateGuaranteeType: 'none', // none, MCC, SACE, other
+      stateGuaranteeCoverage: 0, // Percentuale di copertura (0-100)
+      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
     // SME Division Products
     smeRefinancing: {
@@ -263,7 +278,12 @@ export const defaultAssumptions = {
       recoveryCosts: 15.0,
       collateralHaircut: 25.0,
       type: 'french', // After 2 years grace period
-      gracePeriod: 2 // Grace period for interest only
+      gracePeriod: 2, // Grace period for interest only
+      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      // Garanzie pubbliche
+      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
+      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
     smeBridge: {
       name: 'Bridge (Ponte)',
@@ -278,7 +298,12 @@ export const defaultAssumptions = {
       recoveryCosts: 20.0,
       collateralHaircut: 30.0,
       type: 'bullet', // Bullet repayment
-      gracePeriod: 0 // Non applicabile per bullet loans
+      gracePeriod: 0, // Non applicabile per bullet loans
+      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      // Garanzie pubbliche
+      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
+      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
     smeSpecialSituation: {
       name: 'Special Situation',
@@ -293,7 +318,12 @@ export const defaultAssumptions = {
       recoveryCosts: 25.0,
       collateralHaircut: 40.0,
       type: 'bullet', // Bullet repayment
-      gracePeriod: 0 // Non applicabile per bullet loans
+      gracePeriod: 0, // Non applicabile per bullet loans
+      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      // Garanzie pubbliche
+      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
+      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
     smeNuovaFinanza: {
       name: 'Nuova Finanza',
@@ -309,7 +339,12 @@ export const defaultAssumptions = {
       collateralHaircut: 50.0,
       type: 'bullet', // Bullet repayment
       gracePeriod: 0, // Non applicabile per bullet loans
-      isFixedRate: true // Fixed rate
+      isFixedRate: true, // Fixed rate
+      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      // Garanzie pubbliche
+      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
+      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
     smeRestructuring: {
       name: 'Restructuring (Ristrutturazione)',
@@ -325,7 +360,12 @@ export const defaultAssumptions = {
       collateralHaircut: 60.0,
       type: 'bullet', // Bullet repayment
       gracePeriod: 0, // Non applicabile per bullet loans
-      equityUpside: 2.5 // 2.5% equity upside
+      equityUpside: 2.5, // 2.5% equity upside
+      timeToRecover: 3, // Tempo medio di recupero crediti deteriorati
+      // Garanzie pubbliche
+      stateGuaranteeType: 'MCC', // none, MCC, SACE, other
+      stateGuaranteeCoverage: 80, // Percentuale di copertura (0-100)
+      stateGuaranteeRecoveryTime: 0.5 // Tempo di recupero in anni (default 6 mesi)
     },
     // Digital Banking Division - Unified Customer Model with Modular Services
     digitalRetailCustomer: {
