@@ -9,12 +9,11 @@ import { createVintages, getInterestRate } from './vintageManager.js';
 import { calculateFTPExpense } from './interestCalculator.js';
 import { calculateAnnualRepayments, updateAllVintagePrincipals } from './amortizationCalculator.js';
 import { 
-  processQuarterlyDefaultsAligned,
   saveVintageStatesBeforeQuarter,
   calculateYearEndPerformingStock 
 } from './defaultCalculatorAligned.js';
 import { processQuarterlyRecoveries } from './recoveryCalculator.js';
-import { calculateLLP } from './llpCalculator.js';
+import { processDangerRate } from './dangerRateCalculator.js';
 import { 
   calculateVolumes, 
   calculateNumberOfLoans, 
@@ -117,48 +116,26 @@ export const calculateCreditProductQuarterly = (product, assumptions, years) => 
         nplCohorts.splice(recoveredCohortIndices[i], 1);
       }
       
-      // Process defaults
-      const { newDefaults, newNPLCohorts } = processQuarterlyDefaultsAligned(
-        vintages,
-        currentQuarter,
-        year,
-        quarter,
-        product
-      );
+      // Process danger rate defaults using new microservice
+      const dangerRateResult = processDangerRate(vintages, currentQuarter, product);
       
-      quarterlyNewNPLs[currentQuarter] = newDefaults;
-      annualNewDefaults += newDefaults;
+      quarterlyNewNPLs[currentQuarter] = dangerRateResult.newDefaults;
+      annualNewDefaults += dangerRateResult.newDefaults;
       
-      // Calculate LLP
-      let totalPerformingStockBeforeDefaults = 0;
-      vintages.forEach(vintage => {
-        const vintageStartQuarter = vintage.startYear * 4 + vintage.startQuarter;
-        const vintageMaturityQuarter = vintage.maturityYear * 4 + vintage.maturityQuarter;
-        
-        if (vintageStartQuarter < currentQuarter && currentQuarter < vintageMaturityQuarter) {
-          const beginningStock = vintage.outstandingPrincipalBeforeQuarter || vintage.outstandingPrincipal;
-          totalPerformingStockBeforeDefaults += beginningStock;
-        }
-      });
+      quarterlyLLP[currentQuarter] = dangerRateResult.llp;
+      annualLLP += dangerRateResult.llp;
       
-      const llpResult = calculateLLP({
-        performingStock: totalPerformingStockBeforeDefaults,
-        dangerRate: product.dangerRate || 0,
-        productParameters: product,
-        quarterlyInterestRate: quarterlyRate
-      });
+      // Update NPL stock with new defaults
+      cumulativeNPLStockNet += dangerRateResult.newDefaults;
       
-      quarterlyLLP[currentQuarter] = llpResult.llp;
-      annualLLP += llpResult.llp;
-      cumulativeNPLStockNet += llpResult.recoveryNPV;
-      
-      if (llpResult.newDefaults > 0) {
+      // Add NPL cohorts for recovery tracking
+      if (dangerRateResult.newDefaults > 0) {
         const recoveryQuarter = currentQuarter + Math.round((product.timeToRecover || 3) * 4);
         nplCohorts.push({
           quarter: currentQuarter,
-          amount: llpResult.recoveryNPV,
+          amount: dangerRateResult.newDefaults,
           recoveryQuarter: recoveryQuarter,
-          type: 'standard'
+          type: 'vintage_default'
         });
       }
       

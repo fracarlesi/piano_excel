@@ -146,7 +146,7 @@ export const updateAllVintagePrincipals = (vintages, currentQuarter, product, as
         const quartersElapsed = currentQuarter - vintageStartQuarter;
         const gracePeriodQuarters = vintage.gracePeriod; // Already in quarters
         
-        if (quartersElapsed > gracePeriodQuarters) {
+        if (quartersElapsed >= gracePeriodQuarters) {
           const quarterlyRate = getInterestRate(product, assumptions) / 4;
           const interestPayment = vintage.outstandingPrincipal * quarterlyRate;
           const principalPayment = vintage.quarterlyPayment - interestPayment;

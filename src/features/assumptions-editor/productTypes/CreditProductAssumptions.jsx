@@ -72,7 +72,18 @@ const CreditProductAssumptions = ({
             min={0}
             max={20}
             step={0.1}
-            tooltip="Tasso di default annuale atteso"
+            tooltip="Percentuale di default applicata una sola volta per ogni vintage di erogazione"
+          />
+          
+          <EditableNumberField
+            label="Default dopo (trimestri)"
+            value={product.defaultAfterQuarters || 8}
+            onChange={(value) => handleChange('defaultAfterQuarters', value)}
+            editMode={editMode}
+            min={1}
+            max={40}
+            step={1}
+            tooltip="Numero di trimestri dopo l'erogazione quando si verifica il default"
           />
           
           <EditableNumberField

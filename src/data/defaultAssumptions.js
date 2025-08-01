@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '10.86', // Changed maturity (durata) from years to quarters for consistency
+  version: '11.00', // Nuovo microservizio danger rate con default per vintage
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -213,6 +213,7 @@ export const defaultAssumptions = {
       durata: 28, // Durata in trimestri (7 anni)
       commissionRate: 0.3, // Commissione contenuta
       dangerRate: 0.8, // Rischio molto basso
+      defaultAfterQuarters: 8, // Default dopo 2 anni
       ltv: 65.0, // LTV conservativo
       recoveryCosts: 8.0, // Costi di recupero bassi
       collateralHaircut: 15.0, // Haircut moderato
@@ -233,6 +234,7 @@ export const defaultAssumptions = {
       durata: 100, // Durata in trimestri (25 anni)
       commissionRate: 0.8, // Commissione di istruttoria
       dangerRate: 1.2, // Rischio contenuto
+      defaultAfterQuarters: 8, // Default dopo 2 anni
       ltv: 80.0, // LTV standard per mutui
       recoveryCosts: 12.0, // Costi procedura standard
       collateralHaircut: 20.0, // Haircut standard
@@ -253,6 +255,7 @@ export const defaultAssumptions = {
       durata: 8, // Durata in trimestri (2 anni)
       commissionRate: 2.5, // Commissioni elevate per complessità
       dangerRate: 3.5, // Rischio elevato per natura bridge
+      defaultAfterQuarters: 4, // Default dopo 1 anno (bridge loan)
       ltv: 70.0, // LTV prudenziale
       recoveryCosts: 18.0, // Costi più elevati per corporate
       collateralHaircut: 25.0, // Haircut prudenziale
@@ -274,6 +277,7 @@ export const defaultAssumptions = {
       durata: 20, // Durata in trimestri (5 anni)
       commissionRate: 0.0, // No initial commission mentioned
       dangerRate: 1.0, // Standard risk (Boris)
+      defaultAfterQuarters: 8, // Default dopo 2 anni
       ltv: 70.0,
       recoveryCosts: 15.0,
       collateralHaircut: 25.0,
@@ -294,6 +298,7 @@ export const defaultAssumptions = {
       durata: 6, // Durata in trimestri (1.5 anni)
       commissionRate: 3.0, // 3% commission
       dangerRate: 1.0, // Standard risk (Boris)
+      defaultAfterQuarters: 8, // Default dopo 2 anni
       ltv: 60.0,
       recoveryCosts: 20.0,
       collateralHaircut: 30.0,
@@ -314,6 +319,7 @@ export const defaultAssumptions = {
       durata: 16, // Durata in trimestri (4 anni)
       commissionRate: 2.0,
       dangerRate: 2.5, // Higher risk
+      defaultAfterQuarters: 6, // Default dopo 1.5 anni
       ltv: 50.0,
       recoveryCosts: 25.0,
       collateralHaircut: 40.0,
@@ -334,6 +340,7 @@ export const defaultAssumptions = {
       durata: 16, // Durata in trimestri (4 anni)
       commissionRate: 1.5,
       dangerRate: 8.0, // Very high risk (UTP)
+      defaultAfterQuarters: 4, // Default dopo 1 anno (già problematico)
       ltv: 40.0,
       recoveryCosts: 30.0,
       collateralHaircut: 50.0,
@@ -355,6 +362,7 @@ export const defaultAssumptions = {
       durata: 20, // Durata in trimestri (5 anni)
       commissionRate: 0.0, // No initial commission
       dangerRate: 6.0, // High risk but restructured
+      defaultAfterQuarters: 6, // Default dopo 1.5 anni
       ltv: 30.0,
       recoveryCosts: 35.0,
       collateralHaircut: 60.0,
