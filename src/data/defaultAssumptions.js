@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '12.76', // Refactored: each P&L microservice now exposes table-ready data directly without intermediate calculator
+  version: '12.77', // Restructured interest-income folder with clean orchestrator pattern for credit products
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

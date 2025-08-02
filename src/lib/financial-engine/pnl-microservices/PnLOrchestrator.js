@@ -6,7 +6,7 @@
  */
 
 import { calculateAllPersonnelCosts } from './personnel-calculators/personnelCalculator.js';
-import { calculateDynamicInterestIncome } from './interest-income/DynamicProductInterestCalculator.js';
+import { calculateInterestIncome } from './interest-income/InterestIncomeOrchestrator.js';
 import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
 import { calculateCommissionIncome } from './commission-calculators/commissionCalculator.js';
 import { calculateLoanLossProvisions } from './llp-calculators/defaultCalculator.js';
@@ -178,33 +178,10 @@ export const PnLOrchestrator = {
    * @private
    */
   calculateInterestIncome(balanceSheetResults, assumptions, years) {
-    // Use the new calculator that applies product-specific rates
-    const netPerformingAssets = balanceSheetResults.details?.netPerformingAssets;
-    
-    if (!netPerformingAssets || !netPerformingAssets.byProduct) {
-      console.warn('Net performing assets data not available', {
-        hasDetails: !!balanceSheetResults.details,
-        hasNPA: !!balanceSheetResults.details?.netPerformingAssets,
-        hasByProduct: !!balanceSheetResults.details?.netPerformingAssets?.byProduct
-      });
-      return {
-        consolidated: new Array(10).fill(0),
-        byDivision: {},
-        quarterly: {
-          total: new Array(40).fill(0),
-          byDivision: {}
-        }
-      };
-    }
-    
-    // Get product data from balance sheet for dynamic products
-    const productData = balanceSheetResults.productResults || {};
-    
-    // Use the new dynamic calculator that doesn't depend on hardcoded mappings
-    const interestResults = calculateDynamicInterestIncome(
-      netPerformingAssets,
+    // Use the new Interest Income Orchestrator
+    const interestResults = calculateInterestIncome(
+      balanceSheetResults,
       assumptions,
-      productData,
       40 // quarters
     );
     
@@ -212,11 +189,8 @@ export const PnLOrchestrator = {
       consolidated: interestResults.annual.total,
       byDivision: interestResults.annual.byDivision,
       byProduct: interestResults.annual.byProduct,
-      quarterly: {
-        total: interestResults.quarterly.total,
-        byDivision: interestResults.quarterly.byDivision,
-        byProduct: interestResults.quarterly.byProduct
-      },
+      quarterly: interestResults.quarterly,
+      tableData: interestResults.tableData,
       metrics: interestResults.metrics
     };
   },
