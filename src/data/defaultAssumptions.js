@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '12.68', // Fixed Total Assets calc & breakdown, renamed total-assets to stock-nbv, fixed NPV data mapping
+  version: '12.76', // Refactored: each P&L microservice now exposes table-ready data directly without intermediate calculator
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

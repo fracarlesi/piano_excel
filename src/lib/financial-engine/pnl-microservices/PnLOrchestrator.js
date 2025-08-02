@@ -6,7 +6,7 @@
  */
 
 import { calculateAllPersonnelCosts } from './personnel-calculators/personnelCalculator.js';
-import { calculateCreditInterestIncome } from './interest-income/CreditInterestIncomeCalculator.js';
+import { calculateDynamicInterestIncome } from './interest-income/DynamicProductInterestCalculator.js';
 import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
 import { calculateCommissionIncome } from './commission-calculators/commissionCalculator.js';
 import { calculateLoanLossProvisions } from './llp-calculators/defaultCalculator.js';
@@ -128,12 +128,18 @@ export const PnLOrchestrator = {
       
       // Quarterly data
       quarterly: {
-        interestIncome: this.annualToQuarterly(interestIncome.consolidated),
+        interestIncome: interestIncome.quarterly || this.annualToQuarterly(interestIncome.consolidated),
         interestExpenses: this.annualToQuarterly(interestExpense.consolidated),
         netInterestIncome: this.annualToQuarterly(netInterestIncome.consolidated),
         totalRevenues: this.annualToQuarterly(totalRevenues),
         totalLLP: this.annualToQuarterly(loanLossProvisions.consolidated),
-        netProfit: this.annualToQuarterly(netProfit)
+        netProfit: this.annualToQuarterly(netProfit),
+        // Add personnel and opex quarterly data
+        personnelCosts: this.annualToQuarterly(personnelCosts.grandTotal.costs),
+        otherOpex: this.annualToQuarterly(operatingExpenses.other),
+        totalOpex: this.annualToQuarterly(operatingExpenses.total),
+        commissionIncome: this.annualToQuarterly(commissionIncome.consolidated),
+        commissionExpenses: this.annualToQuarterly(commissionExpense)
       },
       
       // Division breakdown
@@ -149,6 +155,11 @@ export const PnLOrchestrator = {
       
       // Personnel detail
       personnelDetail: personnelCosts,
+      
+      // Product P&L data from microservices
+      productTableData: {
+        interestIncome: interestIncome.tableData || {}
+      },
       
       // Component details
       details: {
@@ -167,28 +178,47 @@ export const PnLOrchestrator = {
    * @private
    */
   calculateInterestIncome(balanceSheetResults, assumptions, years) {
-    const consolidated = new Array(10).fill(0);
-    const byDivision = {};
+    // Use the new calculator that applies product-specific rates
+    const netPerformingAssets = balanceSheetResults.details?.netPerformingAssets;
     
-    // Simplified calculation based on performing assets
-    const avgPerformingAssets = this.calculateAverageAssets(
-      balanceSheetResults.quarterly.netPerformingAssets
+    if (!netPerformingAssets || !netPerformingAssets.byProduct) {
+      console.warn('Net performing assets data not available', {
+        hasDetails: !!balanceSheetResults.details,
+        hasNPA: !!balanceSheetResults.details?.netPerformingAssets,
+        hasByProduct: !!balanceSheetResults.details?.netPerformingAssets?.byProduct
+      });
+      return {
+        consolidated: new Array(10).fill(0),
+        byDivision: {},
+        quarterly: {
+          total: new Array(40).fill(0),
+          byDivision: {}
+        }
+      };
+    }
+    
+    // Get product data from balance sheet for dynamic products
+    const productData = balanceSheetResults.productResults || {};
+    
+    // Use the new dynamic calculator that doesn't depend on hardcoded mappings
+    const interestResults = calculateDynamicInterestIncome(
+      netPerformingAssets,
+      assumptions,
+      productData,
+      40 // quarters
     );
     
-    // Apply average rate (spread + euribor)
-    const avgRate = (assumptions.euribor + 3.0) / 100; // Simplified avg spread
-    
-    avgPerformingAssets.forEach((avg, year) => {
-      consolidated[year] = avg * avgRate;
-    });
-    
-    // Division breakdown (simplified)
-    ALL_DIVISION_PREFIXES.forEach(divKey => {
-      const divisionAssets = balanceSheetResults.byDivision[divKey]?.annual?.netPerformingAssets || new Array(10).fill(0);
-      byDivision[divKey] = divisionAssets.map(assets => assets * avgRate);
-    });
-    
-    return { consolidated, byDivision };
+    return {
+      consolidated: interestResults.annual.total,
+      byDivision: interestResults.annual.byDivision,
+      byProduct: interestResults.annual.byProduct,
+      quarterly: {
+        total: interestResults.quarterly.total,
+        byDivision: interestResults.quarterly.byDivision,
+        byProduct: interestResults.quarterly.byProduct
+      },
+      metrics: interestResults.metrics
+    };
   },
   
   /**
@@ -395,6 +425,7 @@ export const PnLOrchestrator = {
       );
       
       results[divKey] = {
+        // Annual data
         interestIncome: divisionInterestIncome,
         interestExpenses: divisionInterestExpense,
         netInterestIncome,
@@ -408,7 +439,24 @@ export const PnLOrchestrator = {
         totalLLP: divisionLLP,
         preTaxProfit,
         taxes,
-        netProfit
+        netProfit,
+        
+        // Quarterly data
+        quarterly: {
+          interestIncome: interestIncome.quarterly?.byDivision?.[divKey] || this.annualToQuarterly(divisionInterestIncome),
+          interestExpenses: this.annualToQuarterly(divisionInterestExpense),
+          netInterestIncome: this.annualToQuarterly(netInterestIncome),
+          commissionIncome: this.annualToQuarterly(divisionCommissions),
+          commissionExpenses: this.annualToQuarterly(divisionCommissions.map(c => -c * 0.1)),
+          totalRevenues: this.annualToQuarterly(totalRevenues),
+          personnelCosts: this.annualToQuarterly(divisionPersonnel),
+          otherOpex: this.annualToQuarterly(otherOpex),
+          totalOpex: this.annualToQuarterly(totalOpex),
+          totalLLP: this.annualToQuarterly(divisionLLP),
+          preTaxProfit: this.annualToQuarterly(preTaxProfit),
+          taxes: this.annualToQuarterly(taxes),
+          netProfit: this.annualToQuarterly(netProfit)
+        }
       };
     });
     

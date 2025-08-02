@@ -35,6 +35,11 @@ const StandardDivisionSheet = ({
   const productResults = Object.fromEntries(
     Object.entries(results.productResults || {}).filter(([key]) => key.startsWith(divisionKey))
   );
+  
+  // Get P&L table data for products in this division
+  const productPnLData = Object.fromEntries(
+    Object.entries(results.productPnLTableData?.interestIncome || {}).filter(([key]) => key.startsWith(divisionKey))
+  );
 
   // const defaultOverview = [
   //   { 
@@ -74,7 +79,7 @@ const StandardDivisionSheet = ({
       {/* Financial Statements Only */}
       <StandardPnL
         divisionResults={divisionResults}
-        productResults={productResults}
+        productResults={productPnLData}
         assumptions={assumptions}
         globalResults={results}
         divisionName={divisionKey}

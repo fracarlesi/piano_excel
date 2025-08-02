@@ -59,6 +59,9 @@ export const calculateResults = (assumptions) => {
       // Product-level detail
       productResults: balanceSheetResults.productResults,
       
+      // Product P&L table data
+      productPnLTableData: pnlResults.productTableData,
+      
       // Personnel costs detail
       allPersonnelCosts: pnlResults.personnelDetail,
       

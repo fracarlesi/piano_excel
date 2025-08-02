@@ -25,15 +25,30 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
   );
 
   // Generate a unique product key
-  const generateProductKey = (name) => {
-    const baseKey = `${divisionKey}${name.replace(/[^A-Za-z0-9]/g, '')}`;
+  const generateProductKey = (name, creditType) => {
+    // Sanitize name to create a valid key
+    const sanitizedName = name
+      .replace(/[^A-Za-z0-9]/g, '')
+      .replace(/^\\w/, c => c.toUpperCase());
+    
+    // Create base key with division prefix
+    let baseKey = `${divisionKey}${sanitizedName}`;
+    
+    // Add suffix for grace period products if needed
+    if (creditType === 'frenchWithGrace') {
+      baseKey += 'WithGrace';
+    }
+    
+    // Ensure uniqueness
     let counter = 1;
     let key = baseKey;
-    
     while (assumptions.products?.[key]) {
       key = `${baseKey}${counter}`;
       counter++;
     }
+    
+    // Log for tracking
+    console.log(`Generated product key: ${key} for ${name}`);
     
     return key;
   };
@@ -132,7 +147,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
       return;
     }
 
-    const productKey = generateProductKey(newProductName);
+    const productKey = generateProductKey(newProductName, newCreditType);
     const newProduct = createDefaultProduct(newProductName.trim(), newProductType, newCreditType);
 
     // Create updated products object
