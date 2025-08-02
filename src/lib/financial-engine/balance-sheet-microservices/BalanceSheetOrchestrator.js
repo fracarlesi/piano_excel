@@ -331,6 +331,7 @@ export const BalanceSheetOrchestrator = {
         productResults[productKey] = {
           name: product.name,
           productType: product.productType || 'Credit',
+          type: product.type, // Copy the type field (french, bullet, bridge)
           originalProduct: product,
           
           // Add quarterly data with actual calculated values

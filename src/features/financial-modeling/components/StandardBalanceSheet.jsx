@@ -72,6 +72,26 @@ const StandardBalanceSheet = ({
   // Define quarters constant
   const quarters = 40;
 
+  // DEBUG: Log what we receive for Balance Sheet
+  console.log('🏦 StandardBalanceSheet - Data received:', {
+    divisionName,
+    productResultsKeys: Object.keys(productResults || {}),
+    showProductDetail,
+    hasProductResults: !!productResults,
+    productResultsCount: Object.keys(productResults || {}).length
+  });
+  
+  // DEBUG: Log each product and its filtering status
+  Object.entries(productResults || {}).forEach(([key, product]) => {
+    const passesFilter = product.productType === 'Credit' || product.type === 'french' || product.type === 'bullet' || product.type === 'bridge';
+    console.log(`  - Product ${key}: ${product.name}`, {
+      productType: product.productType,
+      type: product.type,
+      passesFilter,
+      hasQuarterly: !!product.quarterly
+    });
+  });
+
   // Use quarterly data directly (40 quarters)
   const performingAssets = divisionResults.bs.quarterly?.performingAssets ?? Array(quarters).fill(0);
   const nonPerformingAssets = divisionResults.bs.quarterly?.nonPerformingAssets ?? Array(quarters).fill(0);
