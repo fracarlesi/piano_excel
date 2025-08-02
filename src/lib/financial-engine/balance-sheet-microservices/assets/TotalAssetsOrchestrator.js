@@ -7,6 +7,7 @@
 
 import { calculateTotalNBV } from './stock-nbv/TotalNBVOrchestrator.js';
 import { calculateGBVDefaulted } from './gbv-defaulted/GBVDefaultedOrchestrator.js';
+import { calculateStockNBVPerforming } from './stock-nbv-performing/StockNBVPerformingOrchestrator.js';
 import { calculateNonPerformingAssets } from './non-performing-assets/NonPerformingAssetsOrchestrator.js';
 import { calculateNetPerformingAssets } from './net-performing-assets/NetPerformingAssetsOrchestrator.js';
 
@@ -36,7 +37,16 @@ export const calculateTotalAssets = (divisionProducts, assumptions, quarters = 4
     quarters
   );
   
-  // Step 4: Calculate non-performing assets using NPV methodology if recovery data available
+  // Step 4: Calculate Stock NBV Performing (new microservice)
+  const stockNBVPerformingResults = calculateStockNBVPerforming(
+    totalNBVResults,
+    gbvDefaultedResults,
+    recoveryResults,
+    divisionProducts,
+    quarters
+  );
+  
+  // Step 5: Calculate non-performing assets using NPV methodology if recovery data available
   let nonPerformingResults;
   if (recoveryResults) {
     // Use advanced NPV-based calculation with recovery data
@@ -54,10 +64,9 @@ export const calculateTotalAssets = (divisionProducts, assumptions, quarters = 4
     );
   }
   
-  // Step 5: Calculate net performing assets using dedicated microservice
+  // Step 6: Calculate net performing assets using dedicated microservice
   const performingResults = calculateNetPerformingAssets(
-    totalNBVResults,
-    nonPerformingResults,
+    stockNBVPerformingResults,
     divisionProducts,
     quarters
   );
@@ -80,6 +89,7 @@ export const calculateTotalAssets = (divisionProducts, assumptions, quarters = 4
     // Main balance sheet lines
     netPerformingAssets: performingResults,
     gbvDefaulted: gbvDefaultedResults,
+    stockNBVPerforming: stockNBVPerformingResults,
     nonPerformingAssets: nonPerformingResults,
     
     // Vintages for detailed analysis

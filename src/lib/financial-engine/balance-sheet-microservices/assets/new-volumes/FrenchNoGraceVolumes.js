@@ -52,10 +52,13 @@ export const calculateFrenchNoGraceVolumes = (product, assumptions, quarters = 4
         const quarterIndex = year * 4 + quarter;
         
         if (quarterIndex < quarters) {
-          const quarterlyVolume = new Decimal(yearVolume)
+          const quarterlyVolumeCount = new Decimal(yearVolume)
             .mul(percentage)
-            .div(100)
-            .toNumber();
+            .div(100);
+          
+          // Convert volume count to monetary amount (millions of euros)
+          const avgLoanSize = product.avgLoanSize || 1.0; // Default 1M if not specified
+          const quarterlyVolume = quarterlyVolumeCount.mul(avgLoanSize).toNumber();
           
           if (quarterlyVolume > 0) {
             results.quarterlyVolumes[quarterIndex] = quarterlyVolume;

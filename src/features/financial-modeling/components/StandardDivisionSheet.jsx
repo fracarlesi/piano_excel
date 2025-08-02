@@ -38,6 +38,7 @@ const StandardDivisionSheet = ({
   
   // Get P&L table data for products in this division (including NPL)
   const allInterestIncomeData = results.productPnLTableData?.interestIncome || {};
+  const allInterestExpenseData = results.productPnLTableData?.interestExpense || {};
   
   const productPnLData = Object.fromEntries(
     Object.entries(allInterestIncomeData).filter(([key]) => {
@@ -47,6 +48,20 @@ const StandardDivisionSheet = ({
       return baseKey.startsWith(divisionKey);
     })
   );
+  
+  // Merge interest expense data into product P&L data
+  Object.entries(allInterestExpenseData).forEach(([key, expenseData]) => {
+    // Extract the product key from the consolidated key (e.g., "re_reSecuritization" -> "reSecuritization")
+    const parts = key.split('_');
+    const productKey = parts.length > 1 ? parts[1] : key;
+    
+    if (productKey.startsWith(divisionKey) && productPnLData[productKey]) {
+      productPnLData[productKey].quarterly = productPnLData[productKey].quarterly || {};
+      // Use quarterly FTP data directly
+      productPnLData[productKey].quarterly.interestExpense = expenseData.quarterlyFTP || Array(40).fill(0);
+      productPnLData[productKey].ftpRate = expenseData.ftpRate || 0;
+    }
+  });
   
 
   // const defaultOverview = [

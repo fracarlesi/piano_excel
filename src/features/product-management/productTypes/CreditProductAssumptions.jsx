@@ -55,6 +55,17 @@ const CreditProductAssumptions = ({
             step={0.1}
             tooltip="Commissione upfront sui nuovi prestiti"
           />
+          
+          <EditableNumberField
+            label="FTP Rate (%)"
+            value={product.ftpRate || 1.5}
+            onChange={(value) => handleChange('ftpRate', value)}
+            editMode={editMode}
+            min={0}
+            max={10}
+            step={0.1}
+            tooltip="Funds Transfer Pricing - Tasso interno di trasferimento fondi per questo prodotto"
+          />
         </CardContent>
       </Card>
 

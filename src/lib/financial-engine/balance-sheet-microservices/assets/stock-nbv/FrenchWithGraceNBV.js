@@ -53,43 +53,41 @@ export const calculateFrenchWithGraceNBV = (product, assumptions, quarters = 40)
     // For each quarter, calculate amortization
     for (let q = 0; q < quarters; q++) {
       if (q >= startQ && q <= maturityQ && outstandingPrincipal.gt(0)) {
-        // Apply payments BEFORE adding to NBV (except for first quarter)
-        if (q > startQ) {
-          const quarterlyRate = new Decimal(vintage.quarterlyRate);
-          
-          if (q <= graceEndQ) {
-            // During grace period: interest only, no principal reduction
-            // Interest is paid but principal remains the same
-            // (Interest payment tracked separately for P&L)
-          } else {
-            // After grace period: full amortization
-            const quarterlyPayment = new Decimal(vintage.quarterlyPaymentPostGrace);
-            
-            // Interest payment
-            const interestPayment = outstandingPrincipal.mul(quarterlyRate);
-            
-            // Principal payment
-            const principalPayment = quarterlyPayment.minus(interestPayment);
-            
-            if (principalPayment.gt(0)) {
-              // Apply principal reduction
-              outstandingPrincipal = outstandingPrincipal.minus(principalPayment);
-              results.metrics.totalRepaid += principalPayment.toNumber();
-              
-              // Ensure we don't go negative
-              if (outstandingPrincipal.lt(0)) {
-                outstandingPrincipal = new Decimal(0);
-              }
-            }
-          }
-        }
-        
-        // Add current outstanding to NBV (after reduction)
+        // Add current outstanding to NBV BEFORE any reduction
         results.quarterlyNBV[q] += outstandingPrincipal.toNumber();
         
         // Store quarterly outstanding for vintage tracking
         vintage.quarterlyOutstanding = vintage.quarterlyOutstanding || {};
         vintage.quarterlyOutstanding[q] = outstandingPrincipal.toNumber();
+        
+        // Apply payments AFTER recording NBV
+        const quarterlyRate = new Decimal(vintage.quarterlyRate);
+        
+        if (q <= graceEndQ) {
+          // During grace period: interest only, no principal reduction
+          // Interest is paid but principal remains the same
+          // (Interest payment tracked separately for P&L)
+        } else {
+          // After grace period: full amortization
+          const quarterlyPayment = new Decimal(vintage.quarterlyPaymentPostGrace);
+          
+          // Interest payment
+          const interestPayment = outstandingPrincipal.mul(quarterlyRate);
+          
+          // Principal payment
+          const principalPayment = quarterlyPayment.minus(interestPayment);
+          
+          if (principalPayment.gt(0)) {
+            // Apply principal reduction
+            outstandingPrincipal = outstandingPrincipal.minus(principalPayment);
+            results.metrics.totalRepaid += principalPayment.toNumber();
+            
+            // Ensure we don't go negative
+            if (outstandingPrincipal.lt(0)) {
+              outstandingPrincipal = new Decimal(0);
+            }
+          }
+        }
       }
     }
     
@@ -160,7 +158,10 @@ const createFrenchWithGraceVintages = (product, yearlyVolumes, assumptions) => {
                                   [25, 25, 25, 25];
       
       quarterlyAllocation.forEach((percentage, quarter) => {
-        const quarterlyVolume = new Decimal(volume).mul(percentage).div(100);
+        const quarterlyVolumeCount = new Decimal(volume).mul(percentage).div(100);
+        // Convert volume count to monetary amount (millions of euros)
+        const avgLoanSize = product.avgLoanSize || 1.0; // Default 1M if not specified
+        const quarterlyVolume = quarterlyVolumeCount.mul(avgLoanSize);
         
         if (quarterlyVolume.gt(0)) {
           const vintage = {

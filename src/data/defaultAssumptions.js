@@ -1,11 +1,9 @@
 export const defaultAssumptions = {
-  version: '12.84', // Centralized logging control - set DEBUG_LEVEL in debugLogger.js
+  version: '13.22', // fix: Net Performing Assets now correctly equals Stock NBV Performing (not Stock NBV - Non-Performing)
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
-  euribor: 3.5, // EURIBOR base rate
-  ftpSpread: 1.5, // Spread over EURIBOR for FTP rate (FTP = EURIBOR + ftpSpread)
-  depositRate: 0.5, // Rate paid to customers on deposit accounts
+  euribor: 2.0, // Default EURIBOR - overridden by Firebase value in General Settings
   quarterlyAllocation: [25, 25, 25, 25], // % di erogazioni per Q1, Q2, Q3, Q4
   hqAllocationY1: 2.5, 
   itCostsY1: 4, 
@@ -209,6 +207,7 @@ export const defaultAssumptions = {
       volumes: { y1: 150, y10: 800 },
       avgLoanSize: 25.0, // Finanziamenti di importo significativo
       spread: 2.8, // Spread contenuto per note senior sicure
+      ftpRate: 1.2, // FTP rate for Real Estate Securitization
       rwaDensity: 35, // Bassa rischiosità per note senior
       durata: 28, // Durata in trimestri (7 anni)
       commissionRate: 0.3, // Commissione contenuta
@@ -230,6 +229,7 @@ export const defaultAssumptions = {
       volumes: { y1: 200, y10: 1200 },
       avgLoanSize: 0.8, // Finanziamenti retail di importo contenuto
       spread: 2.2, // Spread competitivo per ipoteche
+      ftpRate: 1.0, // FTP rate for Mortgages
       rwaDensity: 45, // RWA standard per mutui residenziali
       durata: 100, // Durata in trimestri (25 anni)
       commissionRate: 0.8, // Commissione di istruttoria
@@ -251,6 +251,7 @@ export const defaultAssumptions = {
       volumes: { y1: 80, y10: 400 },
       avgLoanSize: 15.0, // Finanziamenti corporate di taglia media
       spread: 4.2, // Spread elevato per bridge loan
+      ftpRate: 2.0, // FTP rate for Bridge Loans
       rwaDensity: 85, // Alta rischiosità per natura temporanea
       durata: 8, // Durata in trimestri (2 anni)
       commissionRate: 2.5, // Commissioni elevate per complessità
@@ -273,6 +274,7 @@ export const defaultAssumptions = {
       volumes: { y1: 15, y10: 75 },
       avgLoanSize: 15.0, // Average loan size in €M (as per description)
       spread: 3.5, // IRR Adj 7% - EURIBOR 3.5% = 3.5%
+      ftpRate: 1.5, // FTP rate for SME Senior
       rwaDensity: 80, // RWA 80% (Boris standard)
       durata: 20, // Durata in trimestri (5 anni)
       commissionRate: 0.0, // No initial commission mentioned
@@ -294,6 +296,7 @@ export const defaultAssumptions = {
       volumes: { y1: 15, y10: 60 },
       avgLoanSize: 15.0, // Average loan size in €M (as per description)
       spread: 4.5, // IRR Adj 8% - EURIBOR 3.5% = 4.5%
+      ftpRate: 1.8, // FTP rate for SME Unitranche
       rwaDensity: 80, // RWA 80% (Boris standard)
       durata: 6, // Durata in trimestri (1.5 anni)
       commissionRate: 3.0, // 3% commission
@@ -315,6 +318,7 @@ export const defaultAssumptions = {
       volumes: { y1: 20, y10: 80 },
       avgLoanSize: 20.0, // Average loan size in €M (as per description)
       spread: 5.5, // IRR Adj 9% - EURIBOR 3.5% = 5.5%
+      ftpRate: 2.2, // FTP rate for SME Special Situation
       rwaDensity: 100, // RWA 100% (higher risk)
       durata: 16, // Durata in trimestri (4 anni)
       commissionRate: 2.0,
@@ -336,6 +340,7 @@ export const defaultAssumptions = {
       volumes: { y1: 10, y10: 40 },
       avgLoanSize: 10.0, // Average loan size in €M (as per description)
       spread: 8.5, // IRR Adj 12% - EURIBOR 3.5% = 8.5%
+      ftpRate: 3.0, // FTP rate for Nuova Finanza
       rwaDensity: 136, // RWA 136% (UTP classification)
       durata: 16, // Durata in trimestri (4 anni)
       commissionRate: 1.5,
@@ -358,6 +363,7 @@ export const defaultAssumptions = {
       volumes: { y1: 8, y10: 35 },
       avgLoanSize: 8.0, // Average loan size in €M
       spread: 11.5, // IRR Adj 15% - EURIBOR 3.5% = 11.5%
+      ftpRate: 3.5, // FTP rate for Restructuring
       rwaDensity: 100, // RWA 100% (UTP but restructured)
       durata: 20, // Durata in trimestri (5 anni)
       commissionRate: 0.0, // No initial commission

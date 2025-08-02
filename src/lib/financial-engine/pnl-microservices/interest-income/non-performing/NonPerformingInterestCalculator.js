@@ -269,6 +269,11 @@ const prepareProductTableData = (productKey, productConfig, productNPL, interest
       reconciliation: interestResults.reconciliation
     },
     
+    // Add quarterly NPL interest for the microservice
+    quarterlyInterestIncomePerforming: new Array(40).fill(0), // NPL products don't have performing interest
+    quarterlyInterestIncomeNPL: interestResults.quarterly,
+    quarterlyInterestIncome: interestResults.quarterly, // Total is same as NPL for these products
+    
     // Configuration for formulas
     assumptions: {
       spread: productConfig.spread || 0,

@@ -110,25 +110,24 @@ const StandardBalanceSheet = ({
   const termDeposits = totalLiabilities.map(tl => tl * (fundingMix.termDeposits / 100));
   const groupFunding = totalLiabilities.map(tl => tl * (fundingMix.groupFunding / 100));
 
-  // Get NBV data from global results if available
-  const totalAssetsNBV = globalResults?.quarterly?.balanceSheet?.totalAssetsNBV || Array(quarters).fill(0);
-  const bridgeLoansNBV = globalResults?.quarterly?.balanceSheet?.bridgeLoansNBV || Array(quarters).fill(0);
-  const frenchNoGraceNBV = globalResults?.quarterly?.balanceSheet?.frenchNoGraceNBV || Array(quarters).fill(0);
-  const frenchWithGraceNBV = globalResults?.quarterly?.balanceSheet?.frenchWithGraceNBV || Array(quarters).fill(0);
-  const gbvDefaulted = globalResults?.quarterly?.balanceSheet?.gbvDefaulted || Array(quarters).fill(0);
-  const recoveryOnDefaultedAssets = globalResults?.quarterly?.balanceSheet?.recoveryOnDefaultedAssets || Array(quarters).fill(0);
-  
-  // Get Non-Performing Assets NPV data
-  const nonPerformingAssetsNPV = globalResults?.bs?.details?.nonPerformingAssets?.balanceSheetLine?.quarterly || Array(quarters).fill(0);
-  
-  // Get new volumes and repayments data
-  const newVolumes = globalResults?.quarterly?.balanceSheet?.newVolumes || Array(quarters).fill(0);
-  const repayments = globalResults?.quarterly?.balanceSheet?.repayments || Array(quarters).fill(0);
+  // Variables removed - now calculated directly from product details in each section
   
   // Try to get product-level data from multiple possible locations
   const volumesByProduct = globalResults?.bs?.details?.newVolumesByProduct || {};
   const repaymentsByProduct = globalResults?.bs?.details?.repaymentsByProduct || {};
   
+
+  // Helper function to calculate totals from product details
+  const calculateTotalFromProducts = (productResults, dataExtractor, quarterIndex) => {
+    return Object.entries(productResults || {})
+      .filter(([key, product]) => {
+        return product.productType === 'Credit' || product.type === 'french' || product.type === 'bullet' || product.type === 'bridge';
+      })
+      .reduce((sum, [key, product]) => {
+        const data = dataExtractor(key, product);
+        return sum + (data[quarterIndex] || 0);
+      }, 0);
+  };
 
   // Balance Sheet Rows following the exact schema
   const balanceSheetRows = [
@@ -136,11 +135,21 @@ const StandardBalanceSheet = ({
     // STEP 1: New Loan Volumes (Inflows)
     {
       label: 'New Loan Volumes',
-      data: newVolumes,
+      data: Array(quarters).fill(0).map((_, i) => 
+        calculateTotalFromProducts(productResults, (key, product) => {
+          if (volumesByProduct[key]?.quarterlyVolumes) {
+            return volumesByProduct[key].quarterlyVolumes;
+          } else if (product.quarterly?.newBusiness) {
+            return product.quarterly.newBusiness;
+          } else {
+            return calculateProductVolumes(product, assumptions);
+          }
+        }, i)
+      ),
       decimals: 0,
       isPositive: true,
       isHeader: true,
-      formula: newVolumes.map((val, i) => createFormula(
+      formula: Array(quarters).fill(0).map((_, i) => createFormula(
         i,
         'New credit disbursements this quarter',
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -155,7 +164,18 @@ const StandardBalanceSheet = ({
             calculation: 'New loans disbursed'
           };
         }),
-        () => `Total new volumes: ${formatNumber(val, 0)} €M`
+        () => {
+          const total = calculateTotalFromProducts(productResults, (key, product) => {
+            if (volumesByProduct[key]?.quarterlyVolumes) {
+              return volumesByProduct[key].quarterlyVolumes;
+            } else if (product.quarterly?.newBusiness) {
+              return product.quarterly.newBusiness;
+            } else {
+              return calculateProductVolumes(product, assumptions);
+            }
+          }, i);
+          return `Total new volumes: ${formatNumber(total, 0)} €M`;
+        }
       )),
       // Add product breakdown
       subRows: showProductDetail ? 
@@ -191,10 +211,35 @@ const StandardBalanceSheet = ({
     // STEP 2: Principal Repayments (Outflows)
     {
       label: 'Principal Repayments',
-      data: repayments.map(r => -Math.abs(r)), // Ensure negative display
+      data: Array(quarters).fill(0).map((_, i) => {
+        const total = calculateTotalFromProducts(productResults, (key, product) => {
+          if (repaymentsByProduct[key]?.quarterlyRepayments) {
+            return repaymentsByProduct[key].quarterlyRepayments;
+          } else if (product.quarterly?.principalRepayments) {
+            return product.quarterly.principalRepayments;
+          } else if (product.quarterly?.repayments) {
+            return product.quarterly.repayments;
+          } else if (product.quarterly?.performingStock) {
+            // Calculate repayments from stock changes
+            const quarterlyRepayments = Array(quarters).fill(0);
+            const stock = product.quarterly.performingStock;
+            const newBusiness = product.quarterly?.newBusiness || Array(quarters).fill(0);
+            const defaults = product.quarterly?.defaults || Array(quarters).fill(0);
+            
+            for (let q = 1; q < quarters; q++) {
+              const stockChange = stock[q] - stock[q-1];
+              const repayment = newBusiness[q] - defaults[q] - stockChange;
+              quarterlyRepayments[q] = Math.max(0, repayment);
+            }
+            return quarterlyRepayments;
+          }
+          return Array(quarters).fill(0);
+        }, i);
+        return -Math.abs(total); // Ensure negative display
+      }),
       decimals: 0,
       isHeader: true,
-      formula: repayments.map((val, i) => createFormula(
+      formula: Array(quarters).fill(0).map((_, i) => createFormula(
         i,
         'Principal repayments this quarter',
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -209,7 +254,31 @@ const StandardBalanceSheet = ({
             calculation: 'Principal repaid'
           };
         }),
-        () => `Total repayments: ${formatNumber(val, 0)} €M`
+        () => {
+          const total = calculateTotalFromProducts(productResults, (key, product) => {
+            if (repaymentsByProduct[key]?.quarterlyRepayments) {
+              return repaymentsByProduct[key].quarterlyRepayments;
+            } else if (product.quarterly?.principalRepayments) {
+              return product.quarterly.principalRepayments;
+            } else if (product.quarterly?.repayments) {
+              return product.quarterly.repayments;
+            } else if (product.quarterly?.performingStock) {
+              const quarterlyRepayments = Array(quarters).fill(0);
+              const stock = product.quarterly.performingStock;
+              const newBusiness = product.quarterly?.newBusiness || Array(quarters).fill(0);
+              const defaults = product.quarterly?.defaults || Array(quarters).fill(0);
+              
+              for (let q = 1; q < quarters; q++) {
+                const stockChange = stock[q] - stock[q-1];
+                const repayment = newBusiness[q] - defaults[q] - stockChange;
+                quarterlyRepayments[q] = Math.max(0, repayment);
+              }
+              return quarterlyRepayments;
+            }
+            return Array(quarters).fill(0);
+          }, i);
+          return `Total repayments: ${formatNumber(total, 0)} €M`;
+        }
       )),
       // Add product breakdown
       subRows: showProductDetail ?
@@ -260,34 +329,41 @@ const StandardBalanceSheet = ({
     // STEP 3: Total Assets (NBV)
     {
       label: 'Stock NBV',
-      data: totalAssetsNBV,
+      data: Array(quarters).fill(0).map((_, i) => 
+        calculateTotalFromProducts(productResults, (key, product) => {
+          const totalAssetsData = globalResults?.bs?.details?.totalAssetsNBV;
+          const productNBV = totalAssetsData?.byProduct?.[key];
+          return productNBV?.quarterlyNBV || Array(quarters).fill(0);
+        }, i)
+      ),
       decimals: 0,
       isHeader: true,
-      formula: totalAssetsNBV.map((val, i) => createFormula(
-        i,
-        'Sum of all loan types at gross book value',
-        [
-          {
-            name: 'Bridge/Bullet Loans',
-            value: bridgeLoansNBV[i],
-            unit: '€M',
-            calculation: 'Bridge loans outstanding principal'
-          },
-          {
-            name: 'French Amortization',
-            value: frenchNoGraceNBV[i],
-            unit: '€M',
-            calculation: 'French loans without grace period'
-          },
-          {
-            name: 'French with Grace',
-            value: frenchWithGraceNBV[i],
-            unit: '€M',
-            calculation: 'French loans with grace period'
-          }
-        ],
-        () => `${formatNumber(bridgeLoansNBV[i], 0)} + ${formatNumber(frenchNoGraceNBV[i], 0)} + ${formatNumber(frenchWithGraceNBV[i], 0)} = ${formatNumber(val, 0)} €M`
-      )),
+      formula: Array(quarters).fill(0).map((_, i) => {
+        const total = calculateTotalFromProducts(productResults, (key, product) => {
+          const totalAssetsData = globalResults?.bs?.details?.totalAssetsNBV;
+          const productNBV = totalAssetsData?.byProduct?.[key];
+          return productNBV?.quarterlyNBV || Array(quarters).fill(0);
+        }, i);
+        
+        return createFormula(
+          i,
+          'Sum of all loan types at gross book value',
+          Object.entries(productResults || {}).filter(([key, product]) => {
+            return product.productType === 'Credit' || product.type === 'french' || product.type === 'bullet' || product.type === 'bridge';
+          }).map(([key, product]) => {
+            const totalAssetsData = globalResults?.bs?.details?.totalAssetsNBV;
+            const productNBV = totalAssetsData?.byProduct?.[key];
+            const quarterlyNBV = productNBV?.quarterlyNBV || Array(quarters).fill(0);
+            return {
+              name: product.name || key,
+              value: quarterlyNBV[i] || 0,
+              unit: '€M',
+              calculation: 'Outstanding principal'
+            };
+          }),
+          () => `Total Stock NBV: ${formatNumber(total, 0)} €M`
+        );
+      }),
       // Add product breakdown as subRows
       subRows: showProductDetail ? 
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -312,10 +388,23 @@ const StandardBalanceSheet = ({
     // STEP 4: GBV Defaulted (applying danger rate at default timing)
     {
       label: 'GBV Defaulted',
-      data: gbvDefaulted,
+      data: Array(quarters).fill(0).map((_, i) => 
+        calculateTotalFromProducts(productResults, (key, product) => {
+          const gbvDefaultedData = globalResults?.bs?.details?.gbvDefaulted;
+          const productGbvDefaulted = gbvDefaultedData?.byProduct?.[key];
+          return productGbvDefaulted?.quarterlyGrossNPL || Array(quarters).fill(0);
+        }, i)
+      ),
       decimals: 0,
       isHeader: true,
-      formula: gbvDefaulted.map((val, i) => createFormula(
+      formula: Array(quarters).fill(0).map((_, i) => {
+        const total = calculateTotalFromProducts(productResults, (key, product) => {
+          const gbvDefaultedData = globalResults?.bs?.details?.gbvDefaulted;
+          const productGbvDefaulted = gbvDefaultedData?.byProduct?.[key];
+          return productGbvDefaulted?.quarterlyGrossNPL || Array(quarters).fill(0);
+        }, i);
+        
+        return createFormula(
         i,
         'Stock GBV × Danger Rate at Default Timing',
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -330,8 +419,9 @@ const StandardBalanceSheet = ({
             calculation: `Danger Rate: ${(product.dangerRate || 1.5).toFixed(1)}% annual`
           };
         }),
-        () => `Total Gross NPL: ${formatNumber(val, 0)} €M`
-      )),
+        () => `Total Gross NPL: ${formatNumber(total, 0)} €M`
+        );
+      }),
       // Add product breakdown
       subRows: showProductDetail ? 
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -350,14 +440,82 @@ const StandardBalanceSheet = ({
         }) : []
     },
     
-    // STEP 5: Recovery on Defaulted Assets
+    // STEP 5: Stock NBV Performing (NEW)
+    {
+      label: 'Stock NBV Performing',
+      data: Array(quarters).fill(0).map((_, i) => 
+        calculateTotalFromProducts(productResults, (key, product) => {
+          const stockNBVPerformingData = globalResults?.bs?.details?.stockNBVPerforming;
+          const productStockNBVPerforming = stockNBVPerformingData?.byProduct?.[key];
+          return productStockNBVPerforming?.quarterly || Array(quarters).fill(0);
+        }, i)
+      ),
+      decimals: 0,
+      isHeader: true,
+      formula: Array(quarters).fill(0).map((_, i) => {
+        const total = calculateTotalFromProducts(productResults, (key, product) => {
+          const stockNBVPerformingData = globalResults?.bs?.details?.stockNBVPerforming;
+          const productStockNBVPerforming = stockNBVPerformingData?.byProduct?.[key];
+          return productStockNBVPerforming?.quarterly || Array(quarters).fill(0);
+        }, i);
+        
+        return createFormula(
+          i,
+          'Stock NBV - GBV Defaulted Cumulativo',
+          Object.entries(productResults || {}).filter(([key, product]) => {
+            return product.productType === 'Credit' || product.type === 'french' || product.type === 'bullet' || product.type === 'bridge';
+          }).map(([key, product]) => {
+            const stockNBVPerformingData = globalResults?.bs?.details?.stockNBVPerforming;
+            const productStockNBVPerforming = stockNBVPerformingData?.byProduct?.[key];
+            return {
+              name: product.name || key,
+              value: productStockNBVPerforming?.quarterly?.[i] || 0,
+              unit: '€M',
+              calculation: 'Performing loans at book value'
+            };
+          }),
+          () => `Total Stock NBV Performing: ${formatNumber(total, 0)} €M`
+        );
+      }),
+      // Add product breakdown
+      subRows: showProductDetail ? 
+        Object.entries(productResults || {}).filter(([key, product]) => {
+          return product.productType === 'Credit' || product.type === 'french' || product.type === 'bullet' || product.type === 'bridge';
+        }).map(([key, product]) => {
+          const stockNBVPerformingData = globalResults?.bs?.details?.stockNBVPerforming;
+          const productStockNBVPerforming = stockNBVPerformingData?.byProduct?.[key];
+          const quarterlyStockNBVPerforming = productStockNBVPerforming?.quarterly || Array(quarters).fill(0);
+          
+          return {
+            label: `o/w ${product.name || key}`,
+            data: quarterlyStockNBVPerforming,
+            decimals: 0,
+            isSubItem: true
+          };
+        }) : []
+    },
+    
+    // STEP 6: Recovery on Defaulted Assets
     {
       label: 'Recovery on Defaulted Assets',
-      data: recoveryOnDefaultedAssets,
+      data: Array(quarters).fill(0).map((_, i) => 
+        calculateTotalFromProducts(productResults, (key, product) => {
+          const recoveryData = globalResults?.bs?.details?.recoveryOnDefaultedAssets;
+          const productRecovery = recoveryData?.byProduct?.[key];
+          return productRecovery?.quarterly || Array(quarters).fill(0);
+        }, i)
+      ),
       decimals: 0,
       isHeader: true,
       isPositive: true,
-      formula: recoveryOnDefaultedAssets.map((val, i) => createFormula(
+      formula: Array(quarters).fill(0).map((_, i) => {
+        const total = calculateTotalFromProducts(productResults, (key, product) => {
+          const recoveryData = globalResults?.bs?.details?.recoveryOnDefaultedAssets;
+          const productRecovery = recoveryData?.byProduct?.[key];
+          return productRecovery?.quarterly || Array(quarters).fill(0);
+        }, i);
+        
+        return createFormula(
         i,
         'Expected recovery from collateral and state guarantees on defaulted loans',
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -372,8 +530,9 @@ const StandardBalanceSheet = ({
             calculation: `Recovery rate: ${((productRecovery?.fullResults?.metrics?.averageRecoveryRate || 0)).toFixed(1)}%`
           };
         }),
-        () => `Total Recovery: ${formatNumber(val, 0)} €M`
-      )),
+        () => `Total Recovery: ${formatNumber(total, 0)} €M`
+        );
+      }),
       // Add product breakdown
       subRows: showProductDetail ? 
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -393,13 +552,26 @@ const StandardBalanceSheet = ({
         }) : []
     },
     
-    // STEP 6: Non-Performing Assets
+    // STEP 7: Non-Performing Assets
     {
       label: 'Non-Performing Assets',
-      data: nonPerformingAssetsNPV,
+      data: Array(quarters).fill(0).map((_, i) => 
+        calculateTotalFromProducts(productResults, (key, product) => {
+          const npaData = globalResults?.bs?.details?.nonPerformingAssets;
+          const productNPA = npaData?.byProduct?.[key];
+          return productNPA?.quarterlyNPV || Array(quarters).fill(0);
+        }, i)
+      ),
       decimals: 0,
       isHeader: true,
-      formula: nonPerformingAssetsNPV.map((val, i) => createFormula(
+      formula: Array(quarters).fill(0).map((_, i) => {
+        const total = calculateTotalFromProducts(productResults, (key, product) => {
+          const npaData = globalResults?.bs?.details?.nonPerformingAssets;
+          const productNPA = npaData?.byProduct?.[key];
+          return productNPA?.quarterlyNPV || Array(quarters).fill(0);
+        }, i);
+        
+        return createFormula(
         i,
         'Net Present Value of expected recoveries on defaulted loans',
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -415,8 +587,9 @@ const StandardBalanceSheet = ({
             calculation: `Discount rate: ${discountRate.toFixed(2)}% (Spread + Euribor)`
           };
         }),
-        () => `Total NPV: ${formatNumber(val, 0)} €M`
-      )),
+        () => `Total NPV: ${formatNumber(total, 0)} €M`
+        );
+      }),
       // Add product breakdown
       subRows: showProductDetail ? 
         Object.entries(productResults || {}).filter(([key, product]) => {
@@ -439,23 +612,33 @@ const StandardBalanceSheet = ({
     // Separator
     { isSeparator: true },
     
-    // STEP 7: Net Performing Assets (Result)
+    // STEP 8: Net Performing Assets (Result)
     {
       label: 'Net Performing Assets',
-      data: performingAssets,
+      data: Array(quarters).fill(0).map((_, i) => 
+        calculateTotalFromProducts(productResults, (key, product) => {
+          return product.quarterly?.performingStock || Array(quarters).fill(0);
+        }, i)
+      ),
       decimals: 0,
       isHeader: true,
-      formula: performingAssets.map((val, i) => createAggregateFormula(
-        i,
-        'Net Performing Assets',
-        Object.entries(productResults).map(([key, product]) => ({
-          name: product.name,
-          value: (product.quarterly?.performingStock || Array(40).fill(0))[i],
-          unit: '€M'
-        }))
-      )),
+      formula: Array(quarters).fill(0).map((_, i) => {
+        return createAggregateFormula(
+          i,
+          'Net Performing Assets',
+          Object.entries(productResults || {}).filter(([key, product]) => {
+            return product.productType === 'Credit' || product.type === 'french' || product.type === 'bullet' || product.type === 'bridge';
+          }).map(([key, product]) => ({
+            name: product.name,
+            value: (product.quarterly?.performingStock || Array(40).fill(0))[i],
+            unit: '€M'
+          }))
+        );
+      }),
       // Add product breakdown as subRows
-      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      subRows: showProductDetail ? Object.entries(productResults || {}).filter(([key, product]) => {
+        return product.productType === 'Credit' || product.type === 'french' || product.type === 'bullet' || product.type === 'bridge';
+      }).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.quarterly?.performingStock ?? Array(quarters).fill(0),
         decimals: 0,

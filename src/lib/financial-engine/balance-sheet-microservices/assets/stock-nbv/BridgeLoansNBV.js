@@ -131,7 +131,10 @@ const createBridgeVintages = (product, yearlyVolumes, assumptions) => {
                                   [25, 25, 25, 25];
       
       quarterlyAllocation.forEach((percentage, quarter) => {
-        const quarterlyVolume = new Decimal(volume).mul(percentage).div(100);
+        const quarterlyVolumeCount = new Decimal(volume).mul(percentage).div(100);
+        // Convert volume count to monetary amount (millions of euros)
+        const avgLoanSize = product.avgLoanSize || 1.0; // Default 1M if not specified
+        const quarterlyVolume = quarterlyVolumeCount.mul(avgLoanSize);
         
         if (quarterlyVolume.gt(0)) {
           const vintage = {

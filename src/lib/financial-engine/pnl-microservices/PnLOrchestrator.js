@@ -8,8 +8,6 @@
 import { calculateAllPersonnelCosts } from './personnel-calculators/personnelCalculator.js';
 import { calculateInterestIncome } from './interest-income/index.js';
 import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
-import { calculateCommissionIncome } from './commission-income/commissionCalculator.js';
-import { calculateLoanLossProvisions } from './llp-calculators/defaultCalculator.js';
 import { 
   ALL_DIVISION_PREFIXES,
   getPersonnelKey
@@ -131,7 +129,7 @@ export const PnLOrchestrator = {
         interestIncome: interestIncome.quarterly?.total || this.annualToQuarterly(interestIncome.consolidated),
         interestIncomePerforming: interestIncome.performing?.quarterly || new Array(40).fill(0),
         interestIncomeNonPerforming: interestIncome.nonPerforming?.quarterly || new Array(40).fill(0),
-        interestExpenses: this.annualToQuarterly(interestExpense.consolidated),
+        interestExpenses: interestExpense.consolidated,
         netInterestIncome: this.annualToQuarterly(netInterestIncome.consolidated),
         totalRevenues: this.annualToQuarterly(totalRevenues),
         totalLLP: this.annualToQuarterly(loanLossProvisions.consolidated),
@@ -160,7 +158,8 @@ export const PnLOrchestrator = {
       
       // Product P&L data from microservices
       productTableData: {
-        interestIncome: interestIncome.tableData || {}
+        interestIncome: interestIncome.tableData || {},
+        interestExpense: interestExpense.productDetails || {}
       },
       
       // Component details
@@ -202,34 +201,110 @@ export const PnLOrchestrator = {
       nonPerforming: {
         annual: interestResults.annual.nonPerforming,
         quarterly: interestResults.quarterly.nonPerforming
-      }
+      },
+      // Add division totals for UI display
+      divisionTotals: interestResults.divisionTotals
     };
   },
   
   /**
-   * Calculate interest expense on liabilities
+   * Calculate interest expense on liabilities and FTP on credit assets
    * @private
    */
   calculateInterestExpense(balanceSheetResults, assumptions, years) {
-    const consolidated = new Array(10).fill(0);
+    const consolidated = new Array(40).fill(0); // Changed to quarterly
     const byDivision = {};
+    let productDetails = {};
     
-    // Deposits cost
-    const depositRate = assumptions.depositRate / 100;
-    const deposits = balanceSheetResults.consolidated.customerDeposits;
-    
-    // Interbank funding cost
-    const ftpRate = (assumptions.euribor + assumptions.ftpSpread) / 100;
-    const interbankFunding = balanceSheetResults.consolidated.interbankFunding;
-    
-    years.forEach(year => {
-      consolidated[year] = -(
-        deposits[year] * depositRate +
-        interbankFunding[year] * ftpRate
-      );
+    // FTP on credit assets (performing + NPL)
+    console.log('🔍 PnL Orchestrator - Balance Sheet Data for FTP:', {
+      hasProductResults: !!balanceSheetResults.productResults,
+      productResultsKeys: Object.keys(balanceSheetResults.productResults || {}),
+      sampleProduct: Object.keys(balanceSheetResults.productResults || {})[0],
+      sampleProductData: balanceSheetResults.productResults?.[Object.keys(balanceSheetResults.productResults || {})[0]]
     });
     
-    return { consolidated, byDivision };
+    // Build credit data structure from balance sheet results and product results
+    const creditDataForFTP = {
+      byDivision: {}
+    };
+    
+    // Use productResults from balance sheet which contains the actual product data
+    Object.entries(balanceSheetResults.productResults || {}).forEach(([prodKey, prodData]) => {
+      // Determine division from product key (e.g., 'reCartoImmobiliare' -> 're')
+      let divKey = '';
+      if (prodKey.startsWith('re')) divKey = 're';
+      else if (prodKey.startsWith('sme')) divKey = 'sme';
+      else if (prodKey.startsWith('wealth')) divKey = 'wealth';
+      else if (prodKey.startsWith('incentive')) divKey = 'incentive';
+      else if (prodKey.startsWith('digital')) divKey = 'digital';
+      
+      if (divKey) {
+        if (!creditDataForFTP.byDivision[divKey]) {
+          creditDataForFTP.byDivision[divKey] = {
+            creditProducts: {}
+          };
+        }
+        
+        // Add product data with performing and NPL assets
+        const performingData = prodData.quarterly?.performingStock || 
+                              prodData.quarterly?.netPerformingAssets || 
+                              new Array(40).fill(0);
+        const nplData = prodData.quarterly?.nplStock || 
+                       prodData.quarterly?.nonPerformingStock ||
+                       prodData.quarterly?.nonPerformingAssets || 
+                       new Array(40).fill(0);
+        
+        console.log(`    📊 Product ${prodKey} data:`, {
+          hasPerforming: performingData.some(v => v > 0),
+          hasNPL: nplData.some(v => v > 0),
+          performingQ0: performingData[0],
+          nplQ0: nplData[0],
+          totalQ0: performingData[0] + nplData[0]
+        });
+        
+        creditDataForFTP.byDivision[divKey].creditProducts[prodKey] = {
+          performingAssets: performingData,
+          nplStock: nplData
+        };
+      }
+    });
+    
+    console.log('🔍 PnL Orchestrator - Credit data for FTP:', {
+      hasByDivision: !!creditDataForFTP.byDivision,
+      divisionKeys: Object.keys(creditDataForFTP.byDivision || {}),
+      sampleDivision: creditDataForFTP.byDivision?.re ? Object.keys(creditDataForFTP.byDivision.re) : []
+    });
+    
+    const creditFTPResults = calculateCreditInterestExpense(
+      creditDataForFTP,
+      assumptions
+    );
+    
+    // Initialize division results
+    ALL_DIVISION_PREFIXES.forEach(prefix => {
+      byDivision[prefix] = new Array(40).fill(0); // Changed to quarterly
+    });
+    
+    // FTP should only include credit products, not deposits or interbank funding
+    for (let quarter = 0; quarter < 40; quarter++) {
+      // Total FTP = only FTP on credit assets
+      consolidated[quarter] = creditFTPResults.consolidated?.[quarter] || 0;
+      
+      // Update division results with FTP
+      Object.entries(creditFTPResults.byDivision || {}).forEach(([divKey, divFTP]) => {
+        if (byDivision[divKey]) {
+          byDivision[divKey][quarter] = divFTP[quarter] || 0;
+        }
+      });
+    }
+    
+    // Include product details if available
+    if (creditFTPResults.productDetails) {
+      productDetails = creditFTPResults.productDetails;
+    }
+    
+    return { consolidated, byDivision, productDetails };
   },
   
   /**
@@ -369,6 +444,9 @@ export const PnLOrchestrator = {
       const divisionInterestExpense = interestExpense.byDivision[divKey] || new Array(10).fill(0);
       const divisionCommissions = commissionIncome.byDivision[divKey] || new Array(10).fill(0);
       
+      // Get division interest income totals
+      const divisionTotals = interestIncome.divisionTotals?.[divKey];
+      
       // Net interest income
       const netInterestIncome = divisionInterestIncome.map((income, i) => 
         income + divisionInterestExpense[i]
@@ -428,9 +506,9 @@ export const PnLOrchestrator = {
         
         // Quarterly data
         quarterly: {
-          interestIncome: interestIncome.quarterly?.byDivision?.[divKey] || this.annualToQuarterly(divisionInterestIncome),
-          interestIncomePerforming: interestIncome.performing?.quarterly || new Array(40).fill(0),
-          interestIncomeNonPerforming: interestIncome.nonPerforming?.quarterly || new Array(40).fill(0),
+          interestIncome: divisionTotals?.total || interestIncome.quarterly?.byDivision?.[divKey] || this.annualToQuarterly(divisionInterestIncome),
+          interestIncomePerforming: divisionTotals?.performingSubtotal || interestIncome.performing?.quarterly || new Array(40).fill(0),
+          interestIncomeNonPerforming: divisionTotals?.nplSubtotal || interestIncome.nonPerforming?.quarterly || new Array(40).fill(0),
           interestExpenses: this.annualToQuarterly(divisionInterestExpense),
           netInterestIncome: this.annualToQuarterly(netInterestIncome),
           commissionIncome: this.annualToQuarterly(divisionCommissions),
@@ -443,7 +521,10 @@ export const PnLOrchestrator = {
           preTaxProfit: this.annualToQuarterly(preTaxProfit),
           taxes: this.annualToQuarterly(taxes),
           netProfit: this.annualToQuarterly(netProfit)
-        }
+        },
+        
+        // Add division totals for product details
+        divisionInterestIncomeTotals: divisionTotals
       };
     });
     

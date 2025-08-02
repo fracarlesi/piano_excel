@@ -2,7 +2,7 @@
  * Net Performing Assets Orchestrator
  * 
  * ORCHESTRATORE che coordina il calcolo dei Net Performing Assets
- * come differenza tra Stock NBV totale e Non-Performing Assets
+ * che sono uguali allo Stock NBV Performing
  */
 
 import { 
@@ -14,16 +14,14 @@ import {
 
 /**
  * Calcola Net Performing Assets per tutti i prodotti
- * @param {Object} totalNBVResults - Risultati Stock NBV dal TotalNBVOrchestrator
- * @param {Object} nonPerformingResults - Risultati Non-Performing Assets
+ * @param {Object} stockNBVPerformingResults - Risultati Stock NBV Performing dal StockNBVPerformingOrchestrator
  * @param {Object} divisions - Dati divisioni con prodotti
  * @param {number} quarters - Numero di trimestri
  * @returns {Object} Risultati Net Performing Assets completi
  */
-export const calculateNetPerformingAssets = (totalNBVResults, nonPerformingResults, divisions, quarters = 40) => {
-  // console.log('📊 Net Performing Assets Calculator - Start');
-  // console.log('  - Total NBV available:', !!totalNBVResults);
-  // console.log('  - Non-Performing available:', !!nonPerformingResults);
+export const calculateNetPerformingAssets = (stockNBVPerformingResults, divisions, quarters = 40) => {
+  console.log('📊 Net Performing Assets Calculator - Start');
+  console.log('  - Stock NBV Performing available:', !!stockNBVPerformingResults);
   
   const results = {
     // RIGA PRINCIPALE BALANCE SHEET
@@ -71,32 +69,27 @@ export const calculateNetPerformingAssets = (totalNBVResults, nonPerformingResul
     }
   };
   
-  // Step 1: Calcola Net Performing per ogni prodotto
-  if (totalNBVResults && totalNBVResults.byProduct && nonPerformingResults && nonPerformingResults.byProduct) {
-    Object.entries(totalNBVResults.byProduct).forEach(([productKey, productNBV]) => {
+  // Step 1: Calcola Net Performing per ogni prodotto (usando Stock NBV Performing)
+  if (stockNBVPerformingResults && stockNBVPerformingResults.byProduct) {
+    Object.entries(stockNBVPerformingResults.byProduct).forEach(([productKey, productData]) => {
       console.log(`\n🔍 Processing product: ${productKey}`);
       
-      // Get Stock NBV data
-      const stockNBV = productNBV.quarterlyNBV || new Array(quarters).fill(0);
+      // Get Stock NBV Performing data
+      const stockNBVPerforming = productData.quarterly || new Array(quarters).fill(0);
       
-      // Get Non-Performing Assets data
-      const nonPerforming = nonPerformingResults.byProduct[productKey]?.quarterlyNPV || new Array(quarters).fill(0);
+      console.log(`  - Stock NBV Performing Q0: €${stockNBVPerforming[0]?.toFixed(1)}M`);
       
-      console.log(`  - Stock NBV Q0: €${stockNBV[0]?.toFixed(1)}M`);
-      console.log(`  - Non-Performing Q0: €${nonPerforming[0]?.toFixed(1)}M`);
-      
-      // Calculate Net Performing = Stock NBV - Non-Performing
-      const netPerforming = calculateProductNetPerforming(stockNBV, nonPerforming, quarters);
+      // Net Performing = Stock NBV Performing
+      const netPerforming = calculateProductNetPerforming(stockNBVPerforming, quarters);
       
       console.log(`  - Net Performing Q0: €${netPerforming[0]?.toFixed(1)}M`);
       
       // Store product results
       results.byProduct[productKey] = {
-        productName: productNBV.productName || productKey,
-        productType: productNBV.productType,
+        productName: productData.productName || productKey,
+        productType: productData.productType,
         quarterly: netPerforming,
-        stockNBV: stockNBV,
-        nonPerforming: nonPerforming
+        stockNBVPerforming: stockNBVPerforming
       };
       
       // Aggregate to total
@@ -106,7 +99,7 @@ export const calculateNetPerformingAssets = (totalNBVResults, nonPerformingResul
       });
       
       // Aggregate by product type
-      const productType = getProductTypeFromNBV(productNBV);
+      const productType = productData.productType || 'bridgeLoans';
       if (results.byProductType[productType]) {
         netPerforming.forEach((value, q) => {
           results.byProductType[productType].quarterly[q] += value;
@@ -153,13 +146,8 @@ export const calculateNetPerformingAssets = (totalNBVResults, nonPerformingResul
     results.consolidatedMetrics.growthRate = (Math.pow(lastValue / firstValue, 1 / periods) - 1) * 100;
   }
   
-  // Calculate NPL ratio for each quarter
-  for (let q = 0; q < quarters; q++) {
-    const totalNBV = totalNBVResults?.totalAssets?.quarterly[q] || 0;
-    const netPerforming = results.balanceSheetLine.quarterly[q] || 0;
-    const nplRatio = totalNBV > 0 ? ((totalNBV - netPerforming) / totalNBV) * 100 : 0;
-    results.consolidatedMetrics.nplRatio[q] = nplRatio;
-  }
+  // Calculate NPL ratio for each quarter (not applicable anymore as we don't have totalNBV here)
+  // This metric will be calculated at a higher level
   
   // Step 4: Calculate change analysis
   const quarterlyChanges = calculateQuarterlyChanges(results.balanceSheetLine.quarterly);

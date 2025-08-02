@@ -72,7 +72,8 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
       creditClassification: 'Bonis',
       isFixedRate: false,
       commissionRate: 0.5,
-      equityUpside: 0
+      equityUpside: 0,
+      ftpRate: 1.5
     };
 
     if (type === 'Credit') {

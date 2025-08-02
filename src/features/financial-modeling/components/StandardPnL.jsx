@@ -21,7 +21,8 @@ const StandardPnL = ({
   console.log('🎯 StandardPnL - Data received:', {
     divisionName,
     productResultsKeys: Object.keys(productResults || {}),
-    productResults
+    hasDivisionTotals: !!divisionResults.pnl?.divisionInterestIncomeTotals,
+    divisionTotals: divisionResults.pnl?.divisionInterestIncomeTotals
   });
   
   // DEBUG: Check performing vs NPL products
@@ -46,9 +47,20 @@ const StandardPnL = ({
   // });
   
   // Use quarterly data directly (40 quarters)
-  const interestIncomeData = divisionResults.pnl.quarterly?.interestIncome ?? Array(40).fill(0);
-  const interestIncomePerformingData = divisionResults.pnl.quarterly?.interestIncomePerforming ?? Array(40).fill(0);
-  const interestIncomeNonPerformingData = divisionResults.pnl.quarterly?.interestIncomeNonPerforming ?? Array(40).fill(0);
+  // Check if we have division totals from the microservice
+  const hasDivisionTotals = !!divisionResults.divisionInterestIncomeTotals;
+  
+  const interestIncomeData = hasDivisionTotals 
+    ? divisionResults.divisionInterestIncomeTotals.total 
+    : (divisionResults.pnl.quarterly?.interestIncome ?? Array(40).fill(0));
+    
+  const interestIncomePerformingData = hasDivisionTotals
+    ? divisionResults.divisionInterestIncomeTotals.performingSubtotal
+    : (divisionResults.pnl.quarterly?.interestIncomePerforming ?? Array(40).fill(0));
+    
+  const interestIncomeNonPerformingData = hasDivisionTotals
+    ? divisionResults.divisionInterestIncomeTotals.nplSubtotal
+    : (divisionResults.pnl.quarterly?.interestIncomeNonPerforming ?? Array(40).fill(0));
   const interestExpensesData = divisionResults.pnl.quarterly?.interestExpenses ?? Array(40).fill(0);
   const commissionIncomeData = divisionResults.pnl.quarterly?.commissionIncome ?? Array(40).fill(0);
   const commissionExpensesData = divisionResults.pnl.quarterly?.commissionExpenses ?? Array(40).fill(0);
@@ -89,6 +101,8 @@ const StandardPnL = ({
   console.log('  - showProductDetail:', showProductDetail);
   console.log('  - productResults keys:', Object.keys(productResults));
   console.log('  - productResults:', productResults);
+  console.log('  - hasDivisionTotals:', hasDivisionTotals);
+  console.log('  - divisionInterestIncomeTotals:', divisionResults.divisionInterestIncomeTotals);
   
   // Check if we have NPL products (using already declared variables)
   console.log('  - Performing products:', performingProducts.map(([k,p]) => `${k}: ${p.name}`));
@@ -232,18 +246,44 @@ const StandardPnL = ({
     // ========== INTEREST EXPENSES SECTION ==========
     {
       label: 'FTP',
-      data: interestExpensesData,
+      data: (() => {
+        // Calculate FTP total as sum of product FTP values
+        const ftpTotal = Array(40).fill(0);
+        Object.entries(productResults)
+          .filter(([key, product]) => !key.includes('_NPL'))
+          .forEach(([key, product]) => {
+            const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+            productFTP.forEach((val, i) => {
+              ftpTotal[i] += val;
+            });
+          });
+        return ftpTotal;
+      })(),
       decimals: 2,
       isHeader: true,
-      formula: interestExpensesData.map((val, i) => createFormula(i,
-        'Average Performing Assets × FTP Rate (EURIBOR + FTP Spread)',
-        [
-          year => `FTP Rate: ${((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)).toFixed(2)}% (EURIBOR ${(assumptions.euribor ?? 0).toFixed(1)}% + Spread ${(assumptions.ftpSpread ?? 0).toFixed(1)}%)`,
-          year => `FTP Cost: ${formatNumber(val, 2)} €M`
-        ]
-      )),
-      // Add product breakdown as subRows
-      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      formula: (() => {
+        // Calculate FTP total for formula display
+        const ftpTotal = Array(40).fill(0);
+        Object.entries(productResults)
+          .filter(([key, product]) => !key.includes('_NPL'))
+          .forEach(([key, product]) => {
+            const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+            productFTP.forEach((val, i) => {
+              ftpTotal[i] += val;
+            });
+          });
+        return ftpTotal.map((val, i) => createFormula(i,
+          'Sum of all product FTP values',
+          [
+            year => `FTP Rate: ${((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)).toFixed(2)}% (EURIBOR ${(assumptions.euribor ?? 0).toFixed(1)}% + Spread ${(assumptions.ftpSpread ?? 0).toFixed(1)}%)`,
+            year => `FTP Cost: ${formatNumber(val, 2)} €M`
+          ]
+        ));
+      })(),
+      // Add product breakdown as subRows (exclude NPL products from FTP)
+      subRows: showProductDetail ? Object.entries(productResults)
+        .filter(([key, product]) => !key.includes('_NPL'))
+        .map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.quarterly?.interestExpense ?? Array(40).fill(0),
         decimals: 2,

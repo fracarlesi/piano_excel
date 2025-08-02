@@ -8,6 +8,7 @@
 
 import { calculatePerformingInterest } from './performing/PerformingInterestCalculator.js';
 import { calculateNonPerformingInterest } from './non-performing/NonPerformingInterestCalculator.js';
+import { calculateDivisionInterestIncomeTotals, formatForDisplay } from './DivisionInterestIncomeTotals.js';
 
 /**
  * Calcola gli interessi attivi totali
@@ -97,11 +98,84 @@ export const calculateInterestIncome = (balanceSheetResults, assumptions, quarte
     combinedResults.metrics.performingInterestIncome + 
     combinedResults.metrics.nonPerformingInterestIncome;
   
+  // Calculate division totals using the new microservice
+  const divisionTotals = {};
+  
+  // Get products by division from balance sheet
+  const productsByDivision = {};
+  Object.entries(balanceSheetResults.productResults || {}).forEach(([productKey, productData]) => {
+    // Determine division from product key
+    let divisionKey = '';
+    if (productKey.startsWith('re')) divisionKey = 're';
+    else if (productKey.startsWith('sme')) divisionKey = 'sme';
+    else if (productKey.startsWith('wealth')) divisionKey = 'wealth';
+    else if (productKey.startsWith('incentive')) divisionKey = 'incentive';
+    else if (productKey.startsWith('digital')) divisionKey = 'digital';
+    
+    if (divisionKey) {
+      if (!productsByDivision[divisionKey]) {
+        productsByDivision[divisionKey] = {};
+      }
+      
+      // Add product with interest income data from tableData
+      const productTableData = combinedResults.tableData[productKey] || {};
+      productsByDivision[divisionKey][productKey] = {
+        name: productData.name || productKey,
+        quarterly: {
+          interestIncome: productTableData.quarterlyInterestIncome || new Array(40).fill(0),
+          interestIncomePerforming: productTableData.quarterlyInterestIncomePerforming || new Array(40).fill(0),
+          interestIncomeNonPerforming: productTableData.quarterlyInterestIncomeNPL || new Array(40).fill(0)
+        }
+      };
+    }
+  });
+  
+  // Also add NPL products from tableData (they have _NPL suffix)
+  Object.entries(combinedResults.tableData || {}).forEach(([productKey, productData]) => {
+    if (productKey.endsWith('_NPL')) {
+      // Get base product key without _NPL
+      const baseProductKey = productKey.replace('_NPL', '');
+      
+      // Determine division from base product key
+      let divisionKey = '';
+      if (baseProductKey.startsWith('re')) divisionKey = 're';
+      else if (baseProductKey.startsWith('sme')) divisionKey = 'sme';
+      else if (baseProductKey.startsWith('wealth')) divisionKey = 'wealth';
+      else if (baseProductKey.startsWith('incentive')) divisionKey = 'incentive';
+      else if (baseProductKey.startsWith('digital')) divisionKey = 'digital';
+      
+      if (divisionKey) {
+        if (!productsByDivision[divisionKey]) {
+          productsByDivision[divisionKey] = {};
+        }
+        
+        // Add NPL product
+        productsByDivision[divisionKey][productKey] = {
+          name: productData.name || productKey,
+          quarterly: {
+            interestIncome: productData.quarterlyInterestIncome || new Array(40).fill(0),
+            interestIncomePerforming: productData.quarterlyInterestIncomePerforming || new Array(40).fill(0),
+            interestIncomeNonPerforming: productData.quarterlyInterestIncomeNPL || new Array(40).fill(0)
+          }
+        };
+      }
+    }
+  });
+  
+  // Calculate totals for each division
+  Object.entries(productsByDivision).forEach(([divisionKey, products]) => {
+    divisionTotals[divisionKey] = calculateDivisionInterestIncomeTotals(products, divisionKey);
+  });
+  
   console.log('💰 Interest Income Orchestrator - Complete');
   console.log(`  - Performing Interest Y1: €${combinedResults.annual.performing[0].toFixed(2)}M`);
   console.log(`  - Non-Performing Interest Y1: €${combinedResults.annual.nonPerforming[0].toFixed(2)}M`);
   console.log(`  - Total Interest Income Y1: €${combinedResults.annual.total[0].toFixed(2)}M`);
   console.log('  - TableData keys:', Object.keys(combinedResults.tableData));
+  console.log('  - Division totals calculated:', Object.keys(divisionTotals));
+  
+  // Add division totals to results
+  combinedResults.divisionTotals = divisionTotals;
   
   return combinedResults;
 };

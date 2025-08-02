@@ -1,26 +1,22 @@
 /**
  * Net Performing Assets Calculator
  * 
- * Calcola i Net Performing Assets come differenza tra Stock NBV e Non-Performing Assets
- * Formula: Net Performing Assets = Stock NBV - Non-Performing Assets
+ * Calcola i Net Performing Assets come lo Stock NBV Performing
+ * Formula: Net Performing Assets = Stock NBV Performing
  */
 
 /**
  * Calcola Net Performing Assets per singolo prodotto
- * @param {Array} stockNBV - Array trimestrale dello stock NBV
- * @param {Array} nonPerformingAssets - Array trimestrale dei Non-Performing Assets
+ * @param {Array} stockNBVPerforming - Array trimestrale dello Stock NBV Performing
  * @param {number} quarters - Numero di trimestri
  * @returns {Array} Net Performing Assets trimestrali
  */
-export const calculateProductNetPerforming = (stockNBV, nonPerformingAssets, quarters = 40) => {
+export const calculateProductNetPerforming = (stockNBVPerforming, quarters = 40) => {
   const netPerforming = new Array(quarters).fill(0);
   
   for (let q = 0; q < quarters; q++) {
-    const nbv = stockNBV[q] || 0;
-    const npa = nonPerformingAssets[q] || 0;
-    
-    // Net Performing = Stock NBV - Non-Performing Assets
-    netPerforming[q] = Math.max(0, nbv - npa);
+    // Net Performing Assets = Stock NBV Performing (già calcolato)
+    netPerforming[q] = stockNBVPerforming[q] || 0;
   }
   
   return netPerforming;
@@ -28,12 +24,11 @@ export const calculateProductNetPerforming = (stockNBV, nonPerformingAssets, qua
 
 /**
  * Calcola Net Performing Assets aggregati
- * @param {Object} totalNBVData - Dati Stock NBV totali per prodotto
- * @param {Object} nonPerformingData - Dati Non-Performing Assets per prodotto
+ * @param {Object} stockNBVPerformingData - Dati Stock NBV Performing per prodotto
  * @param {number} quarters - Numero di trimestri
  * @returns {Object} Net Performing Assets con breakdown
  */
-export const calculateAggregateNetPerforming = (totalNBVData, nonPerformingData, quarters = 40) => {
+export const calculateAggregateNetPerforming = (stockNBVPerformingData, quarters = 40) => {
   const results = {
     totalNetPerforming: new Array(quarters).fill(0),
     byProduct: {},
@@ -45,11 +40,10 @@ export const calculateAggregateNetPerforming = (totalNBVData, nonPerformingData,
   };
   
   // Calcola per ogni prodotto
-  Object.keys(totalNBVData).forEach(productKey => {
-    const stockNBV = totalNBVData[productKey] || new Array(quarters).fill(0);
-    const nonPerforming = nonPerformingData[productKey] || new Array(quarters).fill(0);
+  Object.keys(stockNBVPerformingData).forEach(productKey => {
+    const stockNBVPerforming = stockNBVPerformingData[productKey] || new Array(quarters).fill(0);
     
-    const productNetPerforming = calculateProductNetPerforming(stockNBV, nonPerforming, quarters);
+    const productNetPerforming = calculateProductNetPerforming(stockNBVPerforming, quarters);
     
     results.byProduct[productKey] = productNetPerforming;
     
