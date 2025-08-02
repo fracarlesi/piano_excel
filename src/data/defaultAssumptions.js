@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '13.88', // Personnel costs now displayed in millions (€M) for consistency with other P&L items
+  version: '13.92', // Fixed NPL product naming in FTP section to use (NPL) format
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

@@ -278,7 +278,7 @@ const StandardPnL = ({
     },
     // NPL Interest Section
     {
-          label: 'o/w Non-Performing Assets (NPL)',
+          label: 'o/w Non-Performing Assets',
           data: interestIncomeNonPerformingData,
           decimals: 1,
           isSecondarySubTotal: true,  // New flag for second-level subtotals
@@ -364,9 +364,9 @@ const StandardPnL = ({
       })(),
       // Add breakdown for Bonis and NPL
       subRows: [
-        // FTP on Bonis
+        // FTP on Performing Assets
         {
-          label: 'o/w FTP on Performing Assets (Bonis)',
+          label: 'o/w Performing Assets',
           data: (() => {
             // Get Bonis FTP from divisionResults if available
             if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalBonis) {
@@ -448,7 +448,7 @@ const StandardPnL = ({
         },
         // FTP on NPL
         {
-          label: 'o/w FTP on Non-Performing Loans (NPL)',
+          label: 'o/w Non-Performing Assets',
           data: (() => {
             // Get NPL FTP from divisionResults if available
             if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalNPL) {
@@ -474,7 +474,7 @@ const StandardPnL = ({
             Object.entries(divisionResults.pnl.creditInterestExpense.rawResults.byProduct)
               .filter(([key, data]) => data.quarterlyFTPNPL?.some(v => v !== 0))
               .map(([key, data]) => ({
-                label: `o/w ${data.name} NPL`,
+                label: `o/w ${data.name} (NPL)`,
                 data: data.quarterlyFTPNPL || Array(40).fill(0),
                 decimals: 1,
                 formula: (data.quarterlyFTPNPL || Array(40).fill(0)).map((val, i) => {
@@ -1217,34 +1217,6 @@ const StandardPnL = ({
         ],
         year => `${formatNumber(personnelCostsData[year], 2)} + ${formatNumber(otherOpexData[year], 2)} = ${formatNumber(val, 2)} €M`
       ))
-    },
-
-    // ========== OTHER COSTS SECTION ==========
-    {
-      label: 'Other Costs',
-      data: [0,0,0,0,0,0,0,0,0,0],
-      decimals: 1,
-      // Add breakdown as subRows
-      subRows: showProductDetail ? [
-        {
-          label: 'Provisions for liabilities and charges (TFR)',
-          data: [0,0,0,0,0,0,0,0,0,0],
-          decimals: 1,
-          formula: [0,0,0,0,0,0,0,0,0,0].map((val, i) => createFormula(
-            i,
-            'Employee termination provisions',
-            [
-              {
-                name: 'TFR Provisions',
-                value: 0,
-                unit: '€M',
-                calculation: 'Currently not modeled in business plan'
-              }
-            ],
-            year => `TFR provisions: ${formatNumber(0, 2)} €M (not applicable)`
-          ))
-        }
-      ] : []
     },
 
     // ========== PRE-TAX PROFIT ==========
