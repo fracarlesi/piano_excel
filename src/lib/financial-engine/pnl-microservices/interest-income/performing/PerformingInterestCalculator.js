@@ -149,19 +149,23 @@ const calculateProductInterest = (productPerformingAssets, productConfig, assump
   let nonZeroQuarters = 0;
   
   for (let q = 0; q < quarters; q++) {
-    const performingAssets = quarterlyPerforming[q] || 0;
-    quarterly[q] = performingAssets * quarterlyRate;
+    // Use previous quarter's closing balance for interest calculation
+    // (loans disbursed at end of quarter earn interest from next quarter)
+    const performingAssetsForInterest = q > 0 ? (quarterlyPerforming[q - 1] || 0) : 0;
+    quarterly[q] = performingAssetsForInterest * quarterlyRate;
     
+    const performingAssets = quarterlyPerforming[q] || 0;
     if (performingAssets > 0) {
       totalNPA += performingAssets;
       nonZeroQuarters++;
     }
     
-    // Log first quarter for debug
-    if (q === 0 && performingAssets > 0) {
-      console.log(`      - Q1 Performing: €${performingAssets.toFixed(2)}M`);
+    // Log first few quarters for debug
+    if (q < 2 && performingAssets > 0) {
+      console.log(`      - Q${q+1} Performing: €${performingAssets.toFixed(2)}M`);
+      console.log(`      - Q${q+1} Balance for interest: €${performingAssetsForInterest.toFixed(2)}M`);
       console.log(`      - Quarterly rate: ${(quarterlyRate * 100).toFixed(4)}%`);
-      console.log(`      - Q1 Interest: €${quarterly[q].toFixed(2)}M`);
+      console.log(`      - Q${q+1} Interest: €${quarterly[q].toFixed(2)}M`);
     }
   }
   

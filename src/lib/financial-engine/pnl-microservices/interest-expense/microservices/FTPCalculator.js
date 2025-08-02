@@ -22,9 +22,10 @@ export const calculateProductFTPQuarterly = (product, productAssumptions, euribo
   const ftpRate = productAssumptions.ftpRate || 1.5;
   const totalRate = (ftpRate + euribor) / 100 / 4; // Divide by 4 for quarterly rate
   
-  // Get assets from CURRENT quarter (same logic as interest income)
-  const performingAssets = d(product.performingAssets?.[quarter] || 0);
-  const nplAssets = d(product.nplStock?.[quarter] || 0);
+  // Get assets from PREVIOUS quarter (loans disbursed at end of quarter)
+  // FTP is charged from the next quarter after disbursement
+  const performingAssets = quarter > 0 ? d(product.performingAssets?.[quarter - 1] || 0) : d(0);
+  const nplAssets = quarter > 0 ? d(product.nplStock?.[quarter - 1] || 0) : d(0);
   const totalAssets = performingAssets.plus(nplAssets);
   
   // Calculate FTP expense (negative because it's a cost)

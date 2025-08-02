@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '13.22', // fix: Net Performing Assets now correctly equals Stock NBV Performing (not Stock NBV - Non-Performing)
+  version: '13.23', // fix: Interest income and FTP expense now calculated on previous quarter balance (loans disbursed at quarter end)
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
