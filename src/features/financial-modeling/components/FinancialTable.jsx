@@ -4,43 +4,63 @@ import { formatNumber } from '../../../components/shared/formatters';
 
 // Financial Table Component with expandable rows (Quarterly View Only)
 const FinancialTable = ({ title, rows }) => {
-  // State to track which rows are expanded - initialize with all rows that have subRows
-  const initialExpandedRows = new Set();
-  rows.forEach((row, index) => {
-    if (row.subRows && row.subRows.length > 0) {
-      initialExpandedRows.add(index);
-    }
-  });
-  const [expandedRows, setExpandedRows] = useState(initialExpandedRows);
+  // State to track which rows are expanded - use a string key for nested rows
+  const [expandedRows, setExpandedRows] = useState(new Set());
+  
+  // Initialize with all rows expanded (including nested)
+  React.useEffect(() => {
+    const allExpandedKeys = new Set();
+    
+    // Helper to add all expandable rows recursively
+    const addExpandableRows = (rows, prefix = '') => {
+      rows.forEach((row, index) => {
+        const key = prefix ? `${prefix}-${index}` : `${index}`;
+        if (row.subRows && row.subRows.length > 0) {
+          allExpandedKeys.add(key);
+          // Recursively add nested subRows
+          addExpandableRows(row.subRows, key);
+        }
+      });
+    };
+    
+    addExpandableRows(rows);
+    setExpandedRows(allExpandedKeys);
+    
+  }, [rows, title]);
 
   // Toggle row expansion
-  const toggleRow = (rowIndex) => {
+  const toggleRow = (rowKey) => {
     const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(rowIndex)) {
-      newExpanded.delete(rowIndex);
+    if (newExpanded.has(rowKey)) {
+      newExpanded.delete(rowKey);
     } else {
-      newExpanded.add(rowIndex);
+      newExpanded.add(rowKey);
     }
     setExpandedRows(newExpanded);
   };
 
-  // Process rows to include sub-rows when expanded
+  // Process rows to include sub-rows when expanded (recursive)
   const processedRows = [];
-  rows.forEach((row, index) => {
-    processedRows.push({ ...row, originalIndex: index });
-    
-    // If row is expanded and has subRows, add them
-    if (expandedRows.has(index) && row.subRows && row.subRows.length > 0) {
-      row.subRows.forEach((subRow, subIndex) => {
-        processedRows.push({
-          ...subRow,
-          isSubItem: true,
-          parentIndex: index,
-          subIndex: subIndex
-        });
+  
+  const processRowsRecursive = (rows, level = 0, parentKey = '') => {
+    rows.forEach((row, index) => {
+      const rowKey = parentKey ? `${parentKey}-${index}` : `${index}`;
+      
+      processedRows.push({ 
+        ...row, 
+        rowKey,
+        level,
+        isSubItem: level > 0
       });
-    }
-  });
+      
+      // If row is expanded and has subRows, process them recursively
+      if (expandedRows.has(rowKey) && row.subRows && row.subRows.length > 0) {
+        processRowsRecursive(row.subRows, level + 1, rowKey);
+      }
+    });
+  };
+  
+  processRowsRecursive(rows);
 
   return (
   <div className="mb-8 bg-white rounded-lg shadow-md overflow-hidden">
@@ -66,37 +86,43 @@ const FinancialTable = ({ title, rows }) => {
         <tbody>
           {processedRows.map((row, displayIndex) => {
             const hasSubRows = row.subRows && row.subRows.length > 0;
-            const isExpanded = row.originalIndex !== undefined && expandedRows.has(row.originalIndex);
+            const isExpanded = expandedRows.has(row.rowKey);
             
             return (
               <tr 
-                key={row.originalIndex !== undefined ? `main-${row.originalIndex}` : `sub-${row.parentIndex}-${row.subIndex}`} 
+                key={row.rowKey} 
                 className={`
                   ${row.isTotal ? 'bg-blue-200 font-bold border-t-2 border-b-2 border-blue-300' : ''}
                   ${row.isSubTotal ? 'bg-blue-100 font-semibold border-t border-b border-blue-200' : ''}
+                  ${row.isSecondarySubTotal ? 'bg-amber-50 font-medium border-t border-b border-amber-200' : ''}
                   ${row.isHeader ? 'bg-gray-100 font-semibold border-t border-gray-300' : ''}
-                  ${!row.isTotal && !row.isSubTotal && !row.isHeader ? 'hover:bg-gray-50' : ''}
+                  ${!row.isTotal && !row.isSubTotal && !row.isSecondarySubTotal && !row.isHeader ? 'hover:bg-gray-50' : ''}
                   transition-colors duration-150
                 `}
               >
                 <td 
-                  className={`py-2 text-gray-800 ${
-                    row.isSubItem ? 'pl-12 pr-6 text-xs italic' : 'pl-6 pr-6'
+                  className={`py-2 text-gray-800 pr-6 ${
+                    row.level === 0 ? 'pl-6' : 
+                    row.level === 1 ? 'pl-12 text-xs' : 
+                    row.level === 2 ? 'pl-16 text-xs italic' : 
+                    'pl-20 text-xs italic'
                   } ${
                     row.isTotal ? 'text-blue-900 font-bold' : ''
                   } ${
                     row.isSubTotal ? 'text-blue-800 font-semibold' : ''
                   } ${
+                    row.isSecondarySubTotal ? 'text-amber-800 font-medium' : ''
+                  } ${
                     row.isHeader ? 'text-gray-800 font-semibold' : ''
                   } ${
-                    row.isSubItem ? 'text-gray-600' : ''
+                    row.isSubItem && !row.isSecondarySubTotal ? 'text-gray-600' : ''
                   }`}
                 >
                   <div className="flex items-center">
                     {/* Expansion icon for rows with subRows */}
-                    {hasSubRows && !row.isSubItem && (
+                    {hasSubRows && (
                       <button
-                        onClick={() => toggleRow(row.originalIndex)}
+                        onClick={() => toggleRow(row.rowKey)}
                         className="mr-2 text-gray-500 hover:text-gray-700 focus:outline-none"
                       >
                         {isExpanded ? (
@@ -110,12 +136,8 @@ const FinancialTable = ({ title, rows }) => {
                         )}
                       </button>
                     )}
-                    {/* Indent for sub-items without expansion button */}
-                    {row.isSubItem && (
-                      <span className="inline-block w-6 mr-2 text-gray-400">-</span>
-                    )}
                     {/* Add space for alignment when no icon */}
-                    {!hasSubRows && !row.isSubItem && (
+                    {!hasSubRows && (
                       <span className="inline-block w-6 mr-2"></span>
                     )}
                     {row.label}

@@ -24,6 +24,21 @@ const StandardPnL = ({
     productResults
   });
   
+  // DEBUG: Check performing vs NPL products
+  const performingProducts = Object.entries(productResults || {})
+    .filter(([key, product]) => !key.includes('_NPL'));
+  const nplProducts = Object.entries(productResults || {})
+    .filter(([key, product]) => key.includes('_NPL'));
+    
+  console.log('📊 Product breakdown:', {
+    performingCount: performingProducts.length,
+    performingKeys: performingProducts.map(([key]) => key),
+    nplCount: nplProducts.length,
+    nplKeys: nplProducts.map(([key]) => key),
+    samplePerformingData: performingProducts[0]?.[1],
+    sampleNPLData: nplProducts[0]?.[1]
+  });
+  
   // SIMPLE DEBUG
   // console.log(`PnL for ${divisionName}:`, {
   //   hasPersonnelCosts: !!divisionResults.pnl?.personnelCosts,
@@ -32,6 +47,8 @@ const StandardPnL = ({
   
   // Use quarterly data directly (40 quarters)
   const interestIncomeData = divisionResults.pnl.quarterly?.interestIncome ?? Array(40).fill(0);
+  const interestIncomePerformingData = divisionResults.pnl.quarterly?.interestIncomePerforming ?? Array(40).fill(0);
+  const interestIncomeNonPerformingData = divisionResults.pnl.quarterly?.interestIncomeNonPerforming ?? Array(40).fill(0);
   const interestExpensesData = divisionResults.pnl.quarterly?.interestExpenses ?? Array(40).fill(0);
   const commissionIncomeData = divisionResults.pnl.quarterly?.commissionIncome ?? Array(40).fill(0);
   const commissionExpensesData = divisionResults.pnl.quarterly?.commissionExpenses ?? Array(40).fill(0);
@@ -66,6 +83,28 @@ const StandardPnL = ({
   //   return pbt - taxes;
   // }); // Currently unused - may be needed for net profit calculations
 
+  // Debug logging
+  console.log('🔍 StandardPnL Debug:');
+  console.log('  - divisionName:', divisionName);
+  console.log('  - showProductDetail:', showProductDetail);
+  console.log('  - productResults keys:', Object.keys(productResults));
+  console.log('  - productResults:', productResults);
+  
+  // Check if we have NPL products (using already declared variables)
+  console.log('  - Performing products:', performingProducts.map(([k,p]) => `${k}: ${p.name}`));
+  console.log('  - NPL products:', nplProducts.map(([k,p]) => `${k}: ${p.name}`));
+  
+  // Check what data products have
+  if (performingProducts.length > 0) {
+    const [firstKey, firstProduct] = performingProducts[0];
+    console.log(`  - Sample performing product (${firstKey}):`, {
+      name: firstProduct.name,
+      hasQuarterly: !!firstProduct.quarterly,
+      hasInterestIncome: firstProduct.quarterly?.interestIncome?.length || 0,
+      quarterlyData: firstProduct.quarterly
+    });
+  }
+
   // P&L Rows following the exact schema
   const pnlRows = [
     // ========== INTEREST INCOME SECTION ==========
@@ -77,16 +116,39 @@ const StandardPnL = ({
       formula: interestIncomeData.map((val, i) => 
         createAggregateFormula(
           i,
-          'Interest Income',
-          Object.entries(productResults).map(([key, product]) => ({
-            name: product.name,
-            value: (product.interestIncome ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
-            formula: `${formatNumber((product.averagePerformingAssets ?? [0,0,0,0,0,0,0,0,0,0])[i], 2)} × ${((product.assumptions?.interestRate ?? 0) * 100).toFixed(2)}%`
-          }))
+          'Interest Income (Performing + NPL)',
+          [
+            {
+              name: 'Performing Assets',
+              value: interestIncomePerformingData[i] ?? 0,
+              formula: 'Net Performing Assets × Interest Rate'
+            },
+            {
+              name: 'Non-Performing Assets (NPL)',
+              value: interestIncomeNonPerformingData[i] ?? 0,
+              formula: 'NPL Stock × Interest Rate'
+            }
+          ]
         )
       ),
-      // Add product breakdown as subRows
-      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
+      // Add performing and NPL breakdown
+      subRows: [
+        // Performing Interest Section
+        {
+          label: 'o/w Performing Assets',
+          data: interestIncomePerformingData,
+          decimals: 2,
+          isSecondarySubTotal: true,  // New flag for second-level subtotals
+          formula: interestIncomePerformingData.map((val, i) => createFormula(i,
+            'Interest on Performing Loans',
+            [
+              year => `Performing Interest: ${formatNumber(val, 2)} €M`,
+              year => `% of Total: ${interestIncomeData[year] > 0 ? ((val / interestIncomeData[year]) * 100).toFixed(1) : 0}%`
+            ]
+          )),
+          subRows: showProductDetail ? Object.entries(productResults)
+            .filter(([key, product]) => !key.includes('_NPL'))
+            .map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.quarterly?.interestIncome ?? Array(40).fill(0),
         decimals: 2,
@@ -122,6 +184,49 @@ const StandardPnL = ({
           });
         })
       })) : []
+    },
+    // NPL Interest Section
+    {
+          label: 'o/w Non-Performing Assets (NPL)',
+          data: interestIncomeNonPerformingData,
+          decimals: 2,
+          isSecondarySubTotal: true,  // New flag for second-level subtotals
+          formula: interestIncomeNonPerformingData.map((val, i) => createFormula(i,
+            'Interest on Non-Performing Loans (Time Value Unwinding)',
+            [
+              year => `NPL Interest: ${formatNumber(val, 2)} €M`,
+              year => `% of Total: ${interestIncomeData[year] > 0 ? ((val / interestIncomeData[year]) * 100).toFixed(1) : 0}%`
+            ]
+          )),
+          subRows: showProductDetail ? Object.entries(productResults)
+            .filter(([key, product]) => key.includes('_NPL'))
+            .map(([key, product], index) => ({
+              label: `o/w ${product.name}`,
+              data: product.quarterly?.interestIncome ?? Array(40).fill(0),
+              decimals: 2,
+              formula: (product.quarterly?.interestIncome ?? Array(40).fill(0)).map((val, i) => {
+                const baseProductKey = key.replace('_NPL', '');
+                const originalProduct = assumptions.products?.[baseProductKey] || {};
+                
+                const actualInterestRate = originalProduct.isFixedRate ? 
+                  (originalProduct.fixedRate ?? 0) : 
+                  ((assumptions.euribor ?? 0) + (originalProduct.spread ?? 0));
+                
+                const nplStock = product.averageNPLStock?.[i] ?? 
+                               product.nplStock?.[i] ?? 0;
+                
+                return createProductFormula(i, product, 'nplInterestIncome', {
+                  nplStock: nplStock,
+                  interestRate: actualInterestRate,
+                  isFixed: originalProduct.isFixedRate ?? false,
+                  euribor: assumptions.euribor ?? 0,
+                  spread: originalProduct.spread ?? 0,
+                  result: val
+                });
+              })
+            })) : []
+        }
+      ]
     },
 
     // ========== INTEREST EXPENSES SECTION ==========
@@ -702,6 +807,19 @@ const StandardPnL = ({
     }
     return row;
   });
+
+  // Debug: Check Interest Income row and its subRows
+  const interestIncomeRow = transformedRows.find(row => row.label === 'Interest Income (IC)');
+  if (interestIncomeRow) {
+    console.log('📊 Interest Income Row Debug:');
+    console.log('  - Has subRows:', !!interestIncomeRow.subRows);
+    console.log('  - SubRows count:', interestIncomeRow.subRows?.length || 0);
+    if (interestIncomeRow.subRows) {
+      interestIncomeRow.subRows.forEach((subRow, idx) => {
+        console.log(`  - SubRow ${idx}: ${subRow.label}, has subRows: ${!!subRow.subRows}, subRows count: ${subRow.subRows?.length || 0}`);
+      });
+    }
+  }
 
   return <FinancialTable title="1. P&L (€M)" rows={transformedRows} />;
 };

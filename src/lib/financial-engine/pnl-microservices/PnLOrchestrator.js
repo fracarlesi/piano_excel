@@ -6,7 +6,7 @@
  */
 
 import { calculateAllPersonnelCosts } from './personnel-calculators/personnelCalculator.js';
-import { calculateInterestIncome } from './interest-income/InterestIncomeOrchestrator.js';
+import { calculateInterestIncome } from './interest-income/index.js';
 import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
 import { calculateCommissionIncome } from './commission-income/commissionCalculator.js';
 import { calculateLoanLossProvisions } from './llp-calculators/defaultCalculator.js';
@@ -128,7 +128,9 @@ export const PnLOrchestrator = {
       
       // Quarterly data
       quarterly: {
-        interestIncome: interestIncome.quarterly || this.annualToQuarterly(interestIncome.consolidated),
+        interestIncome: interestIncome.quarterly?.total || this.annualToQuarterly(interestIncome.consolidated),
+        interestIncomePerforming: interestIncome.performing?.quarterly || new Array(40).fill(0),
+        interestIncomeNonPerforming: interestIncome.nonPerforming?.quarterly || new Array(40).fill(0),
         interestExpenses: this.annualToQuarterly(interestExpense.consolidated),
         netInterestIncome: this.annualToQuarterly(netInterestIncome.consolidated),
         totalRevenues: this.annualToQuarterly(totalRevenues),
@@ -191,7 +193,16 @@ export const PnLOrchestrator = {
       byProduct: interestResults.annual.byProduct,
       quarterly: interestResults.quarterly,
       tableData: interestResults.tableData,
-      metrics: interestResults.metrics
+      metrics: interestResults.metrics,
+      // Separate performing and NPL data
+      performing: {
+        annual: interestResults.annual.performing,
+        quarterly: interestResults.quarterly.performing
+      },
+      nonPerforming: {
+        annual: interestResults.annual.nonPerforming,
+        quarterly: interestResults.quarterly.nonPerforming
+      }
     };
   },
   
@@ -418,6 +429,8 @@ export const PnLOrchestrator = {
         // Quarterly data
         quarterly: {
           interestIncome: interestIncome.quarterly?.byDivision?.[divKey] || this.annualToQuarterly(divisionInterestIncome),
+          interestIncomePerforming: interestIncome.performing?.quarterly || new Array(40).fill(0),
+          interestIncomeNonPerforming: interestIncome.nonPerforming?.quarterly || new Array(40).fill(0),
           interestExpenses: this.annualToQuarterly(divisionInterestExpense),
           netInterestIncome: this.annualToQuarterly(netInterestIncome),
           commissionIncome: this.annualToQuarterly(divisionCommissions),

@@ -36,10 +36,18 @@ const StandardDivisionSheet = ({
     Object.entries(results.productResults || {}).filter(([key]) => key.startsWith(divisionKey))
   );
   
-  // Get P&L table data for products in this division
+  // Get P&L table data for products in this division (including NPL)
+  const allInterestIncomeData = results.productPnLTableData?.interestIncome || {};
+  
   const productPnLData = Object.fromEntries(
-    Object.entries(results.productPnLTableData?.interestIncome || {}).filter(([key]) => key.startsWith(divisionKey))
+    Object.entries(allInterestIncomeData).filter(([key]) => {
+      // Include both performing products (e.g., "RE-Commercial") 
+      // and NPL products (e.g., "RE-Commercial_NPL")
+      const baseKey = key.replace('_NPL', '');
+      return baseKey.startsWith(divisionKey);
+    })
   );
+  
 
   // const defaultOverview = [
   //   { 

@@ -13,7 +13,7 @@
 // 4 = Debug + Info + Warnings + Errors
 // 5 = Verbose (all logs)
 
-const DEBUG_LEVEL = 0; // Set to 0 to disable ALL logging
+const DEBUG_LEVEL = 3; // Set to 3 to enable Info + Warnings + Errors
 
 export const logger = {
   verbose: (...args) => DEBUG_LEVEL >= 5 && console.log(...args),
