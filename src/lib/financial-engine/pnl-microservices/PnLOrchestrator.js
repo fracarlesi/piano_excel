@@ -8,6 +8,7 @@
 import { calculateAllPersonnelCosts } from './personnel-calculators/personnelCalculator.js';
 import { calculateInterestIncome } from './interest-income/index.js';
 import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
+import { calculateCommissionIncome } from './commission-income/commissionCalculator.js';
 import { 
   ALL_DIVISION_PREFIXES,
   getPersonnelKey
@@ -51,11 +52,24 @@ export const PnLOrchestrator = {
     );
     
     // Step 5: Commission Income & Expense
-    const commissionIncome = this.calculateCommissions(
+    const commissionResults = calculateCommissionIncome(
       balanceSheetResults,
       assumptions,
-      years
+      40 // quarters
     );
+    
+    console.log('🎯 PnL Orchestrator - Commission Results:', {
+      hasResults: !!commissionResults,
+      annualTotal: commissionResults?.annual?.total?.slice(0, 3),
+      quarterlyTotal: commissionResults?.quarterly?.total?.slice(0, 4),
+      productCount: Object.keys(commissionResults?.byProduct || {}).length
+    });
+    
+    // Extract annual data for P&L
+    const commissionIncome = {
+      consolidated: commissionResults.annual.total,
+      byDivision: commissionResults.annual.byDivision
+    };
     
     const commissionExpense = commissionIncome.consolidated.map(income => 
       -income * (assumptions.commissionExpenseRate || 0) / 100
@@ -138,7 +152,7 @@ export const PnLOrchestrator = {
         personnelCosts: this.annualToQuarterly(personnelCosts.grandTotal.costs),
         otherOpex: this.annualToQuarterly(operatingExpenses.other),
         totalOpex: this.annualToQuarterly(operatingExpenses.total),
-        commissionIncome: this.annualToQuarterly(commissionIncome.consolidated),
+        commissionIncome: commissionResults.quarterly.total,
         commissionExpenses: this.annualToQuarterly(commissionExpense)
       },
       
@@ -150,7 +164,8 @@ export const PnLOrchestrator = {
         personnelCosts,
         operatingExpenses,
         loanLossProvisions,
-        assumptions
+        assumptions,
+        commissionResults
       ),
       
       // Personnel detail
@@ -159,7 +174,8 @@ export const PnLOrchestrator = {
       // Product P&L data from microservices
       productTableData: {
         interestIncome: interestIncome.tableData || {},
-        interestExpense: interestExpense.productDetails || {}
+        interestExpense: interestExpense.productDetails || {},
+        commissionIncome: commissionResults.byProduct || {}
       },
       
       // Component details
@@ -333,34 +349,6 @@ export const PnLOrchestrator = {
     return { consolidated, byDivision };
   },
   
-  /**
-   * Calculate commission income
-   * @private
-   */
-  calculateCommissions(balanceSheetResults, assumptions, years) {
-    const consolidated = new Array(10).fill(0);
-    const byDivision = {};
-    
-    // Simplified commission calculation based on new volumes
-    Object.entries(balanceSheetResults.productResults).forEach(([productKey, product]) => {
-      const commissionRate = product.originalProduct?.commissionRate || 0.5;
-      const volumes = product.originalProduct?.volumeArray || new Array(10).fill(0);
-      
-      volumes.forEach((volume, year) => {
-        const commission = volume * commissionRate / 100;
-        consolidated[year] += commission;
-        
-        // Add to division
-        const divKey = this.getDivisionFromProductKey(productKey);
-        if (divKey) {
-          byDivision[divKey] = byDivision[divKey] || new Array(10).fill(0);
-          byDivision[divKey][year] += commission;
-        }
-      });
-    });
-    
-    return { consolidated, byDivision };
-  },
   
   /**
    * Calculate operating expenses
@@ -443,7 +431,7 @@ export const PnLOrchestrator = {
    * @private
    */
   organizeDivisionPnL(interestIncome, interestExpense, commissionIncome, 
-                      personnelCosts, operatingExpenses, llp, assumptions) {
+                      personnelCosts, operatingExpenses, llp, assumptions, commissionResults) {
     const results = {};
     
     ALL_DIVISION_PREFIXES.forEach(divKey => {
@@ -518,7 +506,7 @@ export const PnLOrchestrator = {
           interestIncomeNonPerforming: divisionTotals?.nplSubtotal || interestIncome.nonPerforming?.quarterly || new Array(40).fill(0),
           interestExpenses: this.annualToQuarterly(divisionInterestExpense),
           netInterestIncome: this.annualToQuarterly(netInterestIncome),
-          commissionIncome: this.annualToQuarterly(divisionCommissions),
+          commissionIncome: commissionResults.quarterly.byDivision[divKey] || this.annualToQuarterly(divisionCommissions),
           commissionExpenses: this.annualToQuarterly(divisionCommissions.map(c => -c * 0.1)),
           totalRevenues: this.annualToQuarterly(totalRevenues),
           personnelCosts: this.annualToQuarterly(divisionPersonnel),

@@ -64,11 +64,16 @@ export const calculateNewVolumes = (divisionProducts, assumptions, quarters = 40
   Object.entries(divisionProducts).forEach(([divKey, division]) => {
     const productsToProcess = division.products || division;
     
+    console.log(`📊 NewVolumes - Processing division ${divKey}, products:`, Object.keys(productsToProcess));
+    
     Object.entries(productsToProcess).forEach(([productKey, product]) => {
       const productConfig = product.originalProduct || product;
       
       // Only process credit products
-      if (!isCreditProduct(productConfig)) return;
+      if (!isCreditProduct(productConfig)) {
+        console.log(`  ⏭️ Skipping non-credit product ${productKey}`);
+        return;
+      }
       
       // Route to appropriate volume calculator
       let volumeResults = null;
@@ -86,6 +91,11 @@ export const calculateNewVolumes = (divisionProducts, assumptions, quarters = 40
       }
       
       if (volumeResults && productType) {
+        console.log(`  ✅ Calculated volumes for ${productKey} (${productConfig.name}):`, {
+          type: productType,
+          totalVolume: volumeResults.metrics.totalVolume,
+          firstQuarter: volumeResults.quarterlyVolumes[0]
+        });
         
         // Store product-level detail
         results.byProduct[productKey] = volumeResults;
@@ -129,6 +139,12 @@ export const calculateNewVolumes = (divisionProducts, assumptions, quarters = 40
   });
   
   results.metrics.averageQuarterlyVolume = totalQuarterlyVolume / quarters;
+  
+  console.log('📊 NewVolumes - Final results:', {
+    productKeys: Object.keys(results.byProduct),
+    totalVolumes10Y: results.metrics.totalVolumes10Y,
+    hasVolumes: results.metrics.totalVolumes10Y > 0
+  });
   
   return results;
 };

@@ -122,6 +122,9 @@ export const BalanceSheetOrchestrator = {
         totalAssetsResults
       ),
       
+      // New volumes data (needed for commission income calculation)
+      newVolumes: totalAssetsResults.newVolumes,
+      
       // Detailed components
       details: {
         totalAssetsNBV: totalAssetsResults,

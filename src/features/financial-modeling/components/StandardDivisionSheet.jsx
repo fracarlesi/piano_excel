@@ -39,6 +39,13 @@ const StandardDivisionSheet = ({
   // Get P&L table data for products in this division (including NPL)
   const allInterestIncomeData = results.productPnLTableData?.interestIncome || {};
   const allInterestExpenseData = results.productPnLTableData?.interestExpense || {};
+  const allCommissionIncomeData = results.productPnLTableData?.commissionIncome || {};
+  
+  console.log('🔍 StandardDivisionSheet - Commission Income Data:', {
+    division: divisionKey,
+    hasCommissionData: Object.keys(allCommissionIncomeData).length > 0,
+    commissionProducts: Object.keys(allCommissionIncomeData)
+  });
   
   const productPnLData = Object.fromEntries(
     Object.entries(allInterestIncomeData).filter(([key]) => {
@@ -62,6 +69,37 @@ const StandardDivisionSheet = ({
       productPnLData[productKey].quarterly.interestExpenseTotal = expenseData.quarterlyFTPTotal || Array(40).fill(0);
       productPnLData[productKey].quarterly.interestExpenseNPL = expenseData.quarterlyFTPNPL || Array(40).fill(0);
       productPnLData[productKey].ftpRate = expenseData.ftpRate || 0;
+    }
+  });
+  
+  // Merge commission income data into product P&L data
+  Object.entries(allCommissionIncomeData).forEach(([key, commissionData]) => {
+    if (key.startsWith(divisionKey)) {
+      // Find if this product already exists in productPnLData
+      let targetKey = key;
+      if (!productPnLData[targetKey]) {
+        // For commission income, we need to match with interest income products
+        // Look for a matching product in the existing productPnLData
+        const matchingKey = Object.keys(productPnLData).find(k => k === key || k === `${key}_NPL`);
+        if (matchingKey) {
+          targetKey = matchingKey;
+        } else {
+          // Create new entry if product doesn't exist
+          productPnLData[key] = {
+            name: key,
+            quarterly: {}
+          };
+        }
+      }
+      
+      console.log(`  💰 Adding commission data for ${key} → ${targetKey}`, {
+        quarterlyData: commissionData?.slice(0, 4),
+        hasData: Array.isArray(commissionData)
+      });
+      
+      // Add commission income quarterly data
+      productPnLData[targetKey].quarterly = productPnLData[targetKey].quarterly || {};
+      productPnLData[targetKey].quarterly.commissionIncome = commissionData || Array(40).fill(0);
     }
   });
   

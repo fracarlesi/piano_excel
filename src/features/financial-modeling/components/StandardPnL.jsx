@@ -22,7 +22,10 @@ const StandardPnL = ({
     divisionName,
     productResultsKeys: Object.keys(productResults || {}),
     hasDivisionTotals: !!divisionResults.pnl?.divisionInterestIncomeTotals,
-    divisionTotals: divisionResults.pnl?.divisionInterestIncomeTotals
+    divisionTotals: divisionResults.pnl?.divisionInterestIncomeTotals,
+    commissionIncome: divisionResults.pnl?.commissionIncome?.slice(0, 3),
+    hasProductCommissions: Object.values(productResults || {}).some(p => p.commissionIncome),
+    sampleProduct: Object.entries(productResults || {})[0]
   });
   
   // DEBUG: Check performing vs NPL products
@@ -540,10 +543,28 @@ const StandardPnL = ({
     // ========== COMMISSION INCOME SECTION ==========
     {
       label: 'Commission Income (CI)',
-      data: divisionResults.pnl.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0],
+      data: (() => {
+        const totalCommissionIncome = Array(40).fill(0);
+        Object.entries(productResults).forEach(([key, product]) => {
+          const productCommissionIncome = product.quarterly?.commissionIncome ?? Array(40).fill(0);
+          productCommissionIncome.forEach((val, i) => {
+            totalCommissionIncome[i] += val;
+          });
+        });
+        return totalCommissionIncome;
+      })(),
       decimals: 2,
       isHeader: true,
-      formula: (divisionResults.pnl.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
+      formula: (() => {
+        const totalCommissionIncome = Array(40).fill(0);
+        Object.entries(productResults).forEach(([key, product]) => {
+          const productCommissionIncome = product.quarterly?.commissionIncome ?? Array(40).fill(0);
+          productCommissionIncome.forEach((val, i) => {
+            totalCommissionIncome[i] += val;
+          });
+        });
+        return totalCommissionIncome;
+      })().map((val, i) => 
         createAggregateFormula(
           i,
           'Commission Income',
@@ -552,7 +573,7 @@ const StandardPnL = ({
               assumptions.products[k].name === product.name
             );
             const originalProduct = productKey ? assumptions.products[productKey] : {};
-            const commissionValue = (product.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0;
+            const commissionValue = (product.quarterly?.commissionIncome ?? Array(40).fill(0))[i] ?? 0;
             const newBusiness = (product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0;
             
             return {
@@ -566,9 +587,9 @@ const StandardPnL = ({
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: product.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0],
+        data: product.quarterly?.commissionIncome ?? Array(40).fill(0),
         decimals: 2,
-        formula: (product.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+        formula: (product.quarterly?.commissionIncome ?? Array(40).fill(0)).map((val, i) => {
           const productKey = Object.keys(assumptions.products ?? {}).find(k => 
             assumptions.products[k].name === product.name
           );
@@ -647,7 +668,7 @@ const StandardPnL = ({
           const baseProduct = assumptions.products.digitalRetailCustomer;
           
           return createProductFormula(i, product, 'commissionExpense', {
-            commissionIncome: (product.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
+            commissionIncome: (product.quarterly?.commissionIncome ?? Array(40).fill(0))[i] ?? 0,
             expenseRate: assumptions.commissionExpenseRate ?? 0,
             // CAC specific values
             isCac: isCacExpense,
@@ -681,12 +702,12 @@ const StandardPnL = ({
       // Add product NCI breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: (product.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((income, i) => 
-          income + (product.commissionExpense ?? [0,0,0,0,0,0,0,0,0,0])[i]
+        data: (product.quarterly?.commissionIncome ?? Array(40).fill(0)).map((income, i) => 
+          income + (product.quarterly?.commissionExpense ?? Array(40).fill(0))[i]
         ),
         decimals: 2,
-        formula: (product.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
-          const expense = (product.commissionExpense ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0;
+        formula: (product.quarterly?.commissionIncome ?? Array(40).fill(0)).map((income, i) => {
+          const expense = (product.quarterly?.commissionExpense ?? Array(40).fill(0))[i] ?? 0;
           const nci = income + expense;
           
           return createFormula(

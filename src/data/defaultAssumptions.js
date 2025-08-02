@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '13.30', // Fixed FTP bonis display - now correctly showing only performing FTP using quarterlyFTPBonis field
+  version: '13.38', // Fixed commission income total row to sum quarterly data from underlying products
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
