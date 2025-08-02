@@ -294,7 +294,8 @@ export const PnLOrchestrator = {
       // Update division results with FTP
       Object.entries(creditFTPResults.byDivision || {}).forEach(([divKey, divFTP]) => {
         if (byDivision[divKey]) {
-          byDivision[divKey][quarter] = divFTP[quarter] || 0;
+          // divFTP is an object with {total, bonis, npl} arrays
+          byDivision[divKey][quarter] = divFTP.total?.[quarter] || 0;
         }
       });
     }
@@ -304,7 +305,13 @@ export const PnLOrchestrator = {
       productDetails = creditFTPResults.productDetails;
     }
     
-    return { consolidated, byDivision, productDetails };
+    return { 
+      consolidated, 
+      byDivision, 
+      productDetails,
+      // Include raw results for detailed FTP breakdown
+      rawResults: creditFTPResults.rawResults
+    };
   },
   
   /**
@@ -524,7 +531,12 @@ export const PnLOrchestrator = {
         },
         
         // Add division totals for product details
-        divisionInterestIncomeTotals: divisionTotals
+        divisionInterestIncomeTotals: divisionTotals,
+        
+        // Add credit interest expense details for FTP breakdown
+        creditInterestExpense: {
+          rawResults: interestExpense.rawResults?.byDivision?.[divKey] || null
+        }
       };
     });
     

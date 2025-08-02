@@ -6,6 +6,7 @@
  */
 
 import { orchestrateFTPCalculation, formatFTPForPnL } from './microservices/InterestExpenseOrchestrator.js';
+import { orchestrateFTPCalculationSeparated, formatFTPForPnLSeparated } from './microservices/InterestExpenseOrchestratorSeparated.js';
 
 /**
  * Calcola gli interessi passivi FTP per i prodotti di credito
@@ -46,11 +47,11 @@ export const calculateCreditInterestExpense = (creditResults, assumptions) => {
     }
   }
   
-  // Use orchestrator to calculate FTP with new microservices
-  const ftpResults = orchestrateFTPCalculation(creditResults, assumptions);
+  // Use orchestrator to calculate FTP with new microservices (separated version)
+  const ftpResults = orchestrateFTPCalculationSeparated(creditResults, assumptions);
   
-  // Format results for P&L display
-  const formattedResults = formatFTPForPnL(ftpResults);
+  // Format results for P&L display (separated version)
+  const formattedResults = formatFTPForPnLSeparated(ftpResults);
   
   console.log('💸 Credit Interest Expense - Complete');
   console.log(`  Total FTP expense Y1: €${Math.abs(formattedResults.consolidated[0]).toFixed(2)}M`);

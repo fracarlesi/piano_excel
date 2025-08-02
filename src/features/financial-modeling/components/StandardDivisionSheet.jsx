@@ -57,8 +57,10 @@ const StandardDivisionSheet = ({
     
     if (productKey.startsWith(divisionKey) && productPnLData[productKey]) {
       productPnLData[productKey].quarterly = productPnLData[productKey].quarterly || {};
-      // Use quarterly FTP data directly
-      productPnLData[productKey].quarterly.interestExpense = expenseData.quarterlyFTP || Array(40).fill(0);
+      // Use quarterly FTP data directly - for bonis section we need quarterlyFTPBonis
+      productPnLData[productKey].quarterly.interestExpense = expenseData.quarterlyFTPBonis || Array(40).fill(0);
+      productPnLData[productKey].quarterly.interestExpenseTotal = expenseData.quarterlyFTPTotal || Array(40).fill(0);
+      productPnLData[productKey].quarterly.interestExpenseNPL = expenseData.quarterlyFTPNPL || Array(40).fill(0);
       productPnLData[productKey].ftpRate = expenseData.ftpRate || 0;
     }
   });

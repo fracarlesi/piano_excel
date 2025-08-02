@@ -247,8 +247,15 @@ const StandardPnL = ({
     {
       label: 'FTP',
       data: (() => {
-        // Calculate FTP total as sum of product FTP values
+        // Calculate FTP total including both Bonis and NPL
         const ftpTotal = Array(40).fill(0);
+        
+        // Get FTP from divisionResults if available (from separated calculator)
+        if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotal) {
+          return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotal;
+        }
+        
+        // Fallback: calculate from products
         Object.entries(productResults)
           .filter(([key, product]) => !key.includes('_NPL'))
           .forEach(([key, product]) => {
@@ -264,26 +271,66 @@ const StandardPnL = ({
       formula: (() => {
         // Calculate FTP total for formula display
         const ftpTotal = Array(40).fill(0);
-        Object.entries(productResults)
-          .filter(([key, product]) => !key.includes('_NPL'))
-          .forEach(([key, product]) => {
-            const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
-            productFTP.forEach((val, i) => {
-              ftpTotal[i] += val;
-            });
+        Object.entries(productResults).forEach(([key, product]) => {
+          const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+          productFTP.forEach((val, i) => {
+            ftpTotal[i] += val;
           });
+        });
         return ftpTotal.map((val, i) => createFormula(i,
-          'Sum of all product FTP values',
+          'Total FTP (Bonis + NPL)',
           [
             year => `FTP Rate: ${((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)).toFixed(2)}% (EURIBOR ${(assumptions.euribor ?? 0).toFixed(1)}% + Spread ${(assumptions.ftpSpread ?? 0).toFixed(1)}%)`,
-            year => `FTP Cost: ${formatNumber(val, 2)} €M`
+            year => `Total FTP Cost: ${formatNumber(val, 2)} €M`
           ]
         ));
       })(),
-      // Add product breakdown as subRows (exclude NPL products from FTP)
-      subRows: showProductDetail ? Object.entries(productResults)
-        .filter(([key, product]) => !key.includes('_NPL'))
-        .map(([key, product], index) => ({
+      // Add breakdown for Bonis and NPL
+      subRows: [
+        // FTP on Bonis
+        {
+          label: 'o/w FTP on Performing Assets (Bonis)',
+          data: (() => {
+            // Get Bonis FTP from divisionResults if available
+            if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalBonis) {
+              return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotalBonis;
+            }
+            
+            // Fallback: calculate from performing products only
+            const ftpBonis = Array(40).fill(0);
+            Object.entries(productResults)
+              .filter(([key, product]) => !key.includes('_NPL'))
+              .forEach(([key, product]) => {
+                const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+                productFTP.forEach((val, i) => {
+                  ftpBonis[i] += val;
+                });
+              });
+            return ftpBonis;
+          })(),
+          decimals: 2,
+          isSecondarySubTotal: true,
+          formula: (() => {
+            const ftpBonis = Array(40).fill(0);
+            Object.entries(productResults)
+              .filter(([key, product]) => !key.includes('_NPL'))
+              .forEach(([key, product]) => {
+                const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+                productFTP.forEach((val, i) => {
+                  ftpBonis[i] += val;
+                });
+              });
+            return ftpBonis.map((val, i) => createFormula(i,
+              'FTP on Performing Assets',
+              [
+                year => `FTP Rate: ${((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)).toFixed(2)}%`,
+                year => `Bonis FTP Cost: ${formatNumber(val, 2)} €M`
+              ]
+            ));
+          })(),
+          subRows: showProductDetail ? Object.entries(productResults)
+            .filter(([key, product]) => !key.includes('_NPL'))
+            .map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.quarterly?.interestExpense ?? Array(40).fill(0),
         decimals: 2,
@@ -309,58 +356,162 @@ const StandardPnL = ({
             }
           }
           
-          return createProductFormula(i, product, 'interestExpense', {
-            avgAssets: (product.averagePerformingAssets ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
-            depositStock: isDigitalProduct ? (product.depositStock ?? [0,0,0,0,0,0,0,0,0,0])[i] : 0,
-            interestRate: product.assumptions?.interestRate ?? 0,
-            depositRate: depositRate,
-            ftpRate: ((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)),
-            euribor: assumptions.euribor ?? 0,
-            ftpSpread: assumptions.ftpSpread ?? 0,
-            result: val
-          });
-        })
-      })) : []
+                return createProductFormula(i, product, 'interestExpense', {
+                  avgAssets: (product.averagePerformingAssets ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
+                  depositStock: isDigitalProduct ? (product.depositStock ?? [0,0,0,0,0,0,0,0,0,0])[i] : 0,
+                  interestRate: product.assumptions?.interestRate ?? 0,
+                  depositRate: depositRate,
+                  ftpRate: ((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)),
+                  euribor: assumptions.euribor ?? 0,
+                  ftpSpread: assumptions.ftpSpread ?? 0,
+                  result: val
+                });
+              })
+            })) : []
+        },
+        // FTP on NPL
+        {
+          label: 'o/w FTP on Non-Performing Loans (NPL)',
+          data: (() => {
+            // Get NPL FTP from divisionResults if available
+            if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalNPL) {
+              return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotalNPL;
+            }
+            
+            // Fallback: For now return zeros as NPL FTP is calculated in the total
+            return Array(40).fill(0);
+          })(),
+          decimals: 2,
+          isSecondarySubTotal: true,
+          formula: (() => {
+            const nplFTP = divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalNPL || Array(40).fill(0);
+            return nplFTP.map((val, i) => createFormula(i,
+              'FTP on NPL Stock',
+              [
+                year => `FTP Rate: ${((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)).toFixed(2)}%`,
+                year => `NPL FTP Cost: ${formatNumber(val, 2)} €M`
+              ]
+            ));
+          })(),
+          subRows: showProductDetail && divisionResults.pnl?.creditInterestExpense?.rawResults?.byProduct ? 
+            Object.entries(divisionResults.pnl.creditInterestExpense.rawResults.byProduct)
+              .filter(([key, data]) => data.quarterlyFTPNPL?.some(v => v !== 0))
+              .map(([key, data]) => ({
+                label: `o/w ${data.name} NPL`,
+                data: data.quarterlyFTPNPL || Array(40).fill(0),
+                decimals: 2,
+                formula: (data.quarterlyFTPNPL || Array(40).fill(0)).map((val, i) => {
+                  const details = data.quarterlyDetails?.[i];
+                  return createFormula(i,
+                    'FTP on NPL Stock',
+                    [
+                      year => `NPL Stock: ${formatNumber(details?.nplAssets || 0, 2)} €M`,
+                      year => `FTP Rate: ${((details?.ftpRate || 0) + (assumptions.euribor ?? 0)).toFixed(2)}%`,
+                      year => `NPL FTP: ${formatNumber(val, 2)} €M`
+                    ]
+                  );
+                })
+              })) : []
+        }
+      ]
     },
 
     // ========== NET INTEREST INCOME ==========
     {
       label: 'Net Interest Income (NII)',
-      data: netInterestIncome,
+      data: (() => {
+        // Calculate NII as sum of Interest Income (displayed) + FTP (displayed)
+        const niiData = Array(40).fill(0);
+        
+        // Add Interest Income data
+        interestIncomeData.forEach((income, i) => {
+          niiData[i] += income;
+        });
+        
+        // Add FTP data - Use the total FTP that includes both Bonis and NPL
+        const ftpData = (() => {
+          // First try to get FTP from divisionResults (includes both Bonis and NPL)
+          if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotal) {
+            return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotal;
+          }
+          
+          // Fallback: calculate total FTP from all products (performing + NPL)
+          const ftpTotal = Array(40).fill(0);
+          Object.entries(productResults).forEach(([key, product]) => {
+            const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+            productFTP.forEach((val, i) => {
+              ftpTotal[i] += val;
+            });
+          });
+          return ftpTotal;
+        })();
+        
+        ftpData.forEach((ftp, i) => {
+          niiData[i] += ftp;
+        });
+        
+        return niiData;
+      })(),
       decimals: 2,
       isSubTotal: true,
-      formula: netInterestIncome.map((val, i) => createFormula(
-        i,
-        'Interest Income - Interest Expenses',
-        [
-          {
-            name: 'Interest Income',
-            value: (divisionResults.pnl.interestIncome ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
-            unit: '€M',
-            calculation: 'Sum of all product interest income'
-          },
-          {
-            name: 'Interest Expenses',
-            value: (divisionResults.pnl.interestExpenses ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
-            unit: '€M',
-            calculation: 'Sum of all product funding costs'
+      formula: (() => {
+        // Use the same FTP data as displayed above
+        const ftpData = (() => {
+          // First try to get FTP from divisionResults (includes both Bonis and NPL)
+          if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotal) {
+            return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotal;
           }
-        ],
-        year => {
-          const income = (divisionResults.pnl.interestIncome ?? [0,0,0,0,0,0,0,0,0,0])[year] ?? 0;
-          const expenses = (divisionResults.pnl.interestExpenses ?? [0,0,0,0,0,0,0,0,0,0])[year] ?? 0;
-          return `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expenses), 2)}) = ${formatNumber(val, 2)} €M`;
-        }
-      )),
+          
+          // Fallback: calculate total FTP from all products (performing + NPL)
+          const ftpTotal = Array(40).fill(0);
+          Object.entries(productResults).forEach(([key, product]) => {
+            const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+            productFTP.forEach((val, i) => {
+              ftpTotal[i] += val;
+            });
+          });
+          return ftpTotal;
+        })();
+        
+        // Calculate NII for formula
+        const niiData = Array(40).fill(0);
+        interestIncomeData.forEach((income, i) => {
+          niiData[i] = income + ftpData[i];
+        });
+        
+        return niiData.map((val, i) => createFormula(
+          i,
+          'Interest Income + FTP',
+          [
+            {
+              name: 'Interest Income',
+              value: interestIncomeData[i] ?? 0,
+              unit: '€M',
+              calculation: 'Total interest income (performing + NPL)'
+            },
+            {
+              name: 'FTP',
+              value: ftpData[i] ?? 0,
+              unit: '€M',
+              calculation: 'Funds Transfer Pricing cost (Bonis + NPL)'
+            }
+          ],
+          quarter => {
+            const income = interestIncomeData[quarter] ?? 0;
+            const ftp = ftpData[quarter] ?? 0;
+            return `${formatNumber(income, 2)} + (${formatNumber(ftp, 2)}) = ${formatNumber(val, 2)} €M`;
+          }
+        ));
+      })(),
       // Add product NII breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: (product.interestIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((income, i) => 
-          income + (product.interestExpense ?? [0,0,0,0,0,0,0,0,0,0])[i]
+        data: (product.quarterly?.interestIncome ?? Array(40).fill(0)).map((income, i) => 
+          income + (product.quarterly?.interestExpense ?? Array(40).fill(0))[i]
         ),
         decimals: 2,
-        formula: (product.interestIncome ?? [0,0,0,0,0,0,0,0,0,0]).map((income, i) => {
-          const expense = (product.interestExpense ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0;
+        formula: (product.quarterly?.interestIncome ?? Array(40).fill(0)).map((income, i) => {
+          const expense = (product.quarterly?.interestExpense ?? Array(40).fill(0))[i] ?? 0;
           const nii = income + expense;
           
           return createFormula(

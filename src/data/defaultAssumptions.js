@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '13.23', // fix: Interest income and FTP expense now calculated on previous quarter balance (loans disbursed at quarter end)
+  version: '13.30', // Fixed FTP bonis display - now correctly showing only performing FTP using quarterlyFTPBonis field
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
