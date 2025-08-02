@@ -40,6 +40,7 @@ const StandardDivisionSheet = ({
   const allInterestIncomeData = results.productPnLTableData?.interestIncome || {};
   const allInterestExpenseData = results.productPnLTableData?.interestExpense || {};
   const allCommissionIncomeData = results.productPnLTableData?.commissionIncome || {};
+  const allCommissionExpenseData = results.productPnLTableData?.commissionExpense || {};
   
   console.log('🔍 StandardDivisionSheet - Commission Income Data:', {
     division: divisionKey,
@@ -100,6 +101,36 @@ const StandardDivisionSheet = ({
       // Add commission income quarterly data
       productPnLData[targetKey].quarterly = productPnLData[targetKey].quarterly || {};
       productPnLData[targetKey].quarterly.commissionIncome = commissionData || Array(40).fill(0);
+    }
+  });
+  
+  // Merge commission expense data into product P&L data
+  Object.entries(allCommissionExpenseData).forEach(([key, commissionExpenseData]) => {
+    if (key.startsWith(divisionKey)) {
+      // Find if this product already exists in productPnLData
+      let targetKey = key;
+      if (!productPnLData[targetKey]) {
+        // For commission expense, we need to match with existing products
+        const matchingKey = Object.keys(productPnLData).find(k => k === key || k === `${key}_NPL`);
+        if (matchingKey) {
+          targetKey = matchingKey;
+        } else {
+          // Create new entry if product doesn't exist
+          productPnLData[key] = {
+            name: key,
+            quarterly: {}
+          };
+        }
+      }
+      
+      console.log(`  💸 Adding commission expense data for ${key} → ${targetKey}`, {
+        quarterlyData: commissionExpenseData?.slice(0, 4),
+        hasData: Array.isArray(commissionExpenseData)
+      });
+      
+      // Add commission expense quarterly data
+      productPnLData[targetKey].quarterly = productPnLData[targetKey].quarterly || {};
+      productPnLData[targetKey].quarterly.commissionExpense = commissionExpenseData || Array(40).fill(0);
     }
   });
   

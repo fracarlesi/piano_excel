@@ -64,27 +64,67 @@ const StandardPnL = ({
   const interestIncomeNonPerformingData = hasDivisionTotals
     ? divisionResults.divisionInterestIncomeTotals.nplSubtotal
     : (divisionResults.pnl.quarterly?.interestIncomeNonPerforming ?? Array(40).fill(0));
-  const interestExpensesData = divisionResults.pnl.quarterly?.interestExpenses ?? Array(40).fill(0);
-  const commissionIncomeData = divisionResults.pnl.quarterly?.commissionIncome ?? Array(40).fill(0);
-  const commissionExpensesData = divisionResults.pnl.quarterly?.commissionExpenses ?? Array(40).fill(0);
   const llpData = divisionResults.pnl.quarterly?.totalLLP ?? Array(40).fill(0);
   const personnelCostsData = divisionResults.pnl.quarterly?.personnelCosts ?? Array(40).fill(0);
   const otherOpexData = divisionResults.pnl.quarterly?.otherOpex ?? Array(40).fill(0);
   const totalOpexData = divisionResults.pnl.quarterly?.totalOpex ?? Array(40).fill(0);
 
   // Calculate derived values
-  const netInterestIncome = interestIncomeData.map((income, i) => {
-    const expenses = interestExpensesData[i] ?? 0;
-    return income + expenses; // expenses are negative
-  });
-
-  const netCommissionIncome = commissionIncomeData.map((income, i) => {
-    const expenses = commissionExpensesData[i] ?? 0;
-    return income + expenses; // expenses are negative
-  });
+  const netCommissionIncome = (() => {
+    // Calculate NCI from product results to ensure consistency
+    const totalCommissionIncome = Array(40).fill(0);
+    const totalCommissionExpense = Array(40).fill(0);
+    
+    Object.entries(productResults).forEach(([key, product]) => {
+      const productCommissionIncome = product.quarterly?.commissionIncome ?? Array(40).fill(0);
+      const productCommissionExpense = product.quarterly?.commissionExpense ?? Array(40).fill(0);
+      
+      productCommissionIncome.forEach((val, i) => {
+        totalCommissionIncome[i] += val;
+      });
+      
+      productCommissionExpense.forEach((val, i) => {
+        totalCommissionExpense[i] += val;
+      });
+    });
+    
+    // Calculate NCI for each quarter
+    return totalCommissionIncome.map((income, i) => income + totalCommissionExpense[i]);
+  })();
 
   // Total revenues = NII + NCI (simplified, removed other income and trading income)
-  const totalRevenues = netInterestIncome.map((nii, i) => nii + netCommissionIncome[i]);
+  // Calculate NII from displayed values (Interest Income + FTP)
+  const niiDisplayed = (() => {
+    const niiData = Array(40).fill(0);
+    
+    // Add Interest Income data
+    interestIncomeData.forEach((income, i) => {
+      niiData[i] += income;
+    });
+    
+    // Add FTP data (already negative)
+    const ftpData = (() => {
+      if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotal) {
+        return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotal;
+      }
+      const ftpTotal = Array(40).fill(0);
+      Object.entries(productResults).forEach(([key, product]) => {
+        const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+        productFTP.forEach((val, i) => {
+          ftpTotal[i] += val;
+        });
+      });
+      return ftpTotal;
+    })();
+    
+    ftpData.forEach((ftp, i) => {
+      niiData[i] += ftp;
+    });
+    
+    return niiData;
+  })();
+  
+  const totalRevenues = niiDisplayed.map((nii, i) => nii + netCommissionIncome[i]);
 
   // Calculate net revenues (risk-adjusted)
   const netRevenuesRiskAdjusted = totalRevenues.map((rev, i) => rev + (llpData[i] || 0));
@@ -626,40 +666,54 @@ const StandardPnL = ({
     // ========== COMMISSION EXPENSES SECTION ==========
     {
       label: 'Commission Expenses (CE)',
-      data: divisionResults.pnl.commissionExpenses ?? [0,0,0,0,0,0,0,0,0,0],
+      data: (() => {
+        const totalCommissionExpense = Array(40).fill(0);
+        Object.entries(productResults).forEach(([key, product]) => {
+          const productCommissionExpense = product.quarterly?.commissionExpense ?? Array(40).fill(0);
+          productCommissionExpense.forEach((val, i) => {
+            totalCommissionExpense[i] += val;
+          });
+        });
+        return totalCommissionExpense;
+      })(),
       decimals: 2,
       isHeader: true,
-      formula: (divisionResults.pnl.commissionExpenses ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => 
-        createFormula(
+      formula: (() => {
+        const totalCommissionExpense = Array(40).fill(0);
+        Object.entries(productResults).forEach(([key, product]) => {
+          const productCommissionExpense = product.quarterly?.commissionExpense ?? Array(40).fill(0);
+          productCommissionExpense.forEach((val, i) => {
+            totalCommissionExpense[i] += val;
+          });
+        });
+        return totalCommissionExpense;
+      })().map((val, i) => 
+        createAggregateFormula(
           i,
-          'Commission Income × Expense Rate',
-          [
-            {
-              name: 'Commission Income',
-              value: (divisionResults.pnl.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
-              unit: '€M',
-              calculation: 'Total commission income'
-            },
-            {
-              name: 'Commission Expense Rate',
-              value: assumptions.commissionExpenseRate ?? 0,
-              unit: '%',
-              calculation: 'General commission expense rate'
-            }
-          ],
-          year => {
-            const income = (divisionResults.pnl.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0])[year] ?? 0;
-            const rate = assumptions.commissionExpenseRate ?? 0;
-            return `${formatNumber(income, 2)} × ${formatNumber(rate, 2)}% = ${formatNumber(Math.abs(val), 2)} €M (expense)`;
-          }
+          'Commission Expense',
+          Object.entries(productResults).map(([key, product]) => {
+            const productKey = Object.keys(assumptions.products ?? {}).find(k => 
+              assumptions.products[k].name === product.name
+            );
+            const originalProduct = productKey ? assumptions.products[productKey] : {};
+            const expenseValue = (product.quarterly?.commissionExpense ?? Array(40).fill(0))[i] ?? 0;
+            const newBusiness = (product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0;
+            const commissionExpenseRate = originalProduct.commissionExpenseRate || 0;
+            
+            return {
+              name: product.name,
+              value: expenseValue,
+              formula: expenseValue < 0 ? `-${formatNumber(newBusiness, 2)} × ${commissionExpenseRate.toFixed(2)}%` : 'No expense'
+            };
+          })
         )
       ),
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
-        data: product.commissionExpense ?? [0,0,0,0,0,0,0,0,0,0],
+        data: product.quarterly?.commissionExpense ?? Array(40).fill(0),
         decimals: 2,
-        formula: (product.commissionExpense ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
+        formula: (product.quarterly?.commissionExpense ?? Array(40).fill(0)).map((val, i) => {
           // Check if this is a CAC expense for digital products
           const isBaseAccount = product.name && product.name.includes('Conto Corrente Base');
           const isCacExpense = isBaseAccount && val < 0; // CAC is negative
@@ -667,9 +721,16 @@ const StandardPnL = ({
           // Get base assumptions for digital products
           const baseProduct = assumptions.products.digitalRetailCustomer;
           
+          // Get product config to access commission expense rate
+          const productKey = Object.keys(assumptions.products ?? {}).find(k => 
+            assumptions.products[k].name === product.name
+          );
+          const productConfig = productKey ? assumptions.products[productKey] : {};
+          const commissionExpenseRate = productConfig.commissionExpenseRate || 0;
+          
           return createProductFormula(i, product, 'commissionExpense', {
-            commissionIncome: (product.quarterly?.commissionIncome ?? Array(40).fill(0))[i] ?? 0,
-            expenseRate: assumptions.commissionExpenseRate ?? 0,
+            newVolume: (product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
+            expenseRate: commissionExpenseRate,
             // CAC specific values
             isCac: isCacExpense,
             newCustomers: isCacExpense ? ((product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[i] * 1000) : 0, // Convert from thousands
@@ -683,22 +744,63 @@ const StandardPnL = ({
     // ========== NET COMMISSION INCOME ==========
     {
       label: 'Net Commission Income (NCI)',
-      data: netCommissionIncome,
+      data: (() => {
+        // Calculate NCI as Commission Income + Commission Expenses (expenses are already negative)
+        const totalCommissionIncome = Array(40).fill(0);
+        const totalCommissionExpense = Array(40).fill(0);
+        
+        Object.entries(productResults).forEach(([key, product]) => {
+          const productCommissionIncome = product.quarterly?.commissionIncome ?? Array(40).fill(0);
+          const productCommissionExpense = product.quarterly?.commissionExpense ?? Array(40).fill(0);
+          
+          productCommissionIncome.forEach((val, i) => {
+            totalCommissionIncome[i] += val;
+          });
+          
+          productCommissionExpense.forEach((val, i) => {
+            totalCommissionExpense[i] += val;
+          });
+        });
+        
+        // Calculate NCI for each quarter
+        return totalCommissionIncome.map((income, i) => income + totalCommissionExpense[i]);
+      })(),
       decimals: 2,
       isSubTotal: true,
-      formula: netCommissionIncome.map((val, i) => createFormula(i,
-        'Commission Income - Commission Expenses',
-        [
-          year => `Commission Income: ${formatNumber((divisionResults.pnl.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0])[year], 2)} €M`,
-          year => `Commission Expenses: ${formatNumber((divisionResults.pnl.commissionExpenses ?? [0,0,0,0,0,0,0,0,0,0])[year], 2)} €M`,
-          year => `NCI: ${formatNumber(val, 2)} €M`
-        ],
-        year => {
-          const income = (divisionResults.pnl.commissionIncome ?? [0,0,0,0,0,0,0,0,0,0])[year] ?? 0;
-          const expenses = (divisionResults.pnl.commissionExpenses ?? [0,0,0,0,0,0,0,0,0,0])[year] ?? 0;
-          return `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expenses), 2)}) = ${formatNumber(val, 2)} €M`;
-        }
-      )),
+      formula: (() => {
+        // Recalculate totals for formula display
+        const totalCommissionIncome = Array(40).fill(0);
+        const totalCommissionExpense = Array(40).fill(0);
+        
+        Object.entries(productResults).forEach(([key, product]) => {
+          const productCommissionIncome = product.quarterly?.commissionIncome ?? Array(40).fill(0);
+          const productCommissionExpense = product.quarterly?.commissionExpense ?? Array(40).fill(0);
+          
+          productCommissionIncome.forEach((val, i) => {
+            totalCommissionIncome[i] += val;
+          });
+          
+          productCommissionExpense.forEach((val, i) => {
+            totalCommissionExpense[i] += val;
+          });
+        });
+        
+        const nciData = totalCommissionIncome.map((income, i) => income + totalCommissionExpense[i]);
+        
+        return nciData.map((val, i) => createFormula(i,
+          'Commission Income - Commission Expenses',
+          [
+            year => `Commission Income: ${formatNumber(totalCommissionIncome[year], 2)} €M`,
+            year => `Commission Expenses: ${formatNumber(totalCommissionExpense[year], 2)} €M`,
+            year => `NCI: ${formatNumber(val, 2)} €M`
+          ],
+          year => {
+            const income = totalCommissionIncome[year] ?? 0;
+            const expenses = totalCommissionExpense[year] ?? 0;
+            return `${formatNumber(income, 2)} - (${formatNumber(Math.abs(expenses), 2)}) = ${formatNumber(val, 2)} €M`;
+          }
+        ));
+      })(),
       // Add product NCI breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
@@ -743,11 +845,11 @@ const StandardPnL = ({
       formula: totalRevenues.map((val, i) => createFormula(i,
         'NII + NCI',
         [
-          year => `NII: ${formatNumber(netInterestIncome[year], 2)} €M`,
+          year => `NII: ${formatNumber(niiDisplayed[year], 2)} €M`,
           year => `NCI: ${formatNumber(netCommissionIncome[year], 2)} €M`,
           year => `Total: ${formatNumber(val, 2)} €M`
         ],
-        year => `${formatNumber(netInterestIncome[year], 2)} + ${formatNumber(netCommissionIncome[year], 2)} = ${formatNumber(val, 2)} €M`
+        year => `${formatNumber(niiDisplayed[year], 2)} + ${formatNumber(netCommissionIncome[year], 2)} = ${formatNumber(val, 2)} €M`
       ))
     },
 

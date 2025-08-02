@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '13.38', // Fixed commission income total row to sum quarterly data from underlying products
+  version: '13.44', // Fixed Total Revenues to correctly sum displayed NII and NCI values
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
@@ -7,8 +7,7 @@ export const defaultAssumptions = {
   quarterlyAllocation: [25, 25, 25, 25], // % di erogazioni per Q1, Q2, Q3, Q4
   hqAllocationY1: 2.5, 
   itCostsY1: 4, 
-  costGrowthRate: 10, 
-  commissionExpenseRate: 0.0,
+  costGrowthRate: 10,
   
   // Global Personnel Parameters
   personnel: {

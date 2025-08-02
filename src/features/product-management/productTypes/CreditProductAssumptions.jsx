@@ -57,6 +57,17 @@ const CreditProductAssumptions = ({
           />
           
           <EditableNumberField
+            label="Commissione Passiva (%)"
+            value={product.commissionExpenseRate || 0}
+            onChange={(value) => handleChange('commissionExpenseRate', value)}
+            editMode={editMode}
+            min={0}
+            max={10}
+            step={0.1}
+            tooltip="Commissione passiva pagata agli intermediari sui nuovi volumi"
+          />
+          
+          <EditableNumberField
             label="FTP Rate (%)"
             value={product.ftpRate || 1.5}
             onChange={(value) => handleChange('ftpRate', value)}
