@@ -2,30 +2,41 @@
  * Stock NBV Performing Calculator
  * 
  * Calcola lo Stock NBV dei soli crediti performing (non deteriorati)
- * Formula: Stock NBV Performing = Stock NBV Totale - GBV Defaulted Cumulativo
+ * Formula: Stock NBV Performing = Stock NBV Totale - Stock NPL
+ * Dove Stock NPL = Stock NPL precedente + Nuovi Default
+ * 
+ * IMPORTANTE: I recovery NON riducono lo stock NPL. I recovery sono solo flussi di cassa
+ * che riducono la perdita economica, ma i crediti NPL rimangono classificati come tali
+ * fino al loro completo ammortamento/write-off.
  */
 
 /**
  * Calcola Stock NBV Performing per singolo prodotto
  * @param {Array} totalStockNBV - Array trimestrale dello stock NBV totale
  * @param {Array} gbvDefaulted - Array trimestrale del GBV defaulted (nuovi default per periodo)
- * @param {Array} recoveries - Array trimestrale dei recovery su NPL (non utilizzato)
+ * @param {Array} recoveries - Array trimestrale dei recovery su NPL (NON UTILIZZATO - i recovery non fanno tornare performing i crediti)
  * @param {number} quarters - Numero di trimestri
  * @returns {Array} Stock NBV Performing trimestrali
  */
 export const calculateProductStockNBVPerforming = (totalStockNBV, gbvDefaulted, recoveries, quarters = 40) => {
   const stockNBVPerforming = new Array(quarters).fill(0);
-  let cumulativeDefaulted = 0;
+  let stockNPL = 0; // Stock NPL che si accumula (NON si riduce con i recovery)
   
   for (let q = 0; q < quarters; q++) {
     const totalNBV = totalStockNBV[q] || 0;
     const newDefaulted = gbvDefaulted[q] || 0;
+    // I recovery NON riducono lo stock NPL - sono solo flussi di cassa
+    // const quarterlyRecovery = recoveries[q] || 0;
     
-    // Accumula i default (una volta defaulted, rimane defaulted)
-    cumulativeDefaulted += newDefaulted;
+    // Aggiorna lo stock NPL:
+    // - Aumenta SOLO con i nuovi default
+    // - NON diminuisce con i recovery (i crediti rimangono NPL fino a completo ammortamento)
+    stockNPL = stockNPL + newDefaulted;
     
-    // Stock NBV Performing = Total Stock NBV - Cumulative GBV Defaulted
-    stockNBVPerforming[q] = Math.max(0, totalNBV - cumulativeDefaulted);
+    // Stock NBV Performing = Total Stock NBV - Stock NPL
+    // IMPORTANTE: Lo stock NPL non può superare lo stock totale
+    stockNPL = Math.min(stockNPL, totalNBV);
+    stockNBVPerforming[q] = Math.max(0, totalNBV - stockNPL);
   }
   
   return stockNBVPerforming;

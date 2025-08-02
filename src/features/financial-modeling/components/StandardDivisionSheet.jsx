@@ -41,11 +41,22 @@ const StandardDivisionSheet = ({
   const allInterestExpenseData = results.productPnLTableData?.interestExpense || {};
   const allCommissionIncomeData = results.productPnLTableData?.commissionIncome || {};
   const allCommissionExpenseData = results.productPnLTableData?.commissionExpense || {};
+  const allLoanLossProvisionsData = results.productPnLTableData?.loanLossProvisions || {};
   
   console.log('🔍 StandardDivisionSheet - Commission Income Data:', {
     division: divisionKey,
     hasCommissionData: Object.keys(allCommissionIncomeData).length > 0,
     commissionProducts: Object.keys(allCommissionIncomeData)
+  });
+  
+  // DEBUG: Check P&L structure
+  console.log('🔍 StandardDivisionSheet - P&L Data Structure:', {
+    hasResults: !!results,
+    hasPnL: !!results?.pnl,
+    hasProductTableData: !!results?.pnl?.productTableData,
+    hasLoanLossProvisions: !!results?.pnl?.productTableData?.loanLossProvisions,
+    llpProducts: Object.keys(results?.pnl?.productTableData?.loanLossProvisions || {}),
+    fullPnLStructure: results?.pnl
   });
   
   const productPnLData = Object.fromEntries(

@@ -21,11 +21,7 @@ import { calculateRecoveryTiming } from './RecoveryTimingCalculator.js';
  * @returns {Object} Risultati recovery completi
  */
 export const calculateRecoveryDefault = (divisions, assumptions, quarters = 40, totalAssetsResults = null) => {
-  console.log('🔍 Recovery Calculator Debug - Start');
-  console.log('  - Divisions:', Object.keys(divisions || {}));
-  console.log('  - Total Assets Results available:', !!totalAssetsResults);
-  console.log('  - GBV Defaulted available:', !!(totalAssetsResults?.gbvDefaulted));
-  console.log('  - GBV Defaulted byProduct keys:', Object.keys(totalAssetsResults?.gbvDefaulted?.byProduct || {}));
+  // Logging disabled
   
   const results = {
     // RIGA PRINCIPALE BALANCE SHEET

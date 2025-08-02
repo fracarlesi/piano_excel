@@ -174,15 +174,8 @@ const DivisionAssumptions = ({
                   <div className="mb-6">
                     <h4 className="text-sm font-medium mb-2">📊 Volumi (€M)</h4>
                     <VolumeInputGrid
-                      values={(product.volumeArray || []).slice(0, 5)} // Only first 5 years for editing
-                      onChange={(volumes) => {
-                        // Extend to 10 years for financial engine
-                        const extended = [...volumes];
-                        while (extended.length < 10) {
-                          extended.push(extended[extended.length - 1] || 0);
-                        }
-                        handleVolumeChange(productKey, extended);
-                      }}
+                      values={product.volumeArray || Array(10).fill(0)} // All 10 years editable
+                      onChange={(volumes) => handleVolumeChange(productKey, volumes)}
                     />
                   </div>
 

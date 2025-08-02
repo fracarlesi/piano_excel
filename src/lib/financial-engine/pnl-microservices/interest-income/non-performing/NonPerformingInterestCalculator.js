@@ -14,9 +14,7 @@
  * @returns {Object} Interessi attivi per crediti non-performing
  */
 export const calculateNonPerformingInterest = (nonPerformingAssets, assumptions, quarters = 40) => {
-  console.log('  💀 Non-Performing Interest Calculator - Start');
-  console.log('    - NPL data available:', !!nonPerformingAssets);
-  console.log('    - NPL byProduct keys:', Object.keys(nonPerformingAssets?.byProduct || {}));
+  // Logging disabled
   
   const results = {
     quarterly: {
@@ -51,14 +49,11 @@ export const calculateNonPerformingInterest = (nonPerformingAssets, assumptions,
     const productConfig = assumptions.products?.[productKey];
     
     if (!productConfig) {
-      console.error(`    ❌ No configuration found for NPL product: ${productKey}`);
+      // console.error(`    ❌ No configuration found for NPL product: ${productKey}`);
       return;
     }
     
-    console.log(`    Processing NPL: ${productKey} (${productConfig.name})`);
-    console.log(`      - Spread: ${productConfig.spread}%`);
-    console.log(`      - Euribor: ${assumptions.euribor}%`);
-    console.log(`      - Discount Rate used in NPV: ${productNPL.discountRate}%`);
+    // Logging disabled
     
     // Calculate quarterly interest on NPL
     const quarterlyInterest = calculateProductNPLInterest(
@@ -114,10 +109,7 @@ export const calculateNonPerformingInterest = (nonPerformingAssets, assumptions,
   results.metrics.totalInterestIncome = results.annual.total.reduce((sum, val) => sum + val, 0);
   results.metrics.averageRate = totalNPLStock > 0 ? (weightedRate / totalNPLStock) : 0;
   
-  console.log(`  💀 Non-Performing Interest - Complete`);
-  console.log(`    - Products processed: ${results.metrics.productCount}`);
-  console.log(`    - Total Y1 NPL interest: €${results.annual.total[0].toFixed(2)}M`);
-  console.log(`    - Average rate: ${results.metrics.averageRate.toFixed(2)}%`);
+  // Logging disabled
   
   return results;
 };
@@ -138,7 +130,7 @@ const calculateProductNPLInterest = (productNPL, productConfig, assumptions, qua
   const annualRate = getProductInterestRate(productConfig, assumptions) / 100;
   const quarterlyRate = annualRate / 4;
   
-  console.log(`      - NPL Interest Rate: ${(annualRate * 100).toFixed(2)}% (should match NPV discount rate)`);
+  // console.log(`      - NPL Interest Rate: ${(annualRate * 100).toFixed(2)}% (should match NPV discount rate)`);
   
   // Calculate quarterly interest
   let totalNPLStock = 0;
@@ -186,12 +178,7 @@ const calculateProductNPLInterest = (productNPL, productConfig, assumptions, qua
       
       // Log reconciliation for first few quarters
       if (q <= 4 && previousNPL > 0) {
-        console.log(`      - Q${q} Reconciliation:`);
-        console.log(`        Previous NPL: €${previousNPL.toFixed(2)}M`);
-        console.log(`        Interest: €${quarterly[q].toFixed(2)}M`);
-        console.log(`        Current NPL: €${currentNPL.toFixed(2)}M`);
-        console.log(`        Time Value: €${timeValueUnwinding.toFixed(2)}M`);
-        console.log(`        Match: ${reconciliation[q].isReconciled ? '✓' : '✗'}`);
+        // Logging disabled
       }
     }
   }

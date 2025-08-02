@@ -10,6 +10,9 @@ import { calculateInterestIncome } from './interest-income/index.js';
 import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
 import { calculateCommissionIncome } from './commission-income/commissionCalculator.js';
 import { calculateCommissionExpense } from './commission-expense/commissionExpenseCalculator.js';
+import { calculateCreditImpairment } from './llp-calculators/creditImpairmentCalculator.js';
+import { calculateECLMovements } from './llp-calculators/eclPnLCalculator.js';
+import { calculateTotalLLP } from './llp-calculators/totalLLPCalculator.js';
 import { 
   ALL_DIVISION_PREFIXES,
   getPersonnelKey
@@ -65,13 +68,7 @@ export const PnLOrchestrator = {
       40 // quarters
     );
     
-    console.log('🎯 PnL Orchestrator - Commission Results:', {
-      hasIncomeResults: !!commissionIncomeResults,
-      hasExpenseResults: !!commissionExpenseResults,
-      incomeAnnualTotal: commissionIncomeResults?.annual?.total?.slice(0, 3),
-      expenseAnnualTotal: commissionExpenseResults?.annual?.total?.slice(0, 3),
-      productCount: Object.keys(commissionIncomeResults?.byProduct || {}).length
-    });
+    // Logging disabled
     
     // Extract annual data for P&L
     const commissionIncome = {
@@ -155,7 +152,7 @@ export const PnLOrchestrator = {
         interestExpenses: interestExpense.consolidated,
         netInterestIncome: this.annualToQuarterly(netInterestIncome.consolidated),
         totalRevenues: this.annualToQuarterly(totalRevenues),
-        totalLLP: this.annualToQuarterly(loanLossProvisions.consolidated),
+        totalLLP: loanLossProvisions.quarterly || this.annualToQuarterly(loanLossProvisions.consolidated),
         netProfit: this.annualToQuarterly(netProfit),
         // Add personnel and opex quarterly data
         personnelCosts: this.annualToQuarterly(personnelCosts.grandTotal.costs),
@@ -187,7 +184,10 @@ export const PnLOrchestrator = {
         interestIncome: interestIncome.tableData || {},
         interestExpense: interestExpense.productDetails || {},
         commissionIncome: commissionIncomeResults.byProduct || {},
-        commissionExpense: commissionExpenseResults.byProduct || {}
+        commissionExpense: commissionExpenseResults.byProduct || {},
+        loanLossProvisions: loanLossProvisions.byProduct || {},
+        eclMovements: loanLossProvisions.eclMovements?.byProduct || {},
+        creditImpairment: loanLossProvisions.creditImpairment?.byProduct || {}
       },
       
       // Component details
@@ -245,12 +245,7 @@ export const PnLOrchestrator = {
     let productDetails = {};
     
     // FTP on credit assets (performing + NPL)
-    console.log('🔍 PnL Orchestrator - Balance Sheet Data for FTP:', {
-      hasProductResults: !!balanceSheetResults.productResults,
-      productResultsKeys: Object.keys(balanceSheetResults.productResults || {}),
-      sampleProduct: Object.keys(balanceSheetResults.productResults || {})[0],
-      sampleProductData: balanceSheetResults.productResults?.[Object.keys(balanceSheetResults.productResults || {})[0]]
-    });
+    // Logging disabled
     
     // Build credit data structure from balance sheet results and product results
     const creditDataForFTP = {
@@ -283,13 +278,7 @@ export const PnLOrchestrator = {
                        prodData.quarterly?.nonPerformingAssets || 
                        new Array(40).fill(0);
         
-        console.log(`    📊 Product ${prodKey} data:`, {
-          hasPerforming: performingData.some(v => v > 0),
-          hasNPL: nplData.some(v => v > 0),
-          performingQ0: performingData[0],
-          nplQ0: nplData[0],
-          totalQ0: performingData[0] + nplData[0]
-        });
+        // Logging disabled
         
         creditDataForFTP.byDivision[divKey].creditProducts[prodKey] = {
           performingAssets: performingData,
@@ -298,11 +287,7 @@ export const PnLOrchestrator = {
       }
     });
     
-    console.log('🔍 PnL Orchestrator - Credit data for FTP:', {
-      hasByDivision: !!creditDataForFTP.byDivision,
-      divisionKeys: Object.keys(creditDataForFTP.byDivision || {}),
-      sampleDivision: creditDataForFTP.byDivision?.re ? Object.keys(creditDataForFTP.byDivision.re) : []
-    });
+    // Logging disabled
     
     const creditFTPResults = calculateCreditInterestExpense(
       creditDataForFTP,
@@ -420,23 +405,79 @@ export const PnLOrchestrator = {
    * @private
    */
   calculateLLP(balanceSheetResults, assumptions, years) {
-    const consolidated = new Array(10).fill(0);
-    const byDivision = {};
+    // Get GBV Defaulted and Non-Performing Assets from balance sheet details
+    const gbvDefaultedResults = balanceSheetResults.details?.gbvDefaulted || 
+                               balanceSheetResults.gbvDefaulted;
+    const nonPerformingAssetsResults = balanceSheetResults.details?.nonPerformingAssets || 
+                                      balanceSheetResults.nonPerformingAssets;
     
-    // Simplified LLP based on new NPLs and performing assets
-    const avgPerformingAssets = this.calculateAverageAssets(
-      balanceSheetResults.quarterly.netPerformingAssets
+    // Check if we have the required data
+    if (!gbvDefaultedResults || !nonPerformingAssetsResults) {
+      // console.warn('⚠️ LLP Calculator: Missing required data (GBV Defaulted or Non-Performing Assets)');
+      // Return placeholder values
+      return {
+        consolidated: new Array(10).fill(0),
+        byDivision: {},
+        quarterly: new Array(40).fill(0),
+        byProduct: {},
+        metrics: {
+          totalLLP: 0,
+          totalECLMovement: 0,
+          totalCreditImpairment: 0,
+          eclPercentage: 0,
+          impairmentPercentage: 0
+        }
+      };
+    }
+    
+    // Get ECL provision data from balance sheet
+    const eclProvisionResults = balanceSheetResults.details?.eclProvision?.details || 
+                               balanceSheetResults.eclProvision?.details;
+    
+    // Calculate Credit Impairment (ex-LLPs)
+    const creditImpairmentResults = calculateCreditImpairment(
+      gbvDefaultedResults,
+      nonPerformingAssetsResults,
+      assumptions,
+      40 // quarters
     );
     
-    // Average danger rate across products
-    const avgDangerRate = 1.5 / 100; // 1.5%
+    // Calculate ECL Movements for P&L
+    const eclMovementResults = calculateECLMovements(
+      eclProvisionResults,
+      assumptions,
+      40 // quarters
+    );
     
-    avgPerformingAssets.forEach((avg, year) => {
-      consolidated[year] = -avg * avgDangerRate * 0.45; // 45% LGD
-    });
+    // Calculate Total LLP (ECL + Credit Impairment)
+    const totalLLPResults = calculateTotalLLP(
+      eclMovementResults,
+      creditImpairmentResults,
+      assumptions,
+      40 // quarters
+    );
     
-    return { consolidated, byDivision };
+    return {
+      consolidated: totalLLPResults.consolidated.annual,
+      byDivision: Object.entries(totalLLPResults.byDivision).reduce((acc, [divKey, divData]) => {
+        acc[divKey] = divData.annual;
+        return acc;
+      }, {}),
+      quarterly: totalLLPResults.consolidated.quarterly,
+      byProduct: totalLLPResults.byProduct,
+      
+      // Component breakdown
+      eclMovements: eclMovementResults,
+      creditImpairment: creditImpairmentResults,
+      
+      // Formatted data for UI
+      components: totalLLPResults.consolidated.components,
+      
+      // Metrics
+      metrics: totalLLPResults.metrics
+    };
   },
+  
   
   /**
    * Organize P&L by division
@@ -486,6 +527,18 @@ export const PnLOrchestrator = {
       // LLP
       const divisionLLP = llp.byDivision[divKey] || new Array(10).fill(0);
       
+      // Get LLP components for division (quarterly data)
+      const divisionLLPComponents = {
+        eclMovement: {
+          quarterly: llp.byDivision[divKey]?.components?.eclMovement?.quarterly || new Array(40).fill(0),
+          annual: llp.byDivision[divKey]?.components?.eclMovement?.annual || new Array(10).fill(0)
+        },
+        creditImpairment: {
+          quarterly: llp.byDivision[divKey]?.components?.creditImpairment?.quarterly || new Array(40).fill(0),
+          annual: llp.byDivision[divKey]?.components?.creditImpairment?.annual || new Array(10).fill(0)
+        }
+      };
+      
       // Pre-tax profit
       const preTaxProfit = totalRevenues.map((revenue, i) => 
         revenue + totalOpex[i] + divisionLLP[i]
@@ -518,6 +571,9 @@ export const PnLOrchestrator = {
         taxes,
         netProfit,
         
+        // LLP Components
+        components: divisionLLPComponents,
+        
         // Quarterly data
         quarterly: {
           interestIncome: divisionTotals?.total || interestIncome.quarterly?.byDivision?.[divKey] || this.annualToQuarterly(divisionInterestIncome),
@@ -531,7 +587,8 @@ export const PnLOrchestrator = {
           personnelCosts: this.annualToQuarterly(divisionPersonnel),
           otherOpex: this.annualToQuarterly(otherOpex),
           totalOpex: this.annualToQuarterly(totalOpex),
-          totalLLP: this.annualToQuarterly(divisionLLP),
+          totalLLP: llp.quarterly ? (llp.byDivision[divKey]?.quarterly || new Array(40).fill(0)) : this.annualToQuarterly(divisionLLP),
+          components: divisionLLPComponents,
           preTaxProfit: this.annualToQuarterly(preTaxProfit),
           taxes: this.annualToQuarterly(taxes),
           netProfit: this.annualToQuarterly(netProfit)

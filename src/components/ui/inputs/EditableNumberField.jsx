@@ -13,7 +13,8 @@ const EditableNumberField = ({
   tooltip,
   tooltipTitle,
   tooltipImpact,
-  tooltipFormula
+  tooltipFormula,
+  error = false
 }) => {
   const [inputValue, setInputValue] = useState((value ?? 0).toString());
   const [isFocused, setIsFocused] = useState(false);
@@ -71,7 +72,11 @@ const EditableNumberField = ({
           onFocus={handleFocus}
           onBlur={handleBlur}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            error 
+              ? 'border-red-500 bg-red-50 focus:ring-red-500' 
+              : 'border-gray-300 focus:ring-blue-500'
+          }`}
           disabled={disabled}
         />
         {isPercentage && (

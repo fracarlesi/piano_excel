@@ -73,19 +73,19 @@ const PersonnelAssumptions = ({
                     />
                   </td>
                   <td className="px-4 py-2 text-center text-gray-700">
-                    {(level.count * (level.ralPerHead || level.costPerHead || 0)).toFixed(0)}
+                    {(level.count * (level.ralPerHead || level.costPerHead || 0)).toFixed(1)}
                   </td>
                   <td className="px-4 py-2 text-center text-gray-700">
-                    {(level.count * (level.ralPerHead || level.costPerHead || 0) * companyTaxMultiplier).toFixed(0)}
+                    {(level.count * (level.ralPerHead || level.costPerHead || 0) * companyTaxMultiplier).toFixed(1)}
                   </td>
                 </tr>
               ))}
               <tr className="bg-gray-50 font-semibold">
                 <td className="px-4 py-2">Total</td>
                 <td className="px-4 py-2 text-center">{totalCount}</td>
-                <td className="px-4 py-2 text-center">{totalCount > 0 ? (totalRAL / totalCount).toFixed(0) : 0}</td>
-                <td className="px-4 py-2 text-center">{totalRAL.toFixed(0)}</td>
-                <td className="px-4 py-2 text-center">{totalCompanyCost.toFixed(0)}</td>
+                <td className="px-4 py-2 text-center">{totalCount > 0 ? (totalRAL / totalCount).toFixed(1) : 0}</td>
+                <td className="px-4 py-2 text-center">{totalRAL.toFixed(1)}</td>
+                <td className="px-4 py-2 text-center">{totalCompanyCost.toFixed(1)}</td>
               </tr>
             </tbody>
           </table>

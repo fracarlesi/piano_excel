@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '13.44', // Fixed Total Revenues to correctly sum displayed NII and NCI values
+  version: '13.83', // Fixed grace period calculation - was including one extra quarter in grace period
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

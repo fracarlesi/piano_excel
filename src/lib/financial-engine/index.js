@@ -74,7 +74,7 @@ export const calculateResults = (assumptions) => {
     };
     
   } catch (error) {
-    console.error('Error in financial calculation engine:', error);
+    // console.error('Error in financial calculation engine:', error);
     throw new Error(`Calculation failed: ${error.message}`);
   }
 };

@@ -131,6 +131,8 @@ export const BalanceSheetOrchestrator = {
         netPerformingAssets,
         gbvDefaulted: totalAssetsResults.gbvDefaulted,
         stockNBVPerforming: totalAssetsResults.stockNBVPerforming,
+        eclProvision: totalAssetsResults.eclProvision,
+        stockNBVPerformingPostECL: totalAssetsResults.stockNBVPerformingPostECL,
         recoveryOnDefaultedAssets: recoveryResults,
         nonPerformingAssets,
         customerDeposits,
@@ -142,7 +144,11 @@ export const BalanceSheetOrchestrator = {
         // Full volumes and repayments data
         newVolumesData: totalAssetsResults.newVolumes || {},
         repaymentsData: totalAssetsResults.repayments || {}
-      }
+      },
+      
+      // Make GBV Defaulted and Non-Performing Assets available at top level for P&L
+      gbvDefaulted: totalAssetsResults.gbvDefaulted,
+      nonPerformingAssets: nonPerformingAssets
     };
   },
   

@@ -67,6 +67,13 @@ export const calculateGBVDefaulted = (divisionProducts, assumptions, totalAssets
       // Use 0 if explicitly set to 0, otherwise default to 1.5%
       const dangerRate = (productConfig.dangerRate !== undefined ? productConfig.dangerRate : 1.5) / 100;
       
+      console.log(`📊 GBV Defaulted - Product ${productKey}:`, {
+        productName: productConfig.name,
+        dangerRate: dangerRate * 100,
+        defaultTiming: productConfig.defaultAfterQuarters || 8,
+        vintageCount: productVintages.length
+      });
+      
       // Get default timing (quarters after origination when default occurs)
       // Default to 8 quarters (2 years) if not specified
       const defaultTiming = productConfig.defaultAfterQuarters || 8;

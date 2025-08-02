@@ -64,11 +64,26 @@ const StandardPnL = ({
   const interestIncomeNonPerformingData = hasDivisionTotals
     ? divisionResults.divisionInterestIncomeTotals.nplSubtotal
     : (divisionResults.pnl.quarterly?.interestIncomeNonPerforming ?? Array(40).fill(0));
-  const llpData = divisionResults.pnl.quarterly?.totalLLP ?? Array(40).fill(0);
+  // Get ECL and Credit Impairment components
+  // Note: components are at the top level of loanLossProvisions, not under details
+  const eclMovementData = globalResults?.details?.loanLossProvisions?.components?.eclMovement?.quarterly || 
+                         globalResults?.details?.loanLossProvisions?.eclMovements?.consolidated?.quarterly ||
+                         divisionResults.pnl.components?.eclMovement?.quarterly || 
+                         new Array(40).fill(0);
+  const creditImpairmentData = globalResults?.details?.loanLossProvisions?.components?.creditImpairment?.quarterly || 
+                              globalResults?.details?.loanLossProvisions?.creditImpairment?.consolidated?.quarterly ||
+                              divisionResults.pnl.components?.creditImpairment?.quarterly || 
+                              new Array(40).fill(0);
+  
+  // Total LLP will be calculated automatically by FinancialTable from subRows
+  const llpData = new Array(40).fill(0); // Placeholder - FinancialTable will calculate actual sum
   const personnelCostsData = divisionResults.pnl.quarterly?.personnelCosts ?? Array(40).fill(0);
   const otherOpexData = divisionResults.pnl.quarterly?.otherOpex ?? Array(40).fill(0);
   const totalOpexData = divisionResults.pnl.quarterly?.totalOpex ?? Array(40).fill(0);
 
+  // Net Revenues Risk-Adjusted will be calculated by FinancialTable
+  const netRevenuesRiskAdjustedData = new Array(40).fill(0); // Placeholder - FinancialTable will calculate
+  
   // Calculate derived values
   const netCommissionIncome = (() => {
     // Calculate NCI from product results to ensure consistency
@@ -126,11 +141,13 @@ const StandardPnL = ({
   
   const totalRevenues = niiDisplayed.map((nii, i) => nii + netCommissionIncome[i]);
 
-  // Calculate net revenues (risk-adjusted)
-  const netRevenuesRiskAdjusted = totalRevenues.map((rev, i) => rev + (llpData[i] || 0));
-  
   // Pre-tax profit = Net Revenues (Risk-Adjusted) + Total OPEX
-  const preTaxProfit = netRevenuesRiskAdjusted.map((nrev, i) => nrev + totalOpexData[i]);
+  // Note: netRevenuesRiskAdjusted will be calculated by the table, so we use a temporary calculation here
+  const preTaxProfit = totalRevenues.map((rev, i) => {
+    const llp = eclMovementData[i] + creditImpairmentData[i];
+    const netRevRiskAdj = rev + llp;
+    return netRevRiskAdj + totalOpexData[i];
+  });
 
   // const netProfit = divisionResults.pnl.netProfit || preTaxProfit.map((pbt, i) => {
   //   const taxRate = assumptions.taxRate || 0.3;
@@ -146,6 +163,14 @@ const StandardPnL = ({
   console.log('  - productResults:', productResults);
   console.log('  - hasDivisionTotals:', hasDivisionTotals);
   console.log('  - divisionInterestIncomeTotals:', divisionResults.divisionInterestIncomeTotals);
+  
+  // DEBUG LLP data
+  console.log('💰 LLP Debug:');
+  console.log('  - globalResults available:', !!globalResults);
+  console.log('  - productPnLTableData available:', !!globalResults?.productPnLTableData);
+  console.log('  - loanLossProvisions available:', !!globalResults?.productPnLTableData?.loanLossProvisions);
+  console.log('  - LLP products:', Object.keys(globalResults?.productPnLTableData?.loanLossProvisions || {}));
+  console.log('  - Full LLP data:', globalResults?.productPnLTableData?.loanLossProvisions);
   
   // Check if we have NPL products (using already declared variables)
   console.log('  - Performing products:', performingProducts.map(([k,p]) => `${k}: ${p.name}`));
@@ -168,7 +193,7 @@ const StandardPnL = ({
     {
       label: 'Interest Income (IC)',
       data: interestIncomeData,
-      decimals: 2,
+      decimals: 1,
       isHeader: true,
       formula: interestIncomeData.map((val, i) => 
         createAggregateFormula(
@@ -194,7 +219,7 @@ const StandardPnL = ({
         {
           label: 'o/w Performing Assets',
           data: interestIncomePerformingData,
-          decimals: 2,
+          decimals: 1,
           isSecondarySubTotal: true,  // New flag for second-level subtotals
           formula: interestIncomePerformingData.map((val, i) => createFormula(i,
             'Interest on Performing Loans',
@@ -208,7 +233,7 @@ const StandardPnL = ({
             .map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.quarterly?.interestIncome ?? Array(40).fill(0),
-        decimals: 2,
+        decimals: 1,
         formula: (product.quarterly?.interestIncome ?? Array(40).fill(0)).map((val, i) => {
           const productKey = Object.keys(assumptions.products || {}).find(k => 
             assumptions.products[k].name === product.name
@@ -246,7 +271,7 @@ const StandardPnL = ({
     {
           label: 'o/w Non-Performing Assets (NPL)',
           data: interestIncomeNonPerformingData,
-          decimals: 2,
+          decimals: 1,
           isSecondarySubTotal: true,  // New flag for second-level subtotals
           formula: interestIncomeNonPerformingData.map((val, i) => createFormula(i,
             'Interest on Non-Performing Loans (Time Value Unwinding)',
@@ -260,7 +285,7 @@ const StandardPnL = ({
             .map(([key, product], index) => ({
               label: `o/w ${product.name}`,
               data: product.quarterly?.interestIncome ?? Array(40).fill(0),
-              decimals: 2,
+              decimals: 1,
               formula: (product.quarterly?.interestIncome ?? Array(40).fill(0)).map((val, i) => {
                 const baseProductKey = key.replace('_NPL', '');
                 const originalProduct = assumptions.products?.[baseProductKey] || {};
@@ -309,7 +334,7 @@ const StandardPnL = ({
           });
         return ftpTotal;
       })(),
-      decimals: 2,
+      decimals: 1,
       isHeader: true,
       formula: (() => {
         // Calculate FTP total for formula display
@@ -351,7 +376,7 @@ const StandardPnL = ({
               });
             return ftpBonis;
           })(),
-          decimals: 2,
+          decimals: 1,
           isSecondarySubTotal: true,
           formula: (() => {
             const ftpBonis = Array(40).fill(0);
@@ -376,7 +401,7 @@ const StandardPnL = ({
             .map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.quarterly?.interestExpense ?? Array(40).fill(0),
-        decimals: 2,
+        decimals: 1,
         formula: (product.quarterly?.interestExpense ?? Array(40).fill(0)).map((val, i) => {
           // const productKey = Object.keys(assumptions.products || {}).find(k => 
           //   assumptions.products[k].name === product.name
@@ -424,7 +449,7 @@ const StandardPnL = ({
             // Fallback: For now return zeros as NPL FTP is calculated in the total
             return Array(40).fill(0);
           })(),
-          decimals: 2,
+          decimals: 1,
           isSecondarySubTotal: true,
           formula: (() => {
             const nplFTP = divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalNPL || Array(40).fill(0);
@@ -442,7 +467,7 @@ const StandardPnL = ({
               .map(([key, data]) => ({
                 label: `o/w ${data.name} NPL`,
                 data: data.quarterlyFTPNPL || Array(40).fill(0),
-                decimals: 2,
+                decimals: 1,
                 formula: (data.quarterlyFTPNPL || Array(40).fill(0)).map((val, i) => {
                   const details = data.quarterlyDetails?.[i];
                   return createFormula(i,
@@ -495,7 +520,7 @@ const StandardPnL = ({
         
         return niiData;
       })(),
-      decimals: 2,
+      decimals: 1,
       isSubTotal: true,
       formula: (() => {
         // Use the same FTP data as displayed above
@@ -552,7 +577,7 @@ const StandardPnL = ({
         data: (product.quarterly?.interestIncome ?? Array(40).fill(0)).map((income, i) => 
           income + (product.quarterly?.interestExpense ?? Array(40).fill(0))[i]
         ),
-        decimals: 2,
+        decimals: 1,
         formula: (product.quarterly?.interestIncome ?? Array(40).fill(0)).map((income, i) => {
           const expense = (product.quarterly?.interestExpense ?? Array(40).fill(0))[i] ?? 0;
           const nii = income + expense;
@@ -593,7 +618,7 @@ const StandardPnL = ({
         });
         return totalCommissionIncome;
       })(),
-      decimals: 2,
+      decimals: 1,
       isHeader: true,
       formula: (() => {
         const totalCommissionIncome = Array(40).fill(0);
@@ -628,7 +653,7 @@ const StandardPnL = ({
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.quarterly?.commissionIncome ?? Array(40).fill(0),
-        decimals: 2,
+        decimals: 1,
         formula: (product.quarterly?.commissionIncome ?? Array(40).fill(0)).map((val, i) => {
           const productKey = Object.keys(assumptions.products ?? {}).find(k => 
             assumptions.products[k].name === product.name
@@ -676,7 +701,7 @@ const StandardPnL = ({
         });
         return totalCommissionExpense;
       })(),
-      decimals: 2,
+      decimals: 1,
       isHeader: true,
       formula: (() => {
         const totalCommissionExpense = Array(40).fill(0);
@@ -712,7 +737,7 @@ const StandardPnL = ({
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.quarterly?.commissionExpense ?? Array(40).fill(0),
-        decimals: 2,
+        decimals: 1,
         formula: (product.quarterly?.commissionExpense ?? Array(40).fill(0)).map((val, i) => {
           // Check if this is a CAC expense for digital products
           const isBaseAccount = product.name && product.name.includes('Conto Corrente Base');
@@ -765,7 +790,7 @@ const StandardPnL = ({
         // Calculate NCI for each quarter
         return totalCommissionIncome.map((income, i) => income + totalCommissionExpense[i]);
       })(),
-      decimals: 2,
+      decimals: 1,
       isSubTotal: true,
       formula: (() => {
         // Recalculate totals for formula display
@@ -807,7 +832,7 @@ const StandardPnL = ({
         data: (product.quarterly?.commissionIncome ?? Array(40).fill(0)).map((income, i) => 
           income + (product.quarterly?.commissionExpense ?? Array(40).fill(0))[i]
         ),
-        decimals: 2,
+        decimals: 1,
         formula: (product.quarterly?.commissionIncome ?? Array(40).fill(0)).map((income, i) => {
           const expense = (product.quarterly?.commissionExpense ?? Array(40).fill(0))[i] ?? 0;
           const nci = income + expense;
@@ -839,7 +864,7 @@ const StandardPnL = ({
     {
       label: 'Total Revenues',
       data: totalRevenues,
-      decimals: 2,
+      decimals: 1,
       isTotal: true,
       bgColor: 'gray',
       formula: totalRevenues.map((val, i) => createFormula(i,
@@ -857,60 +882,135 @@ const StandardPnL = ({
     {
       label: 'Loan loss provisions',
       data: llpData,
-      decimals: 2,
+      autoSum: true, // Tell FinancialTable to calculate sum from subRows
+      isHeader: true, // Gray background like other main sections
+      decimals: 1,
       formula: llpData.map((val, i) => createFormula(i,
-        'Expected Loss on New Business + NPL Provisions',
+        'ECL Movement + Credit Impairment',
         [
-          year => `Total LLP: ${formatNumber(val, 2)} €M`
+          year => `Total LLP: ${formatNumber(val, 2)} €M`,
+          year => `Combination of ECL provision changes and credit impairment`
         ]
       )),
-      // Add product breakdown as subRows
-      subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
-        label: `o/w ${product.name}`,
-        data: product.quarterly?.llp ?? Array(40).fill(0),
-        decimals: 2,
-        formula: (product.llp ?? [0,0,0,0,0,0,0,0,0,0]).map((val, i) => {
-          const productKey = Object.keys(assumptions.products ?? {}).find(k => 
-            assumptions.products[k].name === product.name
-          );
-          const originalProduct = productKey ? assumptions.products[productKey] : {};
-          
-          return createProductFormula(i, product, 'llp', {
-            pd: (originalProduct.dangerRate ?? 0) / 100,
-            lgd: 0.45, // Standard LGD assumption
-            ead: (product.newBusiness ?? [0,0,0,0,0,0,0,0,0,0])[i] ?? 0,
-            creditClass: 'Bonis',
-            result: val
-          });
-        })
-      })) : []
+      // Add ECL and Credit Impairment breakdown as primary subRows
+      subRows: [
+        // ECL Movement sub-item
+        {
+          label: 'o/w ECL Provision Movement',
+          data: eclMovementData,
+          isSecondarySubTotal: true, // Yellow background for sub-components
+          decimals: 1,
+          formula: eclMovementData.map((val, i) => createFormula(i,
+            'Change in Expected Credit Loss provision',
+            [
+              year => `ECL Movement: ${formatNumber(val, 2)} €M`,
+              year => `Quarterly change in ECL provision stock`
+            ]
+          )),
+          // Add product breakdown for ECL movements
+          subRows: showProductDetail && globalResults?.productPnLTableData?.eclMovements ? 
+            Object.entries(globalResults.productPnLTableData.eclMovements)
+              .filter(([key, eclData]) => {
+                // Map division names to prefixes
+                const divisionPrefixMap = {
+                  'Real Estate': 're',
+                  'SME': 'sme',
+                  'Digital Banking': 'digital',
+                  'Wealth & Asset Management': 'wealth',
+                  'Tech & Innovation': 'tech',
+                  'Incentive Finance': 'incentive'
+                };
+                
+                const divisionPrefix = divisionPrefixMap[divisionName] || divisionName.toLowerCase();
+                return key.startsWith(divisionPrefix);
+              })
+              .map(([key, eclData]) => ({
+                label: `o/w ${eclData.productName}`,
+                data: eclData.quarterlyMovements,
+                decimals: 1,
+                formula: eclData.quarterlyMovements.map((val, i) => createFormula(i,
+                  'Product-specific ECL movement',
+                  [
+                    year => `Danger Rate: ${(eclData.dangerRate * 100)?.toFixed(2)}%`,
+                    year => `LGD Effective: ${(eclData.lgdEffective * 100)?.toFixed(1)}%`,
+                    year => `ECL Movement: ${formatNumber(val, 2)} €M`
+                  ]
+                ))
+              })) : []
+        },
+        // Credit Impairment sub-item
+        {
+          label: 'o/w Credit Impairment',
+          data: creditImpairmentData,
+          isSecondarySubTotal: true, // Yellow background for sub-components
+          decimals: 1,
+          formula: creditImpairmentData.map((val, i) => createFormula(i,
+            'GBV Defaulted - NPV Recovery',
+            [
+              year => `Credit Impairment: ${formatNumber(val, 2)} €M`,
+              year => `Loss on new defaults this quarter`
+            ]
+          )),
+          // Add product breakdown for credit impairment if available
+          subRows: showProductDetail && globalResults?.productPnLTableData?.creditImpairment ? 
+            Object.entries(globalResults.productPnLTableData.creditImpairment)
+              .filter(([key, impairmentData]) => {
+                // Map division names to prefixes
+                const divisionPrefixMap = {
+                  'Real Estate': 're',
+                  'SME': 'sme',
+                  'Digital Banking': 'digital',
+                  'Wealth & Asset Management': 'wealth',
+                  'Tech & Innovation': 'tech',
+                  'Incentive Finance': 'incentive'
+                };
+                
+                const divisionPrefix = divisionPrefixMap[divisionName] || divisionName.toLowerCase();
+                return key.startsWith(divisionPrefix);
+              })
+              .map(([key, impairmentData]) => ({
+                label: `o/w ${impairmentData.productName}`,
+                data: impairmentData.quarterlyImpairment,
+                decimals: 1,
+                formula: impairmentData.quarterlyImpairment.map((val, i) => createFormula(i,
+                  'Product-specific credit impairment',
+                  [
+                    year => `Danger Rate: ${impairmentData.dangerRate?.toFixed(2)}%`,
+                    year => `Loss Rate: ${impairmentData.averageLossRate?.toFixed(1)}%`,
+                    year => `Impairment: ${formatNumber(val, 2)} €M`
+                  ]
+                ))
+              })) : []
+        }
+      ]
     },
 
     // ========== NET REVENUES (RISK-ADJUSTED) ==========
     {
       label: 'Net Revenues (Risk-Adjusted)',
-      data: totalRevenues.map((rev, i) => rev + (divisionResults.pnl.totalLLP?.[i] || 0)),
-      decimals: 2,
+      data: netRevenuesRiskAdjustedData, // Placeholder - will be calculated by table
+      autoSum: true, // Tell FinancialTable to calculate from specific rows
+      sumFromRows: ['Total Revenues', 'Loan loss provisions'], // Specify which rows to sum
+      decimals: 1,
       isSubTotal: true,
-      formula: totalRevenues.map((val, i) => createFormula(
+      formula: netRevenuesRiskAdjustedData.map((val, i) => createFormula(
         i,
         'Total Revenues + Loan Loss Provisions',
         [
           {
             name: 'Total Revenues',
-            value: val,
+            value: totalRevenues[i],
             unit: '€M'
           },
           {
             name: 'Loan Loss Provisions',
-            value: divisionResults.pnl.totalLLP?.[i] || 0,
+            value: 0, // Will be filled by table calculation
             unit: '€M'
           }
         ],
         (year) => {
           const revenues = totalRevenues[year];
-          const llp = divisionResults.pnl.totalLLP?.[year] || 0;
-          return `${formatNumber(revenues, 2)} - ${formatNumber(Math.abs(llp), 2)} = ${formatNumber(revenues + llp, 2)} €M`;
+          return `Total Revenues + Loan Loss Provisions`;
         }
       ))
     },
@@ -919,7 +1019,7 @@ const StandardPnL = ({
     {
       label: 'Personnel cost',
       data: personnelCostsData,
-      decimals: 2,
+      decimals: 1,
       isHeader: true,
       formula: personnelCostsData.map((val, i) => {
         // Get personnel cost details for calculation trace
@@ -996,7 +1096,7 @@ const StandardPnL = ({
     {
       label: 'Other OPEX',
       data: otherOpexData,
-      decimals: 2,
+      decimals: 1,
       isHeader: true,
       formula: otherOpexData.map((val, i) => createFormula(i,
         'IT Costs + HQ Allocation',
@@ -1010,7 +1110,7 @@ const StandardPnL = ({
         {
           label: 'IT costs (from Tech Division)',
           data: divisionResults.pnl.quarterly?.itCosts ?? Array(40).fill(0),
-          decimals: 2,
+          decimals: 1,
           formula: (divisionResults.pnl.quarterly?.itCosts ?? Array(40).fill(0)).map((val, i) => createFormula(
             i,
             'Tech Division costs allocated to business divisions',
@@ -1028,7 +1128,7 @@ const StandardPnL = ({
         {
           label: 'HQ Allocation (from Central Functions)',
           data: divisionResults.pnl.quarterly?.hqAllocation ?? Array(40).fill(0),
-          decimals: 2,
+          decimals: 1,
           formula: (divisionResults.pnl.quarterly?.hqAllocation ?? Array(40).fill(0)).map((val, i) => createFormula(
             i,
             'Central Functions costs allocated to business divisions',
@@ -1050,7 +1150,7 @@ const StandardPnL = ({
     {
       label: 'Total OPEX',
       data: totalOpexData,
-      decimals: 2,
+      decimals: 1,
       isSubTotal: true,
       bgColor: 'gray',
       formula: totalOpexData.map((val, i) => createFormula(i,
@@ -1068,13 +1168,13 @@ const StandardPnL = ({
     {
       label: 'Other Costs',
       data: [0,0,0,0,0,0,0,0,0,0],
-      decimals: 2,
+      decimals: 1,
       // Add breakdown as subRows
       subRows: showProductDetail ? [
         {
           label: 'Provisions for liabilities and charges (TFR)',
           data: [0,0,0,0,0,0,0,0,0,0],
-          decimals: 2,
+          decimals: 1,
           formula: [0,0,0,0,0,0,0,0,0,0].map((val, i) => createFormula(
             i,
             'Employee termination provisions',
@@ -1096,18 +1196,24 @@ const StandardPnL = ({
     {
       label: 'Pre-tax profit',
       data: preTaxProfit,
-      decimals: 2,
+      decimals: 1,
       isTotal: true,
       bgColor: 'gray',
       formula: preTaxProfit.map((val, i) => createFormula(i,
         'Net Revenues (Risk-Adjusted) + Total OPEX',
         [
-          year => `Net Revenues (Risk-Adjusted): ${formatNumber(netRevenuesRiskAdjusted[year], 2)} €M`,
+          year => {
+            const llp = eclMovementData[year] + creditImpairmentData[year];
+            const netRevRiskAdj = totalRevenues[year] + llp;
+            return `Net Revenues (Risk-Adjusted): ${formatNumber(netRevRiskAdj, 2)} €M`;
+          },
           year => `OPEX: ${formatNumber(totalOpexData[year], 2)} €M`,
           year => `PBT: ${formatNumber(val, 2)} €M`
         ],
         year => {
-          return `${formatNumber(netRevenuesRiskAdjusted[year], 2)} + (${formatNumber(Math.abs(totalOpexData[year]), 2)}) = ${formatNumber(val, 2)} €M`;
+          const llp = eclMovementData[year] + creditImpairmentData[year];
+          const netRevRiskAdj = totalRevenues[year] + llp;
+          return `${formatNumber(netRevRiskAdj, 2)} + (${formatNumber(Math.abs(totalOpexData[year]), 2)}) = ${formatNumber(val, 2)} €M`;
         }
       ))
     }

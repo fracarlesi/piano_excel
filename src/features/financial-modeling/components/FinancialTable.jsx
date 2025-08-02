@@ -46,8 +46,48 @@ const FinancialTable = ({ title, rows }) => {
     rows.forEach((row, index) => {
       const rowKey = parentKey ? `${parentKey}-${index}` : `${index}`;
       
+      // Calculate sum from subRows if they exist and row should auto-sum
+      let rowData = row.data;
+      
+      // Auto-calculate sum if:
+      // 1. Row has subRows AND either has no data, all zeros, or explicitly marked for auto-sum
+      // 2. OR row has sumFromRows specified
+      const shouldAutoSum = (row.subRows && 
+                           row.subRows.length > 0 && 
+                           (!rowData || rowData.every(v => v === 0) || row.autoSum)) ||
+                          (row.sumFromRows && row.sumFromRows.length > 0);
+      
+      if (shouldAutoSum) {
+        // Initialize sum array with zeros
+        rowData = new Array(40).fill(0);
+        
+        if (row.sumFromRows && row.sumFromRows.length > 0) {
+          // Sum from specific rows by label
+          // This will be filled after all rows are processed
+          rowData.sumFromRows = row.sumFromRows;
+        } else {
+          // Recursively calculate sum from all subRows
+          const sumSubRows = (subRows) => {
+            subRows.forEach(subRow => {
+              if (subRow.data) {
+                subRow.data.forEach((value, i) => {
+                  rowData[i] += value || 0;
+                });
+              }
+              // If subRow has its own subRows, sum those too
+              if (subRow.subRows && subRow.subRows.length > 0) {
+                sumSubRows(subRow.subRows);
+              }
+            });
+          };
+          
+          sumSubRows(row.subRows);
+        }
+      }
+      
       processedRows.push({ 
         ...row, 
+        data: rowData,
         rowKey,
         level,
         isSubItem: level > 0
@@ -61,6 +101,31 @@ const FinancialTable = ({ title, rows }) => {
   };
   
   processRowsRecursive(rows);
+  
+  // Post-process rows that need to sum from specific other rows
+  processedRows.forEach((row, index) => {
+    if (row.data && row.data.sumFromRows) {
+      const sumFromLabels = row.data.sumFromRows;
+      const newData = new Array(40).fill(0);
+      
+      // Find all rows with matching labels and sum their data
+      processedRows.forEach(otherRow => {
+        if (sumFromLabels.includes(otherRow.label)) {
+          if (otherRow.data && Array.isArray(otherRow.data)) {
+            otherRow.data.forEach((value, i) => {
+              newData[i] += value || 0;
+            });
+          }
+        }
+      });
+      
+      // Update the row's data
+      processedRows[index] = {
+        ...row,
+        data: newData
+      };
+    }
+  });
 
   return (
   <div className="mb-8 bg-white rounded-lg shadow-md overflow-hidden">

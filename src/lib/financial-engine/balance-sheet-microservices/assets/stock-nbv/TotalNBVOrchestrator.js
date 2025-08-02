@@ -136,6 +136,12 @@ export const calculateTotalNBV = (divisionProducts, assumptions, quarters = 40) 
   
   // Step 2: Calculate new volumes detail
   const volumesResults = calculateNewVolumes(divisionProducts, assumptions, quarters);
+  console.log('🔄 TotalNBVOrchestrator - New volumes calculated:', {
+    hasResults: !!volumesResults,
+    resultKeys: volumesResults ? Object.keys(volumesResults) : [],
+    byProductKeys: volumesResults?.byProduct ? Object.keys(volumesResults.byProduct) : [],
+    sampleProductData: volumesResults?.byProduct ? volumesResults.byProduct[Object.keys(volumesResults.byProduct)[0]] : null
+  });
   results.newVolumes = volumesResults;
   
   // Step 3: Calculate repayments detail using the vintages we collected

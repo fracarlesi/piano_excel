@@ -457,3 +457,6 @@ export const formatCollateralRecoveryReport = (collateralRecovery, product) => {
     }
   };
 };
+
+// Export helper functions for ECL calculator
+export { isUnsecuredProduct, getProductLGD };

@@ -13,10 +13,7 @@
  * @returns {Object} Interessi attivi per crediti performing
  */
 export const calculatePerformingInterest = (netPerformingAssets, assumptions, quarters = 40) => {
-  console.log('  📈 Performing Interest Calculator - Start');
-  console.log('    - NPA data available:', !!netPerformingAssets);
-  console.log('    - NPA byProduct keys:', Object.keys(netPerformingAssets?.byProduct || {}));
-  console.log('    - Assumptions products keys:', Object.keys(assumptions?.products || {}));
+  // Logging disabled
   
   const results = {
     quarterly: {
@@ -47,9 +44,9 @@ export const calculatePerformingInterest = (netPerformingAssets, assumptions, qu
     const productConfig = assumptions.products?.[productKey];
     
     if (!productConfig) {
-      console.error(`    ❌ No configuration found for product: ${productKey}`);
-      console.error(`       Available products in assumptions:`, Object.keys(assumptions.products || {}));
-      console.error(`       This product will have ZERO interest income!`);
+      // console.error(`    ❌ No configuration found for product: ${productKey}`);
+      // console.error(`       Available products in assumptions:`, Object.keys(assumptions.products || {}));
+      // console.error(`       This product will have ZERO interest income!`);
       return;
     }
     
@@ -58,9 +55,7 @@ export const calculatePerformingInterest = (netPerformingAssets, assumptions, qu
       return;
     }
     
-    console.log(`    Processing: ${productKey} (${productConfig.name})`);
-    console.log(`      - Spread: ${productConfig.spread}%`);
-    console.log(`      - Euribor: ${assumptions.euribor}%`);
+    // Logging disabled
     
     // Calculate quarterly interest
     const quarterlyInterest = calculateProductInterest(
@@ -115,10 +110,7 @@ export const calculatePerformingInterest = (netPerformingAssets, assumptions, qu
   results.metrics.totalInterestIncome = results.annual.total.reduce((sum, val) => sum + val, 0);
   results.metrics.averageRate = totalNPA > 0 ? (weightedRate / totalNPA) : 0;
   
-  console.log(`  📈 Performing Interest - Complete`);
-  console.log(`    - Products processed: ${results.metrics.productCount}`);
-  console.log(`    - Total Y1 interest: €${results.annual.total[0].toFixed(2)}M`);
-  console.log(`    - Average rate: ${results.metrics.averageRate.toFixed(2)}%`);
+  // Logging disabled
   
   return results;
 };
@@ -136,8 +128,7 @@ const calculateProductInterest = (productPerformingAssets, productConfig, assump
   
   // Debug: Check what we're getting
   if (productConfig.name && quarterlyPerforming[0] !== undefined) {
-    console.log(`      - Performing data type: ${Array.isArray(quarterlyPerforming) ? 'Array' : typeof quarterlyPerforming}`);
-    console.log(`      - First 4 quarters Performing: [${quarterlyPerforming.slice(0,4).map(v => v?.toFixed(1) || '0').join(', ')}]`);
+    // Logging disabled
   }
   
   // Calculate interest rate
@@ -162,10 +153,7 @@ const calculateProductInterest = (productPerformingAssets, productConfig, assump
     
     // Log first few quarters for debug
     if (q < 2 && performingAssets > 0) {
-      console.log(`      - Q${q+1} Performing: €${performingAssets.toFixed(2)}M`);
-      console.log(`      - Q${q+1} Balance for interest: €${performingAssetsForInterest.toFixed(2)}M`);
-      console.log(`      - Quarterly rate: ${(quarterlyRate * 100).toFixed(4)}%`);
-      console.log(`      - Q${q+1} Interest: €${quarterly[q].toFixed(2)}M`);
+      // Logging disabled
     }
   }
   

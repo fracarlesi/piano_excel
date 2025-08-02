@@ -16,7 +16,9 @@ export {
   calculateCollateralRecovery,
   calculateCollateralRecoveryDistribution,
   validateCollateralRecoveryParams,
-  formatCollateralRecoveryReport
+  formatCollateralRecoveryReport,
+  isUnsecuredProduct,
+  getProductLGD
 } from './CollateralRecoveryCalculator.js';
 
 export { 

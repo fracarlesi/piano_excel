@@ -14,8 +14,40 @@ const CreditProductAssumptions = ({
     onFieldChange(productKey, field, value);
   };
 
+  // Validation: Check if default happens after maturity
+  const maturityQuarters = product.durata || 0;
+  const defaultQuarters = product.defaultAfterQuarters || 8;
+  const isDefaultAfterMaturity = defaultQuarters > maturityQuarters;
+
   return (
     <>
+      {/* Validation Warning */}
+      {isDefaultAfterMaturity && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-300 rounded-lg">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                ⚠️ Attenzione: Configurazione non valida
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>Il default ({defaultQuarters} trimestri) avviene dopo la maturity ({maturityQuarters} trimestri).</p>
+                <p className="mt-1">Il modello richiede che il default avvenga <strong>prima</strong> della scadenza del prestito.</p>
+                <p className="mt-1 font-medium">Soluzioni possibili:</p>
+                <ul className="list-disc list-inside mt-1">
+                  <li>Ridurre "Default dopo" a meno di {maturityQuarters} trimestri</li>
+                  <li>Aumentare la "Durata" del prestito oltre {defaultQuarters} trimestri</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pricing Card */}
       <Card className="mb-4">
         <CardHeader>
@@ -106,6 +138,7 @@ const CreditProductAssumptions = ({
             max={40}
             step={1}
             tooltip="Numero di trimestri dopo l'erogazione quando si verifica il default"
+            error={isDefaultAfterMaturity}
           />
           
           <EditableNumberField
@@ -255,6 +288,7 @@ const CreditProductAssumptions = ({
             max={120}
             step={1}
             tooltip="Durata del prestito in trimestri"
+            error={isDefaultAfterMaturity}
           />
           
           <EditableSelectField

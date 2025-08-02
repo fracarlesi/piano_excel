@@ -156,7 +156,10 @@ const VolumeInputGrid = ({
               type="text"
               value={formatValue(value)}
               onChange={(e) => handleCellChange(index, e.target.value)}
-              onFocus={() => setFocusedIndex(index)}
+              onFocus={(e) => {
+                setFocusedIndex(index);
+                e.target.select(); // Auto-select all content on focus
+              }}
               onBlur={() => setFocusedIndex(null)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={(e) => handlePaste(index, e)}

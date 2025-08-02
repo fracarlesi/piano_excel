@@ -101,7 +101,7 @@ const StandardKPIs = ({
     {
       label: 'Cost of Risk',
       data: costOfRisk,
-      decimals: 0,
+      decimals: 1,
       unit: ' bps',
       isSubTotal: true,
       formula: costOfRisk.map((val, i) => createFormula(i,
@@ -138,7 +138,7 @@ const StandardKPIs = ({
     {
       label: 'FTE',
       data: fte,
-      decimals: 0,
+      decimals: 1,
       isSubTotal: true,
       formula: fte.map((val, i) => createFormula(i,
         'Division Actual FTE from Bottom-up Personnel Model',
@@ -182,7 +182,7 @@ const StandardKPIs = ({
     {
       label: 'FTE front-office (for back-office costs)',
       data: fteFrontOffice,
-      decimals: 0,
+      decimals: 1,
       isSubItem: true,
       formula: fteFrontOffice.map((val, i) => createFormula(i,
         'Total Division FTE × Front-Office Ratio',

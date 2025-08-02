@@ -37,7 +37,7 @@ const StandardCapitalRequirements = ({
     {
       label: 'RWA',
       data: totalRWA,
-      decimals: 0,
+      decimals: 1,
       isHeader: true,
       formula: totalRWA.map((val, i) => createFormula(i,
         'Credit Risk + Operational Risk + Market Risk RWA',
@@ -61,13 +61,13 @@ const StandardCapitalRequirements = ({
             calculation: 'RWA from market risks (~5% of total)'
           }
         ],
-        () => `${formatNumber(creditRiskRWA[i], 0)} + ${formatNumber(operationalRiskRWA[i], 0)} + ${formatNumber(marketRiskRWA[i], 0)} = ${formatNumber(val, 0)} €M`
+        () => `${formatNumber(creditRiskRWA[i], 1)} + ${formatNumber(operationalRiskRWA[i], 1)} + ${formatNumber(marketRiskRWA[i], 1)} = ${formatNumber(val, 1)} €M`
       )),
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
         label: `o/w ${product.name}`,
         data: product.rwa || [0,0,0,0,0,0,0,0,0,0],
-        decimals: 0,
+        decimals: 1,
         formula: (product.rwa || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
           'Performing Assets × RWA Density',
           [
@@ -87,7 +87,7 @@ const StandardCapitalRequirements = ({
           () => {
             const assets = (product.performingAssets || [0,0,0,0,0,0,0,0,0,0])[i] || 0;
             const density = (product.assumptions?.riskWeight || 0.75) * 100;
-            return `${formatNumber(assets, 0)} × ${density.toFixed(0)}% = ${formatNumber(val, 0)} €M`;
+            return `${formatNumber(assets, 1)} × ${density.toFixed(0)}% = ${formatNumber(val, 1)} €M`;
           }
         ))
       })) : []
@@ -97,7 +97,7 @@ const StandardCapitalRequirements = ({
     {
       label: 'Equity',
       data: allocatedEquity,
-      decimals: 0,
+      decimals: 1,
       isHeader: true,
       bgColor: 'lightblue',
       // Add breakdown as subRows
@@ -105,7 +105,7 @@ const StandardCapitalRequirements = ({
         ...Object.entries(productResults).map(([key, product], index) => ({
           label: `o/w ${product.name}`,
           data: product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0],
-          decimals: 0,
+          decimals: 1,
           formula: (product.allocatedEquity || [0,0,0,0,0,0,0,0,0,0]).map((val, i) => createFormula(i,
             'Total Division Equity × (Product RWA / Division RWA)',
             [
@@ -137,7 +137,7 @@ const StandardCapitalRequirements = ({
             () => {
               const prodRwa = (product.rwa || [0,0,0,0,0,0,0,0,0,0])[i];
               const weight = totalRWA[i] > 0 ? (prodRwa / totalRWA[i]) : 0;
-              return `${formatNumber(allocatedEquity[i], 0)} × ${formatNumber(weight * 100, 1)}% = ${formatNumber(val, 0)} €M`;
+              return `${formatNumber(allocatedEquity[i], 1)} × ${formatNumber(weight * 100, 1)}% = ${formatNumber(val, 1)} €M`;
             }
           ))
         })),
@@ -148,7 +148,7 @@ const StandardCapitalRequirements = ({
             const totalDivisionRWA = totalRWA[i];
             return totalDivisionRWA > 0 ? equity * (operatingRWA / totalDivisionRWA) : 0;
           }),
-          decimals: 0,
+          decimals: 1,
           formula: allocatedEquity.map((equity, i) => createFormula(i,
             'Division Equity × (Operating RWA / Total RWA)',
             [
@@ -174,7 +174,7 @@ const StandardCapitalRequirements = ({
             () => {
               const weight = totalRWA[i] > 0 ? (operationalRiskRWA[i] / totalRWA[i]) : 0;
               const result = equity * weight;
-              return `${formatNumber(equity, 0)} × ${formatNumber(weight * 100, 1)}% = ${formatNumber(result, 0)} €M`;
+              return `${formatNumber(equity, 1)} × ${formatNumber(weight * 100, 1)}% = ${formatNumber(result, 1)} €M`;
             }
           ))
         }
@@ -210,7 +210,7 @@ const StandardCapitalRequirements = ({
             calculation: 'Regulatory minimum: 4.5% + buffers'
           }
         ],
-        () => totalRWA[i] > 0 ? `${formatNumber(allocatedEquity[i], 0)} ÷ ${formatNumber(totalRWA[i], 0)} × 100 = ${formatNumber(val, 1)}%` : '0 ÷ 0 = 0%'
+        () => totalRWA[i] > 0 ? `${formatNumber(allocatedEquity[i], 1)} ÷ ${formatNumber(totalRWA[i], 1)} × 100 = ${formatNumber(val, 1)}%` : '0 ÷ 0 = 0%'
       )),
       // Add product breakdown as subRows
       subRows: showProductDetail ? Object.entries(productResults).map(([key, product], index) => ({
@@ -246,7 +246,7 @@ const StandardCapitalRequirements = ({
                 calculation: 'Product-level capital ratio'
               }
             ],
-            () => productRWA > 0 ? `${formatNumber(equity, 0)} ÷ ${formatNumber(productRWA, 0)} × 100 = ${formatNumber(productCET1, 1)}%` : '0 ÷ 0 = 0%'
+            () => productRWA > 0 ? `${formatNumber(equity, 1)} ÷ ${formatNumber(productRWA, 1)} × 100 = ${formatNumber(productCET1, 1)}%` : '0 ÷ 0 = 0%'
           );
         })
       })) : []
@@ -263,7 +263,7 @@ const StandardCapitalRequirements = ({
     {
       label: 'Credit Risk',
       data: creditRiskRWA,
-      decimals: 0,
+      decimals: 1,
       isSubItem: true,
       formula: creditRiskRWA.map((val, i) => createFormula(i,
         'Sum of Credit RWA from all products',
@@ -281,14 +281,14 @@ const StandardCapitalRequirements = ({
             calculation: 'Typically ~85% for lending-focused divisions'
           }
         ],
-        () => `Credit Risk RWA: ${formatNumber(val, 0)} €M (${totalRWA[i] > 0 ? ((val / totalRWA[i]) * 100).toFixed(1) : 0}% of total)`
+        () => `Credit Risk RWA: ${formatNumber(val, 1)} €M (${totalRWA[i] > 0 ? ((val / totalRWA[i]) * 100).toFixed(1) : 0}% of total)`
       ))
     },
 
     {
       label: 'Operative risk',
       data: operationalRiskRWA,
-      decimals: 0,
+      decimals: 1,
       isSubItem: true,
       formula: operationalRiskRWA.map((val, i) => createFormula(i,
         'Total Assets × Operational Risk %',
@@ -306,14 +306,14 @@ const StandardCapitalRequirements = ({
             calculation: 'Typically ~10% of total RWA'
           }
         ],
-        () => `Operational Risk RWA: ${formatNumber(val, 0)} €M (${totalRWA[i] > 0 ? ((val / totalRWA[i]) * 100).toFixed(1) : 0}% of total)`
+        () => `Operational Risk RWA: ${formatNumber(val, 1)} €M (${totalRWA[i] > 0 ? ((val / totalRWA[i]) * 100).toFixed(1) : 0}% of total)`
       ))
     },
 
     {
       label: 'Market risk',
       data: marketRiskRWA,
-      decimals: 0,
+      decimals: 1,
       isSubItem: true,
       formula: marketRiskRWA.map((val, i) => createFormula(i,
         'Market Risk RWA (minimal for banking book)',
@@ -331,7 +331,7 @@ const StandardCapitalRequirements = ({
             calculation: 'Typically ~5% for banking book'
           }
         ],
-        () => `Market Risk RWA: ${formatNumber(val, 0)} €M (${totalRWA[i] > 0 ? ((val / totalRWA[i]) * 100).toFixed(1) : 0}% of total)`
+        () => `Market Risk RWA: ${formatNumber(val, 1)} €M (${totalRWA[i] > 0 ? ((val / totalRWA[i]) * 100).toFixed(1) : 0}% of total)`
       ))
     }
   ];

@@ -99,6 +99,13 @@ export const calculateBridgeLoansVolumes = (product, assumptions, quarters = 40)
 const calculateYearlyVolumes = (product) => {
   const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   
+  console.log(`📊 calculateYearlyVolumes for ${product.name}:`, {
+    hasVolumeArray: !!product.volumeArray,
+    hasVolumes: !!product.volumes,
+    volumes: product.volumes,
+    volumeArray: product.volumeArray
+  });
+  
   return years.map(i => {
     // Check for volumeArray first (new format)
     if (product.volumeArray && Array.isArray(product.volumeArray)) {

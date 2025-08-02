@@ -18,7 +18,7 @@ import { calculateDivisionInterestIncomeTotals, formatForDisplay } from './Divis
  * @returns {Object} Interessi attivi consolidati
  */
 export const calculateInterestIncome = (balanceSheetResults, assumptions, quarters = 40) => {
-  console.log('💰 Interest Income Orchestrator - Start');
+  // console.log('💰 Interest Income Orchestrator - Start');
   
   // Initialize combined results
   const combinedResults = {
@@ -62,7 +62,7 @@ export const calculateInterestIncome = (balanceSheetResults, assumptions, quarte
     // Merge performing results
     mergeResults(combinedResults, performingResults, 'performing');
   } else {
-    console.warn('No Net Performing Assets data available');
+    // console.warn('No Net Performing Assets data available');
   }
   
   // 2. Calculate Non-Performing Interest (NPL)
@@ -77,7 +77,7 @@ export const calculateInterestIncome = (balanceSheetResults, assumptions, quarte
     // Merge non-performing results
     mergeResults(combinedResults, nonPerformingResults, 'nonPerforming');
   } else {
-    console.warn('No Non-Performing Assets data available');
+    // console.warn('No Non-Performing Assets data available');
   }
   
   // Calculate combined totals
@@ -167,12 +167,7 @@ export const calculateInterestIncome = (balanceSheetResults, assumptions, quarte
     divisionTotals[divisionKey] = calculateDivisionInterestIncomeTotals(products, divisionKey);
   });
   
-  console.log('💰 Interest Income Orchestrator - Complete');
-  console.log(`  - Performing Interest Y1: €${combinedResults.annual.performing[0].toFixed(2)}M`);
-  console.log(`  - Non-Performing Interest Y1: €${combinedResults.annual.nonPerforming[0].toFixed(2)}M`);
-  console.log(`  - Total Interest Income Y1: €${combinedResults.annual.total[0].toFixed(2)}M`);
-  console.log('  - TableData keys:', Object.keys(combinedResults.tableData));
-  console.log('  - Division totals calculated:', Object.keys(divisionTotals));
+  // Logging disabled
   
   // Add division totals to results
   combinedResults.divisionTotals = divisionTotals;

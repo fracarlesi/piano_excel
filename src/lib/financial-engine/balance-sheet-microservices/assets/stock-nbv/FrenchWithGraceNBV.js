@@ -63,7 +63,7 @@ export const calculateFrenchWithGraceNBV = (product, assumptions, quarters = 40)
         // Apply payments AFTER recording NBV
         const quarterlyRate = new Decimal(vintage.quarterlyRate);
         
-        if (q <= graceEndQ) {
+        if (q < graceEndQ) {
           // During grace period: interest only, no principal reduction
           // Interest is paid but principal remains the same
           // (Interest payment tracked separately for P&L)

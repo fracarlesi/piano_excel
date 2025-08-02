@@ -8,6 +8,8 @@
 import { calculateTotalNBV } from './stock-nbv/TotalNBVOrchestrator.js';
 import { calculateGBVDefaulted } from './gbv-defaulted/GBVDefaultedOrchestrator.js';
 import { calculateStockNBVPerforming } from './stock-nbv-performing/StockNBVPerformingOrchestrator.js';
+import { calculateECL } from './ecl/ECLOrchestrator.js';
+import { calculateStockNBVPerformingPostECL } from './stock-nbv-performing-post-ecl/StockNBVPerformingPostECL.js';
 import { calculateNonPerformingAssets } from './non-performing-assets/NonPerformingAssetsOrchestrator.js';
 import { calculateNetPerformingAssets } from './net-performing-assets/NetPerformingAssetsOrchestrator.js';
 
@@ -46,6 +48,22 @@ export const calculateTotalAssets = (divisionProducts, assumptions, quarters = 4
     quarters
   );
   
+  // Step 4b: Calculate ECL provisions
+  // ECL is now calculated based on Stock NBV Performing
+  const eclResults = calculateECL(
+    totalNBVResults.newVolumes,
+    stockNBVPerformingResults,
+    assumptions,
+    quarters
+  );
+  
+  // Step 4c: Calculate Stock NBV Performing Post-ECL
+  const stockNBVPerformingPostECLResults = calculateStockNBVPerformingPostECL(
+    stockNBVPerformingResults,
+    eclResults,
+    quarters
+  );
+  
   // Step 5: Calculate non-performing assets using NPV methodology if recovery data available
   let nonPerformingResults;
   if (recoveryResults) {
@@ -64,9 +82,9 @@ export const calculateTotalAssets = (divisionProducts, assumptions, quarters = 4
     );
   }
   
-  // Step 6: Calculate net performing assets using dedicated microservice
+  // Step 6: Calculate net performing assets using Post-ECL stock
   const performingResults = calculateNetPerformingAssets(
-    stockNBVPerformingResults,
+    stockNBVPerformingPostECLResults,
     divisionProducts,
     quarters
   );
@@ -87,9 +105,11 @@ export const calculateTotalAssets = (divisionProducts, assumptions, quarters = 4
     byProduct: totalNBVResults.byProduct, // Product-level NBV data
     
     // Main balance sheet lines
+    stockNBVPerforming: stockNBVPerformingResults,
+    eclProvision: eclResults,
+    stockNBVPerformingPostECL: stockNBVPerformingPostECLResults,
     netPerformingAssets: performingResults,
     gbvDefaulted: gbvDefaultedResults,
-    stockNBVPerforming: stockNBVPerformingResults,
     nonPerformingAssets: nonPerformingResults,
     
     // Vintages for detailed analysis
