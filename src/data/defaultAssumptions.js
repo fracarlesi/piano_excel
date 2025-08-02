@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '12.79', // Added detailed logging to debug interest income calculation flow
+  version: '12.80', // Fixed GBV defaulted calculation to respect danger rate = 0
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

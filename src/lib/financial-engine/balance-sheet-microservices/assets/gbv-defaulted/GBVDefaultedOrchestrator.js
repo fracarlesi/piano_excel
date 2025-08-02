@@ -64,7 +64,8 @@ export const calculateGBVDefaulted = (divisionProducts, assumptions, totalAssets
       
       // Get danger rate for this product (default 1.5% if not specified)
       // Note: dangerRate is stored as percentage (e.g., 1.5 for 1.5%)
-      const dangerRate = (productConfig.dangerRate || 1.5) / 100;
+      // Use 0 if explicitly set to 0, otherwise default to 1.5%
+      const dangerRate = (productConfig.dangerRate !== undefined ? productConfig.dangerRate : 1.5) / 100;
       
       // Get default timing (quarters after origination when default occurs)
       // Default to 8 quarters (2 years) if not specified
