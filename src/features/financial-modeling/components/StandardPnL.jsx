@@ -17,6 +17,13 @@ const StandardPnL = ({
   customRowTransformations = {}
 }) => {
   
+  // DEBUG: Log what we receive
+  console.log('🎯 StandardPnL - Data received:', {
+    divisionName,
+    productResultsKeys: Object.keys(productResults || {}),
+    productResults
+  });
+  
   // SIMPLE DEBUG
   // console.log(`PnL for ${divisionName}:`, {
   //   hasPersonnelCosts: !!divisionResults.pnl?.personnelCosts,

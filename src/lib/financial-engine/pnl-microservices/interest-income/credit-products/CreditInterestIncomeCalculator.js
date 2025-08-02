@@ -14,6 +14,9 @@
  */
 export const calculateCreditInterestIncome = (netPerformingAssets, assumptions, quarters = 40) => {
   console.log('  📈 Credit Interest Income Calculator - Start');
+  console.log('    - NPA data available:', !!netPerformingAssets);
+  console.log('    - NPA byProduct keys:', Object.keys(netPerformingAssets?.byProduct || {}));
+  console.log('    - Assumptions products keys:', Object.keys(assumptions?.products || {}));
   
   const results = {
     quarterly: {
@@ -45,6 +48,8 @@ export const calculateCreditInterestIncome = (netPerformingAssets, assumptions, 
     
     if (!productConfig) {
       console.error(`    ❌ No configuration found for product: ${productKey}`);
+      console.error(`       Available products in assumptions:`, Object.keys(assumptions.products || {}));
+      console.error(`       This product will have ZERO interest income!`);
       return;
     }
     
@@ -54,6 +59,8 @@ export const calculateCreditInterestIncome = (netPerformingAssets, assumptions, 
     }
     
     console.log(`    Processing: ${productKey} (${productConfig.name})`);
+    console.log(`      - Spread: ${productConfig.spread}%`);
+    console.log(`      - Euribor: ${assumptions.euribor}%`);
     
     // Calculate quarterly interest
     const quarterlyInterest = calculateProductInterest(
@@ -142,6 +149,13 @@ const calculateProductInterest = (productNPA, productConfig, assumptions, quarte
     if (npa > 0) {
       totalNPA += npa;
       nonZeroQuarters++;
+    }
+    
+    // Log first quarter for debug
+    if (q === 0 && npa > 0) {
+      console.log(`      - Q1 NPA: €${npa.toFixed(2)}M`);
+      console.log(`      - Quarterly rate: ${(quarterlyRate * 100).toFixed(4)}%`);
+      console.log(`      - Q1 Interest: €${quarterly[q].toFixed(2)}M`);
     }
   }
   

@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '12.77', // Restructured interest-income folder with clean orchestrator pattern for credit products
+  version: '12.79', // Added detailed logging to debug interest income calculation flow
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
