@@ -15,7 +15,7 @@ import { calculateCreditInterestIncome } from './credit-products/CreditInterestI
  * @returns {Object} Interessi attivi consolidati e per prodotto
  */
 export const calculateInterestIncome = (balanceSheetResults, assumptions, quarters = 40) => {
-  console.log('💰 Interest Income Orchestrator - Start');
+  // console.log('💰 Interest Income Orchestrator - Start');
   
   // Get Net Performing Assets data
   const netPerformingAssets = balanceSheetResults.details?.netPerformingAssets;
@@ -25,6 +25,13 @@ export const calculateInterestIncome = (balanceSheetResults, assumptions, quarte
     return createEmptyResults(quarters);
   }
   
+  // Debug: Check NPA structure
+  // console.log('  NPA structure:', {
+  //   hasBalanceSheetLine: !!netPerformingAssets.balanceSheetLine,
+  //   hasByProduct: !!netPerformingAssets.byProduct,
+  //   productKeys: Object.keys(netPerformingAssets.byProduct || {})
+  // });
+  
   // Calculate credit products interest income
   const creditInterest = calculateCreditInterestIncome(
     netPerformingAssets,
@@ -32,8 +39,8 @@ export const calculateInterestIncome = (balanceSheetResults, assumptions, quarte
     quarters
   );
   
-  console.log('💰 Interest Income Orchestrator - Complete');
-  console.log('  Total Y1 Interest Income:', creditInterest.annual.total[0]);
+  // console.log('💰 Interest Income Orchestrator - Complete');
+  // console.log('  Total Y1 Interest Income:', creditInterest.annual.total[0]);
   
   // For now, we only have credit products
   // Future: add other product types as needed

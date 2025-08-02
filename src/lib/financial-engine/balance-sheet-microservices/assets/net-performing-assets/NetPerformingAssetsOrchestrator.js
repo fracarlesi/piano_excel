@@ -21,9 +21,9 @@ import {
  * @returns {Object} Risultati Net Performing Assets completi
  */
 export const calculateNetPerformingAssets = (totalNBVResults, nonPerformingResults, divisions, quarters = 40) => {
-  console.log('📊 Net Performing Assets Calculator - Start');
-  console.log('  - Total NBV available:', !!totalNBVResults);
-  console.log('  - Non-Performing available:', !!nonPerformingResults);
+  // console.log('📊 Net Performing Assets Calculator - Start');
+  // console.log('  - Total NBV available:', !!totalNBVResults);
+  // console.log('  - Non-Performing available:', !!nonPerformingResults);
   
   const results = {
     // RIGA PRINCIPALE BALANCE SHEET

@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '12.80', // Fixed GBV defaulted calculation to respect danger rate = 0
+  version: '12.84', // Centralized logging control - set DEBUG_LEVEL in debugLogger.js
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

@@ -134,6 +134,12 @@ const calculateProductInterest = (productNPA, productConfig, assumptions, quarte
   // Get quarterly NPA data
   const quarterlyNPA = productNPA.quarterly || productNPA || new Array(quarters).fill(0);
   
+  // Debug: Check what we're getting
+  if (productConfig.name && quarterlyNPA[0] !== undefined) {
+    console.log(`      - NPA data type: ${Array.isArray(quarterlyNPA) ? 'Array' : typeof quarterlyNPA}`);
+    console.log(`      - First 4 quarters NPA: [${quarterlyNPA.slice(0,4).map(v => v?.toFixed(1) || '0').join(', ')}]`);
+  }
+  
   // Calculate interest rate
   const annualRate = getProductInterestRate(productConfig, assumptions) / 100;
   const quarterlyRate = annualRate / 4;

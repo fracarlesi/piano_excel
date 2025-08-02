@@ -8,7 +8,7 @@
 import { calculateAllPersonnelCosts } from './personnel-calculators/personnelCalculator.js';
 import { calculateInterestIncome } from './interest-income/InterestIncomeOrchestrator.js';
 import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
-import { calculateCommissionIncome } from './commission-calculators/commissionCalculator.js';
+import { calculateCommissionIncome } from './commission-income/commissionCalculator.js';
 import { calculateLoanLossProvisions } from './llp-calculators/defaultCalculator.js';
 import { 
   ALL_DIVISION_PREFIXES,
