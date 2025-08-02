@@ -13,7 +13,7 @@
 // 4 = Debug + Info + Warnings + Errors
 // 5 = Verbose (all logs)
 
-const DEBUG_LEVEL = 3; // Set to 3 to enable Info + Warnings + Errors
+const DEBUG_LEVEL = 0; // Set to 0 to disable all logs except personnel-related ones
 
 export const logger = {
   verbose: (...args) => DEBUG_LEVEL >= 5 && console.log(...args),
@@ -29,8 +29,24 @@ if (DEBUG_LEVEL === 0 && typeof window !== 'undefined') {
   window._originalConsoleLog = console.log;
   
   // Override console.log
-  console.log = function() {
-    // Silenced
+  console.log = function(...args) {
+    // Allow personnel-related logs for debugging
+    const message = args.join(' ');
+    if (message.includes('PERSONNEL') || 
+        message.includes('Personnel') || 
+        message.includes('personnel') ||
+        message.includes('staffing') ||
+        message.includes('RAL') ||
+        message.includes('💵') ||
+        message.includes('🔧') ||
+        message.includes('🔨') ||
+        message.includes('📊') ||
+        message.includes('🧮') ||
+        message.includes('🔍') ||
+        message.includes('🎯')) {
+      window._originalConsoleLog(...args);
+    }
+    // All other logs are silenced
   };
   
   // Keep console.error and console.warn active for critical issues

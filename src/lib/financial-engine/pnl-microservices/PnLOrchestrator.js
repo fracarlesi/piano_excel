@@ -5,7 +5,7 @@
  * to produce the complete Profit & Loss statement
  */
 
-import { calculateAllPersonnelCosts } from './personnel-calculators/personnelCalculator.js';
+import { PersonnelCalculator } from './personnel-calculators/personnelCalculator.js';
 import { calculateInterestIncome } from './interest-income/index.js';
 import { calculateCreditInterestExpense } from './interest-expense/CreditInterestExpenseCalculator.js';
 import { calculateCommissionIncome } from './commission-income/commissionCalculator.js';
@@ -15,7 +15,8 @@ import { calculateECLMovements } from './llp-calculators/eclPnLCalculator.js';
 import { calculateTotalLLP } from './llp-calculators/totalLLPCalculator.js';
 import { 
   ALL_DIVISION_PREFIXES,
-  getPersonnelKey
+  getPersonnelKey,
+  getAssumptionKey
 } from '../divisionMappings.js';
 
 /**
@@ -31,9 +32,13 @@ export const PnLOrchestrator = {
   calculate(assumptions, balanceSheetResults) {
     const years = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     const quarters = 40;
+    const quarterList = [];
+    for (let i = 0; i < quarters; i++) {
+      quarterList.push(`Q${i + 1}`);
+    }
     
     // Step 1: Personnel costs (calculated first as it's independent)
-    const personnelCosts = calculateAllPersonnelCosts(assumptions, years);
+    const personnelCosts = this.calculateAllPersonnelCosts(assumptions, quarterList, years);
     
     // Step 2: Interest Income (based on performing assets)
     const interestIncome = this.calculateInterestIncome(
@@ -515,6 +520,26 @@ export const PnLOrchestrator = {
       // Personnel costs
       const personnelKey = getPersonnelKey(divKey);
       const divisionPersonnel = personnelCosts[personnelKey]?.costs || new Array(10).fill(0);
+      const divisionPersonnelQuarterly = personnelCosts[personnelKey]?.quarterly || new Array(40).fill(0);
+      const divisionPersonnelBySeniority = personnelCosts[personnelKey]?.bySeniority || {
+        junior: new Array(10).fill(0),
+        middle: new Array(10).fill(0),
+        senior: new Array(10).fill(0),
+        headOf: new Array(10).fill(0)
+      };
+      
+      console.log(`🔍 organizeDivisionPnL - Personnel for ${divKey} (${personnelKey}):`);
+      console.log(`  - Annual costs Y1: ${divisionPersonnel[0]}`);
+      console.log(`  - Quarterly costs Q1: ${divisionPersonnelQuarterly[0]}`);
+      console.log(`  - By seniority exists: ${!!personnelCosts[personnelKey]?.bySeniority}`);
+      
+      // Convert annual seniority data to quarterly
+      const personnelBySeniorityQuarterly = {
+        junior: this.annualToQuarterly(divisionPersonnelBySeniority.junior),
+        middle: this.annualToQuarterly(divisionPersonnelBySeniority.middle),
+        senior: this.annualToQuarterly(divisionPersonnelBySeniority.senior),
+        headOf: this.annualToQuarterly(divisionPersonnelBySeniority.headOf)
+      };
       
       // Other opex allocation (simplified)
       const otherOpex = operatingExpenses.other.map(opex => opex * 0.1); // 10% allocation
@@ -584,7 +609,7 @@ export const PnLOrchestrator = {
           commissionIncome: commissionIncomeResults.quarterly.byDivision[divKey] || this.annualToQuarterly(divisionCommissionIncome),
           commissionExpenses: commissionExpenseResults.quarterly.byDivision[divKey] || this.annualToQuarterly(divisionCommissionExpense),
           totalRevenues: this.annualToQuarterly(totalRevenues),
-          personnelCosts: this.annualToQuarterly(divisionPersonnel),
+          personnelCosts: divisionPersonnelQuarterly,
           otherOpex: this.annualToQuarterly(otherOpex),
           totalOpex: this.annualToQuarterly(totalOpex),
           totalLLP: llp.quarterly ? (llp.byDivision[divKey]?.quarterly || new Array(40).fill(0)) : this.annualToQuarterly(divisionLLP),
@@ -593,6 +618,9 @@ export const PnLOrchestrator = {
           taxes: this.annualToQuarterly(taxes),
           netProfit: this.annualToQuarterly(netProfit)
         },
+        
+        // Personnel costs by seniority
+        personnelCostsBySeniority: personnelBySeniorityQuarterly,
         
         // Add division totals for product details
         divisionInterestIncomeTotals: divisionTotals,
@@ -650,5 +678,125 @@ export const PnLOrchestrator = {
       }
     }
     return null;
+  },
+
+  /**
+   * Calculate all personnel costs
+   * @private
+   */
+  calculateAllPersonnelCosts(assumptions, quarterList, years) {
+    console.log('🔧 PERSONNEL CALC - Starting personnel cost calculation');
+    console.log('  - Divisions to process:', ALL_DIVISION_PREFIXES);
+    console.log('  - Personnel structure in assumptions:', assumptions.personnel);
+    console.log('  - Full assumptions object keys:', Object.keys(assumptions));
+    console.log('  - Sample division (realEstateDivision):', assumptions.realEstateDivision);
+    
+    const results = {
+      grandTotal: {
+        costs: new Array(10).fill(0),
+        quarterly: new Array(40).fill(0),
+        bySeniority: {
+          junior: new Array(10).fill(0),
+          middle: new Array(10).fill(0),
+          senior: new Array(10).fill(0),
+          headOf: new Array(10).fill(0)
+        }
+      }
+    };
+    
+    // Calculate for each division
+    ALL_DIVISION_PREFIXES.forEach(divKey => {
+      const personnelKey = getPersonnelKey(divKey);
+      
+      console.log(`  📊 Processing division: ${divKey}`);
+      console.log(`    - Personnel key: ${personnelKey}`);
+      
+      // Get staffing data based on the division type
+      let staffingData = {};
+      let personnelDivisionData = {};
+      
+      if (divKey === 'cf') {
+        // Central Functions has multiple departments
+        personnelDivisionData = assumptions.centralFunctions || {};
+        staffingData = personnelDivisionData;
+      } else {
+        // Business divisions - personnel data is directly in division assumptions
+        const assumptionKey = getAssumptionKey(divKey);
+        personnelDivisionData = assumptions[assumptionKey] || {};
+        
+        console.log(`    📁 Looking for division data in assumptions.${assumptionKey}`);
+        console.log(`    - Found division data:`, !!personnelDivisionData);
+        console.log(`    - Has staffing array:`, !!personnelDivisionData.staffing);
+        console.log(`    - Staffing length:`, personnelDivisionData.staffing?.length);
+        
+        staffingData = {
+          staffing: personnelDivisionData.staffing || [],
+          positions: [], // Will be converted by PersonnelCalculator
+          companyTaxMultiplier: assumptions.personnel?.companyTaxMultiplier || 1.4,
+          annualSalaryReview: assumptions.personnel?.annualSalaryReview || 0,
+          headcountGrowth: personnelDivisionData.headcountGrowth || 0
+        };
+      }
+      
+      console.log(`    - Personnel division data:`, personnelDivisionData);
+      console.log(`    - Staffing array:`, staffingData.staffing);
+      console.log(`    - Company tax multiplier:`, staffingData.companyTaxMultiplier);
+      console.log(`    - Annual salary review:`, staffingData.annualSalaryReview);
+      
+      const calculator = new PersonnelCalculator(
+        personnelDivisionData,
+        staffingData,
+        quarterList
+      );
+      
+      const divisionResults = calculator.getPersonnelCostsForPnL();
+      console.log(`    - Division results sample (Q1):`, divisionResults['Q1']);
+      
+      // Store division results
+      results[personnelKey] = {
+        costs: new Array(10).fill(0),
+        quarterly: new Array(40).fill(0),
+        bySeniority: {
+          junior: new Array(10).fill(0),
+          middle: new Array(10).fill(0),
+          senior: new Array(10).fill(0),
+          headOf: new Array(10).fill(0)
+        }
+      };
+      
+      // Aggregate quarterly to annual
+      quarterList.forEach((quarter, qIndex) => {
+        const yearIndex = Math.floor(qIndex / 4);
+        const quarterData = divisionResults[quarter];
+        
+        if (quarterData) {
+          // Annual totals
+          results[personnelKey].costs[yearIndex] += quarterData['Personnel costs'];
+          results.grandTotal.costs[yearIndex] += quarterData['Personnel costs'];
+          
+          // Quarterly data
+          results[personnelKey].quarterly[qIndex] = quarterData['Personnel costs'];
+          results.grandTotal.quarterly[qIndex] += quarterData['Personnel costs'];
+          
+          // By seniority annual
+          results[personnelKey].bySeniority.junior[yearIndex] += quarterData['Personnel costs - Junior'];
+          results[personnelKey].bySeniority.middle[yearIndex] += quarterData['Personnel costs - Middle'];
+          results[personnelKey].bySeniority.senior[yearIndex] += quarterData['Personnel costs - Senior'];
+          results[personnelKey].bySeniority.headOf[yearIndex] += quarterData['Personnel costs - Head of'];
+          
+          results.grandTotal.bySeniority.junior[yearIndex] += quarterData['Personnel costs - Junior'];
+          results.grandTotal.bySeniority.middle[yearIndex] += quarterData['Personnel costs - Middle'];
+          results.grandTotal.bySeniority.senior[yearIndex] += quarterData['Personnel costs - Senior'];
+          results.grandTotal.bySeniority.headOf[yearIndex] += quarterData['Personnel costs - Head of'];
+        }
+      });
+    });
+    
+    console.log('🎯 PERSONNEL CALC - Final results summary:');
+    console.log('  - Grand total Y1:', results.grandTotal.costs[0]);
+    console.log('  - Grand total Q1:', results.grandTotal.quarterly[0]);
+    console.log('  - Sample division (RealEstateFinancing) Y1:', results.RealEstateFinancing?.costs[0]);
+    
+    return results;
   }
 };

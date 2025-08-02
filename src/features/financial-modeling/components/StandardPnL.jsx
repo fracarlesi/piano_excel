@@ -17,16 +17,16 @@ const StandardPnL = ({
   customRowTransformations = {}
 }) => {
   
-  // DEBUG: Log what we receive
-  console.log('🎯 StandardPnL - Data received:', {
-    divisionName,
-    productResultsKeys: Object.keys(productResults || {}),
-    hasDivisionTotals: !!divisionResults.pnl?.divisionInterestIncomeTotals,
-    divisionTotals: divisionResults.pnl?.divisionInterestIncomeTotals,
-    commissionIncome: divisionResults.pnl?.commissionIncome?.slice(0, 3),
-    hasProductCommissions: Object.values(productResults || {}).some(p => p.commissionIncome),
-    sampleProduct: Object.entries(productResults || {})[0]
-  });
+  // DEBUG: Log what we receive - DISABLED
+  // console.log('🎯 StandardPnL - Data received:', {
+  //   divisionName,
+  //   productResultsKeys: Object.keys(productResults || {}),
+  //   hasDivisionTotals: !!divisionResults.pnl?.divisionInterestIncomeTotals,
+  //   divisionTotals: divisionResults.pnl?.divisionInterestIncomeTotals,
+  //   commissionIncome: divisionResults.pnl?.commissionIncome?.slice(0, 3),
+  //   hasProductCommissions: Object.values(productResults || {}).some(p => p.commissionIncome),
+  //   sampleProduct: Object.entries(productResults || {})[0]
+  // });
   
   // DEBUG: Check performing vs NPL products
   const performingProducts = Object.entries(productResults || {})
@@ -34,14 +34,14 @@ const StandardPnL = ({
   const nplProducts = Object.entries(productResults || {})
     .filter(([key, product]) => key.includes('_NPL'));
     
-  console.log('📊 Product breakdown:', {
-    performingCount: performingProducts.length,
-    performingKeys: performingProducts.map(([key]) => key),
-    nplCount: nplProducts.length,
-    nplKeys: nplProducts.map(([key]) => key),
-    samplePerformingData: performingProducts[0]?.[1],
-    sampleNPLData: nplProducts[0]?.[1]
-  });
+  // console.log('📊 Product breakdown:', {
+  //   performingCount: performingProducts.length,
+  //   performingKeys: performingProducts.map(([key]) => key),
+  //   nplCount: nplProducts.length,
+  //   nplKeys: nplProducts.map(([key]) => key),
+  //   samplePerformingData: performingProducts[0]?.[1],
+  //   sampleNPLData: nplProducts[0]?.[1]
+  // });
   
   // SIMPLE DEBUG
   // console.log(`PnL for ${divisionName}:`, {
@@ -78,6 +78,15 @@ const StandardPnL = ({
   // Total LLP will be calculated automatically by FinancialTable from subRows
   const llpData = new Array(40).fill(0); // Placeholder - FinancialTable will calculate actual sum
   const personnelCostsData = divisionResults.pnl.quarterly?.personnelCosts ?? Array(40).fill(0);
+  
+  // PERSONNEL DEBUG
+  console.log('👥 PERSONNEL DEBUG in StandardPnL:');
+  console.log('  - Division:', divisionName);
+  console.log('  - Has personnel costs:', !!divisionResults.pnl?.personnelCosts);
+  console.log('  - Has quarterly personnel costs:', !!divisionResults.pnl?.quarterly?.personnelCosts);
+  console.log('  - Has personnel by seniority:', !!divisionResults.pnl?.personnelCostsBySeniority);
+  console.log('  - Personnel by seniority data:', divisionResults.pnl?.personnelCostsBySeniority);
+  console.log('  - First personnel cost value:', personnelCostsData[0]);
   const otherOpexData = divisionResults.pnl.quarterly?.otherOpex ?? Array(40).fill(0);
   const totalOpexData = divisionResults.pnl.quarterly?.totalOpex ?? Array(40).fill(0);
 
@@ -155,37 +164,37 @@ const StandardPnL = ({
   //   return pbt - taxes;
   // }); // Currently unused - may be needed for net profit calculations
 
-  // Debug logging
-  console.log('🔍 StandardPnL Debug:');
-  console.log('  - divisionName:', divisionName);
-  console.log('  - showProductDetail:', showProductDetail);
-  console.log('  - productResults keys:', Object.keys(productResults));
-  console.log('  - productResults:', productResults);
-  console.log('  - hasDivisionTotals:', hasDivisionTotals);
-  console.log('  - divisionInterestIncomeTotals:', divisionResults.divisionInterestIncomeTotals);
+  // Debug logging - DISABLED
+  // console.log('🔍 StandardPnL Debug:');
+  // console.log('  - divisionName:', divisionName);
+  // console.log('  - showProductDetail:', showProductDetail);
+  // console.log('  - productResults keys:', Object.keys(productResults));
+  // console.log('  - productResults:', productResults);
+  // console.log('  - hasDivisionTotals:', hasDivisionTotals);
+  // console.log('  - divisionInterestIncomeTotals:', divisionResults.divisionInterestIncomeTotals);
   
-  // DEBUG LLP data
-  console.log('💰 LLP Debug:');
-  console.log('  - globalResults available:', !!globalResults);
-  console.log('  - productPnLTableData available:', !!globalResults?.productPnLTableData);
-  console.log('  - loanLossProvisions available:', !!globalResults?.productPnLTableData?.loanLossProvisions);
-  console.log('  - LLP products:', Object.keys(globalResults?.productPnLTableData?.loanLossProvisions || {}));
-  console.log('  - Full LLP data:', globalResults?.productPnLTableData?.loanLossProvisions);
-  
-  // Check if we have NPL products (using already declared variables)
-  console.log('  - Performing products:', performingProducts.map(([k,p]) => `${k}: ${p.name}`));
-  console.log('  - NPL products:', nplProducts.map(([k,p]) => `${k}: ${p.name}`));
-  
-  // Check what data products have
-  if (performingProducts.length > 0) {
-    const [firstKey, firstProduct] = performingProducts[0];
-    console.log(`  - Sample performing product (${firstKey}):`, {
-      name: firstProduct.name,
-      hasQuarterly: !!firstProduct.quarterly,
-      hasInterestIncome: firstProduct.quarterly?.interestIncome?.length || 0,
-      quarterlyData: firstProduct.quarterly
-    });
-  }
+  // DEBUG LLP data - DISABLED
+  // console.log('💰 LLP Debug:');
+  // console.log('  - globalResults available:', !!globalResults);
+  // console.log('  - productPnLTableData available:', !!globalResults?.productPnLTableData);
+  // console.log('  - loanLossProvisions available:', !!globalResults?.productPnLTableData?.loanLossProvisions);
+  // console.log('  - LLP products:', Object.keys(globalResults?.productPnLTableData?.loanLossProvisions || {}));
+  // console.log('  - Full LLP data:', globalResults?.productPnLTableData?.loanLossProvisions);
+  // 
+  // // Check if we have NPL products (using already declared variables)
+  // console.log('  - Performing products:', performingProducts.map(([k,p]) => `${k}: ${p.name}`));
+  // console.log('  - NPL products:', nplProducts.map(([k,p]) => `${k}: ${p.name}`));
+  // 
+  // // Check what data products have
+  // if (performingProducts.length > 0) {
+  //   const [firstKey, firstProduct] = performingProducts[0];
+  //   console.log(`  - Sample performing product (${firstKey}):`, {
+  //     name: firstProduct.name,
+  //     hasQuarterly: !!firstProduct.quarterly,
+  //     hasInterestIncome: firstProduct.quarterly?.interestIncome?.length || 0,
+  //     quarterlyData: firstProduct.quarterly
+  //   });
+  // }
 
   // P&L Rows following the exact schema
   const pnlRows = [
@@ -1088,8 +1097,54 @@ const StandardPnL = ({
             ]
           );
         }
-      })
-      // No product breakdown for personnel costs - shown only at division level
+      }),
+      // Add breakdown by seniority level as subRows
+      subRows: showProductDetail && divisionResults.pnl?.personnelCostsBySeniority ? [
+        {
+          label: 'o/w Junior',
+          data: divisionResults.pnl.personnelCostsBySeniority.junior || Array(40).fill(0),
+          decimals: 1,
+          formula: (divisionResults.pnl.personnelCostsBySeniority.junior || Array(40).fill(0)).map((val, i) => createFormula(i,
+            'Junior level personnel costs',
+            [
+              year => `Junior staff costs: ${formatNumber(Math.abs(val), 2)} €M`
+            ]
+          ))
+        },
+        {
+          label: 'o/w Middle',
+          data: divisionResults.pnl.personnelCostsBySeniority.middle || Array(40).fill(0),
+          decimals: 1,
+          formula: (divisionResults.pnl.personnelCostsBySeniority.middle || Array(40).fill(0)).map((val, i) => createFormula(i,
+            'Middle level personnel costs',
+            [
+              year => `Middle staff costs: ${formatNumber(Math.abs(val), 2)} €M`
+            ]
+          ))
+        },
+        {
+          label: 'o/w Senior',
+          data: divisionResults.pnl.personnelCostsBySeniority.senior || Array(40).fill(0),
+          decimals: 1,
+          formula: (divisionResults.pnl.personnelCostsBySeniority.senior || Array(40).fill(0)).map((val, i) => createFormula(i,
+            'Senior level personnel costs',
+            [
+              year => `Senior staff costs: ${formatNumber(Math.abs(val), 2)} €M`
+            ]
+          ))
+        },
+        {
+          label: 'o/w Head of',
+          data: divisionResults.pnl.personnelCostsBySeniority.headOf || Array(40).fill(0),
+          decimals: 1,
+          formula: (divisionResults.pnl.personnelCostsBySeniority.headOf || Array(40).fill(0)).map((val, i) => createFormula(i,
+            'Head of level personnel costs',
+            [
+              year => `Head of staff costs: ${formatNumber(Math.abs(val), 2)} €M`
+            ]
+          ))
+        }
+      ] : []
     },
 
     // ========== OTHER OPEX ==========
@@ -1228,18 +1283,18 @@ const StandardPnL = ({
     return row;
   });
 
-  // Debug: Check Interest Income row and its subRows
-  const interestIncomeRow = transformedRows.find(row => row.label === 'Interest Income (IC)');
-  if (interestIncomeRow) {
-    console.log('📊 Interest Income Row Debug:');
-    console.log('  - Has subRows:', !!interestIncomeRow.subRows);
-    console.log('  - SubRows count:', interestIncomeRow.subRows?.length || 0);
-    if (interestIncomeRow.subRows) {
-      interestIncomeRow.subRows.forEach((subRow, idx) => {
-        console.log(`  - SubRow ${idx}: ${subRow.label}, has subRows: ${!!subRow.subRows}, subRows count: ${subRow.subRows?.length || 0}`);
-      });
-    }
-  }
+  // Debug: Check Interest Income row and its subRows - DISABLED
+  // const interestIncomeRow = transformedRows.find(row => row.label === 'Interest Income (IC)');
+  // if (interestIncomeRow) {
+  //   console.log('📊 Interest Income Row Debug:');
+  //   console.log('  - Has subRows:', !!interestIncomeRow.subRows);
+  //   console.log('  - SubRows count:', interestIncomeRow.subRows?.length || 0);
+  //   if (interestIncomeRow.subRows) {
+  //     interestIncomeRow.subRows.forEach((subRow, idx) => {
+  //       console.log(`  - SubRow ${idx}: ${subRow.label}, has subRows: ${!!subRow.subRows}, subRows count: ${subRow.subRows?.length || 0}`);
+  //     });
+  //   }
+  // }
 
   return <FinancialTable title="1. P&L (€M)" rows={transformedRows} />;
 };

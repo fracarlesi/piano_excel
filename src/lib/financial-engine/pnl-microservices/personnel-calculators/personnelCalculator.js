@@ -1,195 +1,177 @@
-/**
- * Personnel Cost Calculator Module
- * 
- * This module handles all personnel cost calculations using a bottom-up approach.
- * It provides a clean, explicit interface for calculating costs for all divisions
- * and central function departments.
- */
+import Decimal from 'decimal.js';
 
-/**
- * Calculate all personnel costs for every division and department
- * 
- * @param {Object} assumptions - Full assumptions object with personnel data
- * @param {Array} years - Array of year indices [0, 1, 2, ...]
- * @returns {Object} Structured object with all personnel costs
- */
-export const calculateAllPersonnelCosts = (assumptions, years) => {
-  // Extract global personnel parameters
-  const personnel = assumptions.personnel || {};
-  const annualSalaryReview = personnel.annualSalaryReview ?? 0;
-  const companyTaxMultiplier = personnel.companyTaxMultiplier ?? 1.4;
-  const salaryGrowth = years.map(i => Math.pow(1 + annualSalaryReview / 100, i));
+export class PersonnelCalculator {
+  constructor(divisionData, personnelAssumptions, quarters) {
+    this.divisionData = divisionData || {};
+    this.personnelAssumptions = personnelAssumptions || {};
+    this.quarters = quarters || [];
+    
+    console.log('    🔨 PersonnelCalculator constructor:');
+    console.log('      - Has staffing array:', Array.isArray(this.personnelAssumptions.staffing));
+    console.log('      - Staffing array length:', this.personnelAssumptions.staffing?.length);
+    console.log('      - Has positions array:', Array.isArray(this.personnelAssumptions.positions));
+    console.log('      - Positions array length:', this.personnelAssumptions.positions?.length);
+    
+    // Map staffing array to positions format if needed
+    if (Array.isArray(this.personnelAssumptions.positions) && this.personnelAssumptions.positions.length === 0 
+        && Array.isArray(this.personnelAssumptions.staffing)) {
+      console.log('      - Converting staffing to positions format');
+      // Convert from staffing table format to internal format
+      const divisionHeadcountGrowth = this.personnelAssumptions.headcountGrowth || 0;
+      this.personnelAssumptions.positions = this.personnelAssumptions.staffing.map(staff => ({
+        name: staff.level,
+        seniority: this.mapLevelToSeniority(staff.level),
+        ral: (staff.ralPerHead || 0) * 1000, // Convert from thousands to actual value
+        headcount: staff.count || 0,
+        headcountGrowth: divisionHeadcountGrowth // Use division-level growth
+      }));
+      console.log('      - Converted positions:', this.personnelAssumptions.positions);
+    }
+  }
   
-  // Helper function to calculate costs for a single unit (division or department)
-  const calculateUnitCosts = (unitData, salaryGrowth, companyTaxMultiplier, years) => {
-    if (!unitData || !unitData.staffing) {
-      return {
-        costs: years.map(() => 0),
-        headcount: years.map(() => 0),
-        details: years.map(() => [])
-      };
+  mapLevelToSeniority(level) {
+    const mapping = {
+      'Junior': 'junior',
+      'Middle': 'middle', 
+      'Senior': 'senior',
+      'Head of': 'headOf'
+    };
+    return mapping[level] || 'junior';
+  }
+
+  calculate() {
+    const results = {};
+    
+    this.quarters.forEach(quarter => {
+      const quarterPersonnelCosts = this.calculateQuarterPersonnelCosts(quarter);
+      results[quarter] = quarterPersonnelCosts;
+    });
+    
+    return results;
+  }
+
+  calculateQuarterPersonnelCosts(quarter) {
+    const quarterResult = {
+      total: new Decimal(0),
+      bySeniority: {
+        junior: new Decimal(0),
+        middle: new Decimal(0),
+        senior: new Decimal(0),
+        headOf: new Decimal(0)
+      },
+      details: []
+    };
+
+    const positions = this.personnelAssumptions.positions || [];
+    const companyTaxMultiplier = new Decimal(this.personnelAssumptions.companyTaxMultiplier || 1.3);
+    const annualSalaryReview = new Decimal(this.personnelAssumptions.annualSalaryReview || 0);
+    
+    if (quarter === 'Q1') {
+      console.log(`      🧮 Calculating for quarter ${quarter}:`);
+      console.log(`        - Positions to process: ${positions.length}`);
+      console.log(`        - Company tax multiplier: ${companyTaxMultiplier}`);
+      console.log(`        - Annual salary review: ${annualSalaryReview}%`);
     }
     
-    const { headcountGrowth = 0, staffing = [] } = unitData;
-    const headcountMultiplier = years.map(i => Math.pow(1 + headcountGrowth / 100, i));
+    positions.forEach(position => {
+      const seniorityData = this.calculateSeniorityQuarterCost(
+        position,
+        quarter,
+        companyTaxMultiplier,
+        annualSalaryReview
+      );
+      
+      quarterResult.bySeniority[position.seniority] = quarterResult.bySeniority[position.seniority].plus(seniorityData.cost);
+      quarterResult.total = quarterResult.total.plus(seniorityData.cost);
+      quarterResult.details.push(seniorityData);
+    });
     
-    const yearlyResults = years.map((_, yearIndex) => {
-      let totalCost = 0;
-      let totalHeadcount = 0;
-      const levelDetails = [];
-      
-      staffing.forEach(level => {
-        // Apply headcount growth only to Junior and Middle levels
-        const growthMultiplier = (level.level === 'Junior' || level.level === 'Middle') 
-          ? headcountMultiplier[yearIndex] 
-          : 1; // Senior and Head of remain constant
-        
-        const headcount = level.count * growthMultiplier;
-        const ralPerHead = (level.ralPerHead || 0) * 1000 * salaryGrowth[yearIndex]; // ralPerHead is in thousands
-        const companyCostPerHead = ralPerHead * companyTaxMultiplier;
-        const levelCost = headcount * companyCostPerHead / 1000000; // Convert to €M
-        
-        totalCost += levelCost;
-        totalHeadcount += headcount;
-        
-        // Store details for calculation trace
-        levelDetails.push({
-          level: level.level,
-          headcount: headcount,
-          ralPerHead: ralPerHead / 1000, // Show in thousands for display
-          companyCostPerHead: companyCostPerHead / 1000, // Show in thousands for display
-          totalCost: levelCost
-        });
-      });
-      
-      return { 
-        cost: -totalCost, // Negative for P&L
-        headcount: totalHeadcount,
-        details: levelDetails
+    return quarterResult;
+  }
+
+  calculateSeniorityQuarterCost(position, quarter, companyTaxMultiplier, annualSalaryReview) {
+    const baseRAL = new Decimal(position.ral || 0);
+    const headcount = this.getHeadcountForQuarter(position, quarter);
+    
+    const yearsSinceStart = this.getYearsSinceStart(quarter);
+    const salaryGrowthFactor = new Decimal(1).plus(annualSalaryReview.div(100)).pow(yearsSinceStart);
+    
+    const adjustedRAL = baseRAL.times(salaryGrowthFactor);
+    const annualCostPerPerson = adjustedRAL.times(companyTaxMultiplier);
+    const quarterCostPerPerson = annualCostPerPerson.div(4);
+    const totalQuarterCost = quarterCostPerPerson.times(headcount);
+    
+    if (quarter === 'Q1') {
+      console.log(`        💵 Position: ${position.name} (${position.seniority})`);
+      console.log(`          - Base RAL: ${baseRAL.toString()}`);
+      console.log(`          - Headcount: ${headcount.toString()}`);
+      console.log(`          - Total quarter cost: ${totalQuarterCost.toString()}`);
+    }
+    
+    return {
+      position: position.name,
+      seniority: position.seniority,
+      headcount: headcount,
+      ral: adjustedRAL,
+      quarterCostPerPerson: quarterCostPerPerson,
+      cost: totalQuarterCost
+    };
+  }
+
+  getHeadcountForQuarter(position, quarter) {
+    const quarterIndex = this.quarters.indexOf(quarter);
+    const yearIndex = Math.floor(quarterIndex / 4);
+    
+    const baseHeadcount = new Decimal(position.headcount || 0);
+    const growthRate = new Decimal(position.headcountGrowth || 0).div(100);
+    
+    const growsAutomatically = position.seniority === 'junior' || position.seniority === 'middle';
+    
+    if (growsAutomatically && yearIndex > 0) {
+      return baseHeadcount.times(new Decimal(1).plus(growthRate).pow(yearIndex));
+    }
+    
+    return baseHeadcount;
+  }
+
+  getYearsSinceStart(quarter) {
+    const quarterIndex = this.quarters.indexOf(quarter);
+    return Math.floor(quarterIndex / 4);
+  }
+
+  getPersonnelCostsByQuarter() {
+    const costs = this.calculate();
+    const result = {};
+    
+    this.quarters.forEach(quarter => {
+      result[quarter] = {
+        total: costs[quarter].total.toNumber() / 1000000, // Convert to millions
+        bySeniority: {
+          junior: costs[quarter].bySeniority.junior.toNumber() / 1000000,
+          middle: costs[quarter].bySeniority.middle.toNumber() / 1000000,
+          senior: costs[quarter].bySeniority.senior.toNumber() / 1000000,
+          headOf: costs[quarter].bySeniority.headOf.toNumber() / 1000000
+        }
       };
     });
     
-    return {
-      costs: yearlyResults.map(r => r.cost),
-      headcount: yearlyResults.map(r => r.headcount),
-      details: yearlyResults.map(r => r.details)
-    };
-  };
-  
-  // Initialize result structure
-  const result = {
-    // Business Divisions
-    RealEstateFinancing: null,
-    SMEFinancing: null,
-    WealthAndAssetManagement: null,
-    Incentives: null,
-    DigitalBanking: null,
-    Tech: null,
-    Treasury: null,
-    
-    // Central Functions
-    CentralFunctions: {
-      total: years.map(() => 0),
-      departments: {}
-    },
-    
-    // Grand totals
-    grandTotal: {
-      costs: years.map(() => 0),
-      headcount: years.map(() => 0)
-    }
-  };
-  
-  // Calculate costs for each business division
-  if (assumptions.realEstateDivision) {
-    result.RealEstateFinancing = calculateUnitCosts(assumptions.realEstateDivision, salaryGrowth, companyTaxMultiplier, years);
+    return result;
   }
-  
-  if (assumptions.smeDivision) {
-    result.SMEFinancing = calculateUnitCosts(assumptions.smeDivision, salaryGrowth, companyTaxMultiplier, years);
-  }
-  
-  if (assumptions.wealthDivision) {
-    result.WealthAndAssetManagement = calculateUnitCosts(assumptions.wealthDivision, salaryGrowth, companyTaxMultiplier, years);
-  }
-  
-  if (assumptions.incentiveDivision) {
-    result.Incentives = calculateUnitCosts(assumptions.incentiveDivision, salaryGrowth, companyTaxMultiplier, years);
-  }
-  
-  if (assumptions.digitalBankingDivision) {
-    result.DigitalBanking = calculateUnitCosts(assumptions.digitalBankingDivision, salaryGrowth, companyTaxMultiplier, years);
-  }
-  
-  if (assumptions.techDivision) {
-    result.Tech = calculateUnitCosts(assumptions.techDivision, salaryGrowth, companyTaxMultiplier, years);
-  }
-  
-  if (assumptions.treasury && assumptions.treasury.staffing) {
-    result.Treasury = calculateUnitCosts(assumptions.treasury, salaryGrowth, companyTaxMultiplier, years);
-  }
-  
-  // Calculate costs for Central Functions departments
-  if (assumptions.centralFunctions && assumptions.centralFunctions.departments) {
-    Object.entries(assumptions.centralFunctions.departments).forEach(([deptKey, deptData]) => {
-      const deptResult = calculateUnitCosts(deptData, salaryGrowth, companyTaxMultiplier, years);
-      result.CentralFunctions.departments[deptKey] = deptResult;
-      
-      // Add to central functions total
-      result.CentralFunctions.total = result.CentralFunctions.total.map((total, i) => 
-        total + deptResult.costs[i]
-      );
-    });
-  }
-  
-  // Calculate grand totals
-  // Business divisions
-  ['RealEstateFinancing', 'SMEFinancing', 'WealthAndAssetManagement', 'Incentives', 'DigitalBanking', 'Tech', 'Treasury'].forEach(division => {
-    if (result[division]) {
-      result.grandTotal.costs = result.grandTotal.costs.map((total, i) => 
-        total + result[division].costs[i]
-      );
-      result.grandTotal.headcount = result.grandTotal.headcount.map((total, i) => 
-        total + result[division].headcount[i]
-      );
-    }
-  });
-  
-  // Central functions
-  result.grandTotal.costs = result.grandTotal.costs.map((total, i) => 
-    total + result.CentralFunctions.total[i]
-  );
-  
-  Object.values(result.CentralFunctions.departments).forEach(dept => {
-    result.grandTotal.headcount = result.grandTotal.headcount.map((total, i) => 
-      total + dept.headcount[i]
-    );
-  });
-  
-  return result;
-};
 
-/**
- * Get personnel costs for a specific division
- * 
- * @param {Object} allPersonnelCosts - Result from calculateAllPersonnelCosts
- * @param {string} divisionKey - Division key (e.g., 'RealEstateFinancing')
- * @returns {Object} Personnel costs and details for the division
- */
-export const getDivisionPersonnelCosts = (allPersonnelCosts, divisionKey) => {
-  if (divisionKey === 'CentralFunctions') {
-    return {
-      costs: allPersonnelCosts.CentralFunctions.total,
-      details: allPersonnelCosts.CentralFunctions.departments,
-      headcount: Object.values(allPersonnelCosts.CentralFunctions.departments)
-        .reduce((acc, dept) => acc.map((val, i) => val + dept.headcount[i]), 
-                allPersonnelCosts.CentralFunctions.total.map(() => 0))
-    };
+  getPersonnelCostsForPnL() {
+    const costs = this.calculate();
+    const pnlData = {};
+    
+    this.quarters.forEach(quarter => {
+      pnlData[quarter] = {
+        'Personnel costs': -costs[quarter].total.toNumber() / 1000000, // Convert to millions
+        'Personnel costs - Junior': -costs[quarter].bySeniority.junior.toNumber() / 1000000,
+        'Personnel costs - Middle': -costs[quarter].bySeniority.middle.toNumber() / 1000000,
+        'Personnel costs - Senior': -costs[quarter].bySeniority.senior.toNumber() / 1000000,
+        'Personnel costs - Head of': -costs[quarter].bySeniority.headOf.toNumber() / 1000000
+      };
+    });
+    
+    return pnlData;
   }
-  
-  return allPersonnelCosts[divisionKey] || {
-    costs: allPersonnelCosts.CentralFunctions.total.map(() => 0),
-    details: [],
-    headcount: allPersonnelCosts.CentralFunctions.total.map(() => 0)
-  };
-};
+}

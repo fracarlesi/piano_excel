@@ -14,11 +14,21 @@ export const DIVISION_PREFIXES = {
   TECH: 'tech',
   INCENTIVE: 'incentive',
   CENTRAL: 'central',
+  CF: 'cf', // Central Functions alias
   TREASURY: 'treasury'
 };
 
-// All division prefixes as an array
-export const ALL_DIVISION_PREFIXES = Object.values(DIVISION_PREFIXES);
+// All division prefixes as an array (excluding aliases)
+export const ALL_DIVISION_PREFIXES = [
+  DIVISION_PREFIXES.REAL_ESTATE,
+  DIVISION_PREFIXES.SME,
+  DIVISION_PREFIXES.DIGITAL,
+  DIVISION_PREFIXES.WEALTH,
+  DIVISION_PREFIXES.TECH,
+  DIVISION_PREFIXES.INCENTIVE,
+  DIVISION_PREFIXES.CF, // Use 'cf' as the main identifier for central functions
+  DIVISION_PREFIXES.TREASURY
+];
 
 // Business divisions (revenue-generating)
 export const BUSINESS_DIVISION_PREFIXES = [
@@ -45,6 +55,7 @@ export const DIVISION_TO_ASSUMPTION_KEY = {
   [DIVISION_PREFIXES.TECH]: 'techDivision',      // NOTA: era 'techPlatformDivision' in alcuni punti
   [DIVISION_PREFIXES.INCENTIVE]: 'incentiveDivision', // NOTA: era 'incentiveFinanceDivision' in alcuni punti
   [DIVISION_PREFIXES.CENTRAL]: 'centralFunctions',
+  [DIVISION_PREFIXES.CF]: 'centralFunctions', // Alias for central functions
   [DIVISION_PREFIXES.TREASURY]: 'treasury'
 };
 
@@ -57,6 +68,7 @@ export const DIVISION_TO_PERSONNEL_KEY = {
   [DIVISION_PREFIXES.TECH]: 'Tech',
   [DIVISION_PREFIXES.INCENTIVE]: 'Incentives',
   [DIVISION_PREFIXES.CENTRAL]: 'CentralFunctions',
+  [DIVISION_PREFIXES.CF]: 'CentralFunctions', // Alias
   [DIVISION_PREFIXES.TREASURY]: 'Treasury'
 };
 
@@ -69,6 +81,7 @@ export const DIVISION_DISPLAY_NAMES = {
   [DIVISION_PREFIXES.TECH]: 'Tech Platform',
   [DIVISION_PREFIXES.INCENTIVE]: 'Incentive Finance',
   [DIVISION_PREFIXES.CENTRAL]: 'Central Functions',
+  [DIVISION_PREFIXES.CF]: 'Central Functions', // Alias
   [DIVISION_PREFIXES.TREASURY]: 'Treasury / ALM'
 };
 

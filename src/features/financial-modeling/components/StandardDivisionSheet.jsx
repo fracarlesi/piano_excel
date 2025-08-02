@@ -43,21 +43,21 @@ const StandardDivisionSheet = ({
   const allCommissionExpenseData = results.productPnLTableData?.commissionExpense || {};
   const allLoanLossProvisionsData = results.productPnLTableData?.loanLossProvisions || {};
   
-  console.log('🔍 StandardDivisionSheet - Commission Income Data:', {
-    division: divisionKey,
-    hasCommissionData: Object.keys(allCommissionIncomeData).length > 0,
-    commissionProducts: Object.keys(allCommissionIncomeData)
-  });
+  // console.log('🔍 StandardDivisionSheet - Commission Income Data:', {
+  //   division: divisionKey,
+  //   hasCommissionData: Object.keys(allCommissionIncomeData).length > 0,
+  //   commissionProducts: Object.keys(allCommissionIncomeData)
+  // });
   
-  // DEBUG: Check P&L structure
-  console.log('🔍 StandardDivisionSheet - P&L Data Structure:', {
-    hasResults: !!results,
-    hasPnL: !!results?.pnl,
-    hasProductTableData: !!results?.pnl?.productTableData,
-    hasLoanLossProvisions: !!results?.pnl?.productTableData?.loanLossProvisions,
-    llpProducts: Object.keys(results?.pnl?.productTableData?.loanLossProvisions || {}),
-    fullPnLStructure: results?.pnl
-  });
+  // DEBUG: Check P&L structure - DISABLED
+  // console.log('🔍 StandardDivisionSheet - P&L Data Structure:', {
+  //   hasResults: !!results,
+  //   hasPnL: !!results?.pnl,
+  //   hasProductTableData: !!results?.pnl?.productTableData,
+  //   hasLoanLossProvisions: !!results?.pnl?.productTableData?.loanLossProvisions,
+  //   llpProducts: Object.keys(results?.pnl?.productTableData?.loanLossProvisions || {}),
+  //   fullPnLStructure: results?.pnl
+  // });
   
   const productPnLData = Object.fromEntries(
     Object.entries(allInterestIncomeData).filter(([key]) => {
@@ -104,10 +104,10 @@ const StandardDivisionSheet = ({
         }
       }
       
-      console.log(`  💰 Adding commission data for ${key} → ${targetKey}`, {
-        quarterlyData: commissionData?.slice(0, 4),
-        hasData: Array.isArray(commissionData)
-      });
+      // console.log(`  💰 Adding commission data for ${key} → ${targetKey}`, {
+      //   quarterlyData: commissionData?.slice(0, 4),
+      //   hasData: Array.isArray(commissionData)
+      // });
       
       // Add commission income quarterly data
       productPnLData[targetKey].quarterly = productPnLData[targetKey].quarterly || {};

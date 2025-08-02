@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '13.83', // Fixed grace period calculation - was including one extra quarter in grace period
+  version: '13.88', // Personnel costs now displayed in millions (€M) for consistency with other P&L items
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 
