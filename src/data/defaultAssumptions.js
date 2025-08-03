@@ -1,5 +1,5 @@
 export const defaultAssumptions = {
-  version: '13.92', // Fixed NPL product naming in FTP section to use (NPL) format
+  version: '13.94', // Fixed all P&L totals and subtotals to calculate from visible products only
   initialEquity: 200, 
   taxRate: 28, 
   costOfFundsRate: 3.0, 

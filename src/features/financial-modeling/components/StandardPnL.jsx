@@ -50,20 +50,37 @@ const StandardPnL = ({
   // });
   
   // Use quarterly data directly (40 quarters)
-  // Check if we have division totals from the microservice
-  const hasDivisionTotals = !!divisionResults.divisionInterestIncomeTotals;
+  // Calculate subtotals directly from product results to ensure we only sum visible products
+  const interestIncomePerformingData = (() => {
+    const performingTotal = Array(40).fill(0);
+    Object.entries(productResults)
+      .filter(([key, product]) => !key.includes('_NPL'))
+      .forEach(([key, product]) => {
+        const productInterest = product.quarterly?.interestIncome ?? Array(40).fill(0);
+        productInterest.forEach((val, i) => {
+          performingTotal[i] += val;
+        });
+      });
+    return performingTotal;
+  })();
+    
+  const interestIncomeNonPerformingData = (() => {
+    const nplTotal = Array(40).fill(0);
+    Object.entries(productResults)
+      .filter(([key, product]) => key.includes('_NPL'))
+      .forEach(([key, product]) => {
+        const productInterest = product.quarterly?.interestIncome ?? Array(40).fill(0);
+        productInterest.forEach((val, i) => {
+          nplTotal[i] += val;
+        });
+      });
+    return nplTotal;
+  })();
   
-  const interestIncomeData = hasDivisionTotals 
-    ? divisionResults.divisionInterestIncomeTotals.total 
-    : (divisionResults.pnl.quarterly?.interestIncome ?? Array(40).fill(0));
-    
-  const interestIncomePerformingData = hasDivisionTotals
-    ? divisionResults.divisionInterestIncomeTotals.performingSubtotal
-    : (divisionResults.pnl.quarterly?.interestIncomePerforming ?? Array(40).fill(0));
-    
-  const interestIncomeNonPerformingData = hasDivisionTotals
-    ? divisionResults.divisionInterestIncomeTotals.nplSubtotal
-    : (divisionResults.pnl.quarterly?.interestIncomeNonPerforming ?? Array(40).fill(0));
+  // Total interest income is the sum of performing and NPL
+  const interestIncomeData = interestIncomePerformingData.map((performing, i) => 
+    performing + interestIncomeNonPerformingData[i]
+  );
   // Get ECL and Credit Impairment components
   // Note: components are at the top level of loanLossProvisions, not under details
   const eclMovementData = globalResults?.details?.loanLossProvisions?.components?.eclMovement?.quarterly || 
@@ -126,11 +143,8 @@ const StandardPnL = ({
       niiData[i] += income;
     });
     
-    // Add FTP data (already negative)
+    // Add FTP data (already negative) - Calculate from visible products only
     const ftpData = (() => {
-      if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotal) {
-        return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotal;
-      }
       const ftpTotal = Array(40).fill(0);
       Object.entries(productResults).forEach(([key, product]) => {
         const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
@@ -324,23 +338,16 @@ const StandardPnL = ({
     {
       label: 'FTP',
       data: (() => {
-        // Calculate FTP total including both Bonis and NPL
+        // Calculate FTP total including both Bonis and NPL from visible products only
         const ftpTotal = Array(40).fill(0);
         
-        // Get FTP from divisionResults if available (from separated calculator)
-        if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotal) {
-          return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotal;
-        }
-        
-        // Fallback: calculate from products
-        Object.entries(productResults)
-          .filter(([key, product]) => !key.includes('_NPL'))
-          .forEach(([key, product]) => {
-            const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
-            productFTP.forEach((val, i) => {
-              ftpTotal[i] += val;
-            });
+        // Calculate from all products (both performing and NPL)
+        Object.entries(productResults).forEach(([key, product]) => {
+          const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+          productFTP.forEach((val, i) => {
+            ftpTotal[i] += val;
           });
+        });
         return ftpTotal;
       })(),
       decimals: 1,
@@ -368,12 +375,7 @@ const StandardPnL = ({
         {
           label: 'o/w Performing Assets',
           data: (() => {
-            // Get Bonis FTP from divisionResults if available
-            if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalBonis) {
-              return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotalBonis;
-            }
-            
-            // Fallback: calculate from performing products only
+            // Calculate from performing products only (visible products)
             const ftpBonis = Array(40).fill(0);
             Object.entries(productResults)
               .filter(([key, product]) => !key.includes('_NPL'))
@@ -450,18 +452,31 @@ const StandardPnL = ({
         {
           label: 'o/w Non-Performing Assets',
           data: (() => {
-            // Get NPL FTP from divisionResults if available
-            if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalNPL) {
-              return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotalNPL;
-            }
-            
-            // Fallback: For now return zeros as NPL FTP is calculated in the total
-            return Array(40).fill(0);
+            // Calculate NPL FTP from NPL products in productResults
+            const ftpNPL = Array(40).fill(0);
+            Object.entries(productResults)
+              .filter(([key, product]) => key.includes('_NPL'))
+              .forEach(([key, product]) => {
+                const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+                productFTP.forEach((val, i) => {
+                  ftpNPL[i] += val;
+                });
+              });
+            return ftpNPL;
           })(),
           decimals: 1,
           isSecondarySubTotal: true,
           formula: (() => {
-            const nplFTP = divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotalNPL || Array(40).fill(0);
+            // Calculate NPL FTP from visible NPL products
+            const nplFTP = Array(40).fill(0);
+            Object.entries(productResults)
+              .filter(([key, product]) => key.includes('_NPL'))
+              .forEach(([key, product]) => {
+                const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
+                productFTP.forEach((val, i) => {
+                  nplFTP[i] += val;
+                });
+              });
             return nplFTP.map((val, i) => createFormula(i,
               'FTP on NPL Stock',
               [
@@ -470,20 +485,18 @@ const StandardPnL = ({
               ]
             ));
           })(),
-          subRows: showProductDetail && divisionResults.pnl?.creditInterestExpense?.rawResults?.byProduct ? 
-            Object.entries(divisionResults.pnl.creditInterestExpense.rawResults.byProduct)
-              .filter(([key, data]) => data.quarterlyFTPNPL?.some(v => v !== 0))
-              .map(([key, data]) => ({
-                label: `o/w ${data.name} (NPL)`,
-                data: data.quarterlyFTPNPL || Array(40).fill(0),
+          subRows: showProductDetail ? 
+            Object.entries(productResults)
+              .filter(([key, product]) => key.includes('_NPL'))
+              .map(([key, product]) => ({
+                label: `o/w ${product.name}`,
+                data: product.quarterly?.interestExpense || Array(40).fill(0),
                 decimals: 1,
-                formula: (data.quarterlyFTPNPL || Array(40).fill(0)).map((val, i) => {
-                  const details = data.quarterlyDetails?.[i];
+                formula: (product.quarterly?.interestExpense || Array(40).fill(0)).map((val, i) => {
                   return createFormula(i,
                     'FTP on NPL Stock',
                     [
-                      year => `NPL Stock: ${formatNumber(details?.nplAssets || 0, 2)} €M`,
-                      year => `FTP Rate: ${((details?.ftpRate || 0) + (assumptions.euribor ?? 0)).toFixed(2)}%`,
+                      year => `FTP Rate: ${((assumptions.euribor ?? 0) + (assumptions.ftpSpread ?? 0)).toFixed(2)}%`,
                       year => `NPL FTP: ${formatNumber(val, 2)} €M`
                     ]
                   );
@@ -505,14 +518,8 @@ const StandardPnL = ({
           niiData[i] += income;
         });
         
-        // Add FTP data - Use the total FTP that includes both Bonis and NPL
+        // Add FTP data - Calculate total FTP from all visible products
         const ftpData = (() => {
-          // First try to get FTP from divisionResults (includes both Bonis and NPL)
-          if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotal) {
-            return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotal;
-          }
-          
-          // Fallback: calculate total FTP from all products (performing + NPL)
           const ftpTotal = Array(40).fill(0);
           Object.entries(productResults).forEach(([key, product]) => {
             const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
@@ -532,14 +539,8 @@ const StandardPnL = ({
       decimals: 1,
       isSubTotal: true,
       formula: (() => {
-        // Use the same FTP data as displayed above
+        // Calculate FTP data from visible products
         const ftpData = (() => {
-          // First try to get FTP from divisionResults (includes both Bonis and NPL)
-          if (divisionResults.pnl?.creditInterestExpense?.rawResults?.quarterlyTotal) {
-            return divisionResults.pnl.creditInterestExpense.rawResults.quarterlyTotal;
-          }
-          
-          // Fallback: calculate total FTP from all products (performing + NPL)
           const ftpTotal = Array(40).fill(0);
           Object.entries(productResults).forEach(([key, product]) => {
             const productFTP = product.quarterly?.interestExpense ?? Array(40).fill(0);
