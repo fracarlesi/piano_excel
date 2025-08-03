@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EditableNumberField } from '../../components/ui/inputs';
 import StaffingTable from './StaffingTable';
 
 const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
   const centralFunctions = assumptions.centralFunctions || {};
   const companyTaxMultiplier = assumptions.personnel?.companyTaxMultiplier || 1.4;
+  const [isPersonnelExpanded, setIsPersonnelExpanded] = useState(false);
+  const [expandedDepartments, setExpandedDepartments] = useState({});
 
   // List of departments
   const departments = [
@@ -18,6 +20,13 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
     { key: 'MarketingAndCommunication', name: 'Marketing & Communication', icon: '📢' },
     { key: 'InternalAudit', name: 'Internal Audit', icon: '🔍' }
   ];
+
+  const toggleDepartment = (deptKey) => {
+    setExpandedDepartments(prev => ({
+      ...prev,
+      [deptKey]: !prev[deptKey]
+    }));
+  };
 
   return (
     <div className="space-y-8">
@@ -36,9 +45,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Headquarters and central facilities costs"
-              tooltipTitle="Facilities Costs"
-              tooltipImpact="Fixed infrastructure costs not attributable to specific divisions"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
+              
+              
+              
             />
           </div>
 
@@ -52,9 +61,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="External consultants, legal services, professional fees"
-              tooltipTitle="External Services"
-              tooltipImpact="Professional services supporting all bank functions"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
+              
+              
+              
             />
           </div>
 
@@ -68,9 +77,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Regulatory fees, contributions, and supervisory charges"
-              tooltipTitle="Regulatory Fees"
-              tooltipImpact="Mandatory fees paid to regulatory authorities"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
+              
+              
+              
             />
             <EditableNumberField
               label="Other Central Costs (Year 1)"
@@ -80,9 +89,9 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={false}
               decimals={1}
               tooltip="Other miscellaneous central costs"
-              tooltipTitle="Other Central Costs"
-              tooltipImpact="Catch-all for unallocated central expenses"
-              tooltipFormula="Year N = Year 1 × (1 + Cost Growth Rate)^(N-1)"
+              
+              
+              
             />
           </div>
         </div>
@@ -90,35 +99,56 @@ const CentralAssumptions = ({ assumptions, onAssumptionChange }) => {
 
       {/* Department-based Personnel Staffing */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold text-gray-800 mb-6">Central Functions - Personnel by Department</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-800">Personale e Costi HR - Central Functions</h3>
+          <button
+            onClick={() => setIsPersonnelExpanded(!isPersonnelExpanded)}
+            className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <span>{isPersonnelExpanded ? '−' : '+'}</span>
+            <span>{isPersonnelExpanded ? 'Chiudi' : 'Espandi'}</span>
+          </button>
+        </div>
         
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> Configure staffing for each central department. Personnel costs are calculated based on RAL × {companyTaxMultiplier}x multiplier.
-          </p>
-        </div>
-
-        <div className="space-y-6">
-          {departments.map(dept => (
-            <div key={dept.key} className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <span className="text-xl">{dept.icon}</span>
-                  {dept.name}
-                </h4>
-              </div>
-              <div className="p-4">
-                <StaffingTable
-                  divisionData={centralFunctions.departments?.[dept.key] || {}}
-                  path={`centralFunctions.departments.${dept.key}`}
-                  handleAssumptionChange={onAssumptionChange}
-                  editMode={true}
-                  companyTaxMultiplier={companyTaxMultiplier}
-                />
-              </div>
+        {isPersonnelExpanded && (
+          <>
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> Configure staffing for each central department. Personnel costs are calculated based on RAL × {companyTaxMultiplier}x multiplier.
+              </p>
             </div>
-          ))}
-        </div>
+
+            <div className="space-y-6">
+              {departments.map(dept => (
+                <div key={dept.key} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                    <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                      <span className="text-xl">{dept.icon}</span>
+                      {dept.name}
+                    </h4>
+                    <button
+                      onClick={() => toggleDepartment(dept.key)}
+                      className="text-sm text-gray-600 hover:text-gray-800"
+                    >
+                      {expandedDepartments[dept.key] ? '−' : '+'}
+                    </button>
+                  </div>
+                  {expandedDepartments[dept.key] && (
+                    <div className="p-4">
+                      <StaffingTable
+                        divisionData={centralFunctions.departments?.[dept.key] || {}}
+                        path={`centralFunctions.departments.${dept.key}`}
+                        handleAssumptionChange={onAssumptionChange}
+                        editMode={true}
+                        companyTaxMultiplier={companyTaxMultiplier}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Summary */}

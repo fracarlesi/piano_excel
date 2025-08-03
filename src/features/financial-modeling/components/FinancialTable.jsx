@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { CalculationTooltip } from '../../../components/tooltip-system';
-import { formatNumber } from '../../../components/shared/formatters';
+import { formatNumber } from '../../../lib/utils';
 
 // Financial Table Component with expandable rows (Quarterly View Only)
 const FinancialTable = ({ title, rows }) => {
@@ -224,20 +223,7 @@ const FinancialTable = ({ title, rows }) => {
                       'text-gray-900' : ''
                   }`}
                 >
-                  {row.formula && row.formula[i] ? (
-                    <CalculationTooltip 
-                      id={`${title}-${displayIndex}-${i}`}
-                      formula={row.formula[i].formula} 
-                      details={row.formula[i].details}
-                      calculation={row.formula[i].calculation}
-                      precedents={row.formula[i].precedents}
-                      year={row.formula[i].year}
-                    >
-                      {formatNumber(value, row.decimals, row.unit)}
-                    </CalculationTooltip>
-                  ) : (
-                    formatNumber(value, row.decimals, row.unit)
-                  )}
+                  {formatNumber(value, row.decimals, row.unit)}
                 </td>
               ))}
             </tr>

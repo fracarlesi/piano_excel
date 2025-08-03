@@ -62,7 +62,7 @@ const CreditProductAssumptions = ({
             min={0}
             max={20}
             step={0.1}
-            tooltip="Spread sopra EURIBOR per prestiti a tasso variabile o tasso fisso totale"
+            
           />
           
           <EditableSelectField
@@ -74,7 +74,7 @@ const CreditProductAssumptions = ({
               { value: 'variable', label: 'Variabile (EURIBOR + Spread)' },
               { value: 'fixed', label: 'Fisso' }
             ]}
-            tooltip="Tasso variabile legato a EURIBOR o tasso fisso"
+            
           />
           
           <EditableNumberField
@@ -85,7 +85,7 @@ const CreditProductAssumptions = ({
             min={0}
             max={10}
             step={0.1}
-            tooltip="Commissione upfront sui nuovi prestiti"
+            
           />
           
           <EditableNumberField
@@ -96,7 +96,7 @@ const CreditProductAssumptions = ({
             min={0}
             max={10}
             step={0.1}
-            tooltip="Commissione passiva pagata agli intermediari sui nuovi volumi"
+            
           />
           
           <EditableNumberField
@@ -107,7 +107,7 @@ const CreditProductAssumptions = ({
             min={0}
             max={10}
             step={0.1}
-            tooltip="Funds Transfer Pricing - Tasso interno di trasferimento fondi per questo prodotto"
+            
           />
         </CardContent>
       </Card>
@@ -126,7 +126,7 @@ const CreditProductAssumptions = ({
             min={0}
             max={20}
             step={0.1}
-            tooltip="Percentuale di default applicata una sola volta per ogni vintage di erogazione"
+            
           />
           
           <EditableNumberField
@@ -137,7 +137,7 @@ const CreditProductAssumptions = ({
             min={1}
             max={40}
             step={1}
-            tooltip="Numero di trimestri dopo l'erogazione quando si verifica il default"
+            
             error={isDefaultAfterMaturity}
           />
           
@@ -149,7 +149,7 @@ const CreditProductAssumptions = ({
             min={0}
             max={150}
             step={5}
-            tooltip="Risk Weighted Assets come % del valore nominale"
+            
           />
           
           <EditableNumberField
@@ -160,7 +160,7 @@ const CreditProductAssumptions = ({
             min={1}
             max={40}
             step={1}
-            tooltip="Trimestri necessari per completare il processo di recupero del credito NPL. Questo valore è cruciale per l'attualizzazione dei flussi di cassa."
+            
           />
           
           <EditableSelectField
@@ -172,7 +172,7 @@ const CreditProductAssumptions = ({
               { value: 'secured', label: 'Secured (con garanzia)' },
               { value: 'unsecured', label: 'Unsecured (senza garanzia)' }
             ]}
-            tooltip="Prestito garantito o non garantito"
+            
           />
           
           {!product.isUnsecured && (
@@ -185,7 +185,7 @@ const CreditProductAssumptions = ({
                 min={0}
                 max={100}
                 step={5}
-                tooltip="Loan to Value - rapporto prestito/valore garanzia"
+                
               />
               
               <EditableNumberField
@@ -196,7 +196,7 @@ const CreditProductAssumptions = ({
                 min={0}
                 max={50}
                 step={1}
-                tooltip="Costi di recupero come % del valore del credito"
+                
               />
               
               <EditableNumberField
@@ -207,7 +207,7 @@ const CreditProductAssumptions = ({
                 min={0}
                 max={80}
                 step={5}
-                tooltip="Sconto sul valore della garanzia per calcolo LGD"
+                
               />
             </>
           )}
@@ -221,7 +221,7 @@ const CreditProductAssumptions = ({
               min={0}
               max={100}
               step={5}
-              tooltip="Loss Given Default per prestiti non garantiti"
+              
             />
           )}
         </CardContent>
@@ -242,7 +242,7 @@ const CreditProductAssumptions = ({
               { value: 'none', label: 'Non presente' },
               { value: 'present', label: 'Presente' }
             ]}
-            tooltip="Presenza di garanzia pubblica sul credito"
+            
           />
           
           {product.stateGuaranteeType && product.stateGuaranteeType !== 'none' && (
@@ -255,7 +255,7 @@ const CreditProductAssumptions = ({
                 min={0}
                 max={100}
                 step={5}
-                tooltip="Percentuale del credito coperta dalla garanzia pubblica (tipicamente 80-90%)"
+                
               />
               
               <EditableNumberField
@@ -266,7 +266,7 @@ const CreditProductAssumptions = ({
                 min={1}
                 max={8}
                 step={1}
-                tooltip="Tempo medio per l'escussione della garanzia pubblica in trimestri (tipicamente 2-4 trimestri)"
+                
               />
             </>
           )}
@@ -287,7 +287,7 @@ const CreditProductAssumptions = ({
             min={1}
             max={120}
             step={1}
-            tooltip="Durata del prestito in trimestri"
+            
             error={isDefaultAfterMaturity}
           />
           
@@ -300,7 +300,7 @@ const CreditProductAssumptions = ({
               { value: 'french', label: 'Francese (rate costanti)' },
               { value: 'bullet', label: 'Bullet (capitale a scadenza)' }
             ]}
-            tooltip="Modalità di rimborso del prestito"
+            
           />
           
           {product.type !== 'bullet' && (
@@ -312,7 +312,7 @@ const CreditProductAssumptions = ({
               min={0}
               max={20}
               step={1}
-              tooltip="Periodo di pre-ammortamento in trimestri (solo interessi)"
+              
             />
           )}
           
@@ -324,7 +324,7 @@ const CreditProductAssumptions = ({
             min={0.01}
             max={100}
             step={0.1}
-            tooltip="Dimensione media del prestito in milioni di euro"
+            
           />
           
           {product.equityUpside !== undefined && (
@@ -336,7 +336,7 @@ const CreditProductAssumptions = ({
               min={0}
               max={20}
               step={0.5}
-              tooltip="Partecipazione agli utili/equity kicker"
+              
             />
           )}
         </CardContent>

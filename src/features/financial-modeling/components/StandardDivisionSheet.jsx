@@ -42,15 +42,15 @@ const StandardDivisionSheet = ({
   const allCommissionIncomeData = results.productPnLTableData?.commissionIncome || {};
   const allCommissionExpenseData = results.productPnLTableData?.commissionExpense || {};
   const allLoanLossProvisionsData = results.productPnLTableData?.loanLossProvisions || {};
+  const allECLMovementsData = results.productPnLTableData?.eclMovements || {};
+  const allCreditImpairmentData = results.productPnLTableData?.creditImpairment || {};
   
-  // console.log('🔍 StandardDivisionSheet - Commission Income Data:', {
   //   division: divisionKey,
   //   hasCommissionData: Object.keys(allCommissionIncomeData).length > 0,
   //   commissionProducts: Object.keys(allCommissionIncomeData)
   // });
   
   // DEBUG: Check P&L structure - DISABLED
-  // console.log('🔍 StandardDivisionSheet - P&L Data Structure:', {
   //   hasResults: !!results,
   //   hasPnL: !!results?.pnl,
   //   hasProductTableData: !!results?.pnl?.productTableData,
@@ -104,7 +104,6 @@ const StandardDivisionSheet = ({
         }
       }
       
-      // console.log(`  💰 Adding commission data for ${key} → ${targetKey}`, {
       //   quarterlyData: commissionData?.slice(0, 4),
       //   hasData: Array.isArray(commissionData)
       // });
@@ -133,11 +132,7 @@ const StandardDivisionSheet = ({
           };
         }
       }
-      
-      console.log(`  💸 Adding commission expense data for ${key} → ${targetKey}`, {
-        quarterlyData: commissionExpenseData?.slice(0, 4),
-        hasData: Array.isArray(commissionExpenseData)
-      });
+      // Debug commission expense data - removed
       
       // Add commission expense quarterly data
       productPnLData[targetKey].quarterly = productPnLData[targetKey].quarterly || {};
@@ -145,6 +140,37 @@ const StandardDivisionSheet = ({
     }
   });
   
+  // Merge ECL Movements data into product P&L data
+  Object.entries(allECLMovementsData).forEach(([key, eclData]) => {
+    if (key.startsWith(divisionKey) && !key.includes('_NPL')) {
+      if (!productPnLData[key]) {
+        productPnLData[key] = {
+          name: eclData.productName || key,
+          quarterly: {}
+        };
+      }
+      productPnLData[key].quarterly = productPnLData[key].quarterly || {};
+      productPnLData[key].quarterly.eclMovement = eclData.quarterlyMovements || eclData || Array(40).fill(0);
+    }
+  });
+  
+  // Merge Credit Impairment data into product P&L data
+  Object.entries(allCreditImpairmentData).forEach(([key, impairmentData]) => {
+    // Check if this product belongs to the current division
+    if (key.startsWith(divisionKey)) {
+      // Create the NPL key for this product
+      const nplKey = key + '_NPL';
+      
+      if (!productPnLData[nplKey]) {
+        productPnLData[nplKey] = {
+          name: impairmentData.productName || key,
+          quarterly: {}
+        };
+      }
+      productPnLData[nplKey].quarterly = productPnLData[nplKey].quarterly || {};
+      productPnLData[nplKey].quarterly.creditImpairment = impairmentData.quarterlyImpairment || impairmentData || Array(40).fill(0);
+    }
+  });
 
   // const defaultOverview = [
   //   { 
@@ -182,16 +208,6 @@ const StandardDivisionSheet = ({
       </div>
       
       {/* Financial Statements Only */}
-      <StandardPnL
-        divisionResults={divisionResults}
-        productResults={productPnLData}
-        assumptions={assumptions}
-        globalResults={results}
-        divisionName={divisionKey}
-        showProductDetail={showProductDetail}
-        customRowTransformations={customTransformations.pnl}
-      />
-      
       <StandardBalanceSheet
         divisionResults={divisionResults}
         productResults={productResults}
@@ -200,6 +216,16 @@ const StandardDivisionSheet = ({
         divisionName={divisionKey}
         showProductDetail={showProductDetail}
         customRowTransformations={customTransformations.balanceSheet}
+      />
+      
+      <StandardPnL
+        divisionResults={divisionResults}
+        productResults={productPnLData}
+        assumptions={assumptions}
+        globalResults={results}
+        divisionName={divisionKey}
+        showProductDetail={showProductDetail}
+        customRowTransformations={customTransformations.pnl}
       />
       
       <StandardCapitalRequirements

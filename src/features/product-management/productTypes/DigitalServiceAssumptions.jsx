@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card/Card';
 import { EditableNumberField } from '../../../components/ui/inputs';
+import CustomerAcquisitionGrid from '../../financial-modeling/components/CustomerAcquisitionGrid';
 
 const DigitalServiceAssumptions = ({ 
   product, 
@@ -34,56 +35,20 @@ const DigitalServiceAssumptions = ({
 
   return (
     <>
-      {/* Customer Acquisition Card */}
+      {/* Customer Acquisition Card - 10 Year Grid */}
       <Card className="mb-4">
         <CardHeader>
-          <CardTitle className="text-sm font-medium">👥 Acquisizione Clienti</CardTitle>
+          <CardTitle className="text-sm font-medium">👥 Acquisizione Clienti (10 anni)</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <EditableNumberField
-            label="Nuovi Clienti Y1"
-            value={product.acquisition?.newCustomers?.y1 || 0}
-            onChange={(value) => handleFieldChange('acquisition', 'newCustomers', 
-              { ...product.acquisition?.newCustomers, y1: value })}
+        <CardContent>
+          <CustomerAcquisitionGrid
+            values={product.acquisition?.newCustomersArray || Array(10).fill(0)}
+            onChange={(values) => handleFieldChange('acquisition', 'newCustomersArray', values)}
+            cac={product.acquisition?.cac || 30}
+            churnRate={product.acquisition?.churnRate || 5}
+            onCacChange={(value) => handleFieldChange('acquisition', 'cac', value)}
+            onChurnChange={(value) => handleFieldChange('acquisition', 'churnRate', value)}
             editMode={editMode}
-            min={0}
-            max={1000000}
-            step={1000}
-            tooltip="Numero di nuovi clienti acquisiti nel primo anno"
-          />
-          
-          <EditableNumberField
-            label="Nuovi Clienti Y5"
-            value={product.acquisition?.newCustomers?.y5 || 0}
-            onChange={(value) => handleFieldChange('acquisition', 'newCustomers', 
-              { ...product.acquisition?.newCustomers, y5: value })}
-            editMode={editMode}
-            min={0}
-            max={1000000}
-            step={1000}
-            tooltip="Numero di nuovi clienti acquisiti nel quinto anno"
-          />
-          
-          <EditableNumberField
-            label="CAC (€)"
-            value={product.acquisition?.cac || 0}
-            onChange={(value) => handleFieldChange('acquisition', 'cac', value)}
-            editMode={editMode}
-            min={0}
-            max={500}
-            step={5}
-            tooltip="Customer Acquisition Cost - costo per acquisire un cliente"
-          />
-          
-          <EditableNumberField
-            label="Churn Rate (%)"
-            value={product.acquisition?.churnRate || 0}
-            onChange={(value) => handleFieldChange('acquisition', 'churnRate', value)}
-            editMode={editMode}
-            min={0}
-            max={50}
-            step={1}
-            tooltip="Tasso annuale di abbandono dei clienti"
           />
         </CardContent>
       </Card>
@@ -99,10 +64,7 @@ const DigitalServiceAssumptions = ({
             value={product.baseAccount?.avgDeposit || 0}
             onChange={(value) => handleFieldChange('baseAccount', 'avgDeposit', value)}
             editMode={editMode}
-            min={0}
-            max={50000}
-            step={100}
-            tooltip="Deposito medio per cliente nel conto base"
+            
           />
           
           <EditableNumberField
@@ -110,10 +72,7 @@ const DigitalServiceAssumptions = ({
             value={product.baseAccount?.interestRate || 0}
             onChange={(value) => handleFieldChange('baseAccount', 'interestRate', value)}
             editMode={editMode}
-            min={0}
-            max={5}
-            step={0.1}
-            tooltip="Tasso di interesse pagato sul conto base"
+            
           />
           
           <EditableNumberField
@@ -121,10 +80,7 @@ const DigitalServiceAssumptions = ({
             value={product.baseAccount?.monthlyFee || 0}
             onChange={(value) => handleFieldChange('baseAccount', 'monthlyFee', value)}
             editMode={editMode}
-            min={0}
-            max={50}
-            step={0.5}
-            tooltip="Canone mensile del conto"
+            
           />
         </CardContent>
       </Card>
@@ -141,10 +97,7 @@ const DigitalServiceAssumptions = ({
               value={product.savingsModule?.adoptionRate || 0}
               onChange={(value) => handleFieldChange('savingsModule', 'adoptionRate', value)}
               editMode={editMode}
-              min={0}
-              max={100}
-              step={1}
-              tooltip="Percentuale di clienti che attivano il modulo risparmio"
+              
             />
             
             <EditableNumberField
@@ -152,10 +105,7 @@ const DigitalServiceAssumptions = ({
               value={product.savingsModule?.avgAdditionalDeposit || 0}
               onChange={(value) => handleFieldChange('savingsModule', 'avgAdditionalDeposit', value)}
               editMode={editMode}
-              min={0}
-              max={100000}
-              step={1000}
-              tooltip="Deposito aggiuntivo medio per cliente che attiva il modulo"
+              
             />
           </div>
           
@@ -170,20 +120,12 @@ const DigitalServiceAssumptions = ({
                   value={item.percentage || 0}
                   onChange={(value) => handleDepositMixChange(index, 'percentage', value)}
                   editMode={editMode}
-                  min={0}
-                  max={100}
-                  step={5}
-                  compact
                 />
                 <EditableNumberField
                   label="Tasso %"
                   value={item.interestRate || 0}
                   onChange={(value) => handleDepositMixChange(index, 'interestRate', value)}
                   editMode={editMode}
-                  min={0}
-                  max={10}
-                  step={0.1}
-                  compact
                 />
               </div>
             ))}
@@ -202,54 +144,19 @@ const DigitalServiceAssumptions = ({
             value={product.premiumServicesModule?.adoptionRate || 0}
             onChange={(value) => handleFieldChange('premiumServicesModule', 'adoptionRate', value)}
             editMode={editMode}
-            min={0}
-            max={100}
-            step={1}
-            tooltip="Percentuale di clienti che attivano servizi premium"
+            
           />
           
           <EditableNumberField
-            label="Ricavi Annui Medi (€)"
-            value={product.premiumServicesModule?.avgAnnualRevenue || 0}
-            onChange={(value) => handleFieldChange('premiumServicesModule', 'avgAnnualRevenue', value)}
+            label="Ricavo Mensile Medio (€)"
+            value={product.premiumServicesModule?.avgMonthlyRevenue || 0}
+            onChange={(value) => handleFieldChange('premiumServicesModule', 'avgMonthlyRevenue', value)}
             editMode={editMode}
-            min={0}
-            max={1000}
-            step={10}
-            tooltip="Ricavi annui medi per cliente premium"
+            
           />
         </CardContent>
       </Card>
 
-      {/* Wealth Referral Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">🎯 Referral Wealth Management</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-          <EditableNumberField
-            label="Adoption Rate (%)"
-            value={product.wealthManagementReferral?.adoptionRate || 0}
-            onChange={(value) => handleFieldChange('wealthManagementReferral', 'adoptionRate', value)}
-            editMode={editMode}
-            min={0}
-            max={100}
-            step={0.5}
-            tooltip="Percentuale di clienti che vengono riferiti al wealth management"
-          />
-          
-          <EditableNumberField
-            label="Referral Fee (€)"
-            value={product.wealthManagementReferral?.referralFee || 0}
-            onChange={(value) => handleFieldChange('wealthManagementReferral', 'referralFee', value)}
-            editMode={editMode}
-            min={0}
-            max={5000}
-            step={50}
-            tooltip="Commissione per ogni cliente riferito con successo"
-          />
-        </CardContent>
-      </Card>
     </>
   );
 };

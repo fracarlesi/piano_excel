@@ -27,7 +27,7 @@ const SimpleProductAssumptions = ({
           min={0}
           max={10}
           step={0.1}
-          tooltip="Tasso di commissione applicato sui volumi"
+          
         />
         
         {product.requiresBaseProduct && (

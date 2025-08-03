@@ -57,8 +57,6 @@ const StaffingTable = ({
           disabled={!editMode}
           isPercentage
           decimals={1}
-          tooltip="Annual growth rate for Junior and Middle positions only. Senior and Head of positions remain constant."
-          tooltipImpact="Increases headcount for entry and mid-level positions over the plan period"
         />
       </div>
       

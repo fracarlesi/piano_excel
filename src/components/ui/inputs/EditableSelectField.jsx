@@ -1,13 +1,11 @@
 import React from 'react';
-import { Tooltip } from '../../tooltip-system';
 
 const EditableSelectField = ({ 
   label, 
   value, 
   onChange, 
   editMode = false, 
-  options = [],
-  tooltip
+  options = []
 }) => {
   if (!editMode) {
     // Find the selected option's label
@@ -17,13 +15,7 @@ const EditableSelectField = ({
     return (
       <div className="space-y-1">
         <label className="block text-xs font-medium text-gray-700">
-          {tooltip ? (
-            <Tooltip content={tooltip}>
-              <span className="cursor-help underline decoration-dotted">{label}</span>
-            </Tooltip>
-          ) : (
-            label
-          )}
+          {label}
         </label>
         <div className="text-sm font-medium text-gray-900">
           {displayValue || '-'}
@@ -35,13 +27,7 @@ const EditableSelectField = ({
   return (
     <div className="space-y-1">
       <label className="block text-xs font-medium text-gray-700">
-        {tooltip ? (
-          <Tooltip content={tooltip}>
-            <span className="cursor-help underline decoration-dotted">{label}</span>
-          </Tooltip>
-        ) : (
-          label
-        )}
+        {label}
       </label>
       <select
         value={value}

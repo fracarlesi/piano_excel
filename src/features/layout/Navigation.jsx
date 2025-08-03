@@ -4,6 +4,7 @@ import { Settings, TrendingUp, Sliders, Building, Wallet } from 'lucide-react';
 const Navigation = ({ activeSheet, setActiveSheet }) => {
   // Divisioni business con vista finanziaria e assumptions
   const businessDivisions = [
+    // Credit divisions first
     {
       key: 'reFinancing',
       name: 'Real Estate',
@@ -18,6 +19,14 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
       icon: TrendingUp,
       assumptionKey: 'smeAssumptions'
     },
+    {
+      key: 'incentiveFinance',
+      name: 'Finanza Agevolata',
+      shortName: 'Incentive',
+      icon: TrendingUp,
+      assumptionKey: 'incentiveAssumptions'
+    },
+    // Digital divisions
     {
       key: 'digitalBankingFinancing',
       name: 'Digital Banking',
@@ -38,13 +47,6 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
       shortName: 'Tech',
       icon: TrendingUp,
       assumptionKey: 'techAssumptions'
-    },
-    {
-      key: 'incentiveFinance',
-      name: 'Finanza Agevolata',
-      shortName: 'Incentive',
-      icon: TrendingUp,
-      assumptionKey: 'incentiveAssumptions'
     }
   ];
   

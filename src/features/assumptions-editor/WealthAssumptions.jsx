@@ -1,12 +1,9 @@
 import React from 'react';
-import DivisionAssumptions from './DivisionAssumptions';
+import WealthAssumptionsStatic from './WealthAssumptionsStatic';
 
 const WealthAssumptions = ({ assumptions, onAssumptionChange }) => {
   return (
-    <DivisionAssumptions
-      divisionKey="wealth"
-      divisionName="Wealth Management"
-      divisionIcon="💎"
+    <WealthAssumptionsStatic
       assumptions={assumptions}
       onAssumptionChange={onAssumptionChange}
     />

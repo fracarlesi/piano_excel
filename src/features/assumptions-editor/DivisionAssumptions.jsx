@@ -4,7 +4,8 @@ import VolumeInputGrid from '../financial-modeling/components/VolumeInputGrid';
 import StaffingTable from './StaffingTable';
 import CreditProductAssumptions from '../product-management/productTypes/CreditProductAssumptions';
 import DigitalServiceAssumptions from '../product-management/productTypes/DigitalServiceAssumptions';
-import SimpleProductAssumptions from '../product-management/productTypes/SimpleProductAssumptions';
+import WealthManagementProductEditor from './WealthManagementProductEditor';
+import WealthCrossSellAssumptions from './WealthCrossSellAssumptions';
 
 /**
  * Simplified Division Assumptions Component
@@ -19,6 +20,7 @@ const DivisionAssumptions = ({
   productKeys = []
 }) => {
   const [openProductKey, setOpenProductKey] = useState(null);
+  const [isPersonnelExpanded, setIsPersonnelExpanded] = useState(false);
   
   // Handle accordion toggle
   const handleAccordionToggle = (productKey) => {
@@ -39,12 +41,47 @@ const DivisionAssumptions = ({
 
   // Handle volume changes
   const handleVolumeChange = (productKey, volumes) => {
-    // console.log('📊 Volume change for product:', productKey, 'new volumes:', volumes);
     onAssumptionChange(`products.${productKey}.volumeArray`, volumes);
   };
 
   // Get appropriate product component based on type
   const getProductComponent = (product, productKey) => {
+    // Wealth Management model - usa il nuovo componente per Wealth
+    if ((product.productType === 'WealthManagement' || product.isWealth) && divisionKey === 'wealth') {
+      return (
+        <WealthCrossSellAssumptions
+          product={product}
+          onUpdate={(updatedProduct) => {
+            // Update all fields of the product
+            Object.keys(updatedProduct).forEach(field => {
+              if (typeof updatedProduct[field] === 'object' && field !== 'volumes') {
+                // For nested objects, update the entire object
+                onAssumptionChange(`products.${productKey}.${field}`, updatedProduct[field]);
+              }
+            });
+          }}
+        />
+      );
+    }
+    
+    // Altri prodotti Wealth Management (per altre divisioni)
+    if (product.productType === 'WealthManagement' || product.isWealth) {
+      return (
+        <WealthManagementProductEditor
+          product={product}
+          onUpdate={(updatedProduct) => {
+            // Update all fields of the product
+            Object.keys(updatedProduct).forEach(field => {
+              if (typeof updatedProduct[field] === 'object' && field !== 'volumes') {
+                // For nested objects, update the entire object
+                onAssumptionChange(`products.${productKey}.${field}`, updatedProduct[field]);
+              }
+            });
+          }}
+        />
+      );
+    }
+    
     // Digital customer model
     if (product.productType === 'DepositAndService' || product.isDigital || product.acquisition) {
       return (
@@ -58,18 +95,6 @@ const DivisionAssumptions = ({
       );
     }
     
-    // Commission-only products
-    if (product.productType === 'Commission') {
-      return (
-        <SimpleProductAssumptions
-          product={product}
-          productKey={productKey}
-          divisionKey={divisionKey}
-          editMode={true}
-          onFieldChange={handleProductFieldChange}
-        />
-      );
-    }
     
     // Default to credit product
     return (
@@ -113,34 +138,60 @@ const DivisionAssumptions = ({
 
       {/* Personnel Section */}
       {divisionAssumptions && divisionAssumptions.staffing && (
-        <div className="mb-8">
-          <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-            👥 Personale e Costi HR
-          </h3>
-          <StaffingTable
-            divisionData={divisionAssumptions}
-            path={divisionPath}
-            handleAssumptionChange={onAssumptionChange}
-            editMode={true}
-            companyTaxMultiplier={assumptions.personnel?.companyTaxMultiplier || 1.4}
-          />
+        <div className="mb-8 border rounded-lg overflow-hidden">
+          <div className="p-4 bg-gray-50 flex items-center justify-between">
+            <h3 className="text-lg font-medium flex items-center gap-2">
+              👥 Personale e Costi HR
+            </h3>
+            <button
+              onClick={() => setIsPersonnelExpanded(!isPersonnelExpanded)}
+              className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <span>{isPersonnelExpanded ? '−' : '+'}</span>
+              <span>{isPersonnelExpanded ? 'Chiudi' : 'Espandi'}</span>
+            </button>
+          </div>
+          {isPersonnelExpanded && (
+            <div className="p-4">
+              <StaffingTable
+                divisionData={divisionAssumptions}
+                path={divisionPath}
+                handleAssumptionChange={onAssumptionChange}
+                editMode={true}
+                companyTaxMultiplier={assumptions.personnel?.companyTaxMultiplier || 1.4}
+              />
+            </div>
+          )}
         </div>
       )}
 
       {/* Products Section */}
       <div>
         <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-          📦 Prodotti e Servizi
+          {divisionKey === 'wealth' ? '💼 Cross-Selling da altre Divisioni' : '📦 Prodotti e Servizi'}
         </h3>
         
-        {/* Product Manager */}
-        <ProductManager
-          divisionKey={divisionKey}
-          divisionName={divisionName}
-          products={divisionProducts}
-          assumptions={assumptions}
-          onAssumptionChange={onAssumptionChange}
-        />
+        {/* Wealth Division Info Box */}
+        {divisionKey === 'wealth' && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800">
+              <strong>ℹ️ Modello di Business Wealth:</strong> La divisione Wealth non origina prodotti propri, 
+              ma distribuisce ai clienti affluent del Digital Banking i prodotti di investimento 
+              originati dalle altre divisioni (Real Estate, SME Restructuring, Tech & Innovation).
+            </p>
+          </div>
+        )}
+        
+        {/* Product Manager - Non mostrare per Wealth */}
+        {divisionKey !== 'wealth' && (
+          <ProductManager
+            divisionKey={divisionKey}
+            divisionName={divisionName}
+            products={divisionProducts}
+            assumptions={assumptions}
+            onAssumptionChange={onAssumptionChange}
+          />
+        )}
 
         {/* Product Details */}
         <div className="space-y-6 mt-6">
@@ -170,17 +221,33 @@ const DivisionAssumptions = ({
               {/* Product Content */}
               {openProductKey === productKey && (
                 <div className="p-6 space-y-6 bg-white">
-                  {/* Volume Grid */}
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium mb-2">📊 Volumi (€M)</h4>
-                    <VolumeInputGrid
-                      values={product.volumeArray || Array(10).fill(0)} // All 10 years editable
-                      onChange={(volumes) => handleVolumeChange(productKey, volumes)}
-                    />
-                  </div>
+                  {/* Volume Grid - Only for credit products */}
+                  {product.productType !== 'DepositAndService' && 
+                   product.productType !== 'WealthManagement' &&
+                   !product.isDigital && 
+                   !product.isWealth &&
+                   !product.acquisition && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-medium mb-2">📊 Volumi (€M)</h4>
+                      <VolumeInputGrid
+                        values={product.volumeArray || Array(10).fill(0)} // All 10 years editable
+                        onChange={(volumes) => handleVolumeChange(productKey, volumes)}
+                      />
+                    </div>
+                  )}
 
                   {/* Product-specific assumptions */}
-                  {getProductComponent(product, productKey)}
+                  {getProductComponent(product, productKey) || (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                      <p className="text-yellow-800">
+                        ⚠️ Nessun componente di configurazione disponibile per questo tipo di prodotto.
+                      </p>
+                      <p className="text-sm text-yellow-600 mt-2">
+                        Tipo prodotto: {product.productType || 'Non specificato'} | 
+                        Is Wealth: {product.isWealth ? 'Sì' : 'No'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

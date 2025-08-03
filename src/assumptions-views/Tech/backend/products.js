@@ -1,0 +1,50 @@
+// Fixed products for Tech & Innovation Division
+export const techProducts = {
+  techVentureLoans: {
+    name: 'Tech Venture Loans',
+    productType: 'Credit',
+    type: 'bullet',
+    durata: 12,
+    gracePeriod: 0,
+    volumeArray: [20, 50, 80, 120, 160, 160, 160, 160, 160, 160],
+    spread: 5.0,
+    rwaDensity: 90,
+    dangerRate: 4.0,
+    lgd: 50,
+    ltv: 0,
+    recoveryCosts: 15,
+    collateralHaircut: 0,
+    avgLoanSize: 2.0,
+    creditClassification: 'Bonis',
+    isFixedRate: false,
+    commissionRate: 2.0,
+    equityUpside: 5, // Equity kicker
+    ftpRate: 1.5,
+    isSecured: false,
+    unsecuredLGD: 50,
+    hasStateGuarantee: 'Not Present'
+  },
+  techScaleUpLoans: {
+    name: 'Scale-up Financing',
+    productType: 'Credit',
+    type: 'french',
+    durata: 20,
+    gracePeriod: 4,
+    volumeArray: [30, 75, 120, 180, 240, 240, 240, 240, 240, 240],
+    spread: 4.0,
+    rwaDensity: 80,
+    dangerRate: 3.0,
+    lgd: 45,
+    ltv: 50,
+    recoveryCosts: 12,
+    collateralHaircut: 40,
+    avgLoanSize: 3.5,
+    creditClassification: 'Bonis',
+    isFixedRate: false,
+    commissionRate: 1.5,
+    equityUpside: 3,
+    ftpRate: 1.5,
+    isSecured: true,
+    hasStateGuarantee: 'Not Present'
+  }
+};

@@ -25,8 +25,6 @@ const PersonnelAssumptions = ({
             disabled={!editMode}
             isPercentage
             decimals={1}
-            tooltip="Annual growth rate for headcount in this unit"
-            tooltipImpact="Affects personnel costs projection over the plan period"
           />
         </div>
         
@@ -111,9 +109,6 @@ const PersonnelAssumptions = ({
               disabled={!editMode}
               isPercentage
               decimals={1}
-              tooltip="Annual salary increase applied to all personnel costs"
-              tooltipImpact="Affects all personnel costs across the entire organization"
-              tooltipFormula="Next Year Cost = Current Cost × (1 + Annual Salary Review %)"
             />
             <EditableNumberField
               label="Company Tax Multiplier"
@@ -124,9 +119,6 @@ const PersonnelAssumptions = ({
               decimals={2}
               min={1}
               max={2}
-              tooltip="Multiplier to convert RAL to company cost (social charges, TFR, etc.)"
-              tooltipImpact="Converts gross salary (RAL) to total company cost including all charges"
-              tooltipFormula="Company Cost = RAL × Company Tax Multiplier"
             />
           </div>
         </div>

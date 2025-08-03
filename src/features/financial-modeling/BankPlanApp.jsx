@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
 import { useState } from 'react';
-import useAssumptionsStore from '../../store/assumptionsStore';
+import useAssumptionsStore from '../../firebase/assumptionsStore';
 
 // Components
-import { TooltipProvider } from '../../components/tooltip-system';
 import Header from '../layout/Header';
 import Navigation from '../layout/Navigation';
 import AssumptionsSheet from './AssumptionsSheet';
@@ -244,30 +243,28 @@ const BankPlanApp = () => {
   };
   
   return (
-    <TooltipProvider>
-      <div className="flex flex-col h-screen bg-gray-100">
-        <Header 
-          editMode={editMode}
-          onEditModeToggle={() => setEditMode(!editMode)}
-          lastSaved={lastSaved}
-          hasUnsavedChanges={hasUnsavedChanges}
-          isAutoSaving={isAutoSaving}
-          onExportData={exportToFile}
-          onImportData={handleImportData}
-          version={assumptions?.version}
-        />
-        
-        <Navigation 
-          activeSheet={activeSheet} 
-          setActiveSheet={setActiveSheet}
-          showAssumptionsMenu={editMode}
-        />
-        
-        <main className="flex-1 overflow-auto bg-white">
-          {renderActiveSheet()}
-        </main>
-      </div>
-    </TooltipProvider>
+    <div className="flex flex-col h-screen bg-gray-100">
+      <Header 
+        editMode={editMode}
+        onEditModeToggle={() => setEditMode(!editMode)}
+        lastSaved={lastSaved}
+        hasUnsavedChanges={hasUnsavedChanges}
+        isAutoSaving={isAutoSaving}
+        onExportData={exportToFile}
+        onImportData={handleImportData}
+        version={assumptions?.version}
+      />
+      
+      <Navigation 
+        activeSheet={activeSheet} 
+        setActiveSheet={setActiveSheet}
+        showAssumptionsMenu={editMode}
+      />
+      
+      <main className="flex-1 overflow-auto bg-white">
+        {renderActiveSheet()}
+      </main>
+    </div>
   );
 };
 

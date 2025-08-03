@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EditableNumberField } from '../../components/ui/inputs';
 import StaffingTable from './StaffingTable';
 
 const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
   const treasury = assumptions.treasury || {};
   const companyTaxMultiplier = assumptions.personnel?.companyTaxMultiplier || 1.4;
+  const [isPersonnelExpanded, setIsPersonnelExpanded] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -23,9 +24,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="%"
               isPercentage={true}
               tooltip="Required liquidity buffer as % of total deposits"
-              tooltipTitle="Liquidity Buffer Requirement"
-              tooltipImpact="Determines minimum liquid assets the bank must hold for regulatory compliance"
-              tooltipFormula="Liquidity Buffer = Total Deposits × Buffer Requirement %"
+              
+              
+              
             />
             <EditableNumberField
               label="Liquid Asset Return Rate"
@@ -35,9 +36,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={true}
               decimals={2}
               tooltip="Annual return on liquid assets (government bonds, ECB deposits)"
-              tooltipTitle="Liquid Asset Return Rate"
-              tooltipImpact="Generates interest income on mandatory liquidity holdings"
-              tooltipFormula="Liquidity Income = Liquidity Buffer × Return Rate"
+              
+              
+              
             />
           </div>
 
@@ -52,9 +53,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               isPercentage={true}
               decimals={2}
               tooltip="Cost of interbank funding for covering funding gaps"
-              tooltipTitle="Interbank Funding Rate"
-              tooltipImpact="Cost of external funding when loans exceed deposits"
-              tooltipFormula="Interbank Cost = Funding Gap × Interbank Rate"
+              
+              
+              
             />
           </div>
 
@@ -68,9 +69,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="€M"
               isPercentage={false}
               tooltip="Initial size of trading portfolio"
-              tooltipTitle="Trading Book Size"
-              tooltipImpact="Proprietary trading assets generate additional income"
-              tooltipFormula="Trading Income = Trading Book × Return Target ± Volatility"
+              
+              
+              
             />
             <EditableNumberField
               label="Trading Book Growth Rate"
@@ -79,9 +80,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="%"
               isPercentage={true}
               tooltip="Annual growth rate of trading book"
-              tooltipTitle="Trading Book Growth Rate"
-              tooltipImpact="Increases trading assets and potential income over time"
-              tooltipFormula="Trading Book Year N = Initial Size × (1 + Growth Rate)^(N-1)"
+              
+              
+              
             />
             <EditableNumberField
               label="Trading Book Return Target"
@@ -90,9 +91,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="%"
               isPercentage={true}
               tooltip="Target annual return on trading activities"
-              tooltipTitle="Trading Book Return Target"
-              tooltipImpact="Expected income from proprietary trading operations"
-              tooltipFormula="Expected Trading Income = Trading Book × Return Target"
+              
+              
+              
             />
             <EditableNumberField
               label="Trading Book Volatility"
@@ -101,9 +102,9 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
               unit="%"
               isPercentage={true}
               tooltip="Expected volatility of trading returns"
-              tooltipTitle="Trading Book Volatility"
-              tooltipImpact="Risk measure for trading activities, affects capital requirements"
-              tooltipFormula="Actual Return = Target Return ± Volatility adjustments"
+              
+              
+              
             />
           </div>
         </div>
@@ -125,21 +126,34 @@ const TreasuryAssumptions = ({ assumptions, onAssumptionChange }) => {
 
       {/* Personnel Staffing */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-xl font-bold text-gray-800 mb-6">Treasury Personnel Staffing</h3>
-        
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-sm text-green-800">
-            Configure the Treasury division staffing levels and compensation. Personnel costs are calculated based on RAL × {companyTaxMultiplier}x multiplier.
-          </p>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-800">Personale e Costi HR</h3>
+          <button
+            onClick={() => setIsPersonnelExpanded(!isPersonnelExpanded)}
+            className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+          >
+            <span>{isPersonnelExpanded ? '−' : '+'}</span>
+            <span>{isPersonnelExpanded ? 'Chiudi' : 'Espandi'}</span>
+          </button>
         </div>
+        
+        {isPersonnelExpanded && (
+          <>
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800">
+                Configure the Treasury division staffing levels and compensation. Personnel costs are calculated based on RAL × {companyTaxMultiplier}x multiplier.
+              </p>
+            </div>
 
-        <StaffingTable
-          divisionData={treasury}
-          path="treasury"
-          handleAssumptionChange={onAssumptionChange}
-          editMode={true}
-          companyTaxMultiplier={companyTaxMultiplier}
-        />
+            <StaffingTable
+              divisionData={treasury}
+              path="treasury"
+              handleAssumptionChange={onAssumptionChange}
+              editMode={true}
+              companyTaxMultiplier={companyTaxMultiplier}
+            />
+          </>
+        )}
       </div>
     </div>
   );

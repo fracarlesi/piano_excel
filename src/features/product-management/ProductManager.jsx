@@ -48,7 +48,6 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
     }
     
     // Log for tracking
-    console.log(`Generated product key: ${key} for ${name}`);
     
     return key;
   };
@@ -64,6 +63,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
       costOfFunding: assumptions.costOfFundsRate || 3.0,
       rwaDensity: 75,
       dangerRate: 1.5,
+      defaultAfterQuarters: 8, // Default timing for defaults
       lgd: 45,
       ltv: 80,
       recoveryCosts: 10,
@@ -84,8 +84,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
             ...baseProduct,
             type: 'bullet',
             productType: 'bridge',
-            totalDuration: 2,
-            durata: 2,
+            durata: 8,
             gracePeriod: 0
           };
         
@@ -93,8 +92,7 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
           return {
             ...baseProduct,
             type: 'french',
-            totalDuration: 5,
-            durata: 5,
+            durata: 20,
             gracePeriod: 0
           };
         
@@ -102,9 +100,8 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
           return {
             ...baseProduct,
             type: 'french',
-            totalDuration: 7,
-            durata: 7,
-            gracePeriod: 2
+            durata: 28,
+            gracePeriod: 8
           };
         
         default:
@@ -112,32 +109,79 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
             ...baseProduct,
             type: 'bullet',
             productType: 'bridge',
-            totalDuration: 2,
-            durata: 2,
+            durata: 8,
             gracePeriod: 0
           };
       }
     }
 
-    // Commission product
+    // Digital product
+    if (type === 'Digital') {
+      return {
+        name: name,
+        productType: 'DepositAndService',
+        isDigital: true,
+        acquisition: {
+          newCustomersArray: [10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 50000],
+          cac: 30,
+          churnRate: 5
+        },
+        baseAccount: {
+          avgDeposit: 1500,
+          interestRate: 0.1,
+          monthlyFee: 0
+        },
+        savingsModule: {
+          adoptionRate: 30,
+          avgAdditionalDeposit: 5000,
+          depositMix: [
+            { name: 'Vincolato 12 mesi', percentage: 40, interestRate: 3.0 },
+            { name: 'Vincolato 24 mesi', percentage: 35, interestRate: 3.5 },
+            { name: 'Vincolato 36 mesi', percentage: 25, interestRate: 4.0 }
+          ]
+        },
+        premiumServicesModule: {
+          adoptionRate: 20,
+          avgMonthlyRevenue: 6.67  // Era 80 annui, ora ~6.67 mensili
+        }
+      };
+    }
+
+    // Wealth Management product - Captive Deal Model
+    if (type === 'Wealth') {
+      return {
+        name: name,
+        productType: 'WealthManagement',
+        isWealth: true,
+        
+        // Parametri referral da Digital Banking
+        digitalReferral: {
+          adoptionRate: 5,
+          referralFee: 150
+        },
+        
+        // Parametri di Ingaggio Cliente
+        clientEngagement: {
+          consultationFee: 2500
+        },
+        
+        // Parametri dell'Investimento Captive
+        captiveInvestment: {
+          avgInvestmentPerClient: 150000,
+          structuringFee: 3.0,
+          managementFee: 2.0,
+          avgDealDuration: 4
+        }
+      };
+    }
+
+    // Default to credit if type not recognized
     return {
-      name: name,
-      productType: 'Commission',
-      volumes: { y1: 10, y10: 100 },
-      volumeArray: [10, 25, 50, 75, 100, 100, 100, 100, 100, 100],
-      commissionRate: 2.0,
-      feeIncomeRate: 1.5,
-      setupFeeRate: 0.5,
-      managementFeeRate: 1.0,
-      performanceFeeRate: 10.0,
-      avgTransactionSize: 0.001,
-      annualTransactions: 1000,
-      clientRetentionRate: 90,
-      crossSellingRate: 15,
-      avgClientLifecycle: 5,
-      serviceType: 'Advisory',
-      revenueRecognition: 'Upfront',
-      operationalRiskWeight: 15
+      ...baseProduct,
+      type: 'bullet',
+      productType: 'bridge',
+      durata: 8,
+      gracePeriod: 0
     };
   };
 
@@ -189,10 +233,20 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
   const handleStartEdit = (productKey, product) => {
     setEditingProduct(productKey);
     setEditProductName(product.name);
-    setEditProductType(product.productType || 'Credit');
+    
+    // Determine product type
+    if (product.productType === 'DepositAndService' || product.isDigital) {
+      setEditProductType('Digital');
+    } else if (product.productType === 'WealthManagement' || product.isWealth) {
+      setEditProductType('Wealth');
+    } else if (product.productType === 'Commission') {
+      setEditProductType('Commission');
+    } else {
+      setEditProductType('Credit');
+    }
     
     // Determine credit type from product configuration
-    if (product.productType === 'Credit' || !product.productType) {
+    if (product.productType === 'Credit' || (!product.productType && !product.isDigital && !product.isWealth)) {
       if (product.productType === 'bridge' || product.type === 'bullet') {
         setEditCreditType('bridge');
       } else if (product.type === 'french' && product.gracePeriod > 0) {
@@ -284,85 +338,8 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
         <h3 className="text-lg font-semibold text-gray-800">
           {divisionName} - Product Management
         </h3>
-        <button
-          onClick={() => setIsAddingProduct(!isAddingProduct)}
-          className="px-4 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
-        >
-          {isAddingProduct ? '❌ Cancel' : '➕ Add Product'}
-        </button>
       </div>
 
-      {/* Add Product Form */}
-      {isAddingProduct && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <h4 className="font-medium text-blue-800 mb-3">Add New Product</h4>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Product Name
-                </label>
-                <input
-                  type="text"
-                  value={newProductName}
-                  onChange={(e) => setNewProductName(e.target.value)}
-                  placeholder="Enter product name..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Product Type
-                </label>
-                <select
-                  value={newProductType}
-                  onChange={(e) => setNewProductType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Credit">Credit</option>
-                  <option value="Commission">Commission</option>
-                </select>
-              </div>
-            </div>
-            
-            {/* Credit Type Selection */}
-            {newProductType === 'Credit' && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Credit Product Type
-                </label>
-                <div className="space-y-2">
-                  {creditTypeOptions.map((option) => (
-                    <label key={option.value} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="creditType"
-                        value={option.value}
-                        checked={newCreditType === option.value}
-                        onChange={(e) => setNewCreditType(e.target.value)}
-                        className="mt-1 text-blue-600 focus:ring-blue-500"
-                      />
-                      <div>
-                        <div className="font-medium text-gray-900">{option.label}</div>
-                        <div className="text-sm text-gray-500">{option.description}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <div className="flex justify-end">
-              <button
-                onClick={handleAddProduct}
-                className="px-4 py-2 bg-green-500 text-white text-sm rounded hover:bg-green-600"
-              >
-                ✅ Add Product
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Existing Products List */}
       <div>
@@ -405,7 +382,8 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                           >
                             <option value="Credit">Credit</option>
-                            <option value="Commission">Commission</option>
+                            <option value="Digital">Digital (Deposit & Services)</option>
+                            {divisionKey === 'wealth' && <option value="Wealth">Wealth Management</option>}
                           </select>
                         </div>
                       </div>
@@ -468,17 +446,30 @@ const ProductManager = ({ divisionKey, divisionName, assumptions, onAssumptionCh
                         {product.name}
                       </span>
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        product.productType === 'Credit' || !product.productType
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
+                        product.productType === 'DepositAndService' || product.isDigital
+                          ? 'bg-purple-100 text-purple-800'
+                          : product.productType === 'WealthManagement' || product.isWealth
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : product.productType === 'Commission'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-green-100 text-green-800'
                       }`}>
-                        {product.productType === 'Credit' || !product.productType
+                        {product.productType === 'DepositAndService' || product.isDigital
+                          ? 'Digital'
+                          : product.productType === 'WealthManagement' || product.isWealth
+                          ? 'Wealth Management'
+                          : product.productType === 'Credit' || !product.productType
                           ? getCreditTypeDisplay(product)
                           : product.productType
                         }
                       </span>
                       <span className="text-xs text-gray-500">
-                        Vol Y1: €{product.volumes?.y1 || 0}M | Vol Y10: €{product.volumes?.y10 || 0}M
+                        {product.productType === 'DepositAndService' || product.isDigital
+                          ? `Clienti Y1: ${(product.acquisition?.newCustomersArray?.[0] || product.acquisition?.newCustomers?.y1 || 0).toLocaleString()} | Y10: ${(product.acquisition?.newCustomersArray?.[9] || product.acquisition?.newCustomers?.y10 || 0).toLocaleString()}`
+                          : product.productType === 'WealthManagement' || product.isWealth
+                          ? `Adoption Rate: ${product.digitalReferral?.adoptionRate || 5}% | Referral Fee: €${product.digitalReferral?.referralFee || 150}`
+                          : `Vol Y1: €${product.volumes?.y1 || 0}M | Vol Y10: €${product.volumes?.y10 || 0}M`
+                        }
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">

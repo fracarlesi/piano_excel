@@ -6,8 +6,5 @@
 // UI Components
 export * from './ui';
 
-// Tooltip System
-export * from './tooltip-system';
-
 // Shared Utilities
-export * from './shared/formatters';
+export * from '../lib/utils';
