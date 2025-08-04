@@ -18,44 +18,75 @@ const StandardBalanceSheet = ({
   const quarters = 40;
   
   // Get products from assumptions for this division
-  const divisionProducts = Object.entries(assumptions.products || {})
-    .filter(([key, product]) => {
-      // Filter products belonging to this division - handle all variations
-      const lowerKey = key.toLowerCase();
+  const divisionProducts = (() => {
+    if (divisionName === 'tech') {
+      // For Tech division, get products from techDivision.products
+      console.log('🔍 Tech Products Debug:');
+      console.log('  assumptions.techDivision:', assumptions.techDivision);
+      console.log('  assumptions.techDivision.products:', assumptions.techDivision?.products);
+      console.log('  assumptions.products (global):', assumptions.products);
       
-      if (divisionName === 're' || divisionName === 'realEstate') {
-        // Check for all known Real Estate product keys - be precise
-        return lowerKey.startsWith('re') || 
-               product.division === 'realEstate' || 
-               product.division === 're' ||
-               product.division === 'RealEstateFinancing';
-      } else if (divisionName === 'sme') {
-        return lowerKey.startsWith('sme') || 
-               product.division === 'sme' ||
-               product.division === 'SMEFinancing';
-      } else if (divisionName === 'digital') {
-        return lowerKey.startsWith('digital') || 
-               product.division === 'digital' ||
-               product.division === 'DigitalBanking';
-      } else if (divisionName === 'wealth') {
-        return lowerKey.startsWith('wealth') || 
-               product.division === 'wealth' ||
-               product.division === 'WealthAndAssetManagement';
-      } else if (divisionName === 'incentive') {
-        return lowerKey.startsWith('incentive') || 
-               product.division === 'incentive' ||
-               product.division === 'Incentives';
-      } else if (divisionName === 'tech') {
-        return lowerKey.startsWith('tech') || 
-               product.division === 'tech' ||
-               product.division === 'Tech';
-      }
-      return lowerKey.startsWith(divisionName.toLowerCase());
-    })
-    .reduce((acc, [key, product]) => {
-      acc[key] = product;
-      return acc;
-    }, {});
+      // Try techDivision.products first, then fall back to global products
+      const techProducts = assumptions.techDivision?.products || {};
+      const globalTechProducts = Object.entries(assumptions.products || {})
+        .filter(([key]) => {
+          const lowerKey = key.toLowerCase();
+          return lowerKey === 'infrastructure' || 
+                 lowerKey === 'softwarelicenses' || 
+                 lowerKey === 'developmentprojects' ||
+                 lowerKey === 'cloudservices' ||
+                 lowerKey === 'maintenancesupport' ||
+                 lowerKey === 'externalclients' ||
+                 lowerKey === 'divisionexit';
+        })
+        .reduce((acc, [key, product]) => {
+          acc[key] = product;
+          return acc;
+        }, {});
+      
+      console.log('  techProducts from division:', techProducts);
+      console.log('  globalTechProducts filtered:', globalTechProducts);
+      
+      // Merge both sources, preferring techDivision.products
+      return { ...globalTechProducts, ...techProducts };
+    }
+    
+    // Original logic for other divisions
+    return Object.entries(assumptions.products || {})
+      .filter(([key, product]) => {
+        // Filter products belonging to this division - handle all variations
+        const lowerKey = key.toLowerCase();
+        
+        if (divisionName === 're' || divisionName === 'realEstate') {
+          // Check for all known Real Estate product keys - be precise
+          return lowerKey.startsWith('re') || 
+                 product.division === 'realEstate' || 
+                 product.division === 're' ||
+                 product.division === 'RealEstateFinancing';
+        } else if (divisionName === 'sme') {
+          return lowerKey.startsWith('sme') || 
+                 product.division === 'sme' ||
+                 product.division === 'SMEFinancing';
+        } else if (divisionName === 'digital') {
+          return lowerKey.startsWith('digital') || 
+                 product.division === 'digital' ||
+                 product.division === 'DigitalBanking';
+        } else if (divisionName === 'wealth') {
+          return lowerKey.startsWith('wealth') || 
+                 product.division === 'wealth' ||
+                 product.division === 'WealthAndAssetManagement';
+        } else if (divisionName === 'incentive') {
+          return lowerKey.startsWith('incentive') || 
+                 product.division === 'incentive' ||
+                 product.division === 'Incentives';
+        }
+        return lowerKey.startsWith(divisionName.toLowerCase());
+      })
+      .reduce((acc, [key, product]) => {
+        acc[key] = product;
+        return acc;
+      }, {});
+  })();
 
   // Temporary placeholder data
   const placeholderData = Array(quarters).fill(0);
@@ -91,11 +122,82 @@ const StandardBalanceSheet = ({
       visualizationLevel: 1,
       formula: null,
       subRows: [
-        // For Tech division, show IT Assets instead of credit assets
-        ...(divisionName === 'tech' ? [
+        // For Treasury division, show consolidated working capital
+        ...(divisionName === 'treasury' ? [
+          {
+            label: 'Central Cash',
+            data: divisionResults?.centralCash?.quarterly || placeholderData,
+            decimals: 2,
+            isSubTotal: true,
+            visualizationLevel: 2,
+            formula: null
+          },
+          {
+            label: 'Consolidated Working Capital',
+            data: divisionResults?.consolidatedWorkingCapital?.total?.quarterly || placeholderData,
+            decimals: 2,
+            isSubTotal: true,
+            visualizationLevel: 2,
+            formula: null,
+            subRows: showProductDetail ? [
+              {
+                label: '  Cash Requirements',
+                data: divisionResults?.consolidatedWorkingCapital?.cash?.quarterly || placeholderData,
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              },
+              {
+                label: '  Accounts Receivable',
+                data: divisionResults?.consolidatedWorkingCapital?.accountsReceivable?.quarterly || placeholderData,
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              },
+              {
+                label: '  Prepaid Expenses',
+                data: divisionResults?.consolidatedWorkingCapital?.prepaidExpenses?.quarterly || placeholderData,
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              },
+              {
+                label: '  Accounts Payable',
+                data: (() => {
+                  const accPayable = divisionResults?.consolidatedWorkingCapital?.accountsPayable?.quarterly || [];
+                  return accPayable.map(v => -Math.abs(v)); // Show as negative
+                })(),
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              },
+              {
+                label: '  Accrued Expenses',
+                data: (() => {
+                  const accruedExp = divisionResults?.consolidatedWorkingCapital?.accruedExpenses?.quarterly || [];
+                  return accruedExp.map(v => -Math.abs(v)); // Show as negative
+                })(),
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              }
+            ] : []
+          }
+        ] : divisionName === 'tech' ? [
           {
             label: 'IT Infrastructure Assets',
-            data: divisionResults?.techAssets?.infrastructure?.netBookValue?.quarterly || placeholderData,
+            data: (() => {
+              console.log('🔍 Tech Division Debug:');
+              console.log('  divisionResults:', divisionResults);
+              console.log('  techAssets:', divisionResults?.techAssets);
+              console.log('  itInfrastructure:', divisionResults?.techAssets?.itInfrastructure);
+              return divisionResults?.techAssets?.itInfrastructure?.netBookValue?.quarterly || placeholderData;
+            })(),
             decimals: 2,
             isSubTotal: true,
             visualizationLevel: 2,
@@ -103,7 +205,7 @@ const StandardBalanceSheet = ({
             subRows: showProductDetail ? [
               {
                 label: '  Gross Value',
-                data: divisionResults?.techAssets?.infrastructure?.grossValue?.quarterly || placeholderData,
+                data: divisionResults?.techAssets?.itInfrastructure?.grossValue?.quarterly || placeholderData,
                 decimals: 2,
                 isDetail: true,
                 visualizationLevel: 5,
@@ -112,7 +214,7 @@ const StandardBalanceSheet = ({
               {
                 label: '  Accumulated Depreciation',
                 data: (() => {
-                  const accDep = divisionResults?.techAssets?.infrastructure?.accumulatedDepreciation?.quarterly || [];
+                  const accDep = divisionResults?.techAssets?.itInfrastructure?.accumulatedDepreciation?.quarterly || [];
                   return accDep.map(v => -Math.abs(v)); // Show as negative
                 })(),
                 decimals: 2,
@@ -179,14 +281,6 @@ const StandardBalanceSheet = ({
                 formula: null
               }
             ] : []
-          },
-          {
-            label: 'Working Capital',
-            data: divisionResults?.techAssets?.workingCapital?.total?.quarterly || placeholderData,
-            decimals: 2,
-            isSubTotal: true,
-            visualizationLevel: 2,
-            formula: null
           }
         ] : [
           // Net Performing Assets (for credit divisions)
@@ -444,6 +538,54 @@ const StandardBalanceSheet = ({
           decimals: 2,
           visualizationLevel: 2,
           formula: null
+        },
+        {
+          label: 'Exit Valuation (Calculated)',
+          data: (() => {
+            const exitQuarter = divisionResults.exitStrategy?.exitQuarter || -1;
+            const data = new Array(quarters).fill(null);
+            if (exitQuarter >= 0 && exitQuarter < quarters) {
+              // Get from P&L results if available
+              const exitGain = divisionResults.techPnLResults?.exitGain;
+              if (exitGain?.breakdown?.valuation) {
+                data[exitQuarter] = exitGain.breakdown.valuation.totalValuation;
+              } else {
+                // Fallback calculation
+                const annualRevenue = 50; // This should come from actual revenue
+                const multiple = assumptions?.products?.divisionExit?.valuationMultiple || 2.5;
+                data[exitQuarter] = annualRevenue * multiple;
+              }
+            }
+            return data;
+          })(),
+          decimals: 2,
+          visualizationLevel: 3,
+          formula: null
+        },
+        {
+          label: 'Cash Proceeds (100% at Closing)',
+          data: (() => {
+            const exitQuarter = divisionResults.exitStrategy?.exitQuarter || -1;
+            const data = new Array(quarters).fill(null);
+            if (exitQuarter >= 0 && exitQuarter < quarters) {
+              // Get from P&L calculations if available
+              const exitGain = divisionResults.techPnLResults?.exitGain;
+              if (exitGain?.breakdown?.proceeds) {
+                data[exitQuarter] = exitGain.breakdown.proceeds.total;
+              } else {
+                // Fallback: use exit strategy data
+                const exitPercentage = divisionResults.exitStrategy?.exitPercentage || 0.4;
+                const annualRevenue = 50;
+                const multiple = assumptions?.products?.divisionExit?.valuationMultiple || 2.5;
+                const valuation = annualRevenue * multiple;
+                data[exitQuarter] = valuation * exitPercentage; // 100% immediate payment
+              }
+            }
+            return data;
+          })(),
+          decimals: 2,
+          visualizationLevel: 2,
+          formula: null
         }
       ]
     }] : []),
@@ -473,6 +615,145 @@ const StandardBalanceSheet = ({
             decimals: 2,
             visualizationLevel: 4,
             formula: null
+          },
+          {
+            label: 'Working Capital Requirements (Treasury-Managed)',
+            data: divisionResults?.operationalRequirements?.cashRequirements?.quarterly || placeholderData,
+            decimals: 2,
+            visualizationLevel: 4,
+            formula: null,
+            subRows: showProductDetail ? [
+              {
+                label: '  Cash Needs',
+                data: divisionResults?.operationalRequirements?.workingCapitalNeeds?.cash?.quarterly || placeholderData,
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              },
+              {
+                label: '  Receivables Cycle',
+                data: divisionResults?.operationalRequirements?.workingCapitalNeeds?.accountsReceivable?.quarterly || placeholderData,
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              },
+              {
+                label: '  Prepaid Expenses',
+                data: divisionResults?.operationalRequirements?.workingCapitalNeeds?.prepaidExpenses?.quarterly || placeholderData,
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              }
+            ] : []
+          },
+          {
+            label: 'Post-Exit External Revenue Potential',
+            data: (() => {
+              const exitQuarter = divisionResults?.exitStrategy?.exitQuarter || 20;
+              const data = new Array(quarters).fill(0);
+              
+              // Calculate potential revenue from external clients post-exit
+              const clientsGrowth = [0, 0, 2, 5, 10, 15, 20, 25, 30, 35]; // From products config
+              const setupFee = 0.5; // €M per client
+              const annualFee = 2.0; // €M per client per year
+              
+              for (let q = exitQuarter; q < quarters; q++) {
+                const year = Math.floor(q / 4);
+                if (year < clientsGrowth.length) {
+                  const clients = clientsGrowth[year] || 0;
+                  const quarterlyRevenue = (clients * annualFee) / 4;
+                  data[q] = quarterlyRevenue;
+                }
+              }
+              
+              return data;
+            })(),
+            decimals: 2,
+            visualizationLevel: 4,
+            formula: null
+          },
+          {
+            label: 'Post-Exit Service Contract Revenue',
+            data: (() => {
+              const exitQuarter = divisionResults?.exitStrategy?.exitQuarter || 20;
+              const data = new Array(quarters).fill(0);
+              
+              // Get contract parameters from user inputs
+              const contractConfig = assumptions?.techDivision?.products?.divisionExit?.postExitServiceContract;
+              const baseAnnualFee = contractConfig?.annualFee || 50; // User input or default
+              const growthRate = (contractConfig?.annualGrowthRate || 3) / 100; // Convert % to decimal
+              const contractDuration = contractConfig?.contractDuration || 10; // Contract duration in years
+              const initialFee = contractConfig?.initialFee || 10; // One-time setup fee
+              
+              // Calculate contract revenue post-exit
+              for (let q = exitQuarter; q < quarters; q++) {
+                const yearsFromExit = Math.floor((q - exitQuarter) / 4);
+                
+                // Add initial fee in the exit quarter
+                if (q === exitQuarter) {
+                  data[q] += initialFee;
+                }
+                
+                // Only generate recurring revenue during contract duration
+                if (yearsFromExit < contractDuration) {
+                  const annualFee = baseAnnualFee * Math.pow(1 + growthRate, yearsFromExit);
+                  data[q] += annualFee / 4; // Quarterly recurring
+                }
+              }
+              
+              return data;
+            })(),
+            decimals: 2,
+            visualizationLevel: 4,
+            formula: null,
+            subRows: showProductDetail ? [
+              {
+                label: '  Initial Setup Fee',
+                data: (() => {
+                  const exitQuarter = divisionResults?.exitStrategy?.exitQuarter || 20;
+                  const contractConfig = assumptions?.techDivision?.products?.divisionExit?.postExitServiceContract;
+                  const initialFee = contractConfig?.initialFee || 10;
+                  const data = new Array(quarters).fill(0);
+                  if (exitQuarter < quarters) {
+                    data[exitQuarter] = initialFee;
+                  }
+                  return data;
+                })(),
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              },
+              {
+                label: '  Annual Recurring Revenue',
+                data: (() => {
+                  const exitQuarter = divisionResults?.exitStrategy?.exitQuarter || 20;
+                  const data = new Array(quarters).fill(0);
+                  
+                  const contractConfig = assumptions?.techDivision?.products?.divisionExit?.postExitServiceContract;
+                  const baseAnnualFee = contractConfig?.annualFee || 50;
+                  const growthRate = (contractConfig?.annualGrowthRate || 3) / 100;
+                  const contractDuration = contractConfig?.contractDuration || 10;
+                  
+                  for (let q = exitQuarter; q < quarters; q++) {
+                    const yearsFromExit = Math.floor((q - exitQuarter) / 4);
+                    if (yearsFromExit < contractDuration) {
+                      const annualFee = baseAnnualFee * Math.pow(1 + growthRate, yearsFromExit);
+                      data[q] = annualFee / 4;
+                    }
+                  }
+                  
+                  return data;
+                })(),
+                decimals: 2,
+                isDetail: true,
+                visualizationLevel: 5,
+                formula: null
+              }
+            ] : []
           }
         ] : [
           {

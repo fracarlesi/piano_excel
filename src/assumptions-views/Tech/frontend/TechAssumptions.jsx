@@ -118,7 +118,7 @@ const TechAssumptions = () => {
                 </button>
 
                 {expandedProduct === productKey && (
-                  <div className="p-6 space-y-6 bg-white">
+                  <div className="p-6 space-y-6 bg-white dark:bg-gray-800">
                     {/* Description */}
                     <div className="p-3 bg-blue-50 rounded-lg">
                       <p className="text-sm text-blue-800">{product.description}</p>
@@ -323,11 +323,12 @@ const TechAssumptions = () => {
 
                             {/* Simplified Info Box */}
                             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                              <h6 className="font-medium text-blue-900 mb-2">💡 Note sull'Exit Strategy</h6>
+                              <h6 className="font-medium text-blue-900 mb-2">💡 Struttura dell'Exit Strategy</h6>
                               <div className="text-sm text-blue-800 space-y-2">
-                                <p><strong>Struttura del pagamento:</strong> Pagamento immediato del 100% del prezzo di vendita al momento del closing.</p>
-                                <p><strong>Ricavi da quota mantenuta:</strong> La banca continuerà a ricevere la percentuale di utili corrispondente alla quota non venduta ({100 - (currentExitProduct.exitPercentage || exitProduct.exitPercentage)}% della divisione).</p>
-                                <p><strong>Asset non ammortizzati:</strong> Gli asset IT passeranno al compratore al valore contabile residuo. Il prezzo di vendita verrà ridotto del valore non ancora ammortizzato.</p>
+                                <p><strong>💰 Pagamento:</strong> 100% in contanti al momento del closing (nessun earn-out)</p>
+                                <p><strong>🤝 Quota mantenuta:</strong> La banca mantiene {100 - (currentExitProduct.exitPercentage || exitProduct.exitPercentage)}% e continua a ricevere dividendi</p>
+                                <p><strong>🏗️ Asset transfer:</strong> Asset IT trasferiti al valore contabile residuo</p>
+                                <p><strong>📄 Contratto servizio:</strong> Ricavi aggiuntivi dal contratto di servizio post-exit</p>
                               </div>
                             </div>
                           </div>
@@ -336,13 +337,79 @@ const TechAssumptions = () => {
                     </div>
                   )}
 
-                  {/* External Revenue Section - after Exit Strategy */}
+                  {/* Unified Services Section - after Exit Strategy */}
                   <div className="mt-6 border-t pt-6">
                     <h5 className="font-medium mb-4 flex items-center gap-2">
-                      💰 Ricavi da Clienti Esterni
+                      💰 Servizi IT Post-Exit
                     </h5>
+                    
+                    {/* Pricing Model */}
+                    <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <h6 className="font-medium text-green-900 mb-3">📋 Modello di Pricing (uguale per tutti i clienti)</h6>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Setup Fee (€M) 🎯
+                          </label>
+                          <input
+                            type="number"
+                            value={currentProduct.setupFeePerClient !== undefined ? currentProduct.setupFeePerClient : product.setupFeePerClient}
+                            onChange={(e) => handleFieldChange(productKey, 'setupFeePerClient', parseFloat(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            step="0.1"
+                            min="0"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Una tantum</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Fee Annuale (€M) 💰
+                          </label>
+                          <input
+                            type="number"
+                            value={currentProduct.annualFeePerClient !== undefined ? currentProduct.annualFeePerClient : product.annualFeePerClient}
+                            onChange={(e) => handleFieldChange(productKey, 'annualFeePerClient', parseFloat(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            step="1"
+                            min="0"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">Per cliente/anno</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Crescita Annua % 📈
+                          </label>
+                          <input
+                            type="number"
+                            value={currentProduct.annualGrowthRate !== undefined ? currentProduct.annualGrowthRate : product.annualGrowthRate}
+                            onChange={(e) => handleFieldChange(productKey, 'annualGrowthRate', parseFloat(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            step="0.5"
+                            min="0"
+                            max="10"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">% delle fee</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Margine % 📊
+                          </label>
+                          <input
+                            type="number"
+                            value={currentProduct.marginPercentage !== undefined ? currentProduct.marginPercentage : product.marginPercentage}
+                            onChange={(e) => handleFieldChange(productKey, 'marginPercentage', parseFloat(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            step="5"
+                            min="0"
+                            max="100"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">% profitto</p>
+                        </div>
+                      </div>
+                    </div>
 
-                    {/* Info box about revenue timing */}
+
+                    {/* Info box about pricing model */}
                     {(() => {
                       const exitProduct = Object.entries(techProducts).find(([key, prod]) => prod.productType === 'Exit')?.[1];
                       const currentExitProduct = divisionAssumptions?.products?.divisionExit || exitProduct;
@@ -352,8 +419,9 @@ const TechAssumptions = () => {
                         return (
                           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                             <p className="text-sm text-amber-800">
-                              ⚠️ <strong>Nota:</strong> I ricavi da clienti esterni iniziano dall'anno {exitYear + 1} (dopo l'exit strategy nell'anno {exitYear}).
-                              I valori inseriti prima dell'anno {exitYear + 1} verranno automaticamente azzerati.
+                              💡 <strong>Info:</strong> Tutti i clienti hanno lo stesso contratto. 
+                              I ricavi iniziano dall'anno {exitYear} (anno dell'exit). 
+                              La banca madre è il primo cliente. I contratti restano attivi per tutta la durata del piano.
                             </p>
                           </div>
                         );
@@ -361,20 +429,19 @@ const TechAssumptions = () => {
                       return null;
                     })()}
 
-                    {/* Clients Grid with exit year logic */}
+                    {/* Total Clients Grid */}
                     <div>
-                      <h4 className="text-sm font-medium mb-2">👥 Numero Clienti Esterni</h4>
+                      <h4 className="text-sm font-medium mb-2">📊 Numero Totale Clienti (inclusa la banca madre)</h4>
                       <VolumeInputGrid
                         values={(() => {
                           const exitProduct = Object.entries(techProducts).find(([key, prod]) => prod.productType === 'Exit')?.[1];
                           const currentExitProduct = divisionAssumptions?.products?.divisionExit || exitProduct;
                           const exitYear = currentExitProduct?.exitYear || 0;
-                          const clients = currentProduct.clientsArray || product.clientsArray;
+                          const clients = currentProduct.totalClientsArray || product.totalClientsArray || [0, 0, 0, 0, 0, 1, 2, 4, 7, 10];
                           
                           // Se c'è un exit year, azzera i clienti prima di quell'anno
                           if (exitYear > 0) {
                             return clients.map((value, index) => {
-                              // index 0 = Year 1, quindi Year N = index N-1
                               return index < exitYear ? 0 : value;
                             });
                           }
@@ -390,130 +457,32 @@ const TechAssumptions = () => {
                             const adjustedClients = clients.map((value, index) => {
                               return index < exitYear ? 0 : value;
                             });
-                            handleClientChange(productKey, adjustedClients);
+                            handleFieldChange(productKey, 'totalClientsArray', adjustedClients);
                           } else {
-                            handleClientChange(productKey, clients);
+                            handleFieldChange(productKey, 'totalClientsArray', clients);
                           }
                         }}
                         label="Numero Clienti"
                         unit="clienti"
                       />
-                    </div>
-
-                    {/* Revenue Parameters */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Setup Fee (€M) 🎯
-                        </label>
-                        <input
-                          type="number"
-                          value={currentProduct.setupFeePerClient !== undefined ? currentProduct.setupFeePerClient : product.setupFeePerClient}
-                          onChange={(e) => handleFieldChange(productKey, 'setupFeePerClient', parseFloat(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          step="0.1"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Fee Annuale (€M) 💰
-                        </label>
-                        <input
-                          type="number"
-                          value={currentProduct.annualFeePerClient !== undefined ? currentProduct.annualFeePerClient : product.annualFeePerClient}
-                          onChange={(e) => handleFieldChange(productKey, 'annualFeePerClient', parseFloat(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          step="0.1"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Margine % 📈
-                        </label>
-                        <input
-                          type="number"
-                          value={currentProduct.marginPercentage !== undefined ? currentProduct.marginPercentage : product.marginPercentage}
-                          onChange={(e) => handleFieldChange(productKey, 'marginPercentage', parseFloat(e.target.value))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          step="1"
-                          min="0"
-                          max="100"
-                        />
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-600">
+                        {(() => {
+                          const exitProduct = Object.entries(techProducts).find(([key, prod]) => prod.productType === 'Exit')?.[1];
+                          const currentExitProduct = divisionAssumptions?.products?.divisionExit || exitProduct;
+                          const exitYear = currentExitProduct?.exitYear || 5;
+                          return (
+                            <>
+                              💡 <strong>Nota:</strong> La banca madre (NewBank) è contata come il primo cliente. 
+                              Anno {exitYear}: 1 cliente (solo banca) = €{currentProduct.annualFeePerClient || product.annualFeePerClient}M/anno. 
+                              Anno 10: {currentProduct.totalClientsArray?.[9] || product.totalClientsArray?.[9] || 10} clienti totali = €{(currentProduct.totalClientsArray?.[9] || 10) * (currentProduct.annualFeePerClient || product.annualFeePerClient)}M/anno.
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
+
                   </div>
 
-                  {/* Post-Exit Service Contract - dopo i ricavi esterni */}
-                  {productKey === 'externalClients' && (() => {
-                    const exitProduct = Object.entries(techProducts).find(([key, prod]) => prod.productType === 'Exit')?.[1];
-                    const currentExitProduct = divisionAssumptions?.products?.divisionExit || exitProduct;
-                    
-                    return (
-                      <div className="mt-6 border-t pt-6">
-                        <h5 className="font-medium mb-4 flex items-center gap-2">
-                          📄 Contratto di Servizio Post-Exit
-                        </h5>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Fee Iniziale (€M) 💵
-                            </label>
-                            <input
-                              type="number"
-                              value={currentExitProduct.postExitServiceContract?.initialFee !== undefined ? currentExitProduct.postExitServiceContract.initialFee : exitProduct.postExitServiceContract.initialFee}
-                              onChange={(e) => handleFieldChange('divisionExit', 'postExitServiceContract.initialFee', parseFloat(e.target.value))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              step="1"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Fee Annuale (€M) 💰
-                            </label>
-                            <input
-                              type="number"
-                              value={currentExitProduct.postExitServiceContract?.annualFee !== undefined ? currentExitProduct.postExitServiceContract.annualFee : exitProduct.postExitServiceContract.annualFee}
-                              onChange={(e) => handleFieldChange('divisionExit', 'postExitServiceContract.annualFee', parseFloat(e.target.value))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              step="1"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Durata (anni) ⏱️
-                            </label>
-                            <input
-                              type="number"
-                              value={currentExitProduct.postExitServiceContract?.contractDuration !== undefined ? currentExitProduct.postExitServiceContract.contractDuration : exitProduct.postExitServiceContract.contractDuration}
-                              onChange={(e) => handleFieldChange('divisionExit', 'postExitServiceContract.contractDuration', parseInt(e.target.value))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              min="1"
-                              max="20"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Crescita Annua % 📈
-                            </label>
-                            <input
-                              type="number"
-                              value={currentExitProduct.postExitServiceContract?.annualGrowthRate !== undefined ? currentExitProduct.postExitServiceContract.annualGrowthRate : exitProduct.postExitServiceContract.annualGrowthRate}
-                              onChange={(e) => handleFieldChange('divisionExit', 'postExitServiceContract.annualGrowthRate', parseFloat(e.target.value))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              step="0.5"
-                              min="0"
-                              max="10"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
                 </div>
               )}
             </div>

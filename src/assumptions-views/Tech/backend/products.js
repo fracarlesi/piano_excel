@@ -62,16 +62,23 @@ export const techProducts = {
     markupPercentage: 10,
   },
   
-  // External Revenue Stream
-  externalClients: {
-    name: 'External IT Services',
+  // Unified IT Services Revenue Stream (Post-Exit)
+  postExitServices: {
+    name: 'Post-Exit IT Services',
     productType: 'ITRevenue',
-    category: 'external',
-    clientsArray: [0, 0, 2, 5, 10, 15, 20, 25, 30, 35], // Number of external clients
-    setupFeePerClient: 0.5, // €M one-time
-    annualFeePerClient: 2.0, // €M recurring
-    description: 'IT services provided to external financial institutions',
-    marginPercentage: 30, // Profit margin on external services
+    category: 'services',
+    // Service pricing model - same for all clients
+    setupFeePerClient: 0.5, // €M one-time setup per client
+    annualFeePerClient: 50.0, // €M recurring per client per year
+    annualGrowthRate: 3, // % annual fee increase
+    marginPercentage: 30, // Profit margin on all services
+    
+    // Total clients array (bank mother is client #1)
+    // Year 0-4: no external revenue (pre-exit)
+    // Year 5+: bank mother + external clients
+    totalClientsArray: [0, 0, 0, 0, 0, 1, 2, 4, 7, 10], // Total clients including bank
+    
+    description: 'IT services pricing: all clients have same contract terms, bank mother is the first client',
   },
   
   // Division Exit Strategy
@@ -81,18 +88,9 @@ export const techProducts = {
     exitYear: 5, // Year of planned exit (0 = no exit)
     exitPercentage: 40, // % of division to sell (0-100)
     valuationMultiple: 2.5, // Multiple of annual revenue
-    earnOutPercentage: 0, // No earn-out - immediate payment only
-    earnOutYears: 0, // No earn-out period
     retainedStakeRevenue: true, // Bank always receives % of profits from retained stake
     unamortizedAssetTreatment: 'transfer', // Always transfer to buyer at book value
-    postExitServiceContract: {
-      enabled: true,
-      initialFee: 10, // €M
-      annualFee: 50, // €M per year
-      contractDuration: 10, // Years
-      annualGrowthRate: 3, // %
-    },
-    description: 'Partial sale of Tech division to external investor',
+    description: 'Partial sale of Tech division to external investor - 100% cash payment at closing',
   }
 };
 

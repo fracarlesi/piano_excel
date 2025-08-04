@@ -123,10 +123,10 @@ const VolumeInputGrid = ({
     <div className="space-y-3">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <label className="text-sm font-medium text-gray-700">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
           {label} ({unit})
         </label>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           Total: {unit === 'customers' || unit === 'units' 
             ? calculateSum().toLocaleString('en-US', { maximumFractionDigits: 0 })
             : calculateSum().toFixed(1)
@@ -141,7 +141,7 @@ const VolumeInputGrid = ({
       {/* Year Headers */}
       <div className="grid grid-cols-10 gap-1 mb-1">
         {Array.from({ length: 10 }, (_, i) => (
-          <div key={i} className="text-xs font-medium text-gray-600 text-center px-1">
+          <div key={i} className="text-xs font-medium text-gray-600 dark:text-gray-400 text-center px-1">
             Y{i + 1}
           </div>
         ))}
@@ -168,12 +168,12 @@ const VolumeInputGrid = ({
                 w-full px-2 py-1.5 text-sm text-center border rounded
                 transition-colors duration-150
                 ${focusedIndex === index 
-                  ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-blue-500 ring-1 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                 }
                 ${disabled 
-                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
-                  : 'bg-white text-gray-900'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed' 
+                  : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                 }
                 focus:outline-none
               `}
@@ -183,7 +183,7 @@ const VolumeInputGrid = ({
             {/* Year indicator on hover */}
             {focusedIndex === index && (
               <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 
-                            bg-gray-800 text-white text-xs px-2 py-1 rounded 
+                            bg-gray-800 dark:bg-gray-700 text-white text-xs px-2 py-1 rounded 
                             pointer-events-none z-10">
                 Year {index + 1}
               </div>
@@ -194,7 +194,7 @@ const VolumeInputGrid = ({
 
 
       {/* Help Text */}
-      <div className="text-xs text-gray-500 mt-2">
+      <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
         💡 <strong>Excel Integration:</strong> Copy 10 values from Excel and paste into any cell. 
         Use Tab/Arrow keys to navigate between cells.
       </div>

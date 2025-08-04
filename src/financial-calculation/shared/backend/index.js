@@ -112,7 +112,11 @@ const organizeDivisionResults = (balanceSheet, pnl, capital, kpi) => {
       // Add customerGrowth data for divisions that have it (e.g., Digital)
       ...(bsDivision.customerGrowth ? { customerGrowth: bsDivision.customerGrowth } : {}),
       // Add techPnLResults for Tech division
-      ...(pnlDivision.techPnLResults ? { techPnLResults: pnlDivision.techPnLResults } : {})
+      ...(pnlDivision.techPnLResults ? { techPnLResults: pnlDivision.techPnLResults } : {}),
+      // Add Tech division specific data
+      ...(bsDivision.techAssets ? { techAssets: bsDivision.techAssets } : {}),
+      ...(bsDivision.exitStrategy ? { exitStrategy: bsDivision.exitStrategy } : {}),
+      ...(bsDivision.depreciation ? { depreciation: bsDivision.depreciation } : {})
     };
   });
   

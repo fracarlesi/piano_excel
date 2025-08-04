@@ -2,5 +2,5 @@
 export { default as TechAssumptions } from './frontend/TechAssumptions';
 
 // Backend exports
-export { techProducts } from './backend/products';
+export { techProducts, techAllocationKeys } from './backend/products';
 export { techStaffing } from './backend/staffing';

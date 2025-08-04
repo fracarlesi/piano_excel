@@ -45,6 +45,11 @@ export class ITAssetCalculator {
     // Get product configurations
     const products = assumptions.products || {};
     
+    console.log('📊 ITAssetCalculator Debug:');
+    console.log('  assumptions:', assumptions);
+    console.log('  products:', products);
+    console.log('  infrastructure product:', products.infrastructure);
+    
     // Process each asset category
     this.processInfrastructure(products, results);
     this.processSoftware(products, results);
@@ -63,6 +68,11 @@ export class ITAssetCalculator {
     const infraProduct = products.infrastructure || {};
     const costArray = infraProduct.costArray || [5, 8, 12, 15, 18, 20, 22, 24, 26, 28];
     const depreciationYears = infraProduct.depreciationYears || 5;
+    
+    console.log('🔧 Processing Infrastructure:');
+    console.log('  infraProduct:', infraProduct);
+    console.log('  costArray:', costArray);
+    console.log('  depreciationYears:', depreciationYears);
     
     // Calculate gross value and depreciation
     for (let year = 0; year < 10; year++) {

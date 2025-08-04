@@ -73,9 +73,9 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
   return (
     <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Griglia unica con tutto integrato */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
-        <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700">Model Navigation</h3>
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden mb-4">
+        <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Model Navigation</h3>
         </div>
         
         {/* Riga superiore - Bank Consolidated + Divisioni Financial */}
@@ -83,15 +83,15 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
           {/* Bank Consolidated View */}
           <button
             onClick={() => setActiveSheet('bankConsolidated')}
-            className={`flex flex-col items-center gap-1 px-3 py-4 border-r border-gray-200 text-xs font-medium transition-colors ${
+            className={`flex flex-col items-center gap-1 px-3 py-4 border-r border-gray-200 dark:border-gray-700 text-xs font-medium transition-colors ${
               activeSheet === 'bankConsolidated'
-                ? 'bg-purple-100 text-purple-700 border-purple-300'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <TrendingUp className="w-4 h-4" />
             <span className="text-center leading-tight">Bank</span>
-            <span className="text-xs text-gray-500">Consolidated</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Consolidated</span>
           </button>
 
           {/* Tutte le Divisioni Financial */}
@@ -101,34 +101,34 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
               <button
                 key={division.key}
                 onClick={() => setActiveSheet(division.key)}
-                className={`flex flex-col items-center gap-1 px-3 py-4 border-r border-gray-200 last:border-r-0 text-xs font-medium transition-colors ${
+                className={`flex flex-col items-center gap-1 px-3 py-4 border-r border-gray-200 dark:border-gray-700 last:border-r-0 text-xs font-medium transition-colors ${
                   activeSheet === division.key
-                    ? 'bg-blue-100 text-blue-700 border-blue-300'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200'
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 <span className="text-center leading-tight">{division.shortName}</span>
-                <span className="text-xs text-gray-500">Financial</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Financial</span>
               </button>
             );
           })}
         </div>
 
         {/* Riga inferiore - General Settings + Assumptions divisioni business */}
-        <div className="grid grid-cols-9 gap-0 border-t border-gray-200">
+        <div className="grid grid-cols-9 gap-0 border-t border-gray-200 dark:border-gray-700">
           {/* General Settings sotto Bank Consolidated */}
           <button
             onClick={() => setActiveSheet('assumptions')}
-            className={`flex flex-col items-center gap-1 px-3 py-4 border-r border-gray-200 text-xs font-medium transition-colors ${
+            className={`flex flex-col items-center gap-1 px-3 py-4 border-r border-gray-200 dark:border-gray-700 text-xs font-medium transition-colors ${
               activeSheet === 'assumptions'
-                ? 'bg-gray-100 text-gray-700 border-gray-300'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <Settings className="w-4 h-4" />
             <span className="text-center leading-tight">General</span>
-            <span className="text-xs text-gray-500">Settings</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Settings</span>
           </button>
 
           {/* Assumptions per tutte le divisioni */}
@@ -137,15 +137,15 @@ const Navigation = ({ activeSheet, setActiveSheet }) => {
               <button
                 key={division.assumptionKey}
                 onClick={() => setActiveSheet(division.assumptionKey)}
-                className={`flex flex-col items-center gap-1 px-3 py-4 border-r border-gray-200 last:border-r-0 text-xs font-medium transition-colors ${
+                className={`flex flex-col items-center gap-1 px-3 py-4 border-r border-gray-200 dark:border-gray-700 last:border-r-0 text-xs font-medium transition-colors ${
                   activeSheet === division.assumptionKey
-                    ? 'bg-green-100 text-green-700 border-green-300'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200'
                 }`}
               >
                 <Sliders className="w-4 h-4" />
                 <span className="text-center leading-tight">{division.shortName}</span>
-                <span className="text-xs text-gray-500">Assumptions</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Assumptions</span>
               </button>
             );
           })}

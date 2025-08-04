@@ -16,8 +16,8 @@ class TechServiceRevenueCalculator {
   static calculate(assumptions, year, quarter) {
     // console.log('TechServiceRevenueCalculator - Full assumptions:', JSON.stringify(assumptions.techDivision?.products || {}, null, 2));
     
-    // Get external clients product data
-    const externalClients = assumptions.techDivision?.products?.externalClients || {};
+    // Get unified post-exit services data
+    const postExitServices = assumptions.techDivision?.products?.postExitServices || {};
     
     // Check if Tech division exit has occurred
     const exitConfig = assumptions.techDivision?.products?.divisionExit || {};
@@ -27,22 +27,24 @@ class TechServiceRevenueCalculator {
     // console.log('TechServiceRevenue - Year:', year, 'Exit Year:', exitYear, 'Has Exited:', hasExited);
     // console.log('Exit Config:', exitConfig);
     
-    // Default values if not provided
-    const clientsArray = externalClients.clientsArray || [0, 0, 2, 5, 10, 15, 20, 25, 30, 35];
-    const setupFeePerClient = externalClients.setupFeePerClient || 0.5; // €M
-    const annualFeePerClient = externalClients.annualFeePerClient || 2.0; // €M
-    const marginPercentage = (externalClients.marginPercentage || 30) / 100;
+    // Get unified pricing parameters
+    const setupFeePerClient = postExitServices.setupFeePerClient || 0.5; // €M
+    const annualFeePerClient = postExitServices.annualFeePerClient || 50.0; // €M
+    const marginPercentage = (postExitServices.marginPercentage || 30) / 100;
+    const annualGrowthRate = (postExitServices.annualGrowthRate || 3) / 100;
     
-    // Get current and previous year client counts
-    // If no exit has occurred, no external clients are allowed
-    const currentYearClients = hasExited ? (clientsArray[year] || 0) : 0;
-    const previousYearClients = hasExited && year > 0 ? (clientsArray[year - 1] || 0) : 0;
+    // Get total clients array (bank mother is client #1)
+    const totalClientsArray = postExitServices.totalClientsArray || [0, 0, 0, 0, 0, 1, 2, 4, 7, 10];
     
-    // console.log('Clients Array:', clientsArray);
-    // console.log('Current Year Clients:', currentYearClients, 'Previous Year Clients:', previousYearClients);
+    // Calculate client counts - simple model where all clients are equal
+    // If no exit has occurred, no external revenue
+    const totalClients = hasExited ? (totalClientsArray[year] || 0) : 0;
+    const previousYearClients = hasExited && year > 0 ? (totalClientsArray[year - 1] || 0) : 0;
+    
+    // console.log('Total Clients:', totalClients, 'Previous Year:', previousYearClients);
     
     // Calculate new clients in current year (only after exit)
-    const newClients = hasExited ? Math.max(0, currentYearClients - previousYearClients) : 0;
+    const newClients = hasExited ? Math.max(0, totalClients - previousYearClients) : 0;
     
     // Calculate revenues for the quarter
     const quarterlyResults = {
@@ -52,7 +54,7 @@ class TechServiceRevenueCalculator {
       totalCosts: 0,
       netRevenue: 0,
       metrics: {
-        totalClients: currentYearClients,
+        totalClients: totalClients,
         newClients: newClients,
         setupFeePerClient: setupFeePerClient,
         annualFeePerClient: annualFeePerClient,
@@ -62,16 +64,22 @@ class TechServiceRevenueCalculator {
       }
     };
     
-    // Setup fees - recognized in the quarter when new client joins
-    // Distribute new clients evenly across quarters
-    const newClientsThisQuarter = newClients / 4;
-    quarterlyResults.setupFees = newClientsThisQuarter * setupFeePerClient;
+    if (hasExited) {
+      // Calculate fee with growth from exit year
+      const yearsFromExit = year - exitYear;
+      const adjustedAnnualFee = annualFeePerClient * Math.pow(1 + annualGrowthRate, yearsFromExit);
+      
+      // Setup fees - recognized in the quarter when new clients join
+      // Distribute new clients evenly across quarters
+      const newClientsThisQuarter = newClients / 4;
+      quarterlyResults.setupFees = newClientsThisQuarter * setupFeePerClient;
+      
+      // Recurring fees - based on total active clients
+      // Annual fee divided by 4 for quarterly amount
+      quarterlyResults.recurringFees = totalClients * adjustedAnnualFee / 4;
+    }
     
-    // Recurring fees - based on total active clients
-    // Annual fee divided by 4 for quarterly amount
-    quarterlyResults.recurringFees = currentYearClients * annualFeePerClient / 4;
-    
-    // Total revenue
+    // Total revenue (unified model includes both bank mother and external clients)
     quarterlyResults.totalRevenue = quarterlyResults.setupFees + quarterlyResults.recurringFees;
     
     // Calculate costs (inverse of margin)
@@ -82,6 +90,7 @@ class TechServiceRevenueCalculator {
     
     return quarterlyResults;
   }
+  
   
   /**
    * Calculate annual summary
@@ -113,22 +122,22 @@ class TechServiceRevenueCalculator {
     }
     
     // Add annual metrics
-    const externalClients = assumptions.techDivision?.products?.externalClients || {};
-    const clientsArray = externalClients.clientsArray || [0, 0, 2, 5, 10, 15, 20, 25, 30, 35];
+    const postExitServices = assumptions.techDivision?.products?.postExitServices || {};
+    const totalClientsArray = postExitServices.totalClientsArray || [0, 0, 0, 0, 0, 1, 2, 4, 7, 10];
     
     // Check if Tech division exit has occurred
     const exitConfig = assumptions.techDivision?.products?.divisionExit || {};
     const exitYear = exitConfig.exitYear || -1;
     const hasExited = exitYear >= 0 && year >= exitYear;
     
-    const actualClients = hasExited ? (clientsArray[year] || 0) : 0;
-    const prevYearClients = hasExited && year > 0 ? (clientsArray[year - 1] || 0) : 0;
+    const totalClients = hasExited ? (totalClientsArray[year] || 0) : 0;
+    const prevYearClients = hasExited && year > 0 ? (totalClientsArray[year - 1] || 0) : 0;
     
     annualResults.metrics = {
-      totalClients: actualClients,
-      newClients: hasExited ? Math.max(0, actualClients - prevYearClients) : 0,
-      avgRevenuePerClient: actualClients > 0 ? annualResults.totalRevenue / actualClients : 0,
-      marginPercentage: ((externalClients.marginPercentage || 30)),
+      totalClients: totalClients,
+      newClients: hasExited ? Math.max(0, totalClients - prevYearClients) : 0,
+      avgRevenuePerClient: totalClients > 0 ? annualResults.totalRevenue / totalClients : 0,
+      marginPercentage: (postExitServices.marginPercentage || 30),
       hasExited: hasExited,
       exitYear: exitYear >= 0 ? exitYear : null
     };

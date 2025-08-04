@@ -49,7 +49,7 @@ const DigitalAssumptions = () => {
         </button>
         
         {expandedPersonnel && (
-          <div className="p-6 bg-white">
+          <div className="p-6 bg-white dark:bg-gray-800">
             <StaffingTable
               divisionData={divisionAssumptions}
               path="digitalBankingDivision"
@@ -100,7 +100,7 @@ const DigitalAssumptions = () => {
 
                 {/* Product Details */}
                 {expandedProduct === productKey && (
-                  <div className="p-6 space-y-6 bg-white">
+                  <div className="p-6 space-y-6 bg-white dark:bg-gray-800">
                     {/* Customer Acquisition - For all products */}
                     {(productKey === 'digitalBankAccount' || productKey === 'premiumDigitalBankAccount' || productKey === 'depositAccount') && (
                       <div>

@@ -145,7 +145,7 @@ const VolumeTable = ({
       </div>
 
       {/* Mini chart visualization */}
-      <div className="mt-3 h-16 bg-white rounded border relative overflow-hidden">
+      <div className="mt-3 h-16 bg-white dark:bg-gray-800 rounded border relative overflow-hidden">
         <div className="absolute inset-0 flex items-end justify-between px-1 pb-1">
           {Array.from({ length: 10 }, (_, i) => {
             const year = i + 1;

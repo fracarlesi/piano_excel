@@ -14,6 +14,7 @@ import {
 import { DigitalBalanceSheetOrchestrator } from '../../../Digital/backend';
 import { calculateWealthBalanceSheet } from '../../../Wealth/backend/balance-sheet/WealthBalanceSheetOrchestrator.js';
 import { TechBalanceSheetOrchestrator } from '../../../Tech/backend/balance-sheet/TechBalanceSheetOrchestrator.js';
+import { TreasuryBalanceSheetOrchestrator } from '../../../Treasury/backend/balance-sheet/TreasuryBalanceSheetOrchestrator.js';
 
 /**
  * Main Balance Sheet calculation - static method for clean interface
@@ -65,12 +66,37 @@ export const BalanceSheetOrchestrator = {
     
     // Calculate Tech division balance sheet
     let techBalanceSheet = null;
+    console.log('🔍 Tech Division Check in BalanceSheetOrchestrator:');
+    console.log('  assumptions.techDivision exists?', !!assumptions.techDivision);
+    console.log('  assumptions.techDivision:', assumptions.techDivision);
+    
     if (assumptions.techDivision) {
       const techOrchestrator = new TechBalanceSheetOrchestrator();
       techBalanceSheet = techOrchestrator.calculateBalanceSheet(
         assumptions.techDivision,
         assumptions
       );
+      console.log('  techBalanceSheet calculated:', techBalanceSheet);
+      console.log('  techBalanceSheet.assets:', techBalanceSheet?.assets);
+    }
+
+    // Collect operational requirements from all divisions for Treasury
+    const divisionRequirements = {};
+    if (techBalanceSheet?.operationalRequirements) {
+      divisionRequirements.tech = techBalanceSheet.operationalRequirements;
+    }
+    // Add other divisions' requirements as they are implemented
+
+    // Calculate Treasury division balance sheet (manages consolidated working capital)
+    let treasuryBalanceSheet = null;
+    if (assumptions.treasuryDivision || Object.keys(divisionRequirements).length > 0) {
+      const treasuryOrchestrator = new TreasuryBalanceSheetOrchestrator();
+      treasuryBalanceSheet = treasuryOrchestrator.calculateBalanceSheet(
+        assumptions.treasuryDivision || {},
+        assumptions,
+        divisionRequirements
+      );
+      console.log('  treasuryBalanceSheet calculated:', treasuryBalanceSheet);
     }
     
     // Initialize liabilities structure
@@ -197,7 +223,8 @@ export const BalanceSheetOrchestrator = {
         termDeposits,
         digitalBalanceSheet,
         wealthBalanceSheet,
-        techBalanceSheet
+        techBalanceSheet,
+        treasuryBalanceSheet
       ),
       
       // Product-level detail
@@ -365,7 +392,7 @@ export const BalanceSheetOrchestrator = {
    * Organize results by division
    * @private
    */
-  organizeDivisionResults(netPerforming, nonPerforming, deposits, divisionKeys, totalAssetsResults, sightDeposits, termDeposits, digitalBalanceSheet, wealthBalanceSheet, techBalanceSheet) {
+  organizeDivisionResults(netPerforming, nonPerforming, deposits, divisionKeys, totalAssetsResults, sightDeposits, termDeposits, digitalBalanceSheet, wealthBalanceSheet, techBalanceSheet, treasuryBalanceSheet) {
     const results = {};
     
     // Extract division-level new volumes and repayments
@@ -374,6 +401,13 @@ export const BalanceSheetOrchestrator = {
     const defaultsByDivision = this.aggregateByDivision(totalAssetsResults.gbvDefaulted?.byProduct || {}, divisionKeys);
     
     divisionKeys.forEach(divKey => {
+      if (divKey === 'tech') {
+        console.log('🔍 Tech Division in organizeDivisionResults:');
+        console.log('  divKey:', divKey);
+        console.log('  techBalanceSheet:', techBalanceSheet);
+        console.log('  techBalanceSheet?.assets:', techBalanceSheet?.assets);
+      }
+      
       results[divKey] = {
         // Quarterly data expected by UI
         quarterly: {
@@ -418,6 +452,12 @@ export const BalanceSheetOrchestrator = {
         techAssets: divKey === 'tech' ? techBalanceSheet?.assets : undefined,
         exitStrategy: divKey === 'tech' ? techBalanceSheet?.exitStrategy : undefined,
         depreciation: divKey === 'tech' ? techBalanceSheet?.depreciation : undefined,
+        operationalRequirements: divKey === 'tech' ? techBalanceSheet?.operationalRequirements : undefined,
+        
+        // Add Treasury division specific data
+        centralCash: divKey === 'treasury' ? treasuryBalanceSheet?.assets?.centralCash : undefined,
+        consolidatedWorkingCapital: divKey === 'treasury' ? treasuryBalanceSheet?.assets?.consolidatedWorkingCapital : undefined,
+        workingCapitalManagement: divKey === 'treasury' ? treasuryBalanceSheet?.workingCapitalManagement : undefined,
         
         // Legacy structure for backward compatibility
         netPerformingAssets: netPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0),

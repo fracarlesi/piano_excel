@@ -44,9 +44,7 @@ class TechExitGainCalculator {
     // Get exit parameters
     const exitPercentage = (exitConfig.exitPercentage || 40) / 100;
     const valuationMultiple = exitConfig.valuationMultiple || 2.5;
-    const earnOutPercentage = (exitConfig.earnOutPercentage || 20) / 100;
-    const earnOutYears = exitConfig.earnOutYears || 3;
-    const unamortizedTreatment = exitConfig.unamortizedAssetTreatment || 'accelerate';
+    const unamortizedTreatment = exitConfig.unamortizedAssetTreatment || 'transfer';
     
     // Calculate division revenue for valuation
     const divisionRevenue = this.calculateDivisionRevenue(assumptions, year);
@@ -55,12 +53,9 @@ class TechExitGainCalculator {
     const totalValuation = divisionRevenue * valuationMultiple;
     const grossSalePrice = totalValuation * exitPercentage;
     
-    // Split between immediate cash and earn-out
-    const immediateProceeds = grossSalePrice * (1 - earnOutPercentage);
-    const earnOutAmount = grossSalePrice * earnOutPercentage;
-    
-    results.saleProceeds = immediateProceeds;
-    results.earnOutReceivable = earnOutAmount;
+    // 100% immediate cash payment - no earn-out
+    results.saleProceeds = grossSalePrice;
+    results.earnOutReceivable = 0;
     
     // Calculate book value of assets being sold
     const depreciationCalc = new TechDepreciationCalculator();
@@ -99,9 +94,9 @@ class TechExitGainCalculator {
         saleValuation: grossSalePrice
       },
       proceeds: {
-        immediate: immediateProceeds,
-        earnOut: earnOutAmount,
-        earnOutYears: earnOutYears,
+        immediate: grossSalePrice,
+        earnOut: 0,
+        earnOutYears: 0,
         total: grossSalePrice
       },
       assetImpact: {
@@ -131,79 +126,45 @@ class TechExitGainCalculator {
    * Calculate division revenue for valuation purposes
    */
   static calculateDivisionRevenue(assumptions, year) {
-    // This would typically call other revenue calculators
-    // For now, estimate based on external revenue and allocation markup
+    // Calculate revenue based on post-exit contract model
+    // After exit, the Tech company is valued based on its contracted revenues only
     
-    const externalClients = assumptions.products?.externalClients || {};
-    const clientsArray = externalClients.clientsArray || [0, 0, 2, 5, 10, 15, 20, 25, 30, 35];
-    const annualFeePerClient = externalClients.annualFeePerClient || 2.0;
-    const clients = clientsArray[year] || 0;
+    const postExitServices = assumptions.products?.postExitServices || {};
+    const totalClientsArray = postExitServices.totalClientsArray || [0, 0, 0, 0, 0, 1, 2, 4, 7, 10];
+    const annualFeePerClient = postExitServices.annualFeePerClient || 50.0;
+    const annualGrowthRate = (postExitServices.annualGrowthRate || 3) / 100;
     
-    const externalRevenue = clients * annualFeePerClient;
+    // Get exit year to calculate growth
+    const exitConfig = assumptions.products?.divisionExit || {};
+    const exitYear = exitConfig.exitYear || 5;
     
-    // Estimate internal allocation revenue (simplified)
-    // In production, this would call TechAllocationRevenueCalculator
-    const totalITCosts = this.estimateTotalITCosts(assumptions, year);
-    const avgMarkup = 0.15; // 15% average markup
-    const allocationRevenue = totalITCosts * (1 + avgMarkup);
+    // Calculate total clients for the year
+    const totalClients = totalClientsArray[year] || 0;
     
-    return externalRevenue + allocationRevenue;
+    // Apply growth rate from exit year
+    const yearsFromExit = Math.max(0, year - exitYear);
+    const adjustedAnnualFee = annualFeePerClient * Math.pow(1 + annualGrowthRate, yearsFromExit);
+    
+    // Total contracted revenue (all clients × fee with growth)
+    const contractedRevenue = totalClients * adjustedAnnualFee;
+    
+    // For valuation purposes, we use the contracted revenue model
+    // This represents the recurring revenue stream that buyers would value
+    return contractedRevenue;
   }
   
-  /**
-   * Estimate total IT costs for revenue calculation
-   */
-  static estimateTotalITCosts(assumptions, year) {
-    const products = assumptions.products || {};
-    let total = 0;
-    
-    ['infrastructure', 'softwareLicenses', 'developmentProjects', 'cloudServices', 'maintenanceSupport'].forEach(key => {
-      const product = products[key] || {};
-      const costs = product.costArray || [];
-      total += costs[year] || 0;
-    });
-    
-    return total;
-  }
   
   /**
    * Calculate earn-out receipts in years following exit
+   * NOTE: Earn-out mechanism removed - all payments are immediate at closing
    */
   static calculateEarnOutReceipts(assumptions, year, quarter) {
-    const results = {
+    // No earn-out - all payments made at closing
+    return {
       earnOutReceipt: 0,
       remainingEarnOut: 0,
       isEarnOutPeriod: false
     };
-    
-    const exitConfig = assumptions.products?.divisionExit || {};
-    const exitYear = exitConfig.exitYear || 0;
-    
-    if (exitYear === 0) return results;
-    
-    const yearsAfterExit = year - exitYear;
-    const earnOutYears = exitConfig.earnOutYears || 3;
-    
-    // Check if we're in earn-out period
-    if (yearsAfterExit > 0 && yearsAfterExit <= earnOutYears) {
-      results.isEarnOutPeriod = true;
-      
-      // Calculate total earn-out amount
-      const divisionRevenue = this.calculateDivisionRevenue(assumptions, exitYear);
-      const totalValuation = divisionRevenue * (exitConfig.valuationMultiple || 2.5);
-      const salePrice = totalValuation * ((exitConfig.exitPercentage || 40) / 100);
-      const totalEarnOut = salePrice * ((exitConfig.earnOutPercentage || 20) / 100);
-      
-      // Annual earn-out payment
-      const annualEarnOut = totalEarnOut / earnOutYears;
-      results.earnOutReceipt = annualEarnOut / 4; // Quarterly amount
-      
-      // Remaining earn-out
-      const receivedYears = yearsAfterExit - 1;
-      results.remainingEarnOut = totalEarnOut - (annualEarnOut * receivedYears);
-    }
-    
-    return results;
   }
   
   /**

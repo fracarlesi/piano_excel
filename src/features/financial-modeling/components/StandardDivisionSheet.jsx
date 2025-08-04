@@ -284,8 +284,8 @@ const StandardDivisionSheet = ({
     <div className="p-4 md:p-6 space-y-8">
       {/* Division Header */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">{divisionDisplayName || divisionKey}</h2>
-        <div className="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-lg">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{divisionDisplayName || divisionKey}</h2>
+        <div className="text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-lg">
           Vista Trimestrale (40 Trimestri)
         </div>
       </div>

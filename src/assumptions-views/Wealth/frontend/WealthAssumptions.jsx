@@ -119,7 +119,7 @@ const WealthAssumptions = () => {
         </button>
         
         {expandedPersonnel && (
-          <div className="p-6 bg-white">
+          <div className="p-6 bg-white dark:bg-gray-800">
             <StaffingTable
               divisionData={divisionAssumptions}
               path="wealthDivision"
@@ -170,7 +170,7 @@ const WealthAssumptions = () => {
 
                 {/* Product Details */}
                 {expandedProduct === productKey && (
-                  <div className="p-6 space-y-6 bg-white">
+                  <div className="p-6 space-y-6 bg-white dark:bg-gray-800">
                     {/* Digital Referral Parameters */}
                     <div>
                       <h4 className="text-sm font-medium mb-4">📱 Digital Banking Referral</h4>

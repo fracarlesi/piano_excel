@@ -16,7 +16,7 @@ import { wealthStaffing } from './Wealth';
 import { realEstateProducts } from './RealEstate';
 import { smeProducts } from './SME';
 import { digitalProducts } from './Digital';
-import { techProducts } from './Tech';
+import { techProducts, techAllocationKeys } from './Tech';
 import { incentiveProducts } from './Incentive';
 import { wealthProducts } from './Wealth';
 
@@ -55,6 +55,9 @@ export const defaultAssumptions = {
   
   // FTP System
   ...ftpAssumptions,
+  
+  // Tech allocation keys
+  techAllocationKeys: techAllocationKeys,
   
   // All products merged
   products: {

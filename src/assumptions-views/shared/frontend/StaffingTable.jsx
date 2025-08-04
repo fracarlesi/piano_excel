@@ -47,7 +47,7 @@ const StaffingTable = ({
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200">
       <div className="mb-3">
         <EditableNumberField
           label="Annual Headcount Growth (Junior & Middle only)"

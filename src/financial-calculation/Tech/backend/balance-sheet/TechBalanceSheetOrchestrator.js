@@ -23,6 +23,8 @@ export class TechBalanceSheetOrchestrator {
    */
   calculateBalanceSheet(assumptions, globalAssumptions) {
     console.log('🖥️ Starting Tech Balance Sheet calculation...');
+    console.log('  Tech assumptions:', assumptions);
+    console.log('  Tech products:', assumptions?.products);
     
     // Step 1: Calculate IT assets (CAPEX-based)
     const itAssets = this.itAssetCalculator.calculateITAssets(
@@ -30,14 +32,14 @@ export class TechBalanceSheetOrchestrator {
       globalAssumptions
     );
     
-    // Step 2: Calculate working capital
-    const workingCapital = this.workingCapitalCalculator.calculateWorkingCapital(
+    // Step 2: Calculate operational requirements (for Treasury management)
+    const operationalRequirements = this.workingCapitalCalculator.calculateWorkingCapital(
       assumptions,
       globalAssumptions
     );
     
-    // Step 3: Calculate total assets
-    const totalAssets = this.calculateTotalAssets(itAssets, workingCapital);
+    // Step 3: Calculate total assets (only IT assets - no working capital)
+    const totalAssets = this.calculateTotalAssets(itAssets);
     
     // Step 4: Calculate equity allocation
     const equity = this.techEquityCalculator.calculateEquity(
@@ -60,7 +62,6 @@ export class TechBalanceSheetOrchestrator {
         software: itAssets.software,
         developmentProjects: itAssets.developmentProjects,
         totalITAssets: itAssets.total,
-        workingCapital: workingCapital,
         totalAssets: totalAssets,
         // Tech has no lending assets
         newVolumes: { quarterly: new Array(40).fill(0), yearly: new Array(10).fill(0) },
@@ -69,37 +70,44 @@ export class TechBalanceSheetOrchestrator {
         netPerformingAssets: { quarterly: new Array(40).fill(0), yearly: new Array(10).fill(0) }
       },
       liabilities: {
-        // Tech has minimal liabilities
-        accountsPayable: workingCapital.accountsPayable || { quarterly: new Array(40).fill(0), yearly: new Array(10).fill(0) },
-        accruedExpenses: workingCapital.accruedExpenses || { quarterly: new Array(40).fill(0), yearly: new Array(10).fill(0) },
+        // Tech has minimal direct liabilities - working capital managed by Treasury
         equity: equity,
-        groupFunding: { quarterly: new Array(40).fill(0), yearly: new Array(10).fill(0) },
-        // No customer deposits
+        groupFunding: totalAssets, // All funding comes from group/treasury
+        // No customer deposits or operational liabilities (managed by Treasury)
         customerDeposits: { quarterly: new Array(40).fill(0), yearly: new Array(10).fill(0) },
         sightDeposits: { quarterly: new Array(40).fill(0), yearly: new Array(10).fill(0) },
         termDeposits: { quarterly: new Array(40).fill(0), yearly: new Array(10).fill(0) }
       },
       exitStrategy: exitImpact,
-      depreciation: itAssets.depreciation
+      depreciation: itAssets.depreciation,
+      
+      // Operational requirements for Treasury management (not in balance sheet)
+      operationalRequirements: {
+        workingCapitalNeeds: operationalRequirements,
+        cashRequirements: operationalRequirements.total,
+        paymentTerms: {
+          receivables: 60, // days
+          payables: 45,    // days
+          prepaidCycles: 90 // days
+        }
+      }
     };
   }
 
   /**
-   * Calculate total assets
+   * Calculate total assets (only IT assets - no working capital)
    */
-  calculateTotalAssets(itAssets, workingCapital) {
+  calculateTotalAssets(itAssets) {
     const quarterly = new Array(40).fill(0);
     const yearly = new Array(10).fill(0);
     
-    // Sum IT assets and working capital
+    // Only IT assets - working capital managed by Treasury
     for (let q = 0; q < 40; q++) {
-      quarterly[q] = (itAssets.total.quarterly[q] || 0) + 
-                     (workingCapital.total?.quarterly[q] || 0);
+      quarterly[q] = itAssets.total.quarterly[q] || 0;
     }
     
     for (let y = 0; y < 10; y++) {
-      yearly[y] = (itAssets.total.yearly[y] || 0) + 
-                  (workingCapital.total?.yearly[y] || 0);
+      yearly[y] = itAssets.total.yearly[y] || 0;
     }
     
     return { quarterly, yearly };
@@ -109,8 +117,10 @@ export class TechBalanceSheetOrchestrator {
    * Calculate exit strategy impact on balance sheet
    */
   calculateExitStrategyImpact(itAssets, assumptions, globalAssumptions) {
-    const exitYear = assumptions.exitStrategy?.exitYear || 5;
-    const exitPercentage = assumptions.exitStrategy?.exitPercentage || 0.4;
+    // Get exit configuration from products (same path as P&L)
+    const exitConfig = assumptions.products?.divisionExit || {};
+    const exitYear = exitConfig.exitYear || 5;
+    const exitPercentage = (exitConfig.exitPercentage || 40) / 100; // Convert percentage
     
     const impact = {
       exitYear: exitYear,

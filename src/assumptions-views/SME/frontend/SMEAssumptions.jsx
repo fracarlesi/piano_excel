@@ -105,7 +105,7 @@ const SMEAssumptions = () => {
 
                 {/* Product Details */}
                 {expandedProduct === productKey && (
-                  <div className="p-6 space-y-6 bg-white">
+                  <div className="p-6 space-y-6 bg-white dark:bg-gray-800">
                     {/* Volume Grid */}
                     <div>
                       <h4 className="text-sm font-medium mb-2">📊 Volumi (€M)</h4>

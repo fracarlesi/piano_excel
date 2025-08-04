@@ -53,7 +53,19 @@ const BankPlanApp = () => {
     };
     
     if (!results || !results.divisions) return null;
-    return results.divisions[key] || results.divisions[divisionMapping[key]];
+    const divisionData = results.divisions[key] || results.divisions[divisionMapping[key]];
+    
+    // Debug for tech division
+    if (key === 'tech') {
+      console.log('🔍 getDivisionResults for tech:');
+      console.log('  key:', key);
+      console.log('  results.divisions.tech:', results.divisions.tech);
+      console.log('  results.divisions.Tech:', results.divisions.Tech);
+      console.log('  divisionData:', divisionData);
+      console.log('  divisionData?.techAssets:', divisionData?.techAssets);
+    }
+    
+    return divisionData;
   };
   
   const getDivisionProducts = (key) => {
@@ -91,7 +103,7 @@ const BankPlanApp = () => {
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-gray-500 dark:text-gray-400">Loading...</div>
         </div>
       );
     }
@@ -99,7 +111,7 @@ const BankPlanApp = () => {
     if (!assumptions || !results) {
       return (
         <div className="flex items-center justify-center h-full">
-          <div className="text-gray-500">Initializing...</div>
+          <div className="text-gray-500 dark:text-gray-400">Initializing...</div>
         </div>
       );
     }
@@ -238,8 +250,8 @@ const BankPlanApp = () => {
       default:
         return (
           <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">View Not Found</h2>
-            <p className="text-gray-600">
+            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">View Not Found</h2>
+            <p className="text-gray-600 dark:text-gray-400">
               The requested view "{activeSheet}" is not available.
             </p>
           </div>
@@ -248,7 +260,7 @@ const BankPlanApp = () => {
   };
   
   return (
-    <div className="flex flex-col h-screen bg-gray-100">
+    <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900">
       <Header 
         editMode={editMode}
         onEditModeToggle={() => setEditMode(!editMode)}
@@ -266,7 +278,7 @@ const BankPlanApp = () => {
         showAssumptionsMenu={editMode}
       />
       
-      <main className="flex-1 overflow-auto bg-white">
+      <main className="flex-1 overflow-auto bg-white dark:bg-gray-900">
         {renderActiveSheet()}
       </main>
     </div>

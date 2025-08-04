@@ -158,23 +158,23 @@ const FinancialTable = ({ title, rows }) => {
   });
 
   return (
-  <div className="mb-8 bg-white rounded-lg shadow-md overflow-hidden">
-    <div className="bg-gray-800 text-white px-6 py-3 border-b border-gray-700">
+  <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+    <div className="bg-gray-800 dark:bg-gray-900 text-white px-6 py-3 border-b border-gray-700 dark:border-gray-600">
       <h3 className="text-lg font-semibold">{title} (€M)</h3>
     </div>
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-gray-100">
+        <thead className="bg-gray-100 dark:bg-gray-700">
           <tr>
-            <th className="px-6 py-3 text-left font-semibold text-gray-700 w-2/5">Item</th>
-            <th className="px-3 py-3 text-right font-semibold text-gray-700 bg-gray-200 border-r-2 border-gray-400">
+            <th className="px-6 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 w-2/5">Item</th>
+            <th className="px-3 py-3 text-right font-semibold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 border-r-2 border-gray-400 dark:border-gray-500">
               Total 10Y
             </th>
             {Array.from({ length: 40 }, (_, i) => {
               const year = Math.floor(i / 4) + 1;
               const quarter = (i % 4) + 1;
               return (
-                <th key={i} className="px-2 py-3 text-right font-semibold text-gray-700 text-xs">
+                <th key={i} className="px-2 py-3 text-right font-semibold text-gray-700 dark:text-gray-200 text-xs">
                   Y{year}Q{quarter}
                 </th>
               );
@@ -190,11 +190,11 @@ const FinancialTable = ({ title, rows }) => {
               <tr 
                 key={row.rowKey} 
                 className={`
-                  ${row.isTotal ? 'font-bold bg-gray-100' : ''}
-                  ${row.isSubTotal ? 'font-semibold bg-gray-50' : ''}
+                  ${row.isTotal ? 'font-bold bg-gray-100 dark:bg-gray-700' : ''}
+                  ${row.isSubTotal ? 'font-semibold bg-gray-50 dark:bg-gray-750' : ''}
                   ${row.isSecondarySubTotal ? 'font-medium' : ''}
                   ${row.isHeader ? 'font-medium' : ''}
-                  hover:bg-gray-50 transition-colors duration-150
+                  hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150
                 `}
               >
                 <td 
@@ -214,7 +214,7 @@ const FinancialTable = ({ title, rows }) => {
                     row.visualizationLevel === 4 ? 'text-xs font-medium' :
                     row.visualizationLevel === 5 ? 'text-xs' :
                     'text-xs'
-                  } text-gray-800`}
+                  } text-gray-800 dark:text-gray-200`}
                 >
                   <div className="flex items-center">
                     {/* For level 0: show expansion button or spacer */}
@@ -223,7 +223,7 @@ const FinancialTable = ({ title, rows }) => {
                         {hasSubRows ? (
                           <button
                             onClick={() => toggleRow(row.rowKey)}
-                            className="mr-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                            className="mr-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
                           >
                             {isExpanded ? (
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,10 +243,10 @@ const FinancialTable = ({ title, rows }) => {
                     
                     {/* For levels > 0: show tree lines with integrated expansion */}
                     {row.actualLevel > 0 && (
-                      <span className="font-mono text-gray-400">
+                      <span className="font-mono text-gray-400 dark:text-gray-500">
                         {/* Draw vertical lines for all ancestor levels */}
                         {row.ancestorLevels.map((hasMore, idx) => (
-                          <span key={idx} className="text-gray-300">
+                          <span key={idx} className="text-gray-300 dark:text-gray-600">
                             {hasMore ? '│  ' : '   '}
                           </span>
                         ))}
@@ -254,7 +254,7 @@ const FinancialTable = ({ title, rows }) => {
                         {hasSubRows ? (
                           <button
                             onClick={() => toggleRow(row.rowKey)}
-                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none"
                           >
                             {expandedRows.has(row.rowKey) ? '▼ ' : '▶ '}
                           </button>
@@ -268,7 +268,7 @@ const FinancialTable = ({ title, rows }) => {
                 </td>
                 {/* Total 10Y column */}
                 <td 
-                  className={`px-3 py-3 text-right bg-gray-50 border-r-2 border-gray-300 ${
+                  className={`px-3 py-3 text-right bg-gray-50 dark:bg-gray-750 border-r-2 border-gray-300 dark:border-gray-600 ${
                     // Text size based on visualization level
                     row.visualizationLevel === 1 ? 'text-sm font-bold' :
                     row.visualizationLevel === 2 ? 'text-sm font-semibold' :
@@ -278,7 +278,7 @@ const FinancialTable = ({ title, rows }) => {
                     'text-xs'
                   } ${
                     // Color for negative values
-                    row.data && row.data.reduce((sum, val) => sum + (val || 0), 0) < 0 ? 'text-red-500' : 'text-gray-800'
+                    row.data && row.data.reduce((sum, val) => sum + (val || 0), 0) < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-200'
                   }`}
                 >
                   {row.data ? formatNumber(row.data.reduce((sum, val) => sum + (val || 0), 0), row.decimals, row.unit) : ''}
@@ -296,7 +296,7 @@ const FinancialTable = ({ title, rows }) => {
                     'text-xs'
                   } ${
                     // Color for negative values
-                    typeof value === 'number' && value < 0 ? 'text-red-500' : 'text-gray-800'
+                    typeof value === 'number' && value < 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-200'
                   }`}
                 >
                   {formatNumber(value, row.decimals, row.unit)}
