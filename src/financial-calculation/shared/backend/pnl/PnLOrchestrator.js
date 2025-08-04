@@ -20,6 +20,7 @@ import {
 } from '../divisionMappings.js';
 import { DigitalPnLOrchestrator } from '../../../Digital/backend';
 import { calculateWealthPnL } from '../../../Wealth/backend/pnl/WealthPnLOrchestrator.js';
+import { PnLOrchestrator as TechPnLOrchestrator } from '../../../Tech/backend';
 
 /**
  * Main P&L calculation - static method for clean interface
@@ -88,12 +89,12 @@ export const PnLOrchestrator = {
       byDivision: commissionExpenseResults.annual.byDivision
     };
     
-    const netCommissions = commissionIncome.consolidated.map((income, i) => 
+    let netCommissions = commissionIncome.consolidated.map((income, i) => 
       income + commissionExpense.consolidated[i]
     );
     
     // Step 6: Total Revenues
-    const totalRevenues = netInterestIncome.consolidated.map((nii, i) => 
+    let totalRevenues = netInterestIncome.consolidated.map((nii, i) => 
       nii + netCommissions[i]
     );
     
@@ -152,6 +153,80 @@ export const PnLOrchestrator = {
       );
     }
     
+    // Step 9.7: Calculate Tech P&L using custom orchestrator
+    let techPnLResults = null;
+    try {
+      // Check if Tech division has actual data (not just empty structure)
+      const hasTechProducts = assumptions.products && (
+        assumptions.products.infrastructure ||
+        assumptions.products.softwareLicenses ||
+        assumptions.products.developmentProjects ||
+        assumptions.products.cloudServices ||
+        assumptions.products.maintenanceSupport ||
+        assumptions.products.externalClients
+      );
+      
+      if (assumptions.techDivision && hasTechProducts) {
+        const techOrchestrator = new TechPnLOrchestrator();
+        techPnLResults = {};
+        
+        // Calculate for each year
+        for (let year = 0; year < 10; year++) {
+          techPnLResults[`Y${year + 1}`] = techOrchestrator.calculateAnnual(assumptions, year);
+        }
+        
+        // Also store quarterly results for detailed analysis
+        techPnLResults.quarterly = [];
+        for (let q = 0; q < 40; q++) {
+          const year = Math.floor(q / 4);
+          techPnLResults.quarterly.push(techOrchestrator.calculate(assumptions, year, q));
+        }
+      }
+    } catch (error) {
+      console.error('Error calculating Tech P&L:', error);
+      // Continue without Tech results rather than blocking entire calculation
+    }
+    
+    // Add Tech revenue to commission income if available
+    if (techPnLResults && techPnLResults.quarterly) {
+      console.log('Adding Tech revenue to commission income...');
+      // Add Tech division to byDivision if not exists
+      if (!commissionIncome.byDivision.tech) {
+        commissionIncome.byDivision.tech = new Array(10).fill(0);
+      }
+      if (!commissionIncomeResults.quarterly.byDivision.tech) {
+        commissionIncomeResults.quarterly.byDivision.tech = new Array(40).fill(0);
+      }
+      
+      // Aggregate Tech revenue quarterly
+      techPnLResults.quarterly.forEach((q, index) => {
+        const techRevenue = q.totalOperatingRevenue || 0;
+        commissionIncomeResults.quarterly.total[index] += techRevenue;
+        commissionIncomeResults.quarterly.byDivision.tech[index] = techRevenue;
+      });
+      
+      // Aggregate Tech revenue annually
+      for (let year = 0; year < 10; year++) {
+        const yearKey = `Y${year + 1}`;
+        if (techPnLResults[yearKey]) {
+          const annualTechRevenue = techPnLResults[yearKey].totalOperatingRevenue || 0;
+          commissionIncome.consolidated[year] += annualTechRevenue;
+          commissionIncome.byDivision.tech[year] = annualTechRevenue;
+        }
+      }
+      
+      // Recalculate netCommissions and totalRevenues with Tech revenue
+      netCommissions = commissionIncome.consolidated.map((income, i) => 
+        income + commissionExpense.consolidated[i]
+      );
+      
+      totalRevenues = netInterestIncome.consolidated.map((nii, i) => 
+        nii + netCommissions[i]
+      );
+      
+      console.log('Tech revenue added successfully');
+    }
+    
     // Step 10: Organize results
     return {
       // Consolidated P&L
@@ -188,15 +263,18 @@ export const PnLOrchestrator = {
         netInterestIncome: this.annualToQuarterly(netInterestIncome.consolidated),
         commissionIncome: commissionIncomeResults.quarterly.total,
         commissionExpenses: commissionExpenseResults.quarterly.total,
-        // Calculate net commissions quarterly
+        // Calculate net commissions quarterly (already includes Tech from above)
         netCommissions: commissionIncomeResults.quarterly.total.map((income, i) => 
           income + commissionExpenseResults.quarterly.total[i]
         ),
-        totalRevenues: this.annualToQuarterly(totalRevenues),
+        totalRevenues: this.annualToQuarterly(netInterestIncome.consolidated).map((nii, i) => 
+          nii + commissionIncomeResults.quarterly.total[i] + commissionExpenseResults.quarterly.total[i]
+        ),
         totalLLP: loanLossProvisions.quarterly || this.annualToQuarterly(loanLossProvisions.consolidated),
         // Calculate net revenues quarterly (totalRevenues + LLP)
-        netRevenues: this.annualToQuarterly(totalRevenues).map((revenue, i) => 
-          revenue + (loanLossProvisions.quarterly?.[i] || this.annualToQuarterly(loanLossProvisions.consolidated)[i] || 0)
+        netRevenues: this.annualToQuarterly(netInterestIncome.consolidated).map((nii, i) => 
+          nii + commissionIncomeResults.quarterly.total[i] + commissionExpenseResults.quarterly.total[i] + 
+          (loanLossProvisions.quarterly?.[i] || this.annualToQuarterly(loanLossProvisions.consolidated)[i] || 0)
         ),
         netProfit: this.annualToQuarterly(netProfit),
         // Add personnel and opex quarterly data
@@ -218,7 +296,8 @@ export const PnLOrchestrator = {
         commissionIncomeResults,
         commissionExpenseResults,
         digitalPnLResults,
-        wealthPnLResults
+        wealthPnLResults,
+        techPnLResults
       ),
       
       // Personnel detail
@@ -284,9 +363,27 @@ export const PnLOrchestrator = {
                 ])
               ) : {}
             ),
-            // Add other wealth fees as totals
-            wealth_managementFees: wealthPnLResults.byComponent.managementFees.quarterly.total,
-            wealth_carriedInterest: wealthPnLResults.byComponent.carriedInterest.quarterly.total
+            // Add management fees broken down by product
+            ...(wealthPnLResults.byComponent.managementFees?.quarterly?.byProduct ? 
+              Object.fromEntries(
+                Object.entries(wealthPnLResults.byComponent.managementFees.quarterly.byProduct).map(([productKey, data]) => [
+                  `${productKey}_managementFees`,
+                  data
+                ])
+              ) : {}
+            ),
+            // Add carried interest broken down by product
+            ...(wealthPnLResults.byComponent.carriedInterest?.quarterly?.byProduct ? 
+              Object.fromEntries(
+                Object.entries(wealthPnLResults.byComponent.carriedInterest.quarterly.byProduct).map(([productKey, data]) => [
+                  `${productKey}_carriedInterest`,
+                  data
+                ])
+              ) : {}
+            ),
+            // Add totals for reference
+            wealth_managementFees_total: wealthPnLResults.byComponent.managementFees.quarterly.total,
+            wealth_carriedInterest_total: wealthPnLResults.byComponent.carriedInterest.quarterly.total
           } : {})
         },
         commissionExpense: commissionExpenseResults.byProduct || {},
@@ -304,7 +401,8 @@ export const PnLOrchestrator = {
         operatingExpenses,
         loanLossProvisions,
         digitalPnLResults,
-        wealthPnLResults
+        wealthPnLResults,
+        techPnLResults
       }
     };
   },
@@ -590,7 +688,7 @@ export const PnLOrchestrator = {
    */
   organizeDivisionPnL(interestIncome, interestExpense, commissionIncome, commissionExpense,
                       personnelCosts, operatingExpenses, llp, assumptions, 
-                      commissionIncomeResults, commissionExpenseResults, digitalPnLResults, wealthPnLResults) {
+                      commissionIncomeResults, commissionExpenseResults, digitalPnLResults, wealthPnLResults, techPnLResults) {
     const results = {};
     
     ALL_DIVISION_PREFIXES.forEach(divKey => {
@@ -814,6 +912,62 @@ export const PnLOrchestrator = {
             -q['Personnel costs'] - q['Other operating costs']
           ),
           preTaxProfit: Object.values(wealthPnLResults.quarterly).map(q => q['EBITDA'])
+        }
+      };
+    }
+    
+    // Override Tech division with custom P&L results if available
+    if (techPnLResults && results.tech) {
+      // Extract annual values from techPnLResults
+      const annualData = [];
+      for (let year = 1; year <= 10; year++) {
+        annualData.push(techPnLResults[`Y${year}`]);
+      }
+      
+      // Merge custom Tech results
+      results.tech = {
+        ...results.tech,
+        // Override with Tech-specific calculations
+        commissionIncome: annualData.map(d => d.externalServiceRevenue + d.internalAllocationRevenue),
+        netCommissions: annualData.map(d => d.externalServiceRevenue + d.internalAllocationRevenue),
+        totalRevenues: annualData.map(d => d.totalOperatingRevenue),
+        personnelCosts: annualData.map(d => d.personnelCosts),
+        otherOpex: annualData.map(d => d.operatingCosts + d.depreciation),
+        totalOpex: annualData.map(d => d.personnelCosts + d.operatingCosts + d.depreciation),
+        llp: new Array(10).fill(0), // Tech has no loan loss provisions
+        preTaxProfit: annualData.map(d => d.pbt),
+        // Add Tech-specific breakdowns
+        operatingCosts: {
+          breakdown: {
+            itOperatingCosts: annualData.map(d => d.operatingCosts),
+            depreciation: annualData.map(d => d.depreciation),
+            ftpExpense: annualData.map(d => d.ftpExpense)
+          }
+        },
+        revenueBreakdown: {
+          externalServices: annualData.map(d => d.externalServiceRevenue),
+          internalAllocation: annualData.map(d => d.internalAllocationRevenue)
+        },
+        extraordinaryItems: annualData.map(d => d.extraordinaryItems),
+        // Update quarterly data
+        quarterly: {
+          ...results.tech.quarterly,
+          commissionIncome: techPnLResults.quarterly.map(q => 
+            q.externalServiceRevenue.totalRevenue + q.internalAllocationRevenue.totalAllocationRevenue
+          ),
+          netCommissions: techPnLResults.quarterly.map(q => 
+            q.externalServiceRevenue.totalRevenue + q.internalAllocationRevenue.totalAllocationRevenue
+          ),
+          totalRevenues: techPnLResults.quarterly.map(q => q.totalOperatingRevenue),
+          personnelCosts: techPnLResults.quarterly.map(q => q.personnelCosts.totalCost),
+          otherOpex: techPnLResults.quarterly.map(q => 
+            q.operatingCosts.totalOperatingCosts + q.depreciation.totalDepreciation
+          ),
+          totalOpex: techPnLResults.quarterly.map(q => 
+            q.personnelCosts.totalCost + q.operatingCosts.totalOperatingCosts + q.depreciation.totalDepreciation
+          ),
+          preTaxProfit: techPnLResults.quarterly.map(q => q.pbt),
+          extraordinaryItems: techPnLResults.quarterly.map(q => q.extraordinaryItems)
         }
       };
     }

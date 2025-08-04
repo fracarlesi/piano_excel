@@ -17,6 +17,10 @@ export const wealthProducts = {
       structuringFee: 3.0,
       managementFee: 2.0,
       avgDealDuration: 4
+    },
+    carriedInterest: {
+      percentage: 20,
+      expectedReturn: 12
     }
   },
   wealthSMEDebt: {
@@ -36,6 +40,10 @@ export const wealthProducts = {
       structuringFee: 2.5,
       managementFee: 1.8,
       avgDealDuration: 3
+    },
+    carriedInterest: {
+      percentage: 20,
+      expectedReturn: 10
     }
   },
   wealthIncentiveFund: {
@@ -55,6 +63,10 @@ export const wealthProducts = {
       structuringFee: 2.0,
       managementFee: 1.5,
       avgDealDuration: 2
+    },
+    carriedInterest: {
+      percentage: 15,
+      expectedReturn: 8
     }
   }
 };

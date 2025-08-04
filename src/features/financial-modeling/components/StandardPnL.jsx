@@ -158,32 +158,118 @@ const StandardPnL = ({
     const rows = [];
     
     if (showProductDetail && productResults) {
-      Object.entries(productResults).forEach(([productKey, productData]) => {
-        // Get the quarterly commission income data
-        const commissionIncomeData = productData.quarterly?.commissionIncome || 
-                                    productData.quarterlyCommissionIncome ||
-                                    null;
+      // For wealth division, we need to handle special fee breakdown
+      if (divisionName === 'wealth') {
+        const wealthProducts = ['wealthRealEstateFund', 'wealthSMEDebt', 'wealthIncentiveFund'];
+        const feeTypes = [
+          { suffix: '_consultationFees', label: 'Consultation Fees' },
+          { suffix: '_structuringFees', label: 'Structuring Fees' },
+          { suffix: '_managementFees', label: 'Management Fees' },
+          { suffix: '_carriedInterest', label: 'Carried Interest' }
+        ];
         
-        if (commissionIncomeData && Array.isArray(commissionIncomeData) && commissionIncomeData.some(v => v !== 0)) {
-          const productName = productData.name || productData.productName || productKey.replace('_NPL', '');
+        wealthProducts.forEach(baseProductKey => {
+          // Get product name
+          const productName = productResults[baseProductKey]?.name || 
+                            productResults[baseProductKey]?.productName ||
+                            baseProductKey.replace('wealth', 'Wealth ').replace(/([A-Z])/g, ' $1').trim();
           
-          // Check if data needs conversion to millions
-          // If values are > 1000, they're likely in euros and need conversion
-          const needsConversion = commissionIncomeData.some(v => Math.abs(v) > 1000);
-          const displayData = needsConversion ? 
-            commissionIncomeData.map(v => v / 1000000) : 
-            commissionIncomeData;
-          
-          rows.push({
-            label: `  ${productName}`,
-            data: displayData,
-            decimals: 2,
-            isDetail: true,
-            level: 3,
-            formula: null
+          // Add each fee type
+          feeTypes.forEach(({ suffix, label }) => {
+            const feeKey = baseProductKey + suffix;
+            const feeData = productResults[feeKey];
+            
+            if (feeData && Array.isArray(feeData) && feeData.some(v => v !== 0)) {
+              // Check if data needs conversion to millions
+              const needsConversion = feeData.some(v => Math.abs(v) > 1000);
+              const displayData = needsConversion ? 
+                feeData.map(v => v / 1000000) : 
+                feeData;
+              
+              rows.push({
+                label: `  ${productName} - ${label}`,
+                data: displayData,
+                decimals: 2,
+                isDetail: true,
+                level: 3,
+                formula: null
+              });
+            }
           });
+        });
+      } else if (divisionName === 'tech') {
+        // For Tech division, add external service revenue
+        // Try different paths to find Tech P&L results
+        const techPnL = globalResults?.techPnL || 
+                       globalResults?.pnl?.details?.techPnLResults ||
+                       globalResults?.pnl?.byDivision?.tech;
+        
+        console.log('Tech P&L data:', techPnL);
+        console.log('Global results:', globalResults);
+        console.log('PnL details:', globalResults?.pnl?.details);
+        console.log('Division results:', divisionResults);
+        console.log('Show product detail:', showProductDetail);
+        
+        const techQuarterly = techPnL?.quarterly;
+        
+        // Add external service revenue
+        if (techQuarterly && techQuarterly.length > 0 && techQuarterly[0].externalServiceRevenue) {
+          const externalRevenue = techQuarterly.map(q => q.externalServiceRevenue.totalRevenue);
+          if (externalRevenue.some(v => v !== 0)) {
+            rows.push({
+              label: '  External IT Services',
+              data: externalRevenue,
+              decimals: 2,
+              isDetail: true,
+              level: 3,
+              formula: null
+            });
+          }
         }
-      });
+        
+        // Add internal allocation revenue (with markup)
+        if (techQuarterly && techQuarterly.length > 0 && techQuarterly[0].internalAllocationRevenue) {
+          const allocationRevenue = techQuarterly.map(q => q.internalAllocationRevenue.totalAllocationRevenue);
+          if (allocationRevenue.some(v => v !== 0)) {
+            rows.push({
+              label: '  IT Cost Allocation (with markup)',
+              data: allocationRevenue,
+              decimals: 2,
+              isDetail: true,
+              level: 3,
+              formula: null
+            });
+          }
+        }
+      } else {
+        // For other divisions, use standard logic
+        Object.entries(productResults).forEach(([productKey, productData]) => {
+          // Get the quarterly commission income data
+          const commissionIncomeData = productData.quarterly?.commissionIncome || 
+                                      productData.quarterlyCommissionIncome ||
+                                      null;
+          
+          if (commissionIncomeData && Array.isArray(commissionIncomeData) && commissionIncomeData.some(v => v !== 0)) {
+            const productName = productData.name || productData.productName || productKey.replace('_NPL', '');
+            
+            // Check if data needs conversion to millions
+            // If values are > 1000, they're likely in euros and need conversion
+            const needsConversion = commissionIncomeData.some(v => Math.abs(v) > 1000);
+            const displayData = needsConversion ? 
+              commissionIncomeData.map(v => v / 1000000) : 
+              commissionIncomeData;
+            
+            rows.push({
+              label: `  ${productName}`,
+              data: displayData,
+              decimals: 2,
+              isDetail: true,
+              level: 3,
+              formula: null
+            });
+          }
+        });
+      }
     }
     
     return rows;
@@ -321,12 +407,6 @@ const StandardPnL = ({
     const rows = [];
     
     if (divisionName === 'wealth' && showProductDetail) {
-      // Define wealth products
-      const wealthProducts = [
-        { key: 'wealthRealEstateFund', label: 'Real Estate Investment Fund' },
-        { key: 'wealthSMEDebt', label: 'SME Private Debt Fund' },
-        { key: 'wealthIncentiveFund', label: 'Government Incentive Fund' }
-      ];
       
       // Check for referral fees data in various locations
       let referralFeesData = null;
@@ -338,12 +418,19 @@ const StandardPnL = ({
       }
       
       if (referralFeesData) {
-        wealthProducts.forEach(({ key, label }) => {
-          const productData = referralFeesData[key];
+        const wealthProductKeys = ['wealthRealEstateFund', 'wealthSMEDebt', 'wealthIncentiveFund'];
+        
+        wealthProductKeys.forEach(productKey => {
+          const productData = referralFeesData[productKey];
           if (productData && productData.some(v => v !== 0)) {
+            // Get product name consistent with commission income
+            const productName = productResults[productKey]?.name || 
+                              productResults[productKey]?.productName ||
+                              productKey.replace('wealth', 'Wealth ').replace(/([A-Z])/g, ' $1').trim();
+            
             const rowData = productData.map(v => -Math.abs(v) / 1000000);
             rows.push({
-              label: `    - ${label}`,
+              label: `  ${productName} - Referral Fees to Digital`,
               data: rowData,
               decimals: 2,
               isDetail: true,
@@ -534,28 +621,7 @@ const StandardPnL = ({
       formula: null
     },
     // Add wealth referral fees detail rows if wealth division
-    ...(divisionName === 'wealth' && showProductDetail ? (() => {
-      const totalData = divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital?.quarterly?.total ?? 
-                       divisionResults?.pnl?.quarterly?.otherOpex ?? 
-                       placeholderData;
-      
-      // Always show the header row
-      const rows = [{
-        label: '  • Referral Fees to Digital',
-        data: totalData.map(v => -Math.abs(v) / 1000000),
-        decimals: 2,
-        isDetail: true,
-        level: 3,
-        formula: null
-      }];
-      
-      // Add detail rows if available
-      if (wealthReferralFeesRows.length > 0) {
-        rows.push(...wealthReferralFeesRows);
-      }
-      
-      return rows;
-    })() : []),
+    ...(divisionName === 'wealth' && showProductDetail ? wealthReferralFeesRows : []),
     // Add digital OPEX subrows
     ...(showProductDetail && divisionName === 'digital' && divisionResults?.operatingCosts?.breakdown?.customerAcquisitionCost ? [{
       label: '  • Customer Acquisition Cost',

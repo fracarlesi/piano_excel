@@ -3,8 +3,10 @@
  * 
  * Calcola gli AUM totali per prodotto considerando:
  * - Nuovi investimenti (clienti × investimento medio)
- * - Rendimenti accumulati
  * - Scadenze/disinvestimenti basati su durata media
+ * 
+ * NOTA: L'AUM rappresenta solo il capitale investito, NON include i rendimenti maturati.
+ * I rendimenti vengono tracciati separatamente per il calcolo del carried interest.
  */
 
 export const calculateAUM = (assumptions, digitalClients, quarters = 40) => {
@@ -83,7 +85,7 @@ export const calculateAUM = (assumptions, digitalClients, quarters = 40) => {
       // Track vintage for future maturity
       investmentVintages[productKey][q] = newInvestments;
       
-      // Calculate returns on existing AUM
+      // Calculate returns on existing AUM (for tracking only, not added to AUM)
       const quarterlyReturn = currentAUM * (expectedReturn / 100) / 4;
       
       // Calculate outflows (maturities based on average duration)
@@ -92,14 +94,14 @@ export const calculateAUM = (assumptions, digitalClients, quarters = 40) => {
         const maturityQuarter = q - (avgDealDuration * 4); // Convert years to quarters
         if (maturityQuarter >= 0 && maturityQuarter < quarters) {
           // Investments mature after avgDealDuration years
+          // Only the original investment amount exits AUM
           const maturingInvestment = investmentVintages[productKey][maturityQuarter];
-          const maturingReturns = maturingInvestment * Math.pow(1 + expectedReturn/100, avgDealDuration);
-          outflows = maturingReturns;
+          outflows = maturingInvestment;
         }
       }
       
-      // Update AUM: previous + new investments + returns - outflows
-      currentAUM = currentAUM + newInvestments + quarterlyReturn - outflows;
+      // Update AUM: previous + new investments - outflows (returns NOT included in AUM)
+      currentAUM = currentAUM + newInvestments - outflows;
       
       // Store results
       results.quarterly.byProduct[productKey][q] = currentAUM;

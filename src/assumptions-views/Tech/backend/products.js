@@ -1,50 +1,138 @@
-// Fixed products for Tech & Innovation Division
+// IT Services and Infrastructure for Tech Division
 export const techProducts = {
-  techVentureLoans: {
-    name: 'Tech Venture Loans',
-    productType: 'Credit',
-    type: 'bullet',
-    durata: 12,
-    gracePeriod: 0,
-    volumeArray: [20, 50, 80, 120, 160, 160, 160, 160, 160, 160],
-    spread: 5.0,
-    rwaDensity: 90,
-    dangerRate: 4.0,
-    lgd: 50,
-    ltv: 0,
-    recoveryCosts: 15,
-    collateralHaircut: 0,
-    avgLoanSize: 2.0,
-    creditClassification: 'Bonis',
-    isFixedRate: false,
-    commissionRate: 2.0,
-    equityUpside: 5, // Equity kicker
-    ftpRate: 1.5,
-    isSecured: false,
-    unsecuredLGD: 50,
-    hasStateGuarantee: 'Not Present'
+  // IT Infrastructure Costs
+  infrastructure: {
+    name: 'Infrastructure & Hardware',
+    productType: 'ITService',
+    category: 'infrastructure',
+    costType: 'capex',
+    depreciationYears: 5,
+    costArray: [5, 8, 12, 15, 18, 20, 22, 24, 26, 28], // €M per year
+    description: 'Server, data center, network equipment, storage systems',
+    allocationMethod: 'usage', // usage, headcount, transactions
+    markupPercentage: 10, // Default markup for internal charging
   },
-  techScaleUpLoans: {
-    name: 'Scale-up Financing',
-    productType: 'Credit',
-    type: 'french',
-    durata: 20,
-    gracePeriod: 4,
-    volumeArray: [30, 75, 120, 180, 240, 240, 240, 240, 240, 240],
-    spread: 4.0,
-    rwaDensity: 80,
-    dangerRate: 3.0,
-    lgd: 45,
-    ltv: 50,
-    recoveryCosts: 12,
-    collateralHaircut: 40,
-    avgLoanSize: 3.5,
-    creditClassification: 'Bonis',
-    isFixedRate: false,
-    commissionRate: 1.5,
-    equityUpside: 3,
-    ftpRate: 1.5,
-    isSecured: true,
-    hasStateGuarantee: 'Not Present'
+  
+  softwareLicenses: {
+    name: 'Software & Licenses',
+    productType: 'ITService',
+    category: 'software',
+    costType: 'mixed', // some capex, some opex
+    depreciationYears: 3,
+    costArray: [10, 15, 20, 25, 30, 35, 40, 45, 50, 55], // €M per year
+    capexPercentage: 40, // % of costs that are capitalizable
+    description: 'Enterprise licenses (Oracle, SAP, Microsoft), security software, development tools',
+    allocationMethod: 'headcount',
+    markupPercentage: 15,
+  },
+  
+  developmentProjects: {
+    name: 'Development & Digital Transformation',
+    productType: 'ITService',
+    category: 'development',
+    costType: 'capex',
+    depreciationYears: 5,
+    costArray: [15, 25, 35, 40, 45, 50, 55, 60, 65, 70], // €M per year
+    description: 'Application development, API integration, digital transformation projects',
+    allocationMethod: 'project', // Direct allocation to requesting division
+    markupPercentage: 20,
+  },
+  
+  cloudServices: {
+    name: 'Cloud & External Services',
+    productType: 'ITService',
+    category: 'cloud',
+    costType: 'opex',
+    depreciationYears: 0, // No depreciation for opex
+    costArray: [8, 12, 18, 25, 35, 45, 55, 65, 75, 85], // €M per year
+    description: 'AWS, Azure, GCP, SaaS subscriptions, external consultancy',
+    allocationMethod: 'usage',
+    markupPercentage: 5,
+  },
+  
+  maintenanceSupport: {
+    name: 'Maintenance & Support',
+    productType: 'ITService',
+    category: 'maintenance',
+    costType: 'opex',
+    depreciationYears: 0,
+    costArray: [5, 7, 10, 12, 15, 18, 20, 22, 25, 28], // €M per year
+    description: 'System maintenance, helpdesk, technical support, security operations',
+    allocationMethod: 'headcount',
+    markupPercentage: 10,
+  },
+  
+  // External Revenue Stream
+  externalClients: {
+    name: 'External IT Services',
+    productType: 'ITRevenue',
+    category: 'external',
+    clientsArray: [0, 0, 2, 5, 10, 15, 20, 25, 30, 35], // Number of external clients
+    setupFeePerClient: 0.5, // €M one-time
+    annualFeePerClient: 2.0, // €M recurring
+    description: 'IT services provided to external financial institutions',
+    marginPercentage: 30, // Profit margin on external services
+  },
+  
+  // Division Exit Strategy
+  divisionExit: {
+    name: 'Tech Division Exit',
+    productType: 'Exit',
+    exitYear: 5, // Year of planned exit (0 = no exit)
+    exitPercentage: 40, // % of division to sell (0-100)
+    valuationMultiple: 2.5, // Multiple of annual revenue
+    earnOutPercentage: 20, // % of sale price as earn-out
+    earnOutYears: 3, // Years to receive earn-out
+    retainedStakeRevenue: true, // Bank continues to receive % of profits from retained stake
+    unamortizedAssetTreatment: 'accelerate', // 'accelerate' | 'transfer' | 'writeoff'
+    // accelerate: Accelerate depreciation at exit
+    // transfer: Transfer to buyer at book value
+    // writeoff: Write off as extraordinary loss
+    postExitServiceContract: {
+      enabled: true,
+      initialFee: 10, // €M
+      annualFee: 50, // €M per year
+      contractDuration: 10, // Years
+      annualGrowthRate: 3, // %
+    },
+    description: 'Partial sale of Tech division to external investor',
+  }
+};
+
+// Division-specific allocation keys
+export const techAllocationKeys = {
+  usage: {
+    central: 10,
+    digital: 25,
+    wealth: 15,
+    sme: 15,
+    realEstate: 10,
+    incentive: 5,
+    treasury: 10,
+    general: 10,
+  },
+  headcount: {
+    central: 15,
+    digital: 20,
+    wealth: 20,
+    sme: 15,
+    realEstate: 10,
+    incentive: 5,
+    treasury: 5,
+    general: 10,
+  },
+  transactions: {
+    central: 5,
+    digital: 40,
+    wealth: 15,
+    sme: 20,
+    realEstate: 10,
+    incentive: 3,
+    treasury: 2,
+    general: 5,
+  },
+  project: {
+    // Direct allocation based on project requests
+    // Will be dynamically set based on division needs
   }
 };

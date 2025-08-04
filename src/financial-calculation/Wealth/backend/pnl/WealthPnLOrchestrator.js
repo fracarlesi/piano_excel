@@ -42,7 +42,7 @@ export const calculateWealthPnL = (assumptions, balanceSheetResults, digitalClie
 
   try {
     // Get Wealth AUM data from balance sheet
-    const wealthAUM = balanceSheetResults?.wealth?.aum || null;
+    const wealthAUM = balanceSheetResults?.byDivision?.wealth?.aum || null;
     
     if (!wealthAUM) {
       console.warn('⚠️ No Wealth AUM data available, some calculations may be incomplete');

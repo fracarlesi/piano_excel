@@ -179,6 +179,21 @@ const StandardDivisionSheet = ({
     }
   });
   
+  // For wealth division, add all fee type entries to productPnLData
+  if (divisionKey === 'wealth') {
+    // Add all wealth commission income entries with suffixes
+    Object.entries(allCommissionIncomeData).forEach(([key, commissionData]) => {
+      if (key.startsWith('wealth') && (
+        key.endsWith('_consultationFees') || 
+        key.endsWith('_structuringFees') || 
+        key.endsWith('_managementFees') || 
+        key.endsWith('_carriedInterest')
+      )) {
+        productPnLData[key] = commissionData;
+      }
+    });
+  }
+  
   // Merge commission expense data into product P&L data
   Object.entries(allCommissionExpenseData).forEach(([key, commissionExpenseData]) => {
     if (key.startsWith(divisionKey)) {
