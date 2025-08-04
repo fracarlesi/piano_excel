@@ -14,13 +14,18 @@ class TechServiceRevenueCalculator {
    * @returns {Object} Revenue breakdown by type
    */
   static calculate(assumptions, year, quarter) {
+    console.log('TechServiceRevenueCalculator - Full assumptions:', JSON.stringify(assumptions.techDivision?.products || {}, null, 2));
+    
     // Get external clients product data
-    const externalClients = assumptions.products?.externalClients || {};
+    const externalClients = assumptions.techDivision?.products?.externalClients || {};
     
     // Check if Tech division exit has occurred
-    const exitConfig = assumptions.products?.divisionExit || {};
+    const exitConfig = assumptions.techDivision?.products?.divisionExit || {};
     const exitYear = exitConfig.exitYear || -1; // -1 means no exit planned
     const hasExited = exitYear >= 0 && year >= exitYear;
+    
+    console.log('TechServiceRevenue - Year:', year, 'Exit Year:', exitYear, 'Has Exited:', hasExited);
+    console.log('Exit Config:', exitConfig);
     
     // Default values if not provided
     const clientsArray = externalClients.clientsArray || [0, 0, 2, 5, 10, 15, 20, 25, 30, 35];
@@ -32,6 +37,9 @@ class TechServiceRevenueCalculator {
     // If no exit has occurred, no external clients are allowed
     const currentYearClients = hasExited ? (clientsArray[year] || 0) : 0;
     const previousYearClients = hasExited && year > 0 ? (clientsArray[year - 1] || 0) : 0;
+    
+    console.log('Clients Array:', clientsArray);
+    console.log('Current Year Clients:', currentYearClients, 'Previous Year Clients:', previousYearClients);
     
     // Calculate new clients in current year (only after exit)
     const newClients = hasExited ? Math.max(0, currentYearClients - previousYearClients) : 0;
@@ -105,11 +113,11 @@ class TechServiceRevenueCalculator {
     }
     
     // Add annual metrics
-    const externalClients = assumptions.products?.externalClients || {};
+    const externalClients = assumptions.techDivision?.products?.externalClients || {};
     const clientsArray = externalClients.clientsArray || [0, 0, 2, 5, 10, 15, 20, 25, 30, 35];
     
     // Check if Tech division exit has occurred
-    const exitConfig = assumptions.products?.divisionExit || {};
+    const exitConfig = assumptions.techDivision?.products?.divisionExit || {};
     const exitYear = exitConfig.exitYear || -1;
     const hasExited = exitYear >= 0 && year >= exitYear;
     

@@ -158,7 +158,7 @@ const TechAssumptions = () => {
                           </label>
                           <input
                             type="number"
-                            value={currentProduct.capexPercentage || product.capexPercentage}
+                            value={currentProduct.capexPercentage !== undefined ? currentProduct.capexPercentage : product.capexPercentage}
                             onChange={(e) => handleFieldChange(productKey, 'capexPercentage', parseFloat(e.target.value))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             step="5"
@@ -175,7 +175,7 @@ const TechAssumptions = () => {
                         </label>
                         <input
                           type="number"
-                          value={currentProduct.markupPercentage || product.markupPercentage}
+                          value={currentProduct.markupPercentage !== undefined ? currentProduct.markupPercentage : product.markupPercentage}
                           onChange={(e) => handleFieldChange(productKey, 'markupPercentage', parseFloat(e.target.value))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           step="1"
@@ -197,7 +197,6 @@ const TechAssumptions = () => {
                           <option value="usage">Usage-based</option>
                           <option value="headcount">Headcount-based</option>
                           <option value="transactions">Transaction-based</option>
-                          <option value="project">Direct Project</option>
                         </select>
                       </div>
                     </div>
@@ -563,7 +562,7 @@ const TechAssumptions = () => {
         </div>
         {expandedAllocation && (
           <div className="p-6 space-y-6">
-            {Object.entries(techAllocationKeys).filter(([method]) => method !== 'project').map(([method, divisions]) => {
+            {Object.entries(techAllocationKeys).map(([method, divisions]) => {
               const currentAllocation = assumptions.techAllocationKeys?.[method] || divisions;
               
               return (

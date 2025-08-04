@@ -41,9 +41,10 @@ const FinancialTable = ({ title, rows }) => {
   // Process rows to include sub-rows when expanded (recursive)
   const processedRows = [];
   
-  const processRowsRecursive = (rows, level = 0, parentKey = '') => {
+  const processRowsRecursive = (rows, level = 0, parentKey = '', parentIsLast = false, ancestorLevels = []) => {
     rows.forEach((row, index) => {
       const rowKey = parentKey ? `${parentKey}-${index}` : `${index}`;
+      const isLastInGroup = index === rows.length - 1;
       
       // Calculate sum from subRows if they exist and row should auto-sum
       let rowData = row.data;
@@ -84,17 +85,27 @@ const FinancialTable = ({ title, rows }) => {
         }
       }
       
+      // Build the ancestor information for tree lines
+      const newAncestorLevels = [...ancestorLevels];
+      if (level > 0) {
+        newAncestorLevels[level - 1] = !isLastInGroup;
+      }
+      
       processedRows.push({ 
         ...row, 
         data: rowData,
         rowKey,
         level,
-        isSubItem: level > 0
+        isSubItem: level > 0,
+        isLastInGroup: isLastInGroup,
+        parentIsLast: parentIsLast,
+        ancestorLevels: newAncestorLevels,
+        actualLevel: level
       });
       
       // If row is expanded and has subRows, process them recursively
       if (expandedRows.has(rowKey) && row.subRows && row.subRows.length > 0) {
-        processRowsRecursive(row.subRows, level + 1, rowKey);
+        processRowsRecursive(row.subRows, level + 1, rowKey, isLastInGroup, newAncestorLevels);
       }
     });
   };
@@ -156,59 +167,78 @@ const FinancialTable = ({ title, rows }) => {
               <tr 
                 key={row.rowKey} 
                 className={`
-                  ${row.visualizationLevel === 1 ? 'bg-cyan-100' : ''}
-                  ${row.visualizationLevel === 2 ? 'bg-cyan-50' : ''}
-                  ${row.visualizationLevel === 3 ? 'bg-cyan-50/30' : ''}
-                  ${row.visualizationLevel === 4 ? 'bg-white' : ''}
-                  ${row.bgColor === 'lightgreen' ? 'bg-green-100' : ''}
-                  ${row.bgColor === 'lightblue' ? 'bg-blue-100' : ''}
-                  ${row.isTotal ? 'font-bold border-t-2 border-b-2 border-blue-300' : ''}
-                  ${row.isSubTotal ? 'font-semibold border-t border-b border-blue-200' : ''}
-                  ${row.isSecondarySubTotal ? 'font-medium border-t border-b border-amber-200' : ''}
-                  ${row.isHeader ? 'font-semibold border-t border-gray-300' : ''}
-                  ${row.visualizationLevel === 4 ? 'hover:bg-gray-50' : ''}
-                  transition-colors duration-150
+                  ${row.isTotal ? 'font-bold bg-gray-100' : ''}
+                  ${row.isSubTotal ? 'font-semibold bg-gray-50' : ''}
+                  ${row.isSecondarySubTotal ? 'font-medium' : ''}
+                  ${row.isHeader ? 'font-medium' : ''}
+                  hover:bg-gray-50 transition-colors duration-150
                 `}
               >
                 <td 
-                  className={`py-2 text-gray-800 pr-6 ${
-                    row.level === 0 ? 'pl-6' : 
-                    row.level === 1 ? 'pl-12 text-xs' : 
-                    row.level === 2 ? 'pl-16 text-xs italic' : 
-                    'pl-20 text-xs italic'
+                  className={`py-3 pr-6 ${
+                    // Padding based on actual hierarchy level
+                    row.actualLevel === 0 ? 'pl-6' : 
+                    row.actualLevel === 1 ? 'pl-8' : 
+                    row.actualLevel === 2 ? 'pl-12' : 
+                    row.actualLevel === 3 ? 'pl-16' :
+                    row.actualLevel === 4 ? 'pl-20' :
+                    'pl-24'
                   } ${
-                    row.isTotal ? 'text-blue-900 font-bold' : ''
-                  } ${
-                    row.isSubTotal ? 'text-blue-800 font-semibold' : ''
-                  } ${
-                    row.isSecondarySubTotal ? 'text-amber-800 font-medium' : ''
-                  } ${
-                    row.isHeader ? 'text-gray-800 font-semibold' : ''
-                  } ${
-                    row.isSubItem && !row.isSecondarySubTotal ? 'text-gray-600' : ''
-                  }`}
+                    // Text size based on visualization level
+                    row.visualizationLevel === 1 ? 'text-base font-bold' :
+                    row.visualizationLevel === 2 ? 'text-sm font-semibold' :
+                    row.visualizationLevel === 3 ? 'text-sm' :
+                    row.visualizationLevel === 4 ? 'text-xs font-medium' :
+                    row.visualizationLevel === 5 ? 'text-xs' :
+                    'text-xs'
+                  } text-gray-800`}
                 >
                   <div className="flex items-center">
-                    {/* Expansion icon for rows with subRows */}
-                    {hasSubRows && (
-                      <button
-                        onClick={() => toggleRow(row.rowKey)}
-                        className="mr-2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                      >
-                        {isExpanded ? (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
+                    {/* For level 0: show expansion button or spacer */}
+                    {row.actualLevel === 0 && (
+                      <>
+                        {hasSubRows ? (
+                          <button
+                            onClick={() => toggleRow(row.rowKey)}
+                            className="mr-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                          >
+                            {isExpanded ? (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            )}
+                          </button>
                         ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
+                          <span className="inline-block w-6 mr-2"></span>
                         )}
-                      </button>
+                      </>
                     )}
-                    {/* Add space for alignment when no icon */}
-                    {!hasSubRows && (
-                      <span className="inline-block w-6 mr-2"></span>
+                    
+                    {/* For levels > 0: show tree lines with integrated expansion */}
+                    {row.actualLevel > 0 && (
+                      <span className="font-mono text-gray-400">
+                        {/* Draw vertical lines for all ancestor levels */}
+                        {row.ancestorLevels.map((hasMore, idx) => (
+                          <span key={idx} className="text-gray-300">
+                            {hasMore ? '│  ' : '   '}
+                          </span>
+                        ))}
+                        {/* Draw the connector for this level */}
+                        {hasSubRows ? (
+                          <button
+                            onClick={() => toggleRow(row.rowKey)}
+                            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+                          >
+                            {expandedRows.has(row.rowKey) ? '▼ ' : '▶ '}
+                          </button>
+                        ) : (
+                          row.isLastInGroup ? '└─ ' : '├─ '
+                        )}
+                      </span>
                     )}
                     {row.label}
                   </div>
@@ -216,17 +246,17 @@ const FinancialTable = ({ title, rows }) => {
               {row.data && row.data.map((value, i) => (
                 <td 
                   key={i} 
-                  className={`px-2 py-2 text-right text-xs ${
-                    row.isTotal ? 'font-bold text-blue-900' : ''
+                  className={`px-3 py-3 text-right ${
+                    // Text size based on visualization level
+                    row.visualizationLevel === 1 ? 'text-sm font-bold' :
+                    row.visualizationLevel === 2 ? 'text-sm font-semibold' :
+                    row.visualizationLevel === 3 ? 'text-xs' :
+                    row.visualizationLevel === 4 ? 'text-xs font-medium' :
+                    row.visualizationLevel === 5 ? 'text-xs' :
+                    'text-xs'
                   } ${
-                    row.isSubTotal ? 'font-semibold text-blue-800' : ''
-                  } ${
-                    row.isHeader ? 'font-semibold text-gray-800' : ''
-                  } ${
-                    row.isSubItem ? 'text-xs text-gray-600' : ''
-                  } ${
-                    !row.isTotal && !row.isSubTotal && !row.isHeader && !row.isSubItem ? 
-                      'text-gray-900' : ''
+                    // Color for negative values
+                    typeof value === 'number' && value < 0 ? 'text-red-500' : 'text-gray-800'
                   }`}
                 >
                   {formatNumber(value, row.decimals, row.unit)}

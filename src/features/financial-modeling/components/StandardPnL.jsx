@@ -23,8 +23,7 @@ const StandardPnL = ({
     // Level 1 (cyan-100) - Main aggregates
     const level1Items = [
       'Total Revenues',
-      'Loan Loss Provisions',
-      'Net Revenues',
+      'LLPs',
       'Total OPEX',
       'PBT'
     ];
@@ -82,6 +81,7 @@ const StandardPnL = ({
             decimals: 2,
             isDetail: true,
             level: 3,
+            visualizationLevel: 5,
             formula: null
           });
         }
@@ -116,6 +116,7 @@ const StandardPnL = ({
             decimals: 2,
             isDetail: true,
             level: 3,
+            visualizationLevel: 5,
             formula: null
           });
           
@@ -141,6 +142,7 @@ const StandardPnL = ({
                   isDetail: true,
                   isSubRow: true,
                   level: 3,
+                  visualizationLevel: 5,
                   formula: null
                 });
               }
@@ -192,53 +194,157 @@ const StandardPnL = ({
                 decimals: 2,
                 isDetail: true,
                 level: 3,
+                visualizationLevel: 5,
                 formula: null
               });
             }
           });
         });
       } else if (divisionName === 'tech') {
-        // For Tech division, add external service revenue
-        // Try different paths to find Tech P&L results
-        const techPnL = globalResults?.techPnL || 
-                       globalResults?.pnl?.details?.techPnLResults ||
-                       globalResults?.pnl?.byDivision?.tech;
-        
-        console.log('Tech P&L data:', techPnL);
-        console.log('Global results:', globalResults);
-        console.log('PnL details:', globalResults?.pnl?.details);
-        console.log('Division results:', divisionResults);
-        console.log('Show product detail:', showProductDetail);
-        
-        const techQuarterly = techPnL?.quarterly;
-        
-        // Add external service revenue
-        if (techQuarterly && techQuarterly.length > 0 && techQuarterly[0].externalServiceRevenue) {
-          const externalRevenue = techQuarterly.map(q => q.externalServiceRevenue.totalRevenue);
-          if (externalRevenue.some(v => v !== 0)) {
+        // For Tech division, show IT service revenues
+        // Check if we should show product detail
+        if (showProductDetail !== false) {
+          // Try to get Tech P&L results from various sources
+          const techPnLResults = globalResults?.pnl?.details?.techPnLResults || 
+                               globalResults?.divisions?.tech?.techPnLResults ||
+                               divisionResults?.techPnLResults;
+          
+          console.log('=== TECH P&L DEBUG ===');
+          console.log('1. divisionResults:', divisionResults);
+          console.log('2. divisionResults.techPnLResults:', divisionResults?.techPnLResults);
+          console.log('3. globalResults.pnl.details.techPnLResults:', globalResults?.pnl?.details?.techPnLResults);
+          console.log('4. globalResults.divisions:', globalResults?.divisions);
+          console.log('5. Final techPnLResults:', techPnLResults);
+          console.log('6. Tech Commission Income Total:', divisionResults?.pnl?.quarterly?.commissionIncome);
+          
+          // If we have detailed Tech P&L results, extract product-level revenue
+          if (techPnLResults?.quarterly && techPnLResults.quarterly.length > 0) {
+            // External Services
+            const externalRevenue = techPnLResults.quarterly.map(q => q.externalServiceRevenue?.totalRevenue || 0);
+            console.log('External IT Services revenue:', externalRevenue);
             rows.push({
               label: '  External IT Services',
               data: externalRevenue,
               decimals: 2,
               isDetail: true,
               level: 3,
+              visualizationLevel: 3,
               formula: null
             });
-          }
-        }
-        
-        // Add internal allocation revenue (with markup)
-        if (techQuarterly && techQuarterly.length > 0 && techQuarterly[0].internalAllocationRevenue) {
-          const allocationRevenue = techQuarterly.map(q => q.internalAllocationRevenue.totalAllocationRevenue);
-          if (allocationRevenue.some(v => v !== 0)) {
-            rows.push({
-              label: '  IT Cost Allocation (with markup)',
-              data: allocationRevenue,
-              decimals: 2,
-              isDetail: true,
-              level: 3,
-              formula: null
+            
+            // Get divisions list for consistent ordering
+            const divisions = ['central', 'digital', 'general', 'incentive', 'realEstate', 'sme', 'treasury', 'wealth'];
+            const divisionLabels = {
+              central: 'Central',
+              digital: 'Digital', 
+              general: 'General',
+              incentive: 'Incentive',
+              realEstate: 'Real Estate',
+              sme: 'SME',
+              treasury: 'Treasury',
+              wealth: 'Wealth'
+            };
+            
+            // Debug: Check the costs and markup
+            if (techPnLResults.quarterly[0]) {
+              console.log('Tech Q1 Costs:', {
+                infrastructure: techPnLResults.quarterly[0].depreciation?.infrastructureDepreciation,
+                software: techPnLResults.quarterly[0].operatingCosts?.softwareLicensesOpex,
+                cloud: techPnLResults.quarterly[0].operatingCosts?.cloudServices,
+                maintenance: techPnLResults.quarterly[0].operatingCosts?.maintenanceSupport
+              });
+              console.log('Total Allocation Revenue:', techPnLResults.quarterly[0].internalAllocationRevenue?.totalAllocationRevenue);
+              console.log('Total Markup Revenue:', techPnLResults.quarterly[0].internalAllocationRevenue?.totalMarkupRevenue);
+            }
+            
+            // Internal Allocation Revenue by Product Type with Division Detail
+            // Show revenue by product type, then breakdown by division
+            const productTypes = ['infrastructure', 'software', 'development', 'cloud', 'maintenance'];
+            const productLabels = {
+              infrastructure: 'Infrastructure & Hardware',
+              software: 'Software & Licenses',
+              development: 'Development Projects',
+              cloud: 'Cloud Services',
+              maintenance: 'Maintenance & Support'
+            };
+            
+            productTypes.forEach(productType => {
+              // Calculate total revenue for this product across all divisions
+              const productTotalRevenue = techPnLResults.quarterly.map(q => {
+                let totalProductRevenue = 0;
+                if (q.internalAllocationRevenue?.allocationByDivision) {
+                  Object.values(q.internalAllocationRevenue.allocationByDivision).forEach(div => {
+                    if (div.breakdown?.[productType]) {
+                      totalProductRevenue += div.breakdown[productType].total || 0;
+                    }
+                  });
+                }
+                return totalProductRevenue;
+              });
+              
+              if (productTotalRevenue.some(v => v !== 0)) {
+                // Collect division rows for this product
+                const divisionRows = [];
+                divisions.forEach(division => {
+                  const divisionProductRevenue = techPnLResults.quarterly.map(q => {
+                    if (q.internalAllocationRevenue?.allocationByDivision?.[division]?.breakdown?.[productType]) {
+                      return q.internalAllocationRevenue.allocationByDivision[division].breakdown[productType].total || 0;
+                    }
+                    return 0;
+                  });
+                  
+                  if (divisionProductRevenue.some(v => v !== 0)) {
+                    divisionRows.push({
+                      label: `- da ${divisionLabels[division]}`,
+                      data: divisionProductRevenue,
+                      decimals: 2,
+                      isDetail: true,
+                      level: 4,
+                      visualizationLevel: 5,
+                      formula: null
+                    });
+                  }
+                });
+                
+                // Add product total row with subRows
+                rows.push({
+                  label: `  ${productLabels[productType]}`,
+                  data: productTotalRevenue,
+                  decimals: 2,
+                  isDetail: true,
+                  level: 3,
+                  visualizationLevel: 4, // Gray background for product groups
+                  formula: null,
+                  subRows: divisionRows
+                });
+              }
             });
+            
+            // Debug logging for division breakdown
+            console.log('Tech Revenue by Division Q1:');
+            divisions.forEach(division => {
+              const q1Revenue = techPnLResults.quarterly[0]?.internalAllocationRevenue?.allocationByDivision?.[division]?.totalCharge || 0;
+              if (q1Revenue > 0) {
+                console.log(`- ${divisionLabels[division]}:`, q1Revenue);
+              }
+            });
+            console.log('- External IT Services:', externalRevenue[0] || 0);
+            console.log('- Total Internal Allocation:', techPnLResults.quarterly[0]?.internalAllocationRevenue?.totalAllocationRevenue);
+            console.log('- Commission Income Total:', divisionResults?.pnl?.quarterly?.commissionIncome?.[0]);
+          } else {
+            // Fall back to total if no detailed data
+            const techCommissionIncome = divisionResults?.pnl?.quarterly?.commissionIncome;
+            if (techCommissionIncome && techCommissionIncome.some(v => v !== 0)) {
+              rows.push({
+                label: '  IT Services Revenue',
+                data: techCommissionIncome,
+                decimals: 2,
+                isDetail: true,
+                level: 3,
+                visualizationLevel: 5,
+                formula: null
+              });
+            }
           }
         }
       } else {
@@ -265,6 +371,7 @@ const StandardPnL = ({
               decimals: 2,
               isDetail: true,
               level: 3,
+              visualizationLevel: 5,
               formula: null
             });
           }
@@ -295,6 +402,7 @@ const StandardPnL = ({
             decimals: 2,
             isDetail: true,
             level: 3,
+            visualizationLevel: 5,
             formula: null
           });
         }
@@ -327,6 +435,7 @@ const StandardPnL = ({
             decimals: 2,
             isDetail: true,
             level: 3,
+            visualizationLevel: 5,
             formula: null
           });
         }
@@ -363,6 +472,7 @@ const StandardPnL = ({
             decimals: 2,
             isDetail: true,
             level: 3,
+            visualizationLevel: 5,
             formula: null
           });
         }
@@ -393,6 +503,7 @@ const StandardPnL = ({
             decimals: 2,
             isDetail: true,
             level: 3,
+            visualizationLevel: 5,
             formula: null
           });
         }
@@ -435,6 +546,7 @@ const StandardPnL = ({
               decimals: 2,
               isDetail: true,
               level: 3,
+              visualizationLevel: 5,
               formula: null
             });
           }
@@ -502,176 +614,399 @@ const StandardPnL = ({
     return eclSubtotal.map((ecl, index) => ecl + creditImpairmentSubtotal[index]);
   };
 
-  // Simplified P&L Rows
+  // Simplified P&L Rows - Totals First Structure
   const pnlRows = [
-    // INTEREST INCOME SECTION
-    {
-      label: 'Interest Income',
-      data: divisionResults?.pnl?.quarterly?.interestIncome ?? placeholderData,
-      decimals: 2,
-      isHeader: true,
-      formula: null
-    },
-    // Insert product detail rows here
-    ...productRows,
-    // INTEREST EXPENSES SECTION
-    {
-      label: 'FTP',
-      data: divisionResults?.pnl?.quarterly?.interestExpenses ?? placeholderData,
-      decimals: 2,
-      isHeader: true,
-      formula: null
-    },
-    // Insert FTP product detail rows here
-    ...ftpProductRows,
-    {
-      label: 'Net Interest Income',
-      data: divisionResults?.pnl?.quarterly?.netInterestIncome ?? placeholderData,
-      decimals: 2,
-      isSubTotal: true,
-      formula: null
-    },
-    // COMMISSION INCOME/EXPENSES
-    {
-      label: 'Commission Income',
-      data: divisionResults?.pnl?.quarterly?.commissionIncome ?? placeholderData,
-      decimals: 2,
-      isHeader: true,
-      formula: null
-    },
-    // Insert commission income product detail rows here
-    ...commissionIncomeProductRows,
-    {
-      label: 'Commission Expenses',
-      data: divisionResults?.pnl?.quarterly?.commissionExpenses ?? placeholderData,
-      decimals: 2,
-      isHeader: true,
-      formula: null
-    },
-    // Insert commission expense product detail rows here
-    ...commissionExpenseProductRows,
-    {
-      label: 'Net Commission Income',
-      data: divisionResults?.pnl?.quarterly?.netCommissions ?? placeholderData,
-      decimals: 2,
-      isSubTotal: true,
-      formula: null
-    },
+    // TOTAL REVENUES (Level 1)
     {
       label: 'Total Revenues',
-      data: divisionResults?.pnl?.quarterly?.totalRevenues ?? placeholderData,
+      data: null, // Will be calculated from subRows
       decimals: 2,
       isSubTotal: true,
-      bgColor: 'lightgreen',
-      formula: null
-    },
-    // LLP SECTION
-    {
-      label: 'Loan Loss Provisions',
-      data: calculateTotalLLP(),
-      decimals: 2,
-      isHeader: true,
-      level: 1,
-      formula: null
-    },
-    {
-      label: '  ECL Movement',
-      data: calculateECLSubtotal(),
-      decimals: 2,
-      formula: null
-    },
-    // Insert ECL product detail rows here
-    ...eclProductRows,
-    {
-      label: '  Credit Impairment',
-      data: calculateCreditImpairmentSubtotal(),
-      decimals: 2,
-      formula: null
-    },
-    // Insert Credit Impairment product detail rows here
-    ...creditImpairmentProductRows,
-    {
-      label: 'Net Revenues',
-      data: divisionResults?.pnl?.quarterly?.netRevenues ?? placeholderData,
-      decimals: 2,
-      isSubTotal: true,
-      formula: null
-    },
-    // OPERATING EXPENSES
-    {
-      label: 'Personnel Costs',
-      data: divisionResults?.pnl?.quarterly?.personnelCosts ?? placeholderData,
-      decimals: 2,
-      isHeader: true,
-      formula: null
-    },
-    // Insert personnel cost detail rows here
-    ...personnelCostRows,
-    {
-      label: 'Other OPEX',
-      data: (() => {
-        // For Digital division, get from operatingCosts
-        if (divisionName === 'digital' && divisionResults?.operatingCosts?.total?.quarterly) {
-          return divisionResults.operatingCosts.total.quarterly;
-        }
-        return divisionResults?.pnl?.quarterly?.otherOpex ?? placeholderData;
-      })(),
-      decimals: 2,
-      isHeader: true,
-      formula: null
-    },
-    // Add wealth referral fees detail rows if wealth division
-    ...(divisionName === 'wealth' && showProductDetail ? wealthReferralFeesRows : []),
-    // Add digital OPEX subrows
-    ...(showProductDetail && divisionName === 'digital' && divisionResults?.operatingCosts?.breakdown?.customerAcquisitionCost ? [{
-      label: '  • Customer Acquisition Cost',
-      data: divisionResults.operatingCosts.breakdown.customerAcquisitionCost.total.quarterly,
-      decimals: 2,
-      isDetail: true,
-      formula: null
-    }, ...Object.entries(divisionResults.operatingCosts.breakdown.customerAcquisitionCost.byProduct || {})
-      .filter(([productKey, productData]) => productData.quarterly && productData.quarterly.some(v => v !== 0))
-      .map(([productKey, productData]) => {
-        const product = assumptions.products?.[productKey];
-        return {
-          label: `    - ${product?.name || productKey}`,
-          data: productData.quarterly,
+      formula: null,
+      subRows: [
+        // NET INTEREST INCOME (Level 2)
+        {
+          label: 'Net Interest Income',
+          data: null, // Will be calculated from subRows
           decimals: 2,
-          isDetail: true,
-          level: 3,
-          formula: null
-        };
-      })] : []),
+          isSubTotal: true,
+          formula: null,
+          subRows: [
+            // Interest Income (Level 3)
+            {
+              label: 'Interest Income',
+              data: null, // Will be calculated from subRows
+              decimals: 2,
+              isHeader: true,
+              formula: null,
+              subRows: productRows
+            },
+            // Interest Expenses (Level 3)
+            {
+              label: 'FTP',
+              data: null, // Will be calculated from subRows
+              decimals: 2,
+              isHeader: true,
+              formula: null,
+              subRows: ftpProductRows
+            }
+          ]
+        },
+        // NET COMMISSION INCOME (Level 2)
+        {
+          label: 'Net Commission Income',
+          data: null, // Will be calculated from subRows
+          decimals: 2,
+          isSubTotal: true,
+          formula: null,
+          subRows: [
+            // Commission Income (Level 3)
+            {
+              label: 'Commission Income',
+              data: null, // Will be calculated from subRows
+              decimals: 2,
+              isHeader: true,
+              formula: null,
+              subRows: commissionIncomeProductRows
+            },
+            // Commission Expenses (Level 3)
+            {
+              label: 'Commission Expenses',
+              data: null, // Will be calculated from subRows
+              decimals: 2,
+              isHeader: true,
+              formula: null,
+              subRows: commissionExpenseProductRows
+            }
+          ]
+        }
+      ]
+    },
+    // LLPs (Level 1)
+    {
+      label: 'LLPs',
+      data: null, // Will be calculated from subRows
+      decimals: 2,
+      isSubTotal: true,
+      formula: null,
+      subRows: [
+        // ECL Movement (Level 2)
+        {
+          label: 'ECL Movement',
+          data: null, // Will be calculated from subRows
+          decimals: 2,
+          formula: null,
+          subRows: eclProductRows
+        },
+        // Credit Impairment (Level 2)
+        {
+          label: 'Credit Impairment',
+          data: null, // Will be calculated from subRows
+          decimals: 2,
+          formula: null,
+          subRows: creditImpairmentProductRows
+        }
+      ]
+    },
+    // TOTAL OPEX (Level 1)
     {
       label: 'Total OPEX',
-      data: divisionResults?.pnl?.quarterly?.totalOpex ?? placeholderData,
+      data: null, // Will be calculated from subRows
       decimals: 2,
       isSubTotal: true,
-      formula: null
+      formula: null,
+      subRows: [
+        // Personnel Costs (Level 2)
+        {
+          label: 'Personnel Costs',
+          data: personnelCostRows.length > 0 ? null : (divisionResults?.pnl?.quarterly?.personnelCosts ?? placeholderData),
+          decimals: 2,
+          isHeader: true,
+          formula: null,
+          subRows: personnelCostRows
+        },
+        // Other OPEX (Level 2)
+        {
+          label: 'Other OPEX',
+          data: (() => {
+            // For Digital division, get from operatingCosts
+            if (divisionName === 'digital' && divisionResults?.operatingCosts?.total?.quarterly) {
+              return divisionResults.operatingCosts.total.quarterly;
+            }
+            // For Tech division, get from techPnLResults (include depreciation)
+            if (divisionName === 'tech' && globalResults?.pnl?.details?.techPnLResults?.quarterly) {
+              return globalResults.pnl.details.techPnLResults.quarterly.map(q => {
+                const opex = q.operatingCosts?.totalOperatingCosts || 0;
+                const depreciation = q.depreciation?.totalDepreciation || 0;
+                return opex + depreciation;
+              });
+            }
+            return divisionResults?.pnl?.quarterly?.otherOpex ?? placeholderData;
+          })(),
+          decimals: 2,
+          isHeader: true,
+          formula: null,
+          subRows: [
+            // Add wealth referral fees detail rows if wealth division
+            ...(divisionName === 'wealth' && showProductDetail ? wealthReferralFeesRows : []),
+            // Add tech OPEX subrows
+            ...(showProductDetail && divisionName === 'tech' && globalResults?.pnl?.details?.techPnLResults?.quarterly ? (() => {
+      const techPnLResults = globalResults.pnl.details.techPnLResults;
+      const rows = [];
+      
+      // Cloud Services
+      const cloudServicesData = techPnLResults.quarterly.map(q => q.operatingCosts?.cloudServices || 0);
+      if (cloudServicesData.some(v => v !== 0)) {
+        rows.push({
+          label: '  • Cloud Services',
+          data: cloudServicesData,
+          decimals: 2,
+          isDetail: true,
+          visualizationLevel: 5,
+          formula: null
+        });
+      }
+      
+      // Maintenance & Support
+      const maintenanceData = techPnLResults.quarterly.map(q => q.operatingCosts?.maintenanceSupport || 0);
+      if (maintenanceData.some(v => v !== 0)) {
+        rows.push({
+          label: '  • Maintenance & Support',
+          data: maintenanceData,
+          decimals: 2,
+          isDetail: true,
+          visualizationLevel: 5,
+          formula: null
+        });
+      }
+      
+      // Software Licenses OPEX
+      const softwareOpexData = techPnLResults.quarterly.map(q => q.operatingCosts?.softwareLicensesOpex || 0);
+      if (softwareOpexData.some(v => v !== 0)) {
+        rows.push({
+          label: '  • Software Licenses OPEX',
+          data: softwareOpexData,
+          decimals: 2,
+          isDetail: true,
+          visualizationLevel: 5,
+          formula: null
+        });
+      }
+      
+      // External Service Costs
+      const externalServicesData = techPnLResults.quarterly.map(q => q.operatingCosts?.externalServiceCosts || 0);
+      if (externalServicesData.some(v => v !== 0)) {
+        rows.push({
+          label: '  • External Service Costs',
+          data: externalServicesData,
+          decimals: 2,
+          isDetail: true,
+          visualizationLevel: 5,
+          formula: null
+        });
+      }
+      
+      // Infrastructure Depreciation
+      const infraDepData = techPnLResults.quarterly.map(q => q.depreciation?.infrastructureDepreciation || 0);
+      if (infraDepData.some(v => v !== 0)) {
+        rows.push({
+          label: '  • Infrastructure Depreciation',
+          data: infraDepData,
+          decimals: 2,
+          isDetail: true,
+          visualizationLevel: 5,
+          formula: null
+        });
+      }
+      
+      // Software Licenses Depreciation
+      const softwareDepData = techPnLResults.quarterly.map(q => q.depreciation?.softwareDepreciation || 0);
+      if (softwareDepData.some(v => v !== 0)) {
+        rows.push({
+          label: '  • Software Licenses Depreciation',
+          data: softwareDepData,
+          decimals: 2,
+          isDetail: true,
+          visualizationLevel: 5,
+          formula: null
+        });
+      }
+      
+      // Development Depreciation
+      const devDepData = techPnLResults.quarterly.map(q => q.depreciation?.developmentDepreciation || 0);
+      if (devDepData.some(v => v !== 0)) {
+        rows.push({
+          label: '  • Development Depreciation',
+          data: devDepData,
+          decimals: 2,
+          isDetail: true,
+          visualizationLevel: 5,
+          formula: null
+        });
+      }
+      
+      return rows;
+    })() : []),
+            // Add digital OPEX subrows
+            ...(showProductDetail && divisionName === 'digital' && divisionResults?.operatingCosts?.breakdown?.customerAcquisitionCost ? [{
+              label: '  • Customer Acquisition Cost',
+              data: divisionResults.operatingCosts.breakdown.customerAcquisitionCost.total.quarterly,
+              decimals: 2,
+              isDetail: true,
+              formula: null
+            }, ...Object.entries(divisionResults.operatingCosts.breakdown.customerAcquisitionCost.byProduct || {})
+              .filter(([productKey, productData]) => productData.quarterly && productData.quarterly.some(v => v !== 0))
+              .map(([productKey, productData]) => {
+                const product = assumptions.products?.[productKey];
+                return {
+                  label: `    - ${product?.name || productKey}`,
+                  data: productData.quarterly,
+                  decimals: 2,
+                  isDetail: true,
+                  level: 3,
+                  visualizationLevel: 5,
+                  formula: null
+                };
+              })] : [])
+          ]
+        }
+      ]
     },
+    // PBT (Level 1)
     {
       label: 'PBT',
-      data: divisionResults?.pnl?.quarterly?.pbt ?? placeholderData,
+      data: null, // Will be calculated as Total Revenues - LLPs - Total OPEX
       decimals: 2,
       isSubTotal: true,
-      bgColor: 'lightblue',
-      formula: null
+      formula: 'Total Revenues - LLPs - Total OPEX',
+      sumFromRows: ['Total Revenues', 'LLPs', 'Total OPEX'],
+      sumOperation: 'custom' // This will trigger special handling in FinancialTable
     }
   ];
 
-  // Apply custom row transformations and visualization levels
-  const transformedRows = pnlRows.map(row => {
-    const transformation = customRowTransformations[row.label];
-    const baseRow = transformation ? { ...row, ...transformation } : row;
-    
-    // Apply visualization level
-    return {
-      ...baseRow,
-      visualizationLevel: getVisualizationLevel(baseRow.label)
-    };
+  // Apply transformations, calculate sums, and filter out zero rows recursively
+  const transformAndFilterRows = (rows) => {
+    return rows.map(row => {
+      const transformation = customRowTransformations[row.label];
+      const baseRow = transformation ? { ...row, ...transformation } : row;
+      
+      // Apply visualization level only if not already set
+      const transformedRow = {
+        ...baseRow,
+        visualizationLevel: baseRow.visualizationLevel || getVisualizationLevel(baseRow.label)
+      };
+      
+      // If row has subRows, transform and filter them recursively FIRST
+      if (transformedRow.subRows) {
+        transformedRow.subRows = transformAndFilterRows(transformedRow.subRows);
+        
+        // After processing subRows, calculate sum if needed
+        // Calculate sum if:
+        // 1. Row has data set to null (explicitly wants sum)
+        // 2. Row has empty data or all zeros AND has subRows with data
+        if (transformedRow.subRows.length > 0) {
+          const shouldCalculateSum = transformedRow.data === null || 
+                                    (!transformedRow.data || transformedRow.data.every(v => v === 0));
+          
+          if (shouldCalculateSum) {
+            // Initialize sum array
+            const sumData = new Array(quarters).fill(0);
+            
+            // Sum only direct children, not recursive
+            const sumDirectChildren = (subRows) => {
+              subRows.forEach(subRow => {
+                if (subRow.data && Array.isArray(subRow.data)) {
+                  // Debug logging for important rows
+                  if (transformedRow.label === 'Net Interest Income' || 
+                      transformedRow.label === 'Total Revenues' ||
+                      transformedRow.label === 'Interest Income' ||
+                      transformedRow.label === 'FTP') {
+                    console.log(`[${transformedRow.label}] Summing direct child ${subRow.label}:`, {
+                      firstValues: subRow.data?.slice(0, 4)
+                    });
+                  }
+                  
+                  // Just sum the values as they are (FTP should already be negative)
+                  subRow.data.forEach((value, index) => {
+                    sumData[index] += (value || 0);
+                  });
+                }
+                // DO NOT sum grandchildren - they're already included in the child's sum
+              });
+            };
+            
+            sumDirectChildren(transformedRow.subRows);
+            
+            // Debug final result for important rows
+            if (transformedRow.label === 'Net Interest Income' || 
+                transformedRow.label === 'Interest Income' ||
+                transformedRow.label === 'FTP') {
+              console.log(`${transformedRow.label} final sum:`, sumData.slice(0, 4));
+              console.log(`${transformedRow.label} subRows:`, transformedRow.subRows.map(sr => ({
+                label: sr.label,
+                hasData: !!sr.data,
+                firstValues: sr.data?.slice(0, 4)
+              })));
+            }
+            
+            transformedRow.data = sumData;
+          }
+        } else if (transformedRow.data === null) {
+          // If no subRows but data is null, use placeholder
+          transformedRow.data = new Array(quarters).fill(0);
+        }
+      }
+      
+      return transformedRow;
+    }).filter(row => {
+      // Always keep subtotals and level 1 items (main aggregates)
+      if (row.isSubTotal || row.visualizationLevel === 1) {
+        return true;
+      }
+      
+      // Check if row has non-zero values
+      const hasNonZeroValues = Array.isArray(row.data) && row.data.some(v => v !== 0);
+      
+      // Check if row has non-zero children
+      const hasNonZeroChildren = row.subRows && row.subRows.length > 0;
+      
+      return hasNonZeroValues || hasNonZeroChildren;
+    });
+  };
+  
+  const transformedRows = transformAndFilterRows(pnlRows);
+  
+  // Second pass: Calculate rows that depend on other rows (like PBT)
+  const finalRows = transformedRows.map(row => {
+    if (row.calculateFromOtherRows) {
+      const newData = new Array(quarters).fill(0);
+      
+      // Find the rows we need
+      const findRowByLabel = (rows, label) => {
+        for (let r of rows) {
+          if (r.label === label) return r;
+        }
+        return null;
+      };
+      
+      if (row.label === 'PBT') {
+        const totalRevenues = findRowByLabel(transformedRows, 'Total Revenues');
+        const llps = findRowByLabel(transformedRows, 'LLPs');
+        const totalOpex = findRowByLabel(transformedRows, 'Total OPEX');
+        
+        if (totalRevenues?.data && llps?.data && totalOpex?.data) {
+          for (let i = 0; i < quarters; i++) {
+            newData[i] = (totalRevenues.data[i] || 0) - (llps.data[i] || 0) - (totalOpex.data[i] || 0);
+          }
+        }
+      }
+      
+      return { ...row, data: newData };
+    }
+    return row;
   });
 
-  return <FinancialTable title="2. Conto Economico" rows={transformedRows} />;
+  return <FinancialTable title="2. Conto Economico" rows={finalRows} />;
 };
 
 export default StandardPnL;

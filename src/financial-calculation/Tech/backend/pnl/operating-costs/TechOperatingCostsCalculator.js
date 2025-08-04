@@ -43,7 +43,7 @@ class TechOperatingCostsCalculator {
     // 3. Software Licenses - OPEX portion
     const softwareProduct = products.softwareLicenses || {};
     const softwareCosts = softwareProduct.costArray || [10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-    const capexPercentage = (softwareProduct.capexPercentage || 40) / 100;
+    const capexPercentage = (softwareProduct.capexPercentage !== undefined ? softwareProduct.capexPercentage : 40) / 100;
     const opexPercentage = 1 - capexPercentage;
     results.softwareLicensesOpex = ((softwareCosts[year] || 0) * opexPercentage) / 4;
     
@@ -51,21 +51,31 @@ class TechOperatingCostsCalculator {
     const externalClients = products.externalClients || {};
     const marginPercentage = (externalClients.marginPercentage || 30) / 100;
     
+    // Check if Tech division exit has occurred
+    const exitConfig = products.divisionExit || {};
+    const exitYear = exitConfig.exitYear || -1;
+    const hasExited = exitYear >= 0 && year >= exitYear;
+    
     // Calculate external revenue for this quarter
     const clientsArray = externalClients.clientsArray || [0, 0, 2, 5, 10, 15, 20, 25, 30, 35];
-    const currentYearClients = clientsArray[year] || 0;
-    const previousYearClients = year > 0 ? (clientsArray[year - 1] || 0) : 0;
-    const newClients = Math.max(0, currentYearClients - previousYearClients);
+    const currentYearClients = hasExited ? (clientsArray[year] || 0) : 0;
+    const previousYearClients = hasExited && year > 0 ? (clientsArray[year - 1] || 0) : 0;
+    const newClients = hasExited ? Math.max(0, currentYearClients - previousYearClients) : 0;
     
     const setupFeePerClient = externalClients.setupFeePerClient || 0.5;
     const annualFeePerClient = externalClients.annualFeePerClient || 2.0;
     
-    const quarterlySetupRevenue = (newClients / 4) * setupFeePerClient;
-    const quarterlyRecurringRevenue = currentYearClients * annualFeePerClient / 4;
-    const totalExternalRevenue = quarterlySetupRevenue + quarterlyRecurringRevenue;
-    
-    // External costs = revenue * (1 - margin)
-    results.externalServiceCosts = totalExternalRevenue * (1 - marginPercentage);
+    // Only calculate costs if we have external clients (post-exit)
+    if (hasExited && currentYearClients > 0) {
+      const quarterlySetupRevenue = (newClients / 4) * setupFeePerClient;
+      const quarterlyRecurringRevenue = currentYearClients * annualFeePerClient / 4;
+      const totalExternalRevenue = quarterlySetupRevenue + quarterlyRecurringRevenue;
+      
+      // External costs = revenue * (1 - margin)
+      results.externalServiceCosts = totalExternalRevenue * (1 - marginPercentage);
+    } else {
+      results.externalServiceCosts = 0;
+    }
     
     // Total operating costs
     results.totalOperatingCosts = 
@@ -123,7 +133,7 @@ class TechOperatingCostsCalculator {
       
       // Previous quarter software OPEX
       const prevSoftwareCosts = products.softwareLicenses?.costArray || [10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-      const prevCapexPercentage = (products.softwareLicenses?.capexPercentage || 40) / 100;
+      const prevCapexPercentage = (products.softwareLicenses?.capexPercentage !== undefined ? products.softwareLicenses.capexPercentage : 40) / 100;
       const prevOpexPercentage = 1 - prevCapexPercentage;
       const prevSoftwareLicensesOpex = ((prevSoftwareCosts[previousYear] || 0) * prevOpexPercentage) / 4;
       

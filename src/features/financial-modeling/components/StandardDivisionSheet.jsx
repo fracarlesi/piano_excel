@@ -55,7 +55,19 @@ const StandardDivisionSheet = ({
   // Get P&L table data for products in this division (including NPL)
   const allInterestIncomeData = results.productPnLTableData?.interestIncome || {};
   const allInterestExpenseData = results.productPnLTableData?.interestExpense || {};
-  const allCommissionIncomeData = results.productPnLTableData?.commissionIncome || {};
+  let allCommissionIncomeData = results.productPnLTableData?.commissionIncome || {};
+  
+  // For Tech division, merge data from global commission income
+  if (divisionKey === 'tech' && results?.pnl?.commissionIncome?.quarterly?.byProduct) {
+    const techProductsFromGlobal = {};
+    Object.entries(results.pnl.commissionIncome.quarterly.byProduct).forEach(([key, data]) => {
+      if (key.startsWith('tech')) {
+        techProductsFromGlobal[key] = data;
+      }
+    });
+    allCommissionIncomeData = { ...allCommissionIncomeData, ...techProductsFromGlobal };
+    console.log('Tech Division - Merged commission income data:', allCommissionIncomeData);
+  }
   const allCommissionExpenseData = results.productPnLTableData?.commissionExpense || {};
   const allLoanLossProvisionsData = results.productPnLTableData?.loanLossProvisions || {};
   const allECLMovementsData = results.productPnLTableData?.eclMovements || {};
@@ -142,6 +154,11 @@ const StandardDivisionSheet = ({
     if (divisionKey === 'digital') {
       const digitalProducts = ['digitalBankAccount', 'premiumDigitalBankAccount', 'depositAccount', 'wealthReferralFees'];
       isDivisionProduct = digitalProducts.includes(key);
+    } else if (divisionKey === 'tech') {
+      // For Tech division, include tech-prefixed products
+      const techProducts = ['techExternalServices', 'techInfrastructure', 'techSoftwareLicenses', 
+                           'techDevelopmentProjects', 'techCloudServices', 'techMaintenanceSupport'];
+      isDivisionProduct = techProducts.includes(key) || key.startsWith('tech');
     } else {
       // For wealth division, exclude wealthReferralFees as they are costs, not income
       if (divisionKey === 'wealth' && key === 'wealthReferralFees') {

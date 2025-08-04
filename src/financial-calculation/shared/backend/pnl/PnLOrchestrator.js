@@ -205,6 +205,65 @@ export const PnLOrchestrator = {
         commissionIncomeResults.quarterly.byDivision.tech[index] = techRevenue;
       });
       
+      // Also store detailed Tech breakdown for display
+      if (!commissionIncomeResults.quarterly.byProduct) {
+        commissionIncomeResults.quarterly.byProduct = {};
+      }
+      
+      // Store Tech external service revenue
+      commissionIncomeResults.quarterly.byProduct.techExternalServices = 
+        techPnLResults.quarterly.map(q => q.externalServiceRevenue?.totalRevenue || 0);
+      
+      // Store Tech internal allocation revenue breakdown by product
+      // Extract the breakdown from internal allocation revenue
+      const techProductBreakdown = {
+        techInfrastructure: new Array(40).fill(0),
+        techSoftwareLicenses: new Array(40).fill(0),
+        techDevelopmentProjects: new Array(40).fill(0),
+        techCloudServices: new Array(40).fill(0),
+        techMaintenanceSupport: new Array(40).fill(0)
+      };
+      
+      // Process each quarter to extract product-level breakdown
+      techPnLResults.quarterly.forEach((q, index) => {
+        if (q.internalAllocationRevenue && q.breakdown && q.breakdown.revenue && q.breakdown.revenue.internal) {
+          // Get the total internal allocation revenue for this quarter
+          const totalInternal = q.internalAllocationRevenue.totalAllocationRevenue || 0;
+          
+          // If we have the cost breakdown, use it to calculate product revenues
+          if (q.operatingCosts && q.depreciation) {
+            // Calculate revenue for each Tech product based on costs + markup
+            const markup = 1.2; // 20% markup default
+            
+            // Infrastructure revenue (depreciation + markup)
+            techProductBreakdown.techInfrastructure[index] = 
+              (q.depreciation.infrastructureDepreciation || 0) * markup;
+            
+            // Software licenses revenue (opex + depreciation + markup)
+            techProductBreakdown.techSoftwareLicenses[index] = 
+              ((q.operatingCosts.softwareLicensesOpex || 0) + 
+               (q.depreciation.softwareDepreciation || 0)) * markup;
+            
+            // Development projects revenue (depreciation + markup)
+            techProductBreakdown.techDevelopmentProjects[index] = 
+              (q.depreciation.developmentDepreciation || 0) * markup;
+            
+            // Cloud services revenue (opex + markup)
+            techProductBreakdown.techCloudServices[index] = 
+              (q.operatingCosts.cloudServices || 0) * markup;
+            
+            // Maintenance support revenue (opex + markup)
+            techProductBreakdown.techMaintenanceSupport[index] = 
+              (q.operatingCosts.maintenanceSupport || 0) * markup;
+          }
+        }
+      });
+      
+      // Add each Tech product to commission income byProduct
+      Object.entries(techProductBreakdown).forEach(([productKey, data]) => {
+        commissionIncomeResults.quarterly.byProduct[productKey] = data;
+      });
+      
       // Aggregate Tech revenue annually
       for (let year = 0; year < 10; year++) {
         const yearKey = `Y${year + 1}`;
@@ -936,6 +995,8 @@ export const PnLOrchestrator = {
         totalOpex: annualData.map(d => d.personnelCosts + d.operatingCosts + d.depreciation),
         llp: new Array(10).fill(0), // Tech has no loan loss provisions
         preTaxProfit: annualData.map(d => d.pbt),
+        // Add Tech P&L results for access in components
+        techPnLResults: techPnLResults,
         // Add Tech-specific breakdowns
         operatingCosts: {
           breakdown: {

@@ -49,7 +49,11 @@ export const calculateResults = (assumptions) => {
         // Include the details which contain product-level volumes and repayments
         details: balanceSheetResults.details
       },
-      pnl: pnlResults.consolidated,
+      pnl: {
+        ...pnlResults.consolidated,
+        // Include PnL details for access to tech results
+        details: pnlResults.details
+      },
       capital: capitalResults.consolidated,
       kpi: kpiResults.consolidated,
       
@@ -106,7 +110,9 @@ const organizeDivisionResults = (balanceSheet, pnl, capital, kpi) => {
       // Add liabilities data for divisions that have it (e.g., Digital)
       ...(bsDivision.liabilities ? { liabilities: bsDivision.liabilities } : {}),
       // Add customerGrowth data for divisions that have it (e.g., Digital)
-      ...(bsDivision.customerGrowth ? { customerGrowth: bsDivision.customerGrowth } : {})
+      ...(bsDivision.customerGrowth ? { customerGrowth: bsDivision.customerGrowth } : {}),
+      // Add techPnLResults for Tech division
+      ...(pnlDivision.techPnLResults ? { techPnLResults: pnlDivision.techPnLResults } : {})
     };
   });
   

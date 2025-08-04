@@ -48,7 +48,7 @@ class TechDepreciationCalculator {
     // 2. Software Licenses - CAPEX portion
     const softwareProduct = products.softwareLicenses || {};
     const softwareCosts = softwareProduct.costArray || [10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-    const capexPercentage = (softwareProduct.capexPercentage || 40) / 100;
+    const capexPercentage = (softwareProduct.capexPercentage !== undefined ? softwareProduct.capexPercentage : 40) / 100;
     const softwareDepreciationYears = softwareProduct.depreciationYears || 3;
     
     // 3. Development Projects
@@ -201,7 +201,7 @@ class TechDepreciationCalculator {
         key: 'software', 
         costs: products.softwareLicenses?.costArray || [10, 15, 20, 25, 30, 35, 40, 45, 50, 55],
         years: products.softwareLicenses?.depreciationYears || 3,
-        capexRatio: (products.softwareLicenses?.capexPercentage || 40) / 100
+        capexRatio: (products.softwareLicenses?.capexPercentage !== undefined ? products.softwareLicenses.capexPercentage : 40) / 100
       },
       { 
         key: 'development', 

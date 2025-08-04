@@ -66,7 +66,7 @@ class TechPnLOrchestrator {
     const techAssumptions = assumptions.techDivision || {};
     
     // 1. Calculate external service revenue
-    results.externalServiceRevenue = TechServiceRevenueCalculator.calculate(techAssumptions, year, quarter);
+    results.externalServiceRevenue = TechServiceRevenueCalculator.calculate(assumptions, year, quarter);
     
     // 2. Calculate operating costs first (needed for allocation revenue)
     results.operatingCosts = TechOperatingCostsCalculator.calculate(techAssumptions, year, quarter);
@@ -108,15 +108,12 @@ class TechPnLOrchestrator {
       breakdown: personnelData
     };
     
-    // 7. Calculate FTP expense on funding needs
-    const fundingNeeds = this.calculateFundingNeeds(results, techAssumptions, year);
-    const ftpRate = assumptions.centralAssumptions?.ftpRate || 2.5;
-    
-    // For Tech division, we calculate FTP on the funding needs as a simple calculation
+    // 7. No FTP expense for Tech division
+    // Tech is a service division, not a banking division that needs funding
     results.ftpExpense = {
-      total: (fundingNeeds * ftpRate / 100) / 4, // Quarterly FTP
-      rate: ftpRate,
-      base: fundingNeeds
+      total: 0,
+      rate: 0,
+      base: 0
     };
     
     // 8. Total operating costs (excluding depreciation for EBITDA)
@@ -194,29 +191,6 @@ class TechPnLOrchestrator {
     return results;
   }
   
-  /**
-   * Calculate funding needs for FTP
-   */
-  calculateFundingNeeds(results, assumptions, year) {
-    // Simplified: funding needs = CAPEX investments
-    const products = assumptions.products || {};
-    let capexNeeds = 0;
-    
-    // Infrastructure CAPEX
-    const infrastructureCosts = products.infrastructure?.costArray || [];
-    capexNeeds += (infrastructureCosts[year] || 0) / 4;
-    
-    // Software CAPEX portion
-    const softwareCosts = products.softwareLicenses?.costArray || [];
-    const capexPercentage = (products.softwareLicenses?.capexPercentage || 40) / 100;
-    capexNeeds += ((softwareCosts[year] || 0) * capexPercentage) / 4;
-    
-    // Development CAPEX
-    const developmentCosts = products.developmentProjects?.costArray || [];
-    capexNeeds += (developmentCosts[year] || 0) / 4;
-    
-    return capexNeeds;
-  }
   
   
   /**

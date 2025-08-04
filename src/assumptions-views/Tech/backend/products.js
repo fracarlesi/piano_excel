@@ -9,7 +9,7 @@ export const techProducts = {
     depreciationYears: 5,
     costArray: [5, 8, 12, 15, 18, 20, 22, 24, 26, 28], // €M per year
     description: 'Server, data center, network equipment, storage systems',
-    allocationMethod: 'usage', // usage, headcount, transactions
+    allocationMethod: 'transactions', // usage, headcount, transactions
     markupPercentage: 10, // Default markup for internal charging
   },
   
@@ -34,7 +34,7 @@ export const techProducts = {
     depreciationYears: 5,
     costArray: [15, 25, 35, 40, 45, 50, 55, 60, 65, 70], // €M per year
     description: 'Application development, API integration, digital transformation projects',
-    allocationMethod: 'project', // Direct allocation to requesting division
+    allocationMethod: 'usage', // Best for development projects
     markupPercentage: 20,
   },
   
@@ -46,7 +46,7 @@ export const techProducts = {
     depreciationYears: 0, // No depreciation for opex
     costArray: [8, 12, 18, 25, 35, 45, 55, 65, 75, 85], // €M per year
     description: 'AWS, Azure, GCP, SaaS subscriptions, external consultancy',
-    allocationMethod: 'usage',
+    allocationMethod: 'transactions', // Cloud scales with usage
     markupPercentage: 5,
   },
   
@@ -130,9 +130,5 @@ export const techAllocationKeys = {
     incentive: 3,
     treasury: 2,
     general: 5,
-  },
-  project: {
-    // Direct allocation based on project requests
-    // Will be dynamically set based on division needs
   }
 };
