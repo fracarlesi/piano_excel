@@ -20,7 +20,7 @@ import {
 } from '../divisionMappings.js';
 import { DigitalPnLOrchestrator } from '../../../Digital/backend';
 import { calculateWealthPnL } from '../../../Wealth/backend/pnl/WealthPnLOrchestrator.js';
-import { PnLOrchestrator as TechPnLOrchestrator } from '../../../Tech/backend';
+import { TechPnLOrchestrator } from '../../../Tech/backend';
 
 /**
  * Main P&L calculation - static method for clean interface
@@ -230,31 +230,32 @@ export const PnLOrchestrator = {
           // Get the total internal allocation revenue for this quarter
           const totalInternal = q.internalAllocationRevenue.totalAllocationRevenue || 0;
           
-          // If we have the cost breakdown, use it to calculate product revenues
-          if (q.operatingCosts && q.depreciation) {
-            // Calculate revenue for each Tech product based on costs + markup
-            const markup = 1.2; // 20% markup default
+          // If we have the allocation breakdown, aggregate revenues by product category
+          if (q.internalAllocationRevenue && q.internalAllocationRevenue.allocationByDivision) {
+            // Initialize totals for each category
+            let infrastructureTotal = 0;
+            let softwareTotal = 0;
+            let developmentTotal = 0;
+            let cloudTotal = 0;
+            let maintenanceTotal = 0;
             
-            // Infrastructure revenue (depreciation + markup)
-            techProductBreakdown.techInfrastructure[index] = 
-              (q.depreciation.infrastructureDepreciation || 0) * markup;
+            // Sum up allocations from all divisions
+            Object.values(q.internalAllocationRevenue.allocationByDivision).forEach(divisionData => {
+              if (divisionData.breakdown) {
+                infrastructureTotal += divisionData.breakdown.infrastructure?.total || 0;
+                softwareTotal += divisionData.breakdown.software?.total || 0;
+                developmentTotal += divisionData.breakdown.development?.total || 0;
+                cloudTotal += divisionData.breakdown.cloud?.total || 0;
+                maintenanceTotal += divisionData.breakdown.maintenance?.total || 0;
+              }
+            });
             
-            // Software licenses revenue (opex + depreciation + markup)
-            techProductBreakdown.techSoftwareLicenses[index] = 
-              ((q.operatingCosts.softwareLicensesOpex || 0) + 
-               (q.depreciation.softwareDepreciation || 0)) * markup;
-            
-            // Development projects revenue (depreciation + markup)
-            techProductBreakdown.techDevelopmentProjects[index] = 
-              (q.depreciation.developmentDepreciation || 0) * markup;
-            
-            // Cloud services revenue (opex + markup)
-            techProductBreakdown.techCloudServices[index] = 
-              (q.operatingCosts.cloudServices || 0) * markup;
-            
-            // Maintenance support revenue (opex + markup)
-            techProductBreakdown.techMaintenanceSupport[index] = 
-              (q.operatingCosts.maintenanceSupport || 0) * markup;
+            // Assign to product breakdown
+            techProductBreakdown.techInfrastructure[index] = infrastructureTotal;
+            techProductBreakdown.techSoftwareLicenses[index] = softwareTotal;
+            techProductBreakdown.techDevelopmentProjects[index] = developmentTotal;
+            techProductBreakdown.techCloudServices[index] = cloudTotal;
+            techProductBreakdown.techMaintenanceSupport[index] = maintenanceTotal;
           }
         }
       });
@@ -991,7 +992,7 @@ export const PnLOrchestrator = {
         netCommissions: annualData.map(d => d.externalServiceRevenue + d.internalAllocationRevenue),
         totalRevenues: annualData.map(d => d.totalOperatingRevenue),
         personnelCosts: annualData.map(d => d.personnelCosts),
-        otherOpex: annualData.map(d => d.operatingCosts + d.depreciation),
+        otherOpex: annualData.map(d => -(d.operatingCosts + d.depreciation)),
         totalOpex: annualData.map(d => d.personnelCosts + d.operatingCosts + d.depreciation),
         llp: new Array(10).fill(0), // Tech has no loan loss provisions
         preTaxProfit: annualData.map(d => d.pbt),
@@ -1022,7 +1023,7 @@ export const PnLOrchestrator = {
           totalRevenues: techPnLResults.quarterly.map(q => q.totalOperatingRevenue),
           personnelCosts: techPnLResults.quarterly.map(q => q.personnelCosts.totalCost),
           otherOpex: techPnLResults.quarterly.map(q => 
-            q.operatingCosts.totalOperatingCosts + q.depreciation.totalDepreciation
+            -(q.operatingCosts.totalOperatingCosts + q.depreciation.totalDepreciation)
           ),
           totalOpex: techPnLResults.quarterly.map(q => 
             q.personnelCosts.totalCost + q.operatingCosts.totalOperatingCosts + q.depreciation.totalDepreciation

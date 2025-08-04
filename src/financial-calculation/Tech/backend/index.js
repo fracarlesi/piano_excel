@@ -1,19 +1,15 @@
 /**
- * Tech Division Backend Exports
+ * Tech Division Backend Module Exports
  * 
- * Main entry point for Tech division financial calculations
+ * Central export point for all Tech division calculation modules
  */
 
-const TechPnLOrchestrator = require('./pnl/TechPnLOrchestrator');
+// Balance Sheet exports
+export { TechBalanceSheetOrchestrator } from './balance-sheet/TechBalanceSheetOrchestrator.js';
 
-module.exports = {
-  // P&L Orchestrator - use specialized Tech version
-  PnLOrchestrator: TechPnLOrchestrator,
-  
-  // Individual calculators for external use
-  TechServiceRevenueCalculator: require('./pnl/commission-income/TechServiceRevenueCalculator'),
-  TechAllocationRevenueCalculator: require('./pnl/commission-income/TechAllocationRevenueCalculator'),
-  TechOperatingCostsCalculator: require('./pnl/operating-costs/TechOperatingCostsCalculator'),
-  TechDepreciationCalculator: require('./pnl/operating-costs/TechDepreciationCalculator'),
-  TechExitGainCalculator: require('./pnl/extraordinary-items/TechExitGainCalculator')
-};
+// P&L exports
+export { default as TechPnLOrchestrator } from './pnl/TechPnLOrchestrator.js';
+export { default as TechAllocationRevenueCalculator } from './pnl/commission-income/TechAllocationRevenueCalculator.js';
+export { default as TechServiceRevenueCalculator } from './pnl/commission-income/TechServiceRevenueCalculator.js';
+export { default as TechOperatingCostsCalculator } from './pnl/operating-costs/TechOperatingCostsCalculator.js';
+export { default as TechDepreciationCalculator } from './pnl/operating-costs/TechDepreciationCalculator.js';

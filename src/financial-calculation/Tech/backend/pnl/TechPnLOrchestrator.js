@@ -65,6 +65,14 @@ class TechPnLOrchestrator {
     
     const techAssumptions = assumptions.techDivision || {};
     
+    // Debug logging - COMMENTED OUT
+    // console.log('🔍 TechPnLOrchestrator Debug:', {
+    //   year,
+    //   quarter,
+    //   'techAssumptions.products': techAssumptions.products,
+    //   'cloudServices': techAssumptions.products?.cloudServices
+    // });
+    
     // 1. Calculate external service revenue
     results.externalServiceRevenue = TechServiceRevenueCalculator.calculate(assumptions, year, quarter);
     
@@ -72,15 +80,15 @@ class TechPnLOrchestrator {
     results.operatingCosts = TechOperatingCostsCalculator.calculate(techAssumptions, year, quarter);
     results.depreciation = this.depreciationCalculator.calculate(techAssumptions, year, quarter);
     
-    // 3. Prepare total IT costs for allocation
+    // 3. Prepare total IT costs for allocation (quarterly values)
     const totalITCosts = {
-      infrastructure: results.depreciation.infrastructureDepreciation * 4 + // Annualize for allocation
-                      (results.operatingCosts.breakdown.infrastructure?.amount || 0) * 4,
-      software: results.depreciation.softwareDepreciation * 4 +
-                results.operatingCosts.softwareLicensesOpex * 4,
-      development: results.depreciation.developmentDepreciation * 4,
-      cloud: results.operatingCosts.cloudServices * 4,
-      maintenance: results.operatingCosts.maintenanceSupport * 4
+      infrastructure: results.depreciation.infrastructureDepreciation + 
+                      (results.operatingCosts.breakdown.infrastructure?.amount || 0),
+      software: results.depreciation.softwareDepreciation +
+                results.operatingCosts.softwareLicensesOpex,
+      development: results.depreciation.developmentDepreciation,
+      cloud: results.operatingCosts.cloudServices,
+      maintenance: results.operatingCosts.maintenanceSupport
     };
     
     // 4. Calculate internal allocation revenue (with markup)

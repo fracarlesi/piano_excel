@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import StandardPnL from './StandardPnL';
 import StandardBalanceSheet from './StandardBalanceSheet';
 import StandardCapitalRequirements from './StandardCapitalRequirements';
@@ -24,21 +24,7 @@ const StandardDivisionSheet = ({
     kpis: {}
   }
 }) => {
-  // Stati per gestire espansione/compressione delle tabelle
-  const [expandedTables, setExpandedTables] = useState({
-    balanceSheet: false,
-    pnl: false,
-    capitalRequirements: false,
-    kpis: false
-  });
-
-  // Funzione per toggle espansione/compressione
-  const toggleTable = (tableName) => {
-    setExpandedTables(prev => ({
-      ...prev,
-      [tableName]: !prev[tableName]
-    }));
-  };
+  // Removed expansion/compression functionality - all tables always visible
 
   // Get division-specific results
   const divisionResults = results?.divisions?.[divisionKey] || {
@@ -308,110 +294,54 @@ const StandardDivisionSheet = ({
       
       {/* Balance Sheet Section */}
       <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <button
-            onClick={() => toggleTable('balanceSheet')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-          >
-            <span className="text-lg">{expandedTables.balanceSheet ? '▼' : '▶'}</span>
-            <span className="font-semibold">Balance Sheet</span>
-          </button>
-          <span className="ml-3 text-sm text-gray-600">
-            {expandedTables.balanceSheet ? 'Clicca per comprimere' : 'Clicca per espandere'}
-          </span>
-        </div>
-        {expandedTables.balanceSheet && (
-          <StandardBalanceSheet
-            divisionResults={divisionResults}
-            productResults={productResults}
-            assumptions={assumptions}
-            globalResults={results}
-            divisionName={divisionKey}
-            showProductDetail={showProductDetail}
-            customRowTransformations={customTransformations.balanceSheet}
-          />
-        )}
+        <StandardBalanceSheet
+          divisionResults={divisionResults}
+          productResults={productResults}
+          assumptions={assumptions}
+          globalResults={results}
+          divisionName={divisionKey}
+          showProductDetail={showProductDetail}
+          customRowTransformations={customTransformations.balanceSheet}
+        />
       </div>
       
       {/* P&L Section */}
       <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <button
-            onClick={() => toggleTable('pnl')}
-            className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
-          >
-            <span className="text-lg">{expandedTables.pnl ? '▼' : '▶'}</span>
-            <span className="font-semibold">Profit & Loss</span>
-          </button>
-          <span className="ml-3 text-sm text-gray-600">
-            {expandedTables.pnl ? 'Clicca per comprimere' : 'Clicca per espandere'}
-          </span>
-        </div>
-        {expandedTables.pnl && (
-          <StandardPnL
-            divisionResults={divisionResults}
-            productResults={productPnLData}
-            assumptions={assumptions}
-            globalResults={results}
-            divisionName={divisionKey}
-            showProductDetail={showProductDetail}
-            customRowTransformations={customTransformations.pnl}
-          />
-        )}
+        <StandardPnL
+          divisionResults={divisionResults}
+          productResults={productPnLData}
+          assumptions={assumptions}
+          globalResults={results}
+          divisionName={divisionKey}
+          showProductDetail={showProductDetail}
+          customRowTransformations={customTransformations.pnl}
+        />
       </div>
       
       {/* Capital Requirements Section */}
       <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <button
-            onClick={() => toggleTable('capitalRequirements')}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-          >
-            <span className="text-lg">{expandedTables.capitalRequirements ? '▼' : '▶'}</span>
-            <span className="font-semibold">Capital Requirements</span>
-          </button>
-          <span className="ml-3 text-sm text-gray-600">
-            {expandedTables.capitalRequirements ? 'Clicca per comprimere' : 'Clicca per espandere'}
-          </span>
-        </div>
-        {expandedTables.capitalRequirements && (
-          <StandardCapitalRequirements
-            divisionResults={divisionResults}
-            productResults={productResults}
-            assumptions={assumptions}
-            globalResults={results}
-            divisionName={divisionKey}
-            showProductDetail={showProductDetail}
-            customRowTransformations={customTransformations.capitalRequirements}
-          />
-        )}
+        <StandardCapitalRequirements
+          divisionResults={divisionResults}
+          productResults={productResults}
+          assumptions={assumptions}
+          globalResults={results}
+          divisionName={divisionKey}
+          showProductDetail={showProductDetail}
+          customRowTransformations={customTransformations.capitalRequirements}
+        />
       </div>
       
       {/* KPIs Section */}
       <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <button
-            onClick={() => toggleTable('kpis')}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors"
-          >
-            <span className="text-lg">{expandedTables.kpis ? '▼' : '▶'}</span>
-            <span className="font-semibold">Key Performance Indicators</span>
-          </button>
-          <span className="ml-3 text-sm text-gray-600">
-            {expandedTables.kpis ? 'Clicca per comprimere' : 'Clicca per espandere'}
-          </span>
-        </div>
-        {expandedTables.kpis && (
-          <StandardKPIs
-            divisionResults={divisionResults}
-            productResults={productResults}
-            assumptions={assumptions}
-            globalResults={results}
-            divisionName={divisionKey}
-            showProductDetail={showProductDetail}
-            customRowTransformations={customTransformations.kpis}
-          />
-        )}
+        <StandardKPIs
+          divisionResults={divisionResults}
+          productResults={productResults}
+          assumptions={assumptions}
+          globalResults={results}
+          divisionName={divisionKey}
+          showProductDetail={showProductDetail}
+          customRowTransformations={customTransformations.kpis}
+        />
       </div>
     </div>
   );

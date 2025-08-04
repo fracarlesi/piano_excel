@@ -27,13 +27,38 @@ class TechOperatingCostsCalculator {
       }
     };
     
-    // Get product configurations
+    // Get product configurations - support both new structure (techDivision.products) and legacy (assumptions.products)
     const products = assumptions.products || {};
+    
+    // Debug logging to trace data source - COMMENTED OUT
+    // if (products.cloudServices) {
+    //   console.log('🔍 Tech Operating Costs - Using products from assumptions.products');
+    //   console.log('   cloudServices costArray:', products.cloudServices.costArray);
+    // } else {
+    //   console.log('⚠️ Tech Operating Costs - No products found in assumptions.products');
+    //   console.log('   Available keys in assumptions:', Object.keys(assumptions));
+    // }
     
     // 1. Cloud Services (100% OPEX)
     const cloudProduct = products.cloudServices || {};
     const cloudCosts = cloudProduct.costArray || [8, 12, 18, 25, 35, 45, 55, 65, 75, 85];
+    
+    // Debug rimosso - problema risolto
+    
+    // Enhanced debug logging for cloud services specifically - COMMENTED OUT
+    // console.log('💰 Cloud Services Calculation Debug:');
+    // console.log(`   Year: ${year}, Quarter: ${quarter}`);
+    // console.log(`   cloudProduct:`, cloudProduct);
+    // console.log(`   cloudCosts array:`, cloudCosts);
+    // console.log(`   cloudCosts[${year}]:`, cloudCosts[year]);
+    // console.log(`   Using default fallback:`, !cloudProduct.costArray ? 'YES (🚨 PROBLEM!)' : 'NO');
+    
     results.cloudServices = (cloudCosts[year] || 0) / 4; // Quarterly amount
+    
+    // console.log(`   Final quarterly result: ${results.cloudServices}M (expected 4M if input was 16M)`);
+    // if (results.cloudServices === 2 && cloudCosts[year] === 8) {
+    //   console.log('   🚨 FOUND THE ISSUE: Using default 8M instead of user input 16M!');
+    // }
     
     // 2. Maintenance & Support (100% OPEX)
     const maintenanceProduct = products.maintenanceSupport || {};

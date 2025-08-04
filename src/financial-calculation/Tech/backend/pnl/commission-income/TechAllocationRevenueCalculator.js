@@ -29,14 +29,14 @@ class TechAllocationRevenueCalculator {
     };
     
     // Get Tech products for markup percentages from assumptions (user-modified values)
-    const techProducts = assumptions.products || {};
+    const techProducts = assumptions.techDivision?.products || {};
     
     // Debug: log what products we're using
-    console.log('Tech products from assumptions:', {
-      infrastructure: techProducts.infrastructure?.markupPercentage,
-      software: techProducts.softwareLicenses?.markupPercentage,
-      cloud: techProducts.cloudServices?.markupPercentage
-    });
+    // console.log('Tech products from assumptions:', {
+    //   infrastructure: techProducts.infrastructure?.markupPercentage,
+    //   software: techProducts.softwareLicenses?.markupPercentage,
+    //   cloud: techProducts.cloudServices?.markupPercentage
+    // });
     
     // Calculate total costs by category and their markups
     const costsByCategory = {
@@ -64,7 +64,7 @@ class TechAllocationRevenueCalculator {
       
       // Debug log
       if (category === 'infrastructure' || category === 'software') {
-        console.log(`Tech ${category} - Markup %:`, product.markupPercentage, '-> decimal:', markupPercentage);
+        // console.log(`Tech ${category} - Markup %:`, product.markupPercentage, '-> decimal:', markupPercentage);
       }
       
       // Get allocation percentages for this method

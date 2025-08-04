@@ -13,6 +13,7 @@ import {
 } from '../divisionMappings.js';
 import { DigitalBalanceSheetOrchestrator } from '../../../Digital/backend';
 import { calculateWealthBalanceSheet } from '../../../Wealth/backend/balance-sheet/WealthBalanceSheetOrchestrator.js';
+import { TechBalanceSheetOrchestrator } from '../../../Tech/backend/balance-sheet/TechBalanceSheetOrchestrator.js';
 
 /**
  * Main Balance Sheet calculation - static method for clean interface
@@ -62,6 +63,16 @@ export const BalanceSheetOrchestrator = {
       );
     }
     
+    // Calculate Tech division balance sheet
+    let techBalanceSheet = null;
+    if (assumptions.techDivision) {
+      const techOrchestrator = new TechBalanceSheetOrchestrator();
+      techBalanceSheet = techOrchestrator.calculateBalanceSheet(
+        assumptions.techDivision,
+        assumptions
+      );
+    }
+    
     // Initialize liabilities structure
     const sightDeposits = {
       consolidated: new Array(10).fill(0),
@@ -108,7 +119,8 @@ export const BalanceSheetOrchestrator = {
       netPerformingAssets,
       nonPerformingAssets,
       assumptions,
-      quarters
+      quarters,
+      techBalanceSheet
     );
     
     const fundingGap = this.calculateFundingGap(
@@ -184,7 +196,8 @@ export const BalanceSheetOrchestrator = {
         sightDeposits,
         termDeposits,
         digitalBalanceSheet,
-        wealthBalanceSheet
+        wealthBalanceSheet,
+        techBalanceSheet
       ),
       
       // Product-level detail
@@ -261,13 +274,14 @@ export const BalanceSheetOrchestrator = {
    * Calculate total assets
    * @private
    */
-  calculateTotalAssets(netPerforming, nonPerforming, assumptions, quarters) {
+  calculateTotalAssets(netPerforming, nonPerforming, assumptions, quarters, techBalanceSheet) {
     const quarterly = new Array(quarters).fill(0);
     
     for (let q = 0; q < quarters; q++) {
       quarterly[q] = 
         (netPerforming.balanceSheetLine.quarterly[q] || 0) +
         (nonPerforming.balanceSheetLine.quarterly[q] || 0) +
+        (techBalanceSheet?.assets?.totalAssets?.quarterly[q] || 0) + // Add Tech IT assets
         150 + // Placeholder: liquid assets
         20;   // Placeholder: other assets
     }
@@ -351,7 +365,7 @@ export const BalanceSheetOrchestrator = {
    * Organize results by division
    * @private
    */
-  organizeDivisionResults(netPerforming, nonPerforming, deposits, divisionKeys, totalAssetsResults, sightDeposits, termDeposits, digitalBalanceSheet, wealthBalanceSheet) {
+  organizeDivisionResults(netPerforming, nonPerforming, deposits, divisionKeys, totalAssetsResults, sightDeposits, termDeposits, digitalBalanceSheet, wealthBalanceSheet, techBalanceSheet) {
     const results = {};
     
     // Extract division-level new volumes and repayments
@@ -381,6 +395,8 @@ export const BalanceSheetOrchestrator = {
           // Add deposit data for Digital division
           sightDeposits: divKey === 'digital' && sightDeposits.byDivision?.digital?.total?.quarterly || new Array(40).fill(0),
           termDeposits: divKey === 'digital' && termDeposits.byDivision?.digital?.total?.quarterly || new Array(40).fill(0),
+          // Add Tech IT assets
+          itAssets: divKey === 'tech' ? techBalanceSheet?.assets?.totalAssets?.quarterly || new Array(40).fill(0) : new Array(40).fill(0),
           equity: new Array(40).fill(0),
           groupFunding: new Array(40).fill(0)
         },
@@ -397,6 +413,11 @@ export const BalanceSheetOrchestrator = {
         // Add AUM data for Wealth division
         aum: divKey === 'wealth' ? wealthBalanceSheet?.aum : undefined,
         wealthMetrics: divKey === 'wealth' ? wealthBalanceSheet?.metrics : undefined,
+        
+        // Add Tech division specific data
+        techAssets: divKey === 'tech' ? techBalanceSheet?.assets : undefined,
+        exitStrategy: divKey === 'tech' ? techBalanceSheet?.exitStrategy : undefined,
+        depreciation: divKey === 'tech' ? techBalanceSheet?.depreciation : undefined,
         
         // Legacy structure for backward compatibility
         netPerformingAssets: netPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0),

@@ -738,7 +738,7 @@ const StandardPnL = ({
               return globalResults.pnl.details.techPnLResults.quarterly.map(q => {
                 const opex = q.operatingCosts?.totalOperatingCosts || 0;
                 const depreciation = q.depreciation?.totalDepreciation || 0;
-                return opex + depreciation;
+                return -(opex + depreciation);
               });
             }
             return divisionResults?.pnl?.quarterly?.otherOpex ?? placeholderData;
@@ -755,7 +755,7 @@ const StandardPnL = ({
       const rows = [];
       
       // Cloud Services
-      const cloudServicesData = techPnLResults.quarterly.map(q => q.operatingCosts?.cloudServices || 0);
+      const cloudServicesData = techPnLResults.quarterly.map(q => -(q.operatingCosts?.cloudServices || 0));
       if (cloudServicesData.some(v => v !== 0)) {
         rows.push({
           label: '  • Cloud Services',
@@ -768,7 +768,7 @@ const StandardPnL = ({
       }
       
       // Maintenance & Support
-      const maintenanceData = techPnLResults.quarterly.map(q => q.operatingCosts?.maintenanceSupport || 0);
+      const maintenanceData = techPnLResults.quarterly.map(q => -(q.operatingCosts?.maintenanceSupport || 0));
       if (maintenanceData.some(v => v !== 0)) {
         rows.push({
           label: '  • Maintenance & Support',
@@ -781,7 +781,7 @@ const StandardPnL = ({
       }
       
       // Software Licenses OPEX
-      const softwareOpexData = techPnLResults.quarterly.map(q => q.operatingCosts?.softwareLicensesOpex || 0);
+      const softwareOpexData = techPnLResults.quarterly.map(q => -(q.operatingCosts?.softwareLicensesOpex || 0));
       if (softwareOpexData.some(v => v !== 0)) {
         rows.push({
           label: '  • Software Licenses OPEX',
@@ -794,7 +794,7 @@ const StandardPnL = ({
       }
       
       // External Service Costs
-      const externalServicesData = techPnLResults.quarterly.map(q => q.operatingCosts?.externalServiceCosts || 0);
+      const externalServicesData = techPnLResults.quarterly.map(q => -(q.operatingCosts?.externalServiceCosts || 0));
       if (externalServicesData.some(v => v !== 0)) {
         rows.push({
           label: '  • External Service Costs',
@@ -807,7 +807,7 @@ const StandardPnL = ({
       }
       
       // Infrastructure Depreciation
-      const infraDepData = techPnLResults.quarterly.map(q => q.depreciation?.infrastructureDepreciation || 0);
+      const infraDepData = techPnLResults.quarterly.map(q => -(q.depreciation?.infrastructureDepreciation || 0));
       if (infraDepData.some(v => v !== 0)) {
         rows.push({
           label: '  • Infrastructure Depreciation',
@@ -820,7 +820,7 @@ const StandardPnL = ({
       }
       
       // Software Licenses Depreciation
-      const softwareDepData = techPnLResults.quarterly.map(q => q.depreciation?.softwareDepreciation || 0);
+      const softwareDepData = techPnLResults.quarterly.map(q => -(q.depreciation?.softwareDepreciation || 0));
       if (softwareDepData.some(v => v !== 0)) {
         rows.push({
           label: '  • Software Licenses Depreciation',
@@ -833,7 +833,7 @@ const StandardPnL = ({
       }
       
       // Development Depreciation
-      const devDepData = techPnLResults.quarterly.map(q => q.depreciation?.developmentDepreciation || 0);
+      const devDepData = techPnLResults.quarterly.map(q => -(q.depreciation?.developmentDepreciation || 0));
       if (devDepData.some(v => v !== 0)) {
         rows.push({
           label: '  • Development Depreciation',
@@ -959,12 +959,12 @@ const StandardPnL = ({
       
       return transformedRow;
     }).filter(row => {
-      // Always keep subtotals and level 1 items (main aggregates)
-      if (row.isSubTotal || row.visualizationLevel === 1) {
+      // Always keep level 1 items (main aggregates)
+      if (row.visualizationLevel === 1) {
         return true;
       }
       
-      // Check if row has non-zero values
+      // For level 2 and deeper (including subtotals), check if row has non-zero values
       const hasNonZeroValues = Array.isArray(row.data) && row.data.some(v => v !== 0);
       
       // Check if row has non-zero children
@@ -975,38 +975,8 @@ const StandardPnL = ({
   };
   
   const transformedRows = transformAndFilterRows(pnlRows);
-  
-  // Second pass: Calculate rows that depend on other rows (like PBT)
-  const finalRows = transformedRows.map(row => {
-    if (row.calculateFromOtherRows) {
-      const newData = new Array(quarters).fill(0);
-      
-      // Find the rows we need
-      const findRowByLabel = (rows, label) => {
-        for (let r of rows) {
-          if (r.label === label) return r;
-        }
-        return null;
-      };
-      
-      if (row.label === 'PBT') {
-        const totalRevenues = findRowByLabel(transformedRows, 'Total Revenues');
-        const llps = findRowByLabel(transformedRows, 'LLPs');
-        const totalOpex = findRowByLabel(transformedRows, 'Total OPEX');
-        
-        if (totalRevenues?.data && llps?.data && totalOpex?.data) {
-          for (let i = 0; i < quarters; i++) {
-            newData[i] = (totalRevenues.data[i] || 0) - (llps.data[i] || 0) - (totalOpex.data[i] || 0);
-          }
-        }
-      }
-      
-      return { ...row, data: newData };
-    }
-    return row;
-  });
 
-  return <FinancialTable title="2. Conto Economico" rows={finalRows} />;
+  return <FinancialTable title="2. Conto Economico" rows={transformedRows} />;
 };
 
 export default StandardPnL;

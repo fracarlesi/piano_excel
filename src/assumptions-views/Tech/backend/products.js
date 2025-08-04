@@ -81,13 +81,10 @@ export const techProducts = {
     exitYear: 5, // Year of planned exit (0 = no exit)
     exitPercentage: 40, // % of division to sell (0-100)
     valuationMultiple: 2.5, // Multiple of annual revenue
-    earnOutPercentage: 20, // % of sale price as earn-out
-    earnOutYears: 3, // Years to receive earn-out
-    retainedStakeRevenue: true, // Bank continues to receive % of profits from retained stake
-    unamortizedAssetTreatment: 'accelerate', // 'accelerate' | 'transfer' | 'writeoff'
-    // accelerate: Accelerate depreciation at exit
-    // transfer: Transfer to buyer at book value
-    // writeoff: Write off as extraordinary loss
+    earnOutPercentage: 0, // No earn-out - immediate payment only
+    earnOutYears: 0, // No earn-out period
+    retainedStakeRevenue: true, // Bank always receives % of profits from retained stake
+    unamortizedAssetTreatment: 'transfer', // Always transfer to buyer at book value
     postExitServiceContract: {
       enabled: true,
       initialFee: 10, // €M

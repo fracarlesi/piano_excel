@@ -6,25 +6,31 @@ const FinancialTable = ({ title, rows }) => {
   // State to track which rows are expanded - use a string key for nested rows
   const [expandedRows, setExpandedRows] = useState(new Set());
   
-  // Initialize with all rows expanded (including nested)
+  // Initialize with all rows collapsed by default, except those marked as isCollapsedByDefault
   React.useEffect(() => {
-    const allExpandedKeys = new Set();
+    const initialExpandedKeys = new Set();
     
-    // Helper to add all expandable rows recursively
-    const addExpandableRows = (rows, prefix = '') => {
+    // Process rows to check for isCollapsedByDefault flag
+    const processRowsForInitialState = (rows, parentKey = '') => {
       rows.forEach((row, index) => {
-        const key = prefix ? `${prefix}-${index}` : `${index}`;
-        if (row.subRows && row.subRows.length > 0) {
-          allExpandedKeys.add(key);
-          // Recursively add nested subRows
-          addExpandableRows(row.subRows, key);
+        const key = parentKey ? `${parentKey}-${index}` : `${index}`;
+        
+        // If row has subRows and is NOT marked as collapsed by default, keep it collapsed
+        // If row has isCollapsedByDefault = true, it stays collapsed
+        // All other rows start collapsed
+        if (row.subRows && row.subRows.length > 0 && row.isCollapsedByDefault !== true) {
+          // Don't add to expanded set - keep collapsed
+        }
+        
+        // Recursively process subRows
+        if (row.subRows) {
+          processRowsForInitialState(row.subRows, key);
         }
       });
     };
     
-    addExpandableRows(rows);
-    setExpandedRows(allExpandedKeys);
-    
+    processRowsForInitialState(rows);
+    setExpandedRows(initialExpandedKeys);
   }, [rows, title]);
 
   // Toggle row expansion
@@ -114,20 +120,34 @@ const FinancialTable = ({ title, rows }) => {
   
   // Post-process rows that need to sum from specific other rows
   processedRows.forEach((row, index) => {
-    if (row.data && row.data.sumFromRows) {
-      const sumFromLabels = row.data.sumFromRows;
+    if (row.sumFromRows) {
+      const sumFromLabels = row.sumFromRows;
       const newData = new Array(40).fill(0);
       
-      // Find all rows with matching labels and sum their data
-      processedRows.forEach(otherRow => {
-        if (sumFromLabels.includes(otherRow.label)) {
-          if (otherRow.data && Array.isArray(otherRow.data)) {
-            otherRow.data.forEach((value, i) => {
-              newData[i] += value || 0;
-            });
+      // Special handling for PBT calculation
+      if (row.label === 'PBT' && row.sumOperation === 'custom') {
+        // PBT = Total Revenues - LLPs - Total OPEX
+        const totalRevenues = processedRows.find(r => r.label === 'Total Revenues');
+        const llps = processedRows.find(r => r.label === 'LLPs');
+        const totalOpex = processedRows.find(r => r.label === 'Total OPEX');
+        
+        if (totalRevenues?.data && llps?.data && totalOpex?.data) {
+          for (let i = 0; i < 40; i++) {
+            newData[i] = (totalRevenues.data[i] || 0) + (llps.data[i] || 0) + (totalOpex.data[i] || 0);
           }
         }
-      });
+      } else {
+        // Standard sum operation
+        processedRows.forEach(otherRow => {
+          if (sumFromLabels.includes(otherRow.label)) {
+            if (otherRow.data && Array.isArray(otherRow.data)) {
+              otherRow.data.forEach((value, i) => {
+                newData[i] += value || 0;
+              });
+            }
+          }
+        });
+      }
       
       // Update the row's data
       processedRows[index] = {
@@ -147,6 +167,9 @@ const FinancialTable = ({ title, rows }) => {
         <thead className="bg-gray-100">
           <tr>
             <th className="px-6 py-3 text-left font-semibold text-gray-700 w-2/5">Item</th>
+            <th className="px-3 py-3 text-right font-semibold text-gray-700 bg-gray-200 border-r-2 border-gray-400">
+              Total 10Y
+            </th>
             {Array.from({ length: 40 }, (_, i) => {
               const year = Math.floor(i / 4) + 1;
               const quarter = (i % 4) + 1;
@@ -242,6 +265,23 @@ const FinancialTable = ({ title, rows }) => {
                     )}
                     {row.label}
                   </div>
+                </td>
+                {/* Total 10Y column */}
+                <td 
+                  className={`px-3 py-3 text-right bg-gray-50 border-r-2 border-gray-300 ${
+                    // Text size based on visualization level
+                    row.visualizationLevel === 1 ? 'text-sm font-bold' :
+                    row.visualizationLevel === 2 ? 'text-sm font-semibold' :
+                    row.visualizationLevel === 3 ? 'text-xs' :
+                    row.visualizationLevel === 4 ? 'text-xs font-medium' :
+                    row.visualizationLevel === 5 ? 'text-xs' :
+                    'text-xs'
+                  } ${
+                    // Color for negative values
+                    row.data && row.data.reduce((sum, val) => sum + (val || 0), 0) < 0 ? 'text-red-500' : 'text-gray-800'
+                  }`}
+                >
+                  {row.data ? formatNumber(row.data.reduce((sum, val) => sum + (val || 0), 0), row.decimals, row.unit) : ''}
                 </td>
               {row.data && row.data.map((value, i) => (
                 <td 

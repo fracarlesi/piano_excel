@@ -14,7 +14,7 @@ class TechServiceRevenueCalculator {
    * @returns {Object} Revenue breakdown by type
    */
   static calculate(assumptions, year, quarter) {
-    console.log('TechServiceRevenueCalculator - Full assumptions:', JSON.stringify(assumptions.techDivision?.products || {}, null, 2));
+    // console.log('TechServiceRevenueCalculator - Full assumptions:', JSON.stringify(assumptions.techDivision?.products || {}, null, 2));
     
     // Get external clients product data
     const externalClients = assumptions.techDivision?.products?.externalClients || {};
@@ -24,8 +24,8 @@ class TechServiceRevenueCalculator {
     const exitYear = exitConfig.exitYear || -1; // -1 means no exit planned
     const hasExited = exitYear >= 0 && year >= exitYear;
     
-    console.log('TechServiceRevenue - Year:', year, 'Exit Year:', exitYear, 'Has Exited:', hasExited);
-    console.log('Exit Config:', exitConfig);
+    // console.log('TechServiceRevenue - Year:', year, 'Exit Year:', exitYear, 'Has Exited:', hasExited);
+    // console.log('Exit Config:', exitConfig);
     
     // Default values if not provided
     const clientsArray = externalClients.clientsArray || [0, 0, 2, 5, 10, 15, 20, 25, 30, 35];
@@ -38,8 +38,8 @@ class TechServiceRevenueCalculator {
     const currentYearClients = hasExited ? (clientsArray[year] || 0) : 0;
     const previousYearClients = hasExited && year > 0 ? (clientsArray[year - 1] || 0) : 0;
     
-    console.log('Clients Array:', clientsArray);
-    console.log('Current Year Clients:', currentYearClients, 'Previous Year Clients:', previousYearClients);
+    // console.log('Clients Array:', clientsArray);
+    // console.log('Current Year Clients:', currentYearClients, 'Previous Year Clients:', previousYearClients);
     
     // Calculate new clients in current year (only after exit)
     const newClients = hasExited ? Math.max(0, currentYearClients - previousYearClients) : 0;

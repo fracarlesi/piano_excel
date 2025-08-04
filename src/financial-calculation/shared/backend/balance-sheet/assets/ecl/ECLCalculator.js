@@ -24,12 +24,12 @@ import { getProductLGD, isUnsecuredProduct } from '../recovery-default/index.js'
  * @returns {Object} ECL provision accumulate per prodotto
  */
 export const calculateECLProvision = (newVolumesResults, stockNBVPerformingResults, assumptions, quarters = 40) => {
-  console.log('ECL Calculation - Inputs:', {
-    hasNewVolumes: !!newVolumesResults,
-    hasStockNBV: !!stockNBVPerformingResults,
-    hasAssumptions: !!assumptions,
-    quarters
-  });
+  // console.log('ECL Calculation - Inputs:', {
+  //   hasNewVolumes: !!newVolumesResults,
+  //   hasStockNBV: !!stockNBVPerformingResults,
+  //   hasAssumptions: !!assumptions,
+  //   quarters
+  // });
   
   const results = {
     // Stock ECL Provision (accumula trimestre per trimestre)
@@ -57,16 +57,16 @@ export const calculateECLProvision = (newVolumesResults, stockNBVPerformingResul
   // Get all credit products
   const creditProducts = getCreditProducts(assumptions);
   
-  console.log('ECL Calculation - Credit Products:', creditProducts.length);
+  // console.log('ECL Calculation - Credit Products:', creditProducts.length);
   
   // Process each product
   creditProducts.forEach(product => {
     const productKey = product.key || product.id;
-    console.log(`ECL Calculation - Processing ${productKey}:`, {
-      name: product.name,
-      dangerRate: product.dangerRate,
-      hasNewVolumes: !!newVolumesResults?.byProduct?.[productKey]
-    });
+    // console.log(`ECL Calculation - Processing ${productKey}:`, {
+    //   name: product.name,
+    //   dangerRate: product.dangerRate,
+    //   hasNewVolumes: !!newVolumesResults?.byProduct?.[productKey]
+    // });
     
     // Get new volumes for this product
     const newVolumes = newVolumesResults?.byProduct?.[productKey]?.quarterlyVolumes || new Array(quarters).fill(0);
@@ -103,12 +103,12 @@ export const calculateECLProvision = (newVolumesResults, stockNBVPerformingResul
       const eclOnStock = performingStock * dangerRate * lgdEffective;
       
       if (q === 0 && performingStock > 0) {
-        console.log(`ECL Calculation - ${productKey} Q${q}:`, {
-          performingStock,
-          dangerRate,
-          lgdEffective,
-          eclOnStock
-        });
+        // console.log(`ECL Calculation - ${productKey} Q${q}:`, {
+        //   performingStock,
+        //   dangerRate,
+        //   lgdEffective,
+        //   eclOnStock
+        // });
       }
       
       // Store current quarter ECL
