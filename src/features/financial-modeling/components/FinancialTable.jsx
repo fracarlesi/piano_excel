@@ -156,11 +156,17 @@ const FinancialTable = ({ title, rows }) => {
               <tr 
                 key={row.rowKey} 
                 className={`
-                  ${row.isTotal ? 'bg-blue-200 font-bold border-t-2 border-b-2 border-blue-300' : ''}
-                  ${row.isSubTotal ? 'bg-blue-100 font-semibold border-t border-b border-blue-200' : ''}
-                  ${row.isSecondarySubTotal ? 'bg-amber-50 font-medium border-t border-b border-amber-200' : ''}
-                  ${row.isHeader ? 'bg-gray-100 font-semibold border-t border-gray-300' : ''}
-                  ${!row.isTotal && !row.isSubTotal && !row.isSecondarySubTotal && !row.isHeader ? 'hover:bg-gray-50' : ''}
+                  ${row.visualizationLevel === 1 ? 'bg-cyan-100' : ''}
+                  ${row.visualizationLevel === 2 ? 'bg-cyan-50' : ''}
+                  ${row.visualizationLevel === 3 ? 'bg-cyan-50/30' : ''}
+                  ${row.visualizationLevel === 4 ? 'bg-white' : ''}
+                  ${row.bgColor === 'lightgreen' ? 'bg-green-100' : ''}
+                  ${row.bgColor === 'lightblue' ? 'bg-blue-100' : ''}
+                  ${row.isTotal ? 'font-bold border-t-2 border-b-2 border-blue-300' : ''}
+                  ${row.isSubTotal ? 'font-semibold border-t border-b border-blue-200' : ''}
+                  ${row.isSecondarySubTotal ? 'font-medium border-t border-b border-amber-200' : ''}
+                  ${row.isHeader ? 'font-semibold border-t border-gray-300' : ''}
+                  ${row.visualizationLevel === 4 ? 'hover:bg-gray-50' : ''}
                   transition-colors duration-150
                 `}
               >

@@ -36,16 +36,6 @@ const DigitalBankingSheet = ({ assumptions, results }) => {
       divisionIcon="📱"
       customOverview={customOverview}
       showProductDetail={true}
-      customTransformations={{
-        pnl: {
-          'Interest Income': {
-            label: 'Interest Income (Digital Services)'
-          },
-          'Commission Income': {
-            label: 'Digital Service Fees'
-          }
-        }
-      }}
     />
   );
 };

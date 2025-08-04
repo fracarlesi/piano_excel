@@ -19,7 +19,7 @@ export const calculateWealthReferralIncome = (assumptions, customerGrowth, quart
   };
 
   // Get wealth products to extract referral fees
-  const wealthProducts = ['wealthRealEstateFund', 'wealthSMEDebt', 'wealthTechVenture', 'wealthIncentiveFund'];
+  const wealthProducts = ['wealthRealEstateFund', 'wealthSMEDebt', 'wealthIncentiveFund'];
   let totalReferralIncome = 0;
   let totalClientsReferred = 0;
   

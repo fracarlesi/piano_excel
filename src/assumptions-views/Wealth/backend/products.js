@@ -38,25 +38,6 @@ export const wealthProducts = {
       avgDealDuration: 3
     }
   },
-  wealthTechVenture: {
-    name: 'Tech & Innovation Fund',
-    productType: 'WealthManagement',
-    isWealth: true,
-    originatingDivision: 'tech',
-    digitalReferral: {
-      adoptionRate: 3,
-      referralFee: 200
-    },
-    clientEngagement: {
-      consultationFee: 3000
-    },
-    captiveInvestment: {
-      avgInvestmentPerClient: 200000,
-      structuringFee: 4.0,
-      managementFee: 2.5,
-      avgDealDuration: 5
-    }
-  },
   wealthIncentiveFund: {
     name: 'Government Incentive Optimization',
     productType: 'WealthManagement',

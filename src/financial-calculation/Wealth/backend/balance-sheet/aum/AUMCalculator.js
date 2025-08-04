@@ -34,7 +34,7 @@ export const calculateAUM = (assumptions, digitalClients, quarters = 40) => {
   };
 
   // Prodotti Wealth definiti nelle assumptions
-  const wealthProducts = ['wealthRealEstateFund', 'wealthSMEDebt', 'wealthTechVenture', 'wealthIncentiveFund'];
+  const wealthProducts = ['wealthRealEstateFund', 'wealthSMEDebt', 'wealthIncentiveFund'];
   
   // Track investments by vintage for maturity calculations
   const investmentVintages = {};

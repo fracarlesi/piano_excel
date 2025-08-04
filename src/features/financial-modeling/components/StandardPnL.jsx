@@ -18,6 +18,43 @@ const StandardPnL = ({
   const quarters = 40;
   const placeholderData = Array(quarters).fill(0);
 
+  // Helper function to determine visualization level based on row label
+  const getVisualizationLevel = (label) => {
+    // Level 1 (cyan-100) - Main aggregates
+    const level1Items = [
+      'Total Revenues',
+      'Loan Loss Provisions',
+      'Net Revenues',
+      'Total OPEX',
+      'PBT'
+    ];
+    
+    // Level 2 (cyan-50) - Sub-aggregates
+    const level2Items = [
+      'Net Interest Income',
+      'Net Commission Income',
+      'Personnel Costs',
+      'Other OPEX'
+    ];
+    
+    // Level 3 (cyan-25 - very light cyan) - Section headers
+    const level3Items = [
+      'Interest Income',
+      'FTP',
+      'Commission Income',
+      'Commission Expenses',
+      '  ECL Movement',
+      '  Credit Impairment'
+    ];
+    
+    // Level 4 (white) - All product details and sub-items
+    
+    if (level1Items.includes(label)) return 1;
+    if (level2Items.includes(label)) return 2;
+    if (level3Items.includes(label)) return 3;
+    return 4; // Default to level 4 (white) for all product details
+  };
+
   // Build product rows for Interest Income section
   const buildProductRows = () => {
     const rows = [];
@@ -44,6 +81,7 @@ const StandardPnL = ({
             data: quarterlyData,
             decimals: 2,
             isDetail: true,
+            level: 3,
             formula: null
           });
         }
@@ -77,6 +115,7 @@ const StandardPnL = ({
             data: ftpData,
             decimals: 2,
             isDetail: true,
+            level: 3,
             formula: null
           });
           
@@ -101,6 +140,7 @@ const StandardPnL = ({
                   decimals: 2,
                   isDetail: true,
                   isSubRow: true,
+                  level: 3,
                   formula: null
                 });
               }
@@ -118,21 +158,28 @@ const StandardPnL = ({
     const rows = [];
     
     if (showProductDetail && productResults) {
-      
       Object.entries(productResults).forEach(([productKey, productData]) => {
         // Get the quarterly commission income data
         const commissionIncomeData = productData.quarterly?.commissionIncome || 
                                     productData.quarterlyCommissionIncome ||
                                     null;
         
-        if (commissionIncomeData && commissionIncomeData.some(v => v !== 0)) {
+        if (commissionIncomeData && Array.isArray(commissionIncomeData) && commissionIncomeData.some(v => v !== 0)) {
           const productName = productData.name || productData.productName || productKey.replace('_NPL', '');
+          
+          // Check if data needs conversion to millions
+          // If values are > 1000, they're likely in euros and need conversion
+          const needsConversion = commissionIncomeData.some(v => Math.abs(v) > 1000);
+          const displayData = needsConversion ? 
+            commissionIncomeData.map(v => v / 1000000) : 
+            commissionIncomeData;
           
           rows.push({
             label: `  ${productName}`,
-            data: commissionIncomeData,
+            data: displayData,
             decimals: 2,
             isDetail: true,
+            level: 3,
             formula: null
           });
         }
@@ -161,6 +208,7 @@ const StandardPnL = ({
             data: commissionExpenseData,
             decimals: 2,
             isDetail: true,
+            level: 3,
             formula: null
           });
         }
@@ -192,6 +240,7 @@ const StandardPnL = ({
             data: eclData,
             decimals: 2,
             isDetail: true,
+            level: 3,
             formula: null
           });
         }
@@ -227,6 +276,7 @@ const StandardPnL = ({
             data: impairmentData,
             decimals: 2,
             isDetail: true,
+            level: 3,
             formula: null
           });
         }
@@ -256,6 +306,7 @@ const StandardPnL = ({
             data: data,
             decimals: 2,
             isDetail: true,
+            level: 3,
             formula: null
           });
         }
@@ -280,44 +331,27 @@ const StandardPnL = ({
       // Check for referral fees data in various locations
       let referralFeesData = null;
       
-      // Log to debug
-      console.log('=== WEALTH REFERRAL FEES DEBUG ===');
-      console.log('divisionName:', divisionName);
-      console.log('showProductDetail:', showProductDetail);
-      console.log('divisionResults:', divisionResults);
-      console.log('divisionResults?.operatingCosts:', divisionResults?.operatingCosts);
-      console.log('divisionResults?.operatingCosts?.breakdown:', divisionResults?.operatingCosts?.breakdown);
-      console.log('divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital:', 
-        divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital);
-      
       if (divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital?.quarterly?.byProduct) {
         referralFeesData = divisionResults.operatingCosts.breakdown.referralFeesToDigital.quarterly.byProduct;
-        console.log('Found referral fees in divisionResults:', referralFeesData);
       } else if (globalResults?.pnl?.details?.wealthPnLResults?.byComponent?.referralFees?.quarterly?.byProduct) {
         referralFeesData = globalResults.pnl.details.wealthPnLResults.byComponent.referralFees.quarterly.byProduct;
-        console.log('Found referral fees in globalResults:', referralFeesData);
       }
       
       if (referralFeesData) {
-        console.log('Processing referral fees data:', referralFeesData);
         wealthProducts.forEach(({ key, label }) => {
           const productData = referralFeesData[key];
-          console.log(`Product ${key}:`, productData);
           if (productData && productData.some(v => v !== 0)) {
             const rowData = productData.map(v => -Math.abs(v) / 1000000);
-            console.log(`Adding row for ${label} with data:`, rowData);
             rows.push({
               label: `    - ${label}`,
               data: rowData,
               decimals: 2,
               isDetail: true,
+              level: 3,
               formula: null
             });
           }
         });
-        console.log('Final rows:', rows);
-      } else {
-        console.log('No referral fees data found');
       }
     }
     
@@ -450,13 +484,13 @@ const StandardPnL = ({
       data: calculateTotalLLP(),
       decimals: 2,
       isHeader: true,
+      level: 1,
       formula: null
     },
     {
       label: '  ECL Movement',
       data: calculateECLSubtotal(),
       decimals: 2,
-      isSecondarySubTotal: true,
       formula: null
     },
     // Insert ECL product detail rows here
@@ -465,7 +499,6 @@ const StandardPnL = ({
       label: '  Credit Impairment',
       data: calculateCreditImpairmentSubtotal(),
       decimals: 2,
-      isSecondarySubTotal: true,
       formula: null
     },
     // Insert Credit Impairment product detail rows here
@@ -502,21 +535,17 @@ const StandardPnL = ({
     },
     // Add wealth referral fees detail rows if wealth division
     ...(divisionName === 'wealth' && showProductDetail ? (() => {
-      console.log('=== ADDING WEALTH REFERRAL FEES TO TABLE ===');
-      console.log('wealthReferralFeesRows:', wealthReferralFeesRows);
-      console.log('wealthReferralFeesRows.length:', wealthReferralFeesRows.length);
-      
       const totalData = divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital?.quarterly?.total ?? 
                        divisionResults?.pnl?.quarterly?.otherOpex ?? 
                        placeholderData;
-      console.log('Total referral fees data:', totalData);
       
       // Always show the header row
       const rows = [{
         label: '  • Referral Fees to Digital',
-        data: totalData,
+        data: totalData.map(v => -Math.abs(v) / 1000000),
         decimals: 2,
         isDetail: true,
+        level: 3,
         formula: null
       }];
       
@@ -543,6 +572,7 @@ const StandardPnL = ({
           data: productData.quarterly,
           decimals: 2,
           isDetail: true,
+          level: 3,
           formula: null
         };
       })] : []),
@@ -563,13 +593,16 @@ const StandardPnL = ({
     }
   ];
 
-  // Apply custom row transformations
+  // Apply custom row transformations and visualization levels
   const transformedRows = pnlRows.map(row => {
     const transformation = customRowTransformations[row.label];
-    if (transformation) {
-      return { ...row, ...transformation };
-    }
-    return row;
+    const baseRow = transformation ? { ...row, ...transformation } : row;
+    
+    // Apply visualization level
+    return {
+      ...baseRow,
+      visualizationLevel: getVisualizationLevel(baseRow.label)
+    };
   });
 
   return <FinancialTable title="2. Conto Economico" rows={transformedRows} />;

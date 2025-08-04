@@ -23,7 +23,7 @@ export const calculateStructuringFees = (assumptions, referralResults, quarters 
   };
 
   // Prodotti Wealth definiti nelle assumptions
-  const wealthProducts = ['wealthRealEstateFund', 'wealthSMEDebt', 'wealthTechVenture', 'wealthIncentiveFund'];
+  const wealthProducts = ['wealthRealEstateFund', 'wealthSMEDebt', 'wealthIncentiveFund'];
   
   wealthProducts.forEach(productKey => {
     const product = assumptions.products?.[productKey];

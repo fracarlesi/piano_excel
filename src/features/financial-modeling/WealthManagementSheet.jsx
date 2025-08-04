@@ -36,16 +36,6 @@ const WealthManagementSheet = ({ assumptions, results }) => {
       divisionIcon="💎"
       customOverview={customOverview}
       showProductDetail={true}
-      customTransformations={{
-        pnl: {
-          'Commission Income': {
-            label: 'Management Fees'
-          },
-          'Interest Income': {
-            label: 'Investment Income'
-          }
-        }
-      }}
     />
   );
 };

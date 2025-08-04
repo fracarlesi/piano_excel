@@ -204,8 +204,14 @@ export class DigitalPnLOrchestrator {
     // Add wealth referral income (not by product, but total)
     if (wealthReferralIncome) {
       byProduct['wealthReferralFees'] = {
-        quarterly: wealthReferralIncome.quarterly,
-        yearly: wealthReferralIncome.yearly
+        name: 'Wealth Referral Fees',
+        productName: 'Wealth Referral Fees',
+        quarterly: {
+          commissionIncome: wealthReferralIncome.quarterly
+        },
+        yearly: {
+          commissionIncome: wealthReferralIncome.yearly
+        }
       };
       
       wealthReferralIncome.quarterly.forEach((value, q) => {

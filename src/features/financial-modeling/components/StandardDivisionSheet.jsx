@@ -140,10 +140,15 @@ const StandardDivisionSheet = ({
     // For digital division, check against known digital products
     let isDivisionProduct = false;
     if (divisionKey === 'digital') {
-      const digitalProducts = ['digitalBankAccount', 'premiumDigitalBankAccount', 'depositAccount'];
+      const digitalProducts = ['digitalBankAccount', 'premiumDigitalBankAccount', 'depositAccount', 'wealthReferralFees'];
       isDivisionProduct = digitalProducts.includes(key);
     } else {
-      isDivisionProduct = key.startsWith(divisionKey);
+      // For wealth division, exclude wealthReferralFees as they are costs, not income
+      if (divisionKey === 'wealth' && key === 'wealthReferralFees') {
+        isDivisionProduct = false;
+      } else {
+        isDivisionProduct = key.startsWith(divisionKey);
+      }
     }
     
     if (isDivisionProduct) {

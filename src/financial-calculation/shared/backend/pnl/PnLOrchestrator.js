@@ -259,15 +259,32 @@ export const PnLOrchestrator = {
             Object.fromEntries(
               Object.entries(digitalPnLResults.commissionIncome.byProduct).map(([key, data]) => [
                 key,  // Use the key as-is, don't add 'digital' prefix
-                data.quarterly || []
+                // Handle both direct quarterly array and nested quarterly.commissionIncome structure
+                Array.isArray(data.quarterly) ? data.quarterly : (data.quarterly?.commissionIncome || [])
               ])
             ) : {}
           ),
-          // Add Wealth products commission income if available
+          // Add Wealth products commission income if available (excluding referral fees which are costs)
           ...(wealthPnLResults?.byComponent ? {
-            wealth_referralFees: wealthPnLResults.byComponent.referralFees.quarterly.total,
-            wealth_consultationFees: wealthPnLResults.byComponent.consultationFees.quarterly.total,
-            wealth_structuringFees: wealthPnLResults.byComponent.structuringFees.quarterly.total,
+            // Add consultation fees broken down by product
+            ...(wealthPnLResults.byComponent.consultationFees?.quarterly?.byProduct ? 
+              Object.fromEntries(
+                Object.entries(wealthPnLResults.byComponent.consultationFees.quarterly.byProduct).map(([productKey, data]) => [
+                  `${productKey}_consultationFees`,
+                  data
+                ])
+              ) : {}
+            ),
+            // Add structuring fees broken down by product
+            ...(wealthPnLResults.byComponent.structuringFees?.quarterly?.byProduct ? 
+              Object.fromEntries(
+                Object.entries(wealthPnLResults.byComponent.structuringFees.quarterly.byProduct).map(([productKey, data]) => [
+                  `${productKey}_structuringFees`,
+                  data
+                ])
+              ) : {}
+            ),
+            // Add other wealth fees as totals
             wealth_managementFees: wealthPnLResults.byComponent.managementFees.quarterly.total,
             wealth_carriedInterest: wealthPnLResults.byComponent.carriedInterest.quarterly.total
           } : {})
@@ -772,24 +789,19 @@ export const PnLOrchestrator = {
           p + (annualArrays.otherOperatingCosts?.[i] || 0)
         ),
         preTaxProfit: annualArrays.ebitda,
-        // Add commission income breakdown
+        // Add commission income breakdown (excluding referral fees which are costs)
         commissionBreakdown: {
-          referralFees: wealthPnLResults.byComponent.referralFees.annual.total,
           consultationFees: wealthPnLResults.byComponent.consultationFees.annual.total,
           structuringFees: wealthPnLResults.byComponent.structuringFees.annual.total,
           managementFees: wealthPnLResults.byComponent.managementFees.annual.total,
           carriedInterest: wealthPnLResults.byComponent.carriedInterest.annual.total
         },
         // Add operating costs breakdown for frontend
-        operatingCosts: (() => {
-          console.log('=== WEALTH REFERRAL FEES DATA IN PNL ORCHESTRATOR ===');
-          console.log('wealthPnLResults.byComponent.referralFees:', wealthPnLResults.byComponent.referralFees);
-          return {
-            breakdown: {
-              referralFeesToDigital: wealthPnLResults.byComponent.referralFees
-            }
-          };
-        })(),
+        operatingCosts: {
+          breakdown: {
+            referralFeesToDigital: wealthPnLResults.byComponent.referralFees
+          }
+        },
         // Update quarterly data
         quarterly: {
           ...results.wealth.quarterly,
