@@ -1,6 +1,6 @@
 // General bank-level assumptions
 export const generalAssumptions = {
-  version: '15.12', // Updated navigation order: credit divisions first
+  version: '15.17', // Updated digital products structure: Premium only shows Premium Services, Deposit only shows Savings
   initialEquity: 200,
   taxRate: 28,
   costOfFundsRate: 3.0,

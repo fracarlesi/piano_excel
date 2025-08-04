@@ -145,9 +145,14 @@ const BankPlanApp = () => {
         );
       case 'digitalBankingFinancing': 
         return (
-          <DigitalBankingSheet 
-            assumptions={assumptions} 
-            results={results} 
+          <StandardDivisionSheet
+            divisionKey="digital"
+            divisionDisplayName="Digital Banking"
+            divisionDescription="Digital banking and payment services"
+            divisionIcon="💳"
+            assumptions={assumptions}
+            results={results}
+            showProductDetail={true}
           />
         );
       

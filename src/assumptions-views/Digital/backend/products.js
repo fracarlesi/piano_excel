@@ -1,7 +1,8 @@
 // Fixed products for Digital Banking Division
 export const digitalProducts = {
-  digitalBankingAccount: {
-    name: 'Digital Banking Account',
+  digitalBankAccount: {
+    name: 'Digital Bank Account',
+    division: 'digital',
     productType: 'DepositAndService',
     isDigital: true,
     acquisition: {
@@ -15,21 +16,18 @@ export const digitalProducts = {
       monthlyFee: 0
     },
     savingsModule: {
-      adoptionRate: 30,
-      avgAdditionalDeposit: 5000,
-      depositMix: [
-        { name: 'Vincolato 12 mesi', percentage: 40, interestRate: 3.0 },
-        { name: 'Vincolato 24 mesi', percentage: 35, interestRate: 3.5 },
-        { name: 'Vincolato 36 mesi', percentage: 25, interestRate: 4.0 }
-      ]
+      adoptionRate: 0,
+      avgAdditionalDeposit: 0,
+      depositMix: []
     },
     premiumServicesModule: {
-      adoptionRate: 20,
-      avgMonthlyRevenue: 6.67
+      adoptionRate: 0,
+      avgMonthlyRevenue: 0
     }
   },
-  digitalPremiumAccount: {
-    name: 'Premium Digital Account',
+  premiumDigitalBankAccount: {
+    name: 'Premium Digital Bank Account',
+    division: 'digital',
     productType: 'DepositAndService',
     isDigital: true,
     acquisition: {
@@ -40,20 +38,33 @@ export const digitalProducts = {
     baseAccount: {
       avgDeposit: 5000,
       interestRate: 0.5,
-      monthlyFee: 9.99
-    },
-    savingsModule: {
-      adoptionRate: 50,
-      avgAdditionalDeposit: 15000,
-      depositMix: [
-        { name: 'Vincolato 12 mesi', percentage: 30, interestRate: 3.5 },
-        { name: 'Vincolato 24 mesi', percentage: 40, interestRate: 4.0 },
-        { name: 'Vincolato 36 mesi', percentage: 30, interestRate: 4.5 }
-      ]
+      monthlyFee: 9.90
     },
     premiumServicesModule: {
-      adoptionRate: 40,
       avgMonthlyRevenue: 15
+    }
+  },
+  depositAccount: {
+    name: 'Deposit Account',
+    division: 'digital',
+    productType: 'DepositAndService',
+    isDigital: true,
+    acquisition: {
+      newCustomersArray: [5000, 7500, 10000, 12500, 15000, 17500, 20000, 22500, 25000, 25000],
+      cac: 20,
+      churnRate: 10
+    },
+    savingsModule: {
+      avgAdditionalDeposit: 10000,
+      depositMix: [
+        { name: 'Vincolato 6 mesi', percentage: 15, interestRate: 2.5 },
+        { name: 'Vincolato 12 mesi', percentage: 20, interestRate: 3.0 },
+        { name: 'Vincolato 18 mesi', percentage: 15, interestRate: 3.5 },
+        { name: 'Vincolato 24 mesi', percentage: 20, interestRate: 4.0 },
+        { name: 'Vincolato 36 mesi', percentage: 15, interestRate: 4.5 },
+        { name: 'Vincolato 48 mesi', percentage: 10, interestRate: 5.0 },
+        { name: 'Vincolato 60 mesi', percentage: 5, interestRate: 5.5 }
+      ]
     }
   }
 };

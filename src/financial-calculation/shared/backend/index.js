@@ -92,11 +92,21 @@ const organizeDivisionResults = (balanceSheet, pnl, capital, kpi) => {
   const divisionKeys = Object.keys(balanceSheet.byDivision || {});
   
   divisionKeys.forEach(divisionKey => {
+    const pnlDivision = pnl.byDivision[divisionKey] || {};
+    
+    const bsDivision = balanceSheet.byDivision[divisionKey] || {};
+    
     divisions[divisionKey] = {
-      bs: balanceSheet.byDivision[divisionKey] || {},
-      pnl: pnl.byDivision[divisionKey] || {},
+      bs: bsDivision,
+      pnl: pnlDivision,
       capital: capital.byDivision[divisionKey] || {},
-      kpi: kpi.byDivision[divisionKey] || {}
+      kpi: kpi.byDivision[divisionKey] || {},
+      // Add operatingCosts at the top level if it exists
+      ...(pnlDivision.operatingCosts ? { operatingCosts: pnlDivision.operatingCosts } : {}),
+      // Add liabilities data for divisions that have it (e.g., Digital)
+      ...(bsDivision.liabilities ? { liabilities: bsDivision.liabilities } : {}),
+      // Add customerGrowth data for divisions that have it (e.g., Digital)
+      ...(bsDivision.customerGrowth ? { customerGrowth: bsDivision.customerGrowth } : {})
     };
   });
   

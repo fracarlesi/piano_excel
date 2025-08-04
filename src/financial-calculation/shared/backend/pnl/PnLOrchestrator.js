@@ -18,6 +18,8 @@ import {
   getPersonnelKey,
   getAssumptionKey
 } from '../divisionMappings.js';
+import { DigitalPnLOrchestrator } from '../../../Digital/backend';
+import { calculateWealthPnL } from '../../../Wealth/backend/pnl/WealthPnLOrchestrator.js';
 
 /**
  * Main P&L calculation - static method for clean interface
@@ -122,6 +124,34 @@ export const PnLOrchestrator = {
       profit + taxes[i]
     );
     
+    // Step 9.5: Calculate Digital P&L using custom orchestrator
+    let digitalPnLResults = null;
+    if (balanceSheetResults.byDivision?.digital?.liabilities) {
+      
+      const digitalOrchestrator = new DigitalPnLOrchestrator();
+      digitalPnLResults = digitalOrchestrator.calculatePnL(
+        assumptions.digitalBankingDivision || {},
+        assumptions,
+        balanceSheetResults.byDivision.digital
+      );
+    }
+    
+    // Step 9.6: Calculate Wealth P&L using custom orchestrator
+    let wealthPnLResults = null;
+    if (assumptions.wealthDivision) {
+      // Get digital client data for cross-selling calculations
+      const digitalClients = balanceSheetResults.byDivision?.digital?.clients || {
+        quarterly: { affluent: new Array(40).fill(0) }
+      };
+      
+      wealthPnLResults = calculateWealthPnL(
+        assumptions,
+        balanceSheetResults,
+        digitalClients,
+        40 // quarters
+      );
+    }
+    
     // Step 10: Organize results
     return {
       // Consolidated P&L
@@ -186,7 +216,9 @@ export const PnLOrchestrator = {
         loanLossProvisions,
         assumptions,
         commissionIncomeResults,
-        commissionExpenseResults
+        commissionExpenseResults,
+        digitalPnLResults,
+        wealthPnLResults
       ),
       
       // Personnel detail
@@ -195,8 +227,51 @@ export const PnLOrchestrator = {
       // Product P&L data from microservices
       productTableData: {
         interestIncome: interestIncome.tableData || {},
-        interestExpense: interestExpense.productDetails || {},
-        commissionIncome: commissionIncomeResults.byProduct || {},
+        interestExpense: {
+          ...(interestExpense.productDetails || {}),
+          // Add Digital products interest expense if available
+          ...(digitalPnLResults?.interestExpense?.byProduct ? 
+            Object.fromEntries(
+              Object.entries(digitalPnLResults.interestExpense.byProduct).map(([key, data]) => [
+                `digital_${key}`,
+                {
+                  quarterlyFTPBonis: data.quarterly || [],
+                  quarterlyFTPTotal: data.quarterly || [],
+                  productName: key.replace(/([A-Z])/g, ' $1').trim(),
+                  // Include byDuration breakdown if available
+                  ...(data.byDuration ? {
+                    quarterlyByDuration: Object.fromEntries(
+                      Object.entries(data.byDuration).map(([duration, durationData]) => [
+                        duration,
+                        durationData.quarterly || []
+                      ])
+                    )
+                  } : {})
+                }
+              ])
+            ) : {}
+          )
+        },
+        commissionIncome: {
+          ...(commissionIncomeResults.byProduct || {}),
+          // Add Digital products commission income if available
+          ...(digitalPnLResults?.commissionIncome?.byProduct ? 
+            Object.fromEntries(
+              Object.entries(digitalPnLResults.commissionIncome.byProduct).map(([key, data]) => [
+                key,  // Use the key as-is, don't add 'digital' prefix
+                data.quarterly || []
+              ])
+            ) : {}
+          ),
+          // Add Wealth products commission income if available
+          ...(wealthPnLResults?.byComponent ? {
+            wealth_referralFees: wealthPnLResults.byComponent.referralFees.quarterly.total,
+            wealth_consultationFees: wealthPnLResults.byComponent.consultationFees.quarterly.total,
+            wealth_structuringFees: wealthPnLResults.byComponent.structuringFees.quarterly.total,
+            wealth_managementFees: wealthPnLResults.byComponent.managementFees.quarterly.total,
+            wealth_carriedInterest: wealthPnLResults.byComponent.carriedInterest.quarterly.total
+          } : {})
+        },
         commissionExpense: commissionExpenseResults.byProduct || {},
         loanLossProvisions: loanLossProvisions.byProduct || {},
         eclMovements: loanLossProvisions.eclMovements?.byProduct || {},
@@ -210,7 +285,9 @@ export const PnLOrchestrator = {
         netInterestIncome,
         commissionIncome,
         operatingExpenses,
-        loanLossProvisions
+        loanLossProvisions,
+        digitalPnLResults,
+        wealthPnLResults
       }
     };
   },
@@ -496,7 +573,7 @@ export const PnLOrchestrator = {
    */
   organizeDivisionPnL(interestIncome, interestExpense, commissionIncome, commissionExpense,
                       personnelCosts, operatingExpenses, llp, assumptions, 
-                      commissionIncomeResults, commissionExpenseResults) {
+                      commissionIncomeResults, commissionExpenseResults, digitalPnLResults, wealthPnLResults) {
     const results = {};
     
     ALL_DIVISION_PREFIXES.forEach(divKey => {
@@ -646,6 +723,89 @@ export const PnLOrchestrator = {
       };
     });
     
+    // Override Digital division with custom P&L results if available
+    if (digitalPnLResults && results.digital) {
+      // Merge custom Digital results
+      results.digital = {
+        ...results.digital,
+        // Override with Digital-specific calculations
+        interestExpenses: digitalPnLResults.interestExpense.total.yearly,
+        commissionIncome: digitalPnLResults.commissionIncome.total.yearly,
+        netCommissions: digitalPnLResults.netCommissionIncome.total.yearly,
+        totalRevenues: digitalPnLResults.totalRevenues.yearly,
+        otherOpex: digitalPnLResults.operatingCosts.total.yearly,
+        totalOpex: digitalPnLResults.personnelCosts.yearly.map((p, i) => 
+          p + digitalPnLResults.operatingCosts.total.yearly[i]
+        ),
+        // Add operating costs breakdown
+        operatingCosts: digitalPnLResults.operatingCosts,
+        // Update quarterly data
+        quarterly: {
+          ...results.digital.quarterly,
+          interestExpenses: digitalPnLResults.interestExpense.total.quarterly,
+          commissionIncome: digitalPnLResults.commissionIncome.total.quarterly,
+          netCommissions: digitalPnLResults.netCommissionIncome.total.quarterly,
+          totalRevenues: digitalPnLResults.totalRevenues.quarterly,
+          otherOpex: digitalPnLResults.operatingCosts.total.quarterly,
+          totalOpex: digitalPnLResults.personnelCosts.quarterly.map((p, i) => 
+            p + digitalPnLResults.operatingCosts.total.quarterly[i]
+          )
+        }
+      };
+    }
+    
+    // Override Wealth division with custom P&L results if available
+    if (wealthPnLResults && results.wealth) {
+      // Convert quarterly to annual arrays
+      const annualArrays = this.quarterlyToAnnual(wealthPnLResults.quarterly);
+      
+      // Merge custom Wealth results
+      results.wealth = {
+        ...results.wealth,
+        // Override with Wealth-specific calculations
+        commissionIncome: annualArrays.totalCommissionIncome,
+        netCommissions: annualArrays.totalCommissionIncome, // Wealth has no commission expenses
+        totalRevenues: annualArrays.totalCommissionIncome,
+        personnelCosts: annualArrays.personnelCosts,
+        otherOpex: annualArrays.otherOperatingCosts || annualArrays.referralFeesToDigital,
+        totalOpex: annualArrays.personnelCosts.map((p, i) => 
+          p + (annualArrays.otherOperatingCosts?.[i] || 0)
+        ),
+        preTaxProfit: annualArrays.ebitda,
+        // Add commission income breakdown
+        commissionBreakdown: {
+          referralFees: wealthPnLResults.byComponent.referralFees.annual.total,
+          consultationFees: wealthPnLResults.byComponent.consultationFees.annual.total,
+          structuringFees: wealthPnLResults.byComponent.structuringFees.annual.total,
+          managementFees: wealthPnLResults.byComponent.managementFees.annual.total,
+          carriedInterest: wealthPnLResults.byComponent.carriedInterest.annual.total
+        },
+        // Add operating costs breakdown for frontend
+        operatingCosts: (() => {
+          console.log('=== WEALTH REFERRAL FEES DATA IN PNL ORCHESTRATOR ===');
+          console.log('wealthPnLResults.byComponent.referralFees:', wealthPnLResults.byComponent.referralFees);
+          return {
+            breakdown: {
+              referralFeesToDigital: wealthPnLResults.byComponent.referralFees
+            }
+          };
+        })(),
+        // Update quarterly data
+        quarterly: {
+          ...results.wealth.quarterly,
+          commissionIncome: Object.values(wealthPnLResults.quarterly).map(q => q['Total commission income']),
+          netCommissions: Object.values(wealthPnLResults.quarterly).map(q => q['Total commission income']),
+          totalRevenues: Object.values(wealthPnLResults.quarterly).map(q => q['Total commission income']),
+          personnelCosts: Object.values(wealthPnLResults.quarterly).map(q => -q['Personnel costs']),
+          otherOpex: Object.values(wealthPnLResults.quarterly).map(q => -q['Other operating costs']),
+          totalOpex: Object.values(wealthPnLResults.quarterly).map(q => 
+            -q['Personnel costs'] - q['Other operating costs']
+          ),
+          preTaxProfit: Object.values(wealthPnLResults.quarterly).map(q => q['EBITDA'])
+        }
+      };
+    }
+    
     return results;
   },
   
@@ -679,6 +839,50 @@ export const PnLOrchestrator = {
       }
     });
     return quarterly;
+  },
+  
+  /**
+   * Convert quarterly object data to annual arrays
+   * @private
+   */
+  quarterlyToAnnual(quarterlyData) {
+    const result = {};
+    
+    // Get all keys from first quarter
+    const firstQuarter = Object.values(quarterlyData)[0];
+    if (!firstQuarter) return result;
+    
+    // Initialize result arrays for each key
+    Object.keys(firstQuarter).forEach(key => {
+      result[key] = new Array(10).fill(0);
+    });
+    
+    // Sum quarterly values into annual
+    Object.entries(quarterlyData).forEach(([quarterKey, quarterData]) => {
+      // Extract year from quarter key (e.g., Q1Y1 -> year 0)
+      const yearMatch = quarterKey.match(/Y(\d+)/);
+      if (!yearMatch) return;
+      
+      const year = parseInt(yearMatch[1]) - 1;
+      if (year < 0 || year >= 10) return;
+      
+      // Add quarterly values to annual
+      Object.entries(quarterData).forEach(([key, value]) => {
+        if (result[key] && typeof value === 'number') {
+          result[key][year] += value;
+        }
+      });
+    });
+    
+    // Convert keys to camelCase for consistency
+    const camelCaseResult = {};
+    Object.entries(result).forEach(([key, value]) => {
+      const camelKey = key.replace(/[- ](.)/g, (match, char) => char.toUpperCase())
+        .replace(/^./, char => char.toLowerCase());
+      camelCaseResult[camelKey] = value;
+    });
+    
+    return camelCaseResult;
   },
   
   /**

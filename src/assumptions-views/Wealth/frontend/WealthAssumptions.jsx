@@ -14,6 +14,14 @@ const WealthAssumptions = () => {
     updateAssumption(`products.${productKey}.${path}`, value);
   };
 
+  // Debug: verifica quali prodotti esistono nel database
+  console.log('Wealth Products Debug:', {
+    hasRealEstateFund: !!assumptions.products?.wealthRealEstateFund,
+    hasSMEDebt: !!assumptions.products?.wealthSMEDebt,
+    hasIncentiveFund: !!assumptions.products?.wealthIncentiveFund,
+    allProductKeys: Object.keys(assumptions.products || {}).filter(k => k.includes('wealth'))
+  });
+
   // Wealth products come from cross-selling
   const wealthProducts = {
     wealthRealEstateFund: assumptions.products?.wealthRealEstateFund || {
@@ -28,7 +36,8 @@ const WealthAssumptions = () => {
         structuringFee: 3.0,
         managementFee: 2.0,
         avgDealDuration: 4
-      }
+      },
+      carriedInterest: { percentage: 20, expectedReturn: 12 }
     },
     wealthSMEDebt: assumptions.products?.wealthSMEDebt || {
       name: 'SME Private Debt Fund',
@@ -42,24 +51,11 @@ const WealthAssumptions = () => {
         structuringFee: 2.5,
         managementFee: 1.8,
         avgDealDuration: 3
-      }
-    },
-    wealthTechVenture: assumptions.products?.wealthTechVenture || {
-      name: 'Tech & Innovation Fund',
-      productType: 'WealthManagement',
-      isWealth: true,
-      originatingDivision: 'tech',
-      digitalReferral: { adoptionRate: 3, referralFee: 200 },
-      clientEngagement: { consultationFee: 3000 },
-      captiveInvestment: {
-        avgInvestmentPerClient: 200000,
-        structuringFee: 4.0,
-        managementFee: 2.5,
-        avgDealDuration: 5
-      }
+      },
+      carriedInterest: { percentage: 20, expectedReturn: 12 }
     },
     wealthIncentiveFund: assumptions.products?.wealthIncentiveFund || {
-      name: 'Government Incentive Optimization',
+      name: 'Government Incentive Fund',
       productType: 'WealthManagement',
       isWealth: true,
       originatingDivision: 'incentive',
@@ -70,7 +66,8 @@ const WealthAssumptions = () => {
         structuringFee: 2.0,
         managementFee: 1.5,
         avgDealDuration: 2
-      }
+      },
+      carriedInterest: { percentage: 20, expectedReturn: 10 }
     }
   };
 
@@ -94,7 +91,7 @@ const WealthAssumptions = () => {
         <p className="text-sm text-amber-800">
           <strong>ℹ️ Modello di Business Wealth:</strong> La divisione Wealth non origina prodotti propri, 
           ma distribuisce ai clienti affluent del Digital Banking i prodotti di investimento 
-          originati dalle altre divisioni (Real Estate, SME Restructuring, Tech & Innovation).
+          originati dalle altre divisioni (Real Estate, SME Restructuring, Government Incentives).
         </p>
       </div>
 
@@ -277,6 +274,54 @@ const WealthAssumptions = () => {
                             min="1"
                           />
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Carried Interest */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-4">💰 Carried Interest e Performance</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Rendimento Atteso Cliente (%) 📈
+                          </label>
+                          <input
+                            type="number"
+                            value={currentProduct.carriedInterest?.expectedReturn || 10}
+                            onChange={(e) => handleNestedFieldChange(productKey, 'carriedInterest.expectedReturn', parseFloat(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            step="0.5"
+                            min="0"
+                            max="30"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Rendimento annuo atteso per il cliente
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Carried Interest (%) 📊
+                          </label>
+                          <input
+                            type="number"
+                            value={currentProduct.carriedInterest?.percentage || 20}
+                            onChange={(e) => handleNestedFieldChange(productKey, 'carriedInterest.percentage', parseFloat(e.target.value))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            step="0.5"
+                            min="0"
+                            max="50"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            % del rendimento del cliente trattenuto come carried interest
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 p-3 bg-yellow-50 rounded">
+                        <p className="text-xs text-yellow-800">
+                          💡 Esempio: Se il cliente ottiene un rendimento del {currentProduct.carriedInterest?.expectedReturn || 10}%, 
+                          la banca trattiene il {currentProduct.carriedInterest?.percentage || 20}% di questo rendimento 
+                          (quindi {((currentProduct.carriedInterest?.expectedReturn || 10) * (currentProduct.carriedInterest?.percentage || 20) / 100).toFixed(2)}% del capitale investito)
+                        </p>
                       </div>
                     </div>
 

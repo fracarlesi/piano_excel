@@ -101,125 +101,119 @@ const DigitalAssumptions = () => {
                 {/* Product Details */}
                 {expandedProduct === productKey && (
                   <div className="p-6 space-y-6 bg-white">
-                    {/* Customer Acquisition */}
-                    <div>
-                      <h4 className="text-sm font-medium mb-4">🎯 Customer Acquisition</h4>
-                      
-                      {/* Customer Growth Grid */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          New Customers per Year
-                        </label>
-                        <div className="grid grid-cols-5 gap-2">
-                          {[...Array(10)].map((_, index) => (
-                            <div key={index}>
-                              <label className="text-xs text-gray-500">Y{index + 1}</label>
-                              <input
-                                type="number"
-                                value={currentProduct.acquisition?.newCustomersArray?.[index] || 0}
-                                onChange={(e) => {
-                                  const newArray = [...(currentProduct.acquisition?.newCustomersArray || product.acquisition.newCustomersArray)];
-                                  newArray[index] = parseInt(e.target.value) || 0;
-                                  handleNestedFieldChange(productKey, 'acquisition.newCustomersArray', newArray);
-                                }}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                step="1000"
-                              />
-                            </div>
-                          ))}
+                    {/* Customer Acquisition - For all products */}
+                    {(productKey === 'digitalBankAccount' || productKey === 'premiumDigitalBankAccount' || productKey === 'depositAccount') && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-4">🎯 Customer Acquisition</h4>
+                        
+                        {/* Customer Growth Grid */}
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            New Customers per Year
+                          </label>
+                          <div className="grid grid-cols-5 gap-2">
+                            {[...Array(10)].map((_, index) => (
+                              <div key={index}>
+                                <label className="text-xs text-gray-500">Y{index + 1}</label>
+                                <input
+                                  type="number"
+                                  value={currentProduct.acquisition?.newCustomersArray?.[index] || 0}
+                                  onChange={(e) => {
+                                    const newArray = [...(currentProduct.acquisition?.newCustomersArray || product.acquisition.newCustomersArray)];
+                                    newArray[index] = parseInt(e.target.value) || 0;
+                                    handleNestedFieldChange(productKey, 'acquisition.newCustomersArray', newArray);
+                                  }}
+                                  className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  step="1000"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              CAC (€) 💸
+                            </label>
+                            <input
+                              type="number"
+                              value={currentProduct.acquisition?.cac || product.acquisition.cac}
+                              onChange={(e) => handleNestedFieldChange(productKey, 'acquisition.cac', parseFloat(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              step="5"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Churn Rate (%) 📉
+                            </label>
+                            <input
+                              type="number"
+                              value={currentProduct.acquisition?.churnRate || product.acquisition.churnRate}
+                              onChange={(e) => handleNestedFieldChange(productKey, 'acquisition.churnRate', parseFloat(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              step="0.5"
+                            />
+                          </div>
                         </div>
                       </div>
+                    )}
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            CAC (€) 💸
-                          </label>
-                          <input
-                            type="number"
-                            value={currentProduct.acquisition?.cac || product.acquisition.cac}
-                            onChange={(e) => handleNestedFieldChange(productKey, 'acquisition.cac', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            step="5"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Churn Rate (%) 📉
-                          </label>
-                          <input
-                            type="number"
-                            value={currentProduct.acquisition?.churnRate || product.acquisition.churnRate}
-                            onChange={(e) => handleNestedFieldChange(productKey, 'acquisition.churnRate', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            step="0.5"
-                          />
+                    {/* Base Account - For bank account products */}
+                    {(productKey === 'digitalBankAccount' || productKey === 'premiumDigitalBankAccount') && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-4">
+                          {productKey === 'premiumDigitalBankAccount' ? '⭐ Premium Services Module' : '💳 Base Account'}
+                        </h4>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Avg Deposit (€) 💰
+                            </label>
+                            <input
+                              type="number"
+                              value={currentProduct.baseAccount?.avgDeposit || product.baseAccount.avgDeposit}
+                              onChange={(e) => handleNestedFieldChange(productKey, 'baseAccount.avgDeposit', parseFloat(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              step="100"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Interest Rate (%) 📊
+                            </label>
+                            <input
+                              type="number"
+                              value={currentProduct.baseAccount?.interestRate || product.baseAccount.interestRate}
+                              onChange={(e) => handleNestedFieldChange(productKey, 'baseAccount.interestRate', parseFloat(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              step="0.1"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Monthly Fee (€) 🏷️
+                            </label>
+                            <input
+                              type="number"
+                              value={currentProduct.baseAccount?.monthlyFee || product.baseAccount.monthlyFee}
+                              onChange={(e) => handleNestedFieldChange(productKey, 'baseAccount.monthlyFee', parseFloat(e.target.value))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              step="0.5"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Base Account */}
-                    <div>
-                      <h4 className="text-sm font-medium mb-4">💳 Base Account</h4>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
+                    {/* Savings Module - Only for depositAccount */}
+                    {productKey === 'depositAccount' && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-4">🏦 Savings Module</h4>
+                        <div className="mb-4">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Avg Deposit (€) 💰
-                          </label>
-                          <input
-                            type="number"
-                            value={currentProduct.baseAccount?.avgDeposit || product.baseAccount.avgDeposit}
-                            onChange={(e) => handleNestedFieldChange(productKey, 'baseAccount.avgDeposit', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            step="100"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Interest Rate (%) 📊
-                          </label>
-                          <input
-                            type="number"
-                            value={currentProduct.baseAccount?.interestRate || product.baseAccount.interestRate}
-                            onChange={(e) => handleNestedFieldChange(productKey, 'baseAccount.interestRate', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            step="0.1"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Monthly Fee (€) 🏷️
-                          </label>
-                          <input
-                            type="number"
-                            value={currentProduct.baseAccount?.monthlyFee || product.baseAccount.monthlyFee}
-                            onChange={(e) => handleNestedFieldChange(productKey, 'baseAccount.monthlyFee', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            step="0.5"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Savings Module */}
-                    <div>
-                      <h4 className="text-sm font-medium mb-4">🏦 Savings Module</h4>
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Adoption Rate (%) 📈
-                          </label>
-                          <input
-                            type="number"
-                            value={currentProduct.savingsModule?.adoptionRate || product.savingsModule.adoptionRate}
-                            onChange={(e) => handleNestedFieldChange(productKey, 'savingsModule.adoptionRate', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            step="5"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Avg Additional Deposit (€) 💵
+                            Avg Deposit per Customer (€) 💵
                           </label>
                           <input
                             type="number"
@@ -228,45 +222,93 @@ const DigitalAssumptions = () => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             step="500"
                           />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Deposito medio per cliente del conto deposito
+                          </p>
+                        </div>
+                        
+                        {/* Deposit Mix */}
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Mix Depositi per Durata Vincolo 📅
+                          </label>
+                          
+                          {/* Merge current store data with default product structure to ensure all durations are shown */}
+                          {(() => {
+                            // Get the default deposit mix from products.js
+                            const defaultDepositMix = product.savingsModule.depositMix || [];
+                            const currentDepositMix = currentProduct.savingsModule?.depositMix || [];
+                            
+                            // Merge to ensure all default durations are present
+                            const mergedDepositMix = defaultDepositMix.map((defaultItem) => {
+                              const currentItem = currentDepositMix.find(item => item.name === defaultItem.name);
+                              return currentItem || defaultItem;
+                            });
+                            
+                            // Calculate total percentage for validation
+                            const totalPercentage = mergedDepositMix.reduce((sum, item) => sum + (item.percentage || 0), 0);
+                            const isValid = Math.abs(totalPercentage - 100) < 0.01;
+                            
+                            return (
+                              <>
+                                {totalPercentage > 0 && (
+                                  <div className={`mb-2 px-3 py-2 rounded text-sm ${isValid ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                    Totale: {totalPercentage.toFixed(1)}% {isValid ? '✓' : '- Deve essere 100%!'}
+                                  </div>
+                                )}
+                                
+                                <div className="space-y-2">
+                                  {mergedDepositMix.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-3 gap-2 p-2 bg-gray-50 rounded">
+                                      <div className="flex items-center">
+                                        <span className="text-sm">{item.name}</span>
+                                      </div>
+                                      <div>
+                                        <label className="text-xs text-gray-500">% Mix</label>
+                                        <input
+                                          type="number"
+                                          value={item.percentage || 0}
+                                          onChange={(e) => {
+                                            const newMix = [...mergedDepositMix];
+                                            newMix[index] = { ...newMix[index], percentage: parseFloat(e.target.value) || 0 };
+                                            handleNestedFieldChange(productKey, 'savingsModule.depositMix', newMix);
+                                          }}
+                                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                          step="5"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-xs text-gray-500">Tasso %</label>
+                                        <input
+                                          type="number"
+                                          value={item.interestRate || 0}
+                                          onChange={(e) => {
+                                            const newMix = [...mergedDepositMix];
+                                            newMix[index] = { ...newMix[index], interestRate: parseFloat(e.target.value) || 0 };
+                                            handleNestedFieldChange(productKey, 'savingsModule.depositMix', newMix);
+                                          }}
+                                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                          step="0.1"
+                                        />
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Premium Services */}
-                    <div>
-                      <h4 className="text-sm font-medium mb-4">⭐ Premium Services Module</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Adoption Rate (%) 📈
-                          </label>
-                          <input
-                            type="number"
-                            value={currentProduct.premiumServicesModule?.adoptionRate || product.premiumServicesModule.adoptionRate}
-                            onChange={(e) => handleNestedFieldChange(productKey, 'premiumServicesModule.adoptionRate', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            step="5"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Avg Monthly Revenue (€) 💰
-                          </label>
-                          <input
-                            type="number"
-                            value={currentProduct.premiumServicesModule?.avgMonthlyRevenue || product.premiumServicesModule.avgMonthlyRevenue}
-                            onChange={(e) => handleNestedFieldChange(productKey, 'premiumServicesModule.avgMonthlyRevenue', parseFloat(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            step="1"
-                          />
-                        </div>
-                      </div>
-                    </div>
 
                     {/* Product Type Info */}
                     <div className="mt-4 p-3 bg-purple-50 rounded-lg">
                       <p className="text-sm text-purple-800">
-                        <strong>Tipo Prodotto:</strong> Digital Banking Account con moduli opzionali
+                        <strong>Tipo Prodotto:</strong> 
+                        {productKey === 'digitalBankAccount' && 'Digital Bank Account - Conto base'}
+                        {productKey === 'premiumDigitalBankAccount' && 'Premium Digital Bank Account - Con servizi premium'}
+                        {productKey === 'depositAccount' && 'Deposit Account - Conto deposito vincolato'}
                       </p>
                     </div>
                   </div>

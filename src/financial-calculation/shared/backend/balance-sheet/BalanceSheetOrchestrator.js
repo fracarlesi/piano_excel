@@ -11,6 +11,8 @@ import {
   ALL_DIVISION_PREFIXES,
   BUSINESS_DIVISION_PREFIXES
 } from '../divisionMappings.js';
+import { DigitalBalanceSheetOrchestrator } from '../../../Digital/backend';
+import { calculateWealthBalanceSheet } from '../../../Wealth/backend/balance-sheet/WealthBalanceSheetOrchestrator.js';
 
 /**
  * Main Balance Sheet calculation - static method for clean interface
@@ -37,11 +39,68 @@ export const BalanceSheetOrchestrator = {
     const netPerformingAssets = totalAssetsResults.netPerformingAssets;
     const nonPerformingAssets = totalAssetsResults.nonPerformingAssets;
     
-    // Step 3: Calculate Liabilities (placeholder for now)
-    const customerDeposits = {
-      consolidated: new Array(10).fill(1000), // Placeholder deposits
-      quarterly: this.annualToQuarterly(new Array(10).fill(1000)),
+    // Step 3: Calculate Liabilities
+    // Calculate Digital division deposits using custom orchestrator
+    const digitalOrchestrator = new DigitalBalanceSheetOrchestrator();
+    const digitalBalanceSheet = digitalOrchestrator.calculateBalanceSheet(
+      assumptions.digitalBankingDivision || {},
+      assumptions
+    );
+    
+    // Calculate Wealth division AUM
+    let wealthBalanceSheet = null;
+    if (assumptions.wealthDivision) {
+      // Get digital client data for cross-selling
+      const digitalClients = digitalBalanceSheet?.customerGrowth || {
+        quarterly: { affluent: new Array(40).fill(0) }
+      };
+      
+      wealthBalanceSheet = calculateWealthBalanceSheet(
+        assumptions,
+        digitalClients,
+        quarters
+      );
+    }
+    
+    // Initialize liabilities structure
+    const sightDeposits = {
+      consolidated: new Array(10).fill(0),
+      quarterly: new Array(quarters).fill(0),
       byDivision: {}
+    };
+    
+    const termDeposits = {
+      consolidated: new Array(10).fill(0),
+      quarterly: new Array(quarters).fill(0),
+      byDivision: {}
+    };
+    
+    // Add Digital deposits
+    if (digitalBalanceSheet.liabilities) {
+      sightDeposits.byDivision.digital = digitalBalanceSheet.liabilities.sightDeposits;
+      termDeposits.byDivision.digital = digitalBalanceSheet.liabilities.termDeposits;
+      
+      // Add to consolidated
+      if (digitalBalanceSheet.liabilities.sightDeposits?.total) {
+        sightDeposits.quarterly = digitalBalanceSheet.liabilities.sightDeposits.total.quarterly;
+        sightDeposits.consolidated = digitalBalanceSheet.liabilities.sightDeposits.total.yearly;
+      }
+      
+      if (digitalBalanceSheet.liabilities.termDeposits?.total) {
+        termDeposits.quarterly = termDeposits.quarterly.map((val, i) => 
+          val + (digitalBalanceSheet.liabilities.termDeposits.total.quarterly[i] || 0)
+        );
+        termDeposits.consolidated = termDeposits.consolidated.map((val, i) => 
+          val + (digitalBalanceSheet.liabilities.termDeposits.total.yearly[i] || 0)
+        );
+      }
+    }
+    
+    // Total customer deposits
+    const customerDeposits = {
+      consolidated: sightDeposits.consolidated.map((sight, i) => sight + termDeposits.consolidated[i]),
+      quarterly: sightDeposits.quarterly.map((sight, i) => sight + termDeposits.quarterly[i]),
+      byDivision: { digital: digitalBalanceSheet.liabilities?.customerDeposits }
     };
     
     // Step 4: Total Assets & Funding Gap
@@ -83,8 +142,11 @@ export const BalanceSheetOrchestrator = {
         
         // Liabilities
         customerDeposits: customerDeposits.consolidated,
+        sightDeposits: sightDeposits.consolidated,
+        termDeposits: termDeposits.consolidated,
         interbankFunding: fundingGap.annual,
         otherLiabilities: new Array(10).fill(30), // Placeholder
+        groupFunding: new Array(10).fill(0), // Placeholder
         
         // Equity
         equity: equity.total
@@ -103,6 +165,10 @@ export const BalanceSheetOrchestrator = {
         nonPerformingAssets: nonPerformingAssets.balanceSheetLine.quarterly,
         totalAssets: totalAssets.quarterly,
         customerDeposits: customerDeposits.quarterly || this.annualToQuarterly(customerDeposits.consolidated),
+        sightDeposits: sightDeposits.quarterly,
+        termDeposits: termDeposits.quarterly,
+        equity: this.annualToQuarterly(equity.total),
+        groupFunding: new Array(quarters).fill(0),
         // New detailed data
         newVolumes: totalAssetsResults.newVolumes?.totalNewVolumes?.quarterly || new Array(quarters).fill(0),
         repayments: totalAssetsResults.repayments?.totalRepayments?.quarterly || new Array(quarters).fill(0)
@@ -114,7 +180,11 @@ export const BalanceSheetOrchestrator = {
         nonPerformingAssets,
         customerDeposits,
         ALL_DIVISION_PREFIXES,
-        totalAssetsResults
+        totalAssetsResults,
+        sightDeposits,
+        termDeposits,
+        digitalBalanceSheet,
+        wealthBalanceSheet
       ),
       
       // Product-level detail
@@ -281,7 +351,7 @@ export const BalanceSheetOrchestrator = {
    * Organize results by division
    * @private
    */
-  organizeDivisionResults(netPerforming, nonPerforming, deposits, divisionKeys, totalAssetsResults) {
+  organizeDivisionResults(netPerforming, nonPerforming, deposits, divisionKeys, totalAssetsResults, sightDeposits, termDeposits, digitalBalanceSheet, wealthBalanceSheet) {
     const results = {};
     
     // Extract division-level new volumes and repayments
@@ -307,8 +377,26 @@ export const BalanceSheetOrchestrator = {
           totalCreditPortfolio: this.calculateTotalPortfolio(
             netPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0),
             nonPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0)
-          )
+          ),
+          // Add deposit data for Digital division
+          sightDeposits: divKey === 'digital' && sightDeposits.byDivision?.digital?.total?.quarterly || new Array(40).fill(0),
+          termDeposits: divKey === 'digital' && termDeposits.byDivision?.digital?.total?.quarterly || new Array(40).fill(0),
+          equity: new Array(40).fill(0),
+          groupFunding: new Array(40).fill(0)
         },
+        
+        // Add liabilities data for Digital division
+        liabilities: divKey === 'digital' ? digitalBalanceSheet.liabilities : undefined,
+        
+        // Add customerGrowth data for Digital division
+        customerGrowth: divKey === 'digital' ? digitalBalanceSheet.customerGrowth : undefined,
+        
+        // Add clients data for cross-division calculations
+        clients: divKey === 'digital' ? digitalBalanceSheet.customerGrowth : undefined,
+        
+        // Add AUM data for Wealth division
+        aum: divKey === 'wealth' ? wealthBalanceSheet?.aum : undefined,
+        wealthMetrics: divKey === 'wealth' ? wealthBalanceSheet?.metrics : undefined,
         
         // Legacy structure for backward compatibility
         netPerformingAssets: netPerforming.byDivision[divKey]?.quarterly || new Array(40).fill(0),

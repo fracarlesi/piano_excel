@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import StandardPnL from './StandardPnL';
 import StandardBalanceSheet from './StandardBalanceSheet';
 import StandardCapitalRequirements from './StandardCapitalRequirements';
@@ -24,6 +24,22 @@ const StandardDivisionSheet = ({
     kpis: {}
   }
 }) => {
+  // Stati per gestire espansione/compressione delle tabelle
+  const [expandedTables, setExpandedTables] = useState({
+    balanceSheet: false,
+    pnl: false,
+    capitalRequirements: false,
+    kpis: false
+  });
+
+  // Funzione per toggle espansione/compressione
+  const toggleTable = (tableName) => {
+    setExpandedTables(prev => ({
+      ...prev,
+      [tableName]: !prev[tableName]
+    }));
+  };
+
   // Get division-specific results
   const divisionResults = results?.divisions?.[divisionKey] || {
     bs: { performingAssets: [0,0,0,0,0,0,0,0,0,0], nonPerformingAssets: [0,0,0,0,0,0,0,0,0,0], equity: [0,0,0,0,0,0,0,0,0,0] },
@@ -32,7 +48,7 @@ const StandardDivisionSheet = ({
   };
 
   // Filter products for this division
-  const productResults = Object.fromEntries(
+  let productResults = Object.fromEntries(
     Object.entries(results.productResults || {}).filter(([key]) => key.startsWith(divisionKey))
   );
   
@@ -44,6 +60,23 @@ const StandardDivisionSheet = ({
   const allLoanLossProvisionsData = results.productPnLTableData?.loanLossProvisions || {};
   const allECLMovementsData = results.productPnLTableData?.eclMovements || {};
   const allCreditImpairmentData = results.productPnLTableData?.creditImpairment || {};
+  
+  // For Digital division, ensure all digital products are in productResults
+  if (divisionKey === 'digital') {
+    const digitalProductKeys = ['digitalBankAccount', 'premiumDigitalBankAccount', 'depositAccount'];
+    digitalProductKeys.forEach(key => {
+      if (!productResults[key]) {
+        const product = assumptions.products?.[key];
+        if (product) {
+          productResults[key] = {
+            name: product.name || key,
+            productName: product.name || key,
+            quarterly: {}
+          };
+        }
+      }
+    });
+  }
   
   //   division: divisionKey,
   //   hasCommissionData: Object.keys(allCommissionIncomeData).length > 0,
@@ -70,23 +103,50 @@ const StandardDivisionSheet = ({
   
   // Merge interest expense data into product P&L data
   Object.entries(allInterestExpenseData).forEach(([key, expenseData]) => {
-    // Extract the product key from the consolidated key (e.g., "re_reSecuritization" -> "reSecuritization")
-    const parts = key.split('_');
-    const productKey = parts.length > 1 ? parts[1] : key;
-    
-    if (productKey.startsWith(divisionKey) && productPnLData[productKey]) {
+    // Check if this is a digital product (format: "digital_productName")
+    if (key.startsWith('digital_') && divisionKey === 'digital') {
+      const productKey = key.replace('digital_', '');
+      if (!productPnLData[productKey]) {
+        productPnLData[productKey] = {
+          name: expenseData.productName || productKey.replace(/([A-Z])/g, ' $1').trim(),
+          quarterly: {}
+        };
+      }
       productPnLData[productKey].quarterly = productPnLData[productKey].quarterly || {};
-      // Use quarterly FTP data directly - for bonis section we need quarterlyFTPBonis
       productPnLData[productKey].quarterly.interestExpense = expenseData.quarterlyFTPBonis || Array(40).fill(0);
       productPnLData[productKey].quarterly.interestExpenseTotal = expenseData.quarterlyFTPTotal || Array(40).fill(0);
-      productPnLData[productKey].quarterly.interestExpenseNPL = expenseData.quarterlyFTPNPL || Array(40).fill(0);
-      productPnLData[productKey].ftpRate = expenseData.ftpRate || 0;
+      // Add duration breakdown if available
+      if (expenseData.quarterlyByDuration) {
+        productPnLData[productKey].quarterly.interestExpenseByDuration = expenseData.quarterlyByDuration;
+      }
+    } else {
+      // Extract the product key from the consolidated key (e.g., "re_reSecuritization" -> "reSecuritization")
+      const parts = key.split('_');
+      const productKey = parts.length > 1 ? parts[1] : key;
+      
+      if (productKey.startsWith(divisionKey) && productPnLData[productKey]) {
+        productPnLData[productKey].quarterly = productPnLData[productKey].quarterly || {};
+        // Use quarterly FTP data directly - for bonis section we need quarterlyFTPBonis
+        productPnLData[productKey].quarterly.interestExpense = expenseData.quarterlyFTPBonis || Array(40).fill(0);
+        productPnLData[productKey].quarterly.interestExpenseTotal = expenseData.quarterlyFTPTotal || Array(40).fill(0);
+        productPnLData[productKey].quarterly.interestExpenseNPL = expenseData.quarterlyFTPNPL || Array(40).fill(0);
+        productPnLData[productKey].ftpRate = expenseData.ftpRate || 0;
+      }
     }
   });
   
   // Merge commission income data into product P&L data
   Object.entries(allCommissionIncomeData).forEach(([key, commissionData]) => {
-    if (key.startsWith(divisionKey)) {
+    // For digital division, check against known digital products
+    let isDivisionProduct = false;
+    if (divisionKey === 'digital') {
+      const digitalProducts = ['digitalBankAccount', 'premiumDigitalBankAccount', 'depositAccount'];
+      isDivisionProduct = digitalProducts.includes(key);
+    } else {
+      isDivisionProduct = key.startsWith(divisionKey);
+    }
+    
+    if (isDivisionProduct) {
       // Find if this product already exists in productPnLData
       let targetKey = key;
       if (!productPnLData[targetKey]) {
@@ -208,45 +268,114 @@ const StandardDivisionSheet = ({
       </div>
       
       {/* Financial Statements Only */}
-      <StandardBalanceSheet
-        divisionResults={divisionResults}
-        productResults={productResults}
-        assumptions={assumptions}
-        globalResults={results}
-        divisionName={divisionKey}
-        showProductDetail={showProductDetail}
-        customRowTransformations={customTransformations.balanceSheet}
-      />
       
-      <StandardPnL
-        divisionResults={divisionResults}
-        productResults={productPnLData}
-        assumptions={assumptions}
-        globalResults={results}
-        divisionName={divisionKey}
-        showProductDetail={showProductDetail}
-        customRowTransformations={customTransformations.pnl}
-      />
+      {/* Balance Sheet Section */}
+      <div className="mb-8">
+        <div className="flex items-center mb-4">
+          <button
+            onClick={() => toggleTable('balanceSheet')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+          >
+            <span className="text-lg">{expandedTables.balanceSheet ? '▼' : '▶'}</span>
+            <span className="font-semibold">Balance Sheet</span>
+          </button>
+          <span className="ml-3 text-sm text-gray-600">
+            {expandedTables.balanceSheet ? 'Clicca per comprimere' : 'Clicca per espandere'}
+          </span>
+        </div>
+        {expandedTables.balanceSheet && (
+          <StandardBalanceSheet
+            divisionResults={divisionResults}
+            productResults={productResults}
+            assumptions={assumptions}
+            globalResults={results}
+            divisionName={divisionKey}
+            showProductDetail={showProductDetail}
+            customRowTransformations={customTransformations.balanceSheet}
+          />
+        )}
+      </div>
       
-      <StandardCapitalRequirements
-        divisionResults={divisionResults}
-        productResults={productResults}
-        assumptions={assumptions}
-        globalResults={results}
-        divisionName={divisionKey}
-        showProductDetail={showProductDetail}
-        customRowTransformations={customTransformations.capitalRequirements}
-      />
+      {/* P&L Section */}
+      <div className="mb-8">
+        <div className="flex items-center mb-4">
+          <button
+            onClick={() => toggleTable('pnl')}
+            className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors"
+          >
+            <span className="text-lg">{expandedTables.pnl ? '▼' : '▶'}</span>
+            <span className="font-semibold">Profit & Loss</span>
+          </button>
+          <span className="ml-3 text-sm text-gray-600">
+            {expandedTables.pnl ? 'Clicca per comprimere' : 'Clicca per espandere'}
+          </span>
+        </div>
+        {expandedTables.pnl && (
+          <StandardPnL
+            divisionResults={divisionResults}
+            productResults={productPnLData}
+            assumptions={assumptions}
+            globalResults={results}
+            divisionName={divisionKey}
+            showProductDetail={showProductDetail}
+            customRowTransformations={customTransformations.pnl}
+          />
+        )}
+      </div>
       
-      <StandardKPIs
-        divisionResults={divisionResults}
-        productResults={productResults}
-        assumptions={assumptions}
-        globalResults={results}
-        divisionName={divisionKey}
-        showProductDetail={showProductDetail}
-        customRowTransformations={customTransformations.kpis}
-      />
+      {/* Capital Requirements Section */}
+      <div className="mb-8">
+        <div className="flex items-center mb-4">
+          <button
+            onClick={() => toggleTable('capitalRequirements')}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+          >
+            <span className="text-lg">{expandedTables.capitalRequirements ? '▼' : '▶'}</span>
+            <span className="font-semibold">Capital Requirements</span>
+          </button>
+          <span className="ml-3 text-sm text-gray-600">
+            {expandedTables.capitalRequirements ? 'Clicca per comprimere' : 'Clicca per espandere'}
+          </span>
+        </div>
+        {expandedTables.capitalRequirements && (
+          <StandardCapitalRequirements
+            divisionResults={divisionResults}
+            productResults={productResults}
+            assumptions={assumptions}
+            globalResults={results}
+            divisionName={divisionKey}
+            showProductDetail={showProductDetail}
+            customRowTransformations={customTransformations.capitalRequirements}
+          />
+        )}
+      </div>
+      
+      {/* KPIs Section */}
+      <div className="mb-8">
+        <div className="flex items-center mb-4">
+          <button
+            onClick={() => toggleTable('kpis')}
+            className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors"
+          >
+            <span className="text-lg">{expandedTables.kpis ? '▼' : '▶'}</span>
+            <span className="font-semibold">Key Performance Indicators</span>
+          </button>
+          <span className="ml-3 text-sm text-gray-600">
+            {expandedTables.kpis ? 'Clicca per comprimere' : 'Clicca per espandere'}
+          </span>
+        </div>
+        {expandedTables.kpis && (
+          <StandardKPIs
+            divisionResults={divisionResults}
+            productResults={productResults}
+            assumptions={assumptions}
+            globalResults={results}
+            divisionName={divisionKey}
+            showProductDetail={showProductDetail}
+            customRowTransformations={customTransformations.kpis}
+          />
+        )}
+      </div>
     </div>
   );
 };

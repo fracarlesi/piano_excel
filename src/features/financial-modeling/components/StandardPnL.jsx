@@ -79,6 +79,33 @@ const StandardPnL = ({
             isDetail: true,
             formula: null
           });
+          
+          // Check for deposit duration breakdown (for Digital deposit accounts)
+          if (productData.quarterly?.interestExpenseByDuration) {
+            const durationLabels = {
+              'sight': 'A vista',
+              '6_months': 'Vincolato 6 mesi',
+              '12_months': 'Vincolato 12 mesi',
+              '18_months': 'Vincolato 18 mesi',
+              '24_months': 'Vincolato 24 mesi',
+              '36_months': 'Vincolato 36 mesi',
+              '48_months': 'Vincolato 48 mesi',
+              '60_months': 'Vincolato 60 mesi'
+            };
+            
+            Object.entries(productData.quarterly.interestExpenseByDuration).forEach(([duration, durationData]) => {
+              if (durationData && durationData.some(v => v !== 0)) {
+                rows.push({
+                  label: `    • ${durationLabels[duration] || duration}`,
+                  data: durationData,
+                  decimals: 2,
+                  isDetail: true,
+                  isSubRow: true,
+                  formula: null
+                });
+              }
+            });
+          }
         }
       });
     }
@@ -91,6 +118,7 @@ const StandardPnL = ({
     const rows = [];
     
     if (showProductDetail && productResults) {
+      
       Object.entries(productResults).forEach(([productKey, productData]) => {
         // Get the quarterly commission income data
         const commissionIncomeData = productData.quarterly?.commissionIncome || 
@@ -237,6 +265,65 @@ const StandardPnL = ({
     return rows;
   };
 
+  // Build Wealth Referral Fees rows
+  const buildWealthReferralFeesRows = () => {
+    const rows = [];
+    
+    if (divisionName === 'wealth' && showProductDetail) {
+      // Define wealth products
+      const wealthProducts = [
+        { key: 'wealthRealEstateFund', label: 'Real Estate Investment Fund' },
+        { key: 'wealthSMEDebt', label: 'SME Private Debt Fund' },
+        { key: 'wealthIncentiveFund', label: 'Government Incentive Fund' }
+      ];
+      
+      // Check for referral fees data in various locations
+      let referralFeesData = null;
+      
+      // Log to debug
+      console.log('=== WEALTH REFERRAL FEES DEBUG ===');
+      console.log('divisionName:', divisionName);
+      console.log('showProductDetail:', showProductDetail);
+      console.log('divisionResults:', divisionResults);
+      console.log('divisionResults?.operatingCosts:', divisionResults?.operatingCosts);
+      console.log('divisionResults?.operatingCosts?.breakdown:', divisionResults?.operatingCosts?.breakdown);
+      console.log('divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital:', 
+        divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital);
+      
+      if (divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital?.quarterly?.byProduct) {
+        referralFeesData = divisionResults.operatingCosts.breakdown.referralFeesToDigital.quarterly.byProduct;
+        console.log('Found referral fees in divisionResults:', referralFeesData);
+      } else if (globalResults?.pnl?.details?.wealthPnLResults?.byComponent?.referralFees?.quarterly?.byProduct) {
+        referralFeesData = globalResults.pnl.details.wealthPnLResults.byComponent.referralFees.quarterly.byProduct;
+        console.log('Found referral fees in globalResults:', referralFeesData);
+      }
+      
+      if (referralFeesData) {
+        console.log('Processing referral fees data:', referralFeesData);
+        wealthProducts.forEach(({ key, label }) => {
+          const productData = referralFeesData[key];
+          console.log(`Product ${key}:`, productData);
+          if (productData && productData.some(v => v !== 0)) {
+            const rowData = productData.map(v => -Math.abs(v) / 1000000);
+            console.log(`Adding row for ${label} with data:`, rowData);
+            rows.push({
+              label: `    - ${label}`,
+              data: rowData,
+              decimals: 2,
+              isDetail: true,
+              formula: null
+            });
+          }
+        });
+        console.log('Final rows:', rows);
+      } else {
+        console.log('No referral fees data found');
+      }
+    }
+    
+    return rows;
+  };
+
   // Get product rows
   const productRows = buildProductRows();
   const ftpProductRows = buildFTPProductRows();
@@ -245,6 +332,7 @@ const StandardPnL = ({
   const eclProductRows = buildECLProductRows();
   const creditImpairmentProductRows = buildCreditImpairmentProductRows();
   const personnelCostRows = buildPersonnelCostRows();
+  const wealthReferralFeesRows = buildWealthReferralFeesRows();
 
   // Calculate ECL Movement subtotal from product data
   const calculateECLSubtotal = () => {
@@ -401,11 +489,63 @@ const StandardPnL = ({
     ...personnelCostRows,
     {
       label: 'Other OPEX',
-      data: divisionResults?.pnl?.quarterly?.otherOpex ?? placeholderData,
+      data: (() => {
+        // For Digital division, get from operatingCosts
+        if (divisionName === 'digital' && divisionResults?.operatingCosts?.total?.quarterly) {
+          return divisionResults.operatingCosts.total.quarterly;
+        }
+        return divisionResults?.pnl?.quarterly?.otherOpex ?? placeholderData;
+      })(),
       decimals: 2,
       isHeader: true,
       formula: null
     },
+    // Add wealth referral fees detail rows if wealth division
+    ...(divisionName === 'wealth' && showProductDetail ? (() => {
+      console.log('=== ADDING WEALTH REFERRAL FEES TO TABLE ===');
+      console.log('wealthReferralFeesRows:', wealthReferralFeesRows);
+      console.log('wealthReferralFeesRows.length:', wealthReferralFeesRows.length);
+      
+      const totalData = divisionResults?.operatingCosts?.breakdown?.referralFeesToDigital?.quarterly?.total ?? 
+                       divisionResults?.pnl?.quarterly?.otherOpex ?? 
+                       placeholderData;
+      console.log('Total referral fees data:', totalData);
+      
+      // Always show the header row
+      const rows = [{
+        label: '  • Referral Fees to Digital',
+        data: totalData,
+        decimals: 2,
+        isDetail: true,
+        formula: null
+      }];
+      
+      // Add detail rows if available
+      if (wealthReferralFeesRows.length > 0) {
+        rows.push(...wealthReferralFeesRows);
+      }
+      
+      return rows;
+    })() : []),
+    // Add digital OPEX subrows
+    ...(showProductDetail && divisionName === 'digital' && divisionResults?.operatingCosts?.breakdown?.customerAcquisitionCost ? [{
+      label: '  • Customer Acquisition Cost',
+      data: divisionResults.operatingCosts.breakdown.customerAcquisitionCost.total.quarterly,
+      decimals: 2,
+      isDetail: true,
+      formula: null
+    }, ...Object.entries(divisionResults.operatingCosts.breakdown.customerAcquisitionCost.byProduct || {})
+      .filter(([productKey, productData]) => productData.quarterly && productData.quarterly.some(v => v !== 0))
+      .map(([productKey, productData]) => {
+        const product = assumptions.products?.[productKey];
+        return {
+          label: `    - ${product?.name || productKey}`,
+          data: productData.quarterly,
+          decimals: 2,
+          isDetail: true,
+          formula: null
+        };
+      })] : []),
     {
       label: 'Total OPEX',
       data: divisionResults?.pnl?.quarterly?.totalOpex ?? placeholderData,

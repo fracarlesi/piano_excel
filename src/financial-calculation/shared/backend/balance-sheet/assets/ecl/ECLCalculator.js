@@ -154,7 +154,7 @@ export const calculateECLProvision = (newVolumesResults, stockNBVPerformingResul
     're': ['reSecuritization', 'reMortgage', 'reBridge'],
     'sme': ['smeRefinancing', 'smeBridge', 'smeSpecialSituation', 'smeNuovaFinanza', 'smeRestructuring'],
     'wealth': [], // No wealth products defined yet
-    'incentive': [], // No incentive products defined yet
+    'incentive': ['incentiveBridgeFinancing'], // Incentive division products
     'digital': [] // digitalRetailCustomer is a deposit product, not credit
   };
   
