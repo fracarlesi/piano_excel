@@ -93,23 +93,23 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
       <div className="mb-6">
         {initialTab === 'general' ? (
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
               <span className="text-4xl">⚙️</span>
               General Assumptions
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
               Configure global parameters, costs, funding mix, and bank-wide settings that apply to all divisions.
             </p>
           </div>
         ) : (
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-3">
               <span className="text-3xl">
                 {tabs.find(tab => tab.id === initialTab)?.icon}
               </span>
               {tabs.find(tab => tab.id === initialTab)?.label} - Assumptions
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
               Configure products and parameters for the {tabs.find(tab => tab.id === initialTab)?.label} division.
             </p>
           </div>
@@ -121,8 +121,8 @@ const AssumptionsSheet = ({ assumptions, onAssumptionsChange, setAssumptions, ed
       
       {/* Real-time sync status */}
       {editMode && (
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-gray-600 text-xs">
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+          <p className="text-gray-600 dark:text-gray-400 text-xs">
             🔄 Real-time collaboration enabled: All changes are synchronized across all users via Firebase<br/>
             Version: {assumptions.version} | Refactoring completato ✅
           </p>

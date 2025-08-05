@@ -92,7 +92,7 @@ const CustomerAcquisitionGrid = ({
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-gray-100">
+            <tr className="bg-gray-100 dark:bg-gray-700">
               <th className="border px-3 py-2 text-left font-medium">Metrica</th>
               {years.map(year => (
                 <th key={year} className="border px-3 py-2 text-center font-medium">
@@ -104,7 +104,7 @@ const CustomerAcquisitionGrid = ({
           <tbody>
             {/* New Customers Row */}
             <tr>
-              <td className="border px-3 py-2 font-medium bg-gray-50">
+              <td className="border px-3 py-2 font-medium bg-gray-50 dark:bg-gray-800">
                 Nuovi Clienti
               </td>
               {values.map((value, index) => (
@@ -128,10 +128,10 @@ const CustomerAcquisitionGrid = ({
             </tr>
             
             {/* Total Customers Row (calculated) */}
-            <tr className="bg-gray-50">
+            <tr className="bg-gray-50 dark:bg-gray-800">
               <td className="border px-3 py-2 font-medium">
                 Clienti Totali
-                <span className="text-xs text-gray-500 ml-1">(dopo churn {churnRate}%)</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(dopo churn {churnRate}%)</span>
               </td>
               {cumulativeCustomers.map((value, index) => (
                 <td key={index} className="border px-3 py-2 text-center font-medium">

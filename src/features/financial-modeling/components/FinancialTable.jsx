@@ -191,7 +191,7 @@ const FinancialTable = ({ title, rows }) => {
                 key={row.rowKey} 
                 className={`
                   ${row.isTotal ? 'font-bold bg-gray-100 dark:bg-gray-700' : ''}
-                  ${row.isSubTotal ? 'font-semibold bg-gray-50 dark:bg-gray-750' : ''}
+                  ${row.isSubTotal ? 'font-semibold bg-gray-50 dark:bg-gray-800' : ''}
                   ${row.isSecondarySubTotal ? 'font-medium' : ''}
                   ${row.isHeader ? 'font-medium' : ''}
                   hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150
@@ -268,7 +268,7 @@ const FinancialTable = ({ title, rows }) => {
                 </td>
                 {/* Total 10Y column */}
                 <td 
-                  className={`px-3 py-3 text-right bg-gray-50 dark:bg-gray-750 border-r-2 border-gray-300 dark:border-gray-600 ${
+                  className={`px-3 py-3 text-right bg-gray-50 dark:bg-gray-800 border-r-2 border-gray-300 dark:border-gray-600 ${
                     // Text size based on visualization level
                     row.visualizationLevel === 1 ? 'text-sm font-bold' :
                     row.visualizationLevel === 2 ? 'text-sm font-semibold' :

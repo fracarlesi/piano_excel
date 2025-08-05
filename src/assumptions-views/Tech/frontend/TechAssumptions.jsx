@@ -42,13 +42,13 @@ const TechAssumptions = () => {
 
       {/* Personnel Section */}
       <div className="mb-8 border rounded-lg overflow-hidden">
-        <div className="p-4 bg-gray-50 flex items-center justify-between">
+        <div className="p-4 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
           <h3 className="text-lg font-medium flex items-center gap-2">
             👥 Personale IT
           </h3>
           <button
             onClick={() => setExpandedPersonnel(!expandedPersonnel)}
-            className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
           >
             <svg
               className={`w-4 h-4 transform transition-transform ${
@@ -94,7 +94,7 @@ const TechAssumptions = () => {
               <div key={productKey} className="border rounded-lg overflow-hidden">
                 <button
                   onClick={() => setExpandedProduct(expandedProduct === productKey ? null : productKey)}
-                  className="w-full p-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                  className="w-full p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-lg font-medium">{product.name}</span>
@@ -225,7 +225,7 @@ const TechAssumptions = () => {
             <div key={productKey} className="border rounded-lg overflow-hidden">
               <button
                 onClick={() => setExpandedProduct(expandedProduct === productKey ? null : productKey)}
-                className="w-full p-4 bg-green-50 hover:bg-green-100 transition-colors flex items-center justify-between"
+                className="w-full p-4 bg-green-50 dark:bg-green-900 hover:bg-green-100 dark:hover:bg-green-800 transition-colors flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-lg font-medium">{product.name}</span>
@@ -493,13 +493,13 @@ const TechAssumptions = () => {
 
       {/* Allocation Keys Section */}
       <div className="mt-8 border rounded-lg overflow-hidden">
-        <div className="p-4 bg-gray-50 flex items-center justify-between">
+        <div className="p-4 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
           <h3 className="text-lg font-medium flex items-center gap-2">
             📊 Chiavi di Allocazione Costi
           </h3>
           <button
             onClick={() => setExpandedAllocation(!expandedAllocation)}
-            className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
           >
             <svg
               className={`w-4 h-4 transform transition-transform ${

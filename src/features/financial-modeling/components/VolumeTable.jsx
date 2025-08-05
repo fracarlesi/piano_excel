@@ -44,12 +44,12 @@ const VolumeTable = ({
   const avgVolume = totalVolumes / 10;
 
   return (
-    <div className="bg-gray-50 p-4 rounded-lg border">
+    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
       <div className="flex justify-between items-center mb-3">
-        <h4 className="font-semibold text-gray-700">
+        <h4 className="font-semibold text-gray-700 dark:text-gray-200">
           📊 New Business Volumes - {productName}
         </h4>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           Total: {totalVolumes.toFixed(1)} {unit} | Avg: {avgVolume.toFixed(1)} {unit}/year
         </div>
       </div>
@@ -138,7 +138,7 @@ const VolumeTable = ({
             onChange({ y1: volumes.y1 || 0, y10: volumes.y10 || 0 });
           }}
           disabled={disabled}
-          className="px-3 py-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Reset to Y1/Y10
         </button>

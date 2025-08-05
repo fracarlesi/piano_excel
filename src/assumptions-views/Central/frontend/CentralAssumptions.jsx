@@ -96,13 +96,13 @@ const CentralAssumptions = () => {
 
       {/* Personnel by Department Section */}
       <div className="border rounded-lg overflow-hidden">
-        <div className="p-4 bg-gray-50 flex items-center justify-between">
+        <div className="p-4 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
           <h3 className="text-lg font-medium flex items-center gap-2">
             👥 Personale per Dipartimento
           </h3>
           <button
             onClick={() => setExpandedPersonnel(!expandedPersonnel)}
-            className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            className="flex items-center gap-2 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
           >
             <svg
               className={`w-4 h-4 transform transition-transform ${

@@ -99,7 +99,7 @@ const WealthAssumptions = () => {
       <div className="mb-8 border rounded-lg overflow-hidden">
         <button
           onClick={() => setExpandedPersonnel(!expandedPersonnel)}
-          className="w-full p-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+          className="w-full p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             <span className="text-lg font-medium flex items-center gap-2">
@@ -146,7 +146,7 @@ const WealthAssumptions = () => {
                 {/* Product Header */}
                 <button
                   onClick={() => setExpandedProduct(expandedProduct === productKey ? null : productKey)}
-                  className="w-full p-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                  className="w-full p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{divisionIcons[product.originatingDivision]}</span>
