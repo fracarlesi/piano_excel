@@ -65,6 +65,30 @@ def create_input_sheet():
         return row + 2
     
     # Funzione helper per formattare headers
+    # Funzione helper per formattare celle di input (verde)
+    def format_input_cell(cell):
+        cell.fill = PatternFill(start_color="E8F5E9", end_color="E8F5E9", fill_type="solid")
+        cell.font = Font(name='Calibri', size=11, bold=True, color="1B5E20")
+        cell.alignment = Alignment(horizontal='center')
+        cell.border = Border(
+            left=Side(style='medium', color='4CAF50'),
+            right=Side(style='medium', color='4CAF50'),
+            top=Side(style='medium', color='4CAF50'),
+            bottom=Side(style='medium', color='4CAF50')
+        )
+    
+    # Funzione helper per formattare celle con formule (grigio)
+    def format_formula_cell(cell):
+        cell.fill = PatternFill(start_color="F5F5F5", end_color="F5F5F5", fill_type="solid")
+        cell.font = Font(name='Calibri', size=11, color="000000")
+        cell.alignment = Alignment(horizontal='center')
+        cell.border = Border(
+            left=Side(style='dashed'),
+            right=Side(style='dashed'),
+            top=Side(style='dashed'),
+            bottom=Side(style='dashed')
+        )
+    
     def format_headers(row, headers, columns):
         for col, header in zip(columns, headers):
             cell = ws.cell(row=row, column=col, value=header)
@@ -86,8 +110,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="ECB Rate")
     for col, val in enumerate([0.025, 0.0275, 0.03, 0.03, 0.03], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '0.00%'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Base per calcolo costo funding e depositi vincolati")
     current_row += 1
     
@@ -95,8 +119,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Euribor 6M")
     for col, val in enumerate([0.0325, 0.035, 0.0375, 0.0375, 0.0375], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '0.00%'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Base per pricing prodotti credito a tasso variabile")
     current_row += 3
     
@@ -125,8 +149,8 @@ def create_input_sheet():
     for param, value, desc in bilancio_data:
         ws.cell(row=current_row, column=2, value=param)
         cell = ws.cell(row=current_row, column=3, value=value)
+        format_input_cell(cell)
         cell.number_format = '#,##0'
-        cell.alignment = Alignment(horizontal='center')
         ws.cell(row=current_row, column=9, value=desc)
         current_row += 1
     
@@ -156,9 +180,9 @@ def create_input_sheet():
     for param, value, desc, is_pct in rischio_data:
         ws.cell(row=current_row, column=2, value=param)
         cell = ws.cell(row=current_row, column=3, value=value)
+        format_input_cell(cell)
         if is_pct:
             cell.number_format = '0.00%'
-        cell.alignment = Alignment(horizontal='center')
         ws.cell(row=current_row, column=9, value=desc)
         current_row += 1
     
@@ -179,8 +203,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Spese di Marketing")
     for col, val in enumerate([2.0, 2.2, 2.5, 2.8, 3.0], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '#,##0.0'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Costo assoluto per marketing e comunicazione")
     current_row += 1
     
@@ -188,8 +212,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Consulenze e Spese Legali")
     for col, val in enumerate([2.0, 2.1, 2.1, 2.2, 2.2], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '#,##0.0'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Costi per consulenti esterni, legali e revisori")
     current_row += 1
     
@@ -197,8 +221,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Costi Immobiliari")
     for col, val in enumerate([3.0, 3.0, 3.1, 3.1, 3.2], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '#,##0.0'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Costi per affitti, utenze e manutenzione")
     current_row += 1
     
@@ -206,8 +230,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Spese Generali Amministrative")
     for col, val in enumerate([1.5, 1.5, 1.6, 1.6, 1.7], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '#,##0.0'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Altre spese di funzionamento")
     current_row += 2
     
@@ -219,16 +243,16 @@ def create_input_sheet():
     # Contributo FITD
     ws.cell(row=current_row, column=2, value="Contributo FITD (% Depositi)")
     cell = ws.cell(row=current_row, column=3, value=0.0015)
+    format_input_cell(cell)
     cell.number_format = '0.00%'
-    cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Contributo obbligatorio al Fondo Interbancario")
     current_row += 1
     
     # Aliquota Fiscale
     ws.cell(row=current_row, column=2, value="Aliquota Fiscale")
     cell = ws.cell(row=current_row, column=3, value=0.28)
+    format_input_cell(cell)
     cell.number_format = '0.0%'
-    cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Aliquota fiscale media applicabile")
     current_row += 2
     
@@ -241,8 +265,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Dividend Payout")
     for col, val in enumerate([0.30, 0.30, 0.35, 0.35, 0.40], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '0.0%'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Percentuale di utile netto distribuita come dividendi")
     current_row += 3
     
@@ -261,8 +285,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Nuove Erogazioni RE (€ mln)")
     for col, val in enumerate([200, 210, 220, 227, 234], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '#,##0'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Volumi di nuovi finanziamenti divisione Real Estate")
     current_row += 2
     
@@ -276,8 +300,8 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Nuove Erogazioni SME (€ mln)")
     for col, val in enumerate([250, 270, 292, 306, 321], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '#,##0'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Volumi di nuovi finanziamenti divisione SME")
     current_row += 2
     
@@ -291,442 +315,180 @@ def create_input_sheet():
     ws.cell(row=current_row, column=2, value="Nuove Erogazioni PG (€ mln)")
     for col, val in enumerate([50, 55, 61, 66, 69], start=3):
         cell = ws.cell(row=current_row, column=col, value=val)
+        format_input_cell(cell)
         cell.number_format = '#,##0'
-        cell.alignment = Alignment(horizontal='center')
     ws.cell(row=current_row, column=9, value="Volumi di nuovi finanziamenti divisione Public Guarantee")
     current_row += 3
     
     # ====================
-    # SEZIONE 1.6: Parametri Prodotti Real Estate (con nomi completi)
+    # SEZIONE 1.6: Parametri Specifici per Prodotto di Credito
     # ====================
-    current_row = insert_section_title("1.6 Parametri Prodotti - Real Estate Division", current_row)
+    current_row = insert_section_title("1.6 Parametri Specifici per Prodotto di Credito", current_row)
     
-    # Headers prodotti con nomi completi - tutti sulla stessa riga
+    # Real Estate Division
+    ws.cell(row=current_row, column=2, value="Real Estate Division")
+    ws.cell(row=current_row, column=2).font = Font(name='Calibri', size=12, bold=True, italic=True)
+    current_row += 1
+    
+    # Headers prodotti Real Estate
     format_headers(current_row, 
                   ["Parametro", "Construction Bridge Loan", "Mezzanine Loan Amortizing", "Mezzanine Loan Asset Mgmt", 
                    "Mezzanine Loan Pre-Amort", "Mezzanine Pre-Amort Asset Mgmt", "Non-Recourse Estate", "Descrizione"],
                   [2, 3, 4, 5, 6, 7, 8, 9])
     current_row += 1
     
-    # Mix Prodotti
-    ws.cell(row=current_row, column=2, value="Mix Prodotti")
-    for col, val in enumerate([0.20, 0.50, 0, 0.25, 0, 0.05], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% allocazione delle nuove erogazioni")
+    # Lista completa dei 20 parametri per Real Estate
+    re_params = [
+        ("Mix Prodotti (%)", [0.20, 0.50, 0, 0.25, 0, 0.05], '0%', "% allocazione delle nuove erogazioni", "input"),
+        ("Amortizing Type", ["bullet", "amortizing", "amortizing", "amortizing", "amortizing", "bullet"], 'text', "Tipologia di rimborso", "input"),
+        ("Loan Maturity (Anni)", [2, 7, 7, 7, 7, 4], '#,##0', "Durata contrattuale del finanziamento", "input"),
+        ("Pre-amortizing Period", [0, 0, 0, 1, 1, 0], '#,##0', "Periodo iniziale di soli interessi (anni)", "input"),
+        ("LTV (garanzia immobiliare) %", [0.70, 0.65, 0.60, 0.65, 0.60, 0.75], '0%', "Loan-to-Value ratio per garanzie immobiliari", "input"),
+        ("Garanzia MCC (% su erogato)", [0.50, 0.60, 0.80, 0.60, 0.80, 0.30], '0%', "Percentuale di garanzia MCC sull'erogato", "input"),
+        ("RW (credito non garantito MCC) %", [0.75, 0.60, 0.80, 0.75, 0.75, 0.75], '0%', "Risk Weight per porzione non garantita MCC", "input"),
+        ("RW (credito garantito MCC) %", [0.20, 0.20, 0.20, 0.20, 0.20, 0.20], '0%', "Risk Weight per porzione garantita MCC", "input"),
+        ("RW Medio Prodotto %", ["=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA"], '0%', "Risk Weight medio ponderato del prodotto", "formula"),
+        ("Danger Rate %", [0.05, 0.05, 0.05, 0.05, 0.05, 0.05], '0%', "Tasso di passaggio a default annuale", "input"),
+        ("Abbattimento asta garanzia immobiliare %", [0.15, 0.15, 0.10, 0.15, 0.10, 0.20], '0%', "Sconto valore immobile all'asta", "input"),
+        ("Costi di recupero garanzia immobiliare %", [0.05, 0.05, 0.05, 0.05, 0.05, 0.05], '0%', "Costi legali e procedurali per recupero", "input"),
+        ("Spread Attivo Prodotto %", [0.08, 0.08, 0.06, 0.08, 0.06, 0.06], '0.0%', "Tasso di interesse applicato al cliente", "input"),
+        ("Up-front Fees %", [0.01, 0.01, 0.01, 0.01, 0.01, 0.01], '0.0%', "Commissioni iniziali sulle erogazioni", "input"),
+        ("Default Timing (Q)", [12, 12, 12, 12, 12, 12], '#,##0', "Trimestre medio di manifestazione default", "input"),
+        ("Recovery Timing Garanzia Immobiliare (Q)", [8, 8, 8, 8, 8, 8], '#,##0', "Trimestre medio recupero garanzia immobiliare", "input"),
+        ("Recovery Timing Garanzia MCC (Q)", [4, 4, 4, 4, 4, 4], '#,##0', "Trimestre medio recupero garanzia MCC", "input"),
+        ("Recovery Rate Immobili %", [0.60, 0.65, 0.70, 0.65, 0.70, 0.60], '0%', "% recupero da garanzie immobiliari", "input"),
+        ("Recovery Rate MCC %", [0.80, 0.80, 0.80, 0.80, 0.80, 0.80], '0%', "% recupero da garanzie MCC", "input"),
+        ("LGD %", ["=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA"], '0.0%', "Loss Given Default calcolato", "formula")
+    ]
+    
+    # Inserimento parametri Real Estate con formattazione differenziata
+    for param_name, values, num_format, description, cell_type in re_params:
+        ws.cell(row=current_row, column=2, value=param_name)
+        for col, val in enumerate(values, start=3):
+            cell = ws.cell(row=current_row, column=col, value=val)
+            if cell_type == "input":
+                format_input_cell(cell)
+            else:  # formula
+                format_formula_cell(cell)
+            
+            if num_format != 'text':
+                cell.number_format = num_format
+        
+        ws.cell(row=current_row, column=9, value=description)
+        current_row += 1
+    
+    current_row += 2
+    
+    # SME Division
+    ws.cell(row=current_row, column=2, value="SME Division")
+    ws.cell(row=current_row, column=2).font = Font(name='Calibri', size=12, bold=True, italic=True)
     current_row += 1
     
-    # Amortizing Type
-    ws.cell(row=current_row, column=2, value="Amortizing Type")
-    for col, val in enumerate(["bullet", "amortizing", "amortizing", "amortizing", "amortizing", "bullet"], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tipologia di rimborso")
-    current_row += 1
-    
-    # Loan Maturity
-    ws.cell(row=current_row, column=2, value="Loan Maturity (Anni)")
-    for col, val in enumerate([2, 7, 7, 7, 7, 4], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Durata contrattuale del finanziamento")
-    current_row += 1
-    
-    # Pre-amortizing Period
-    ws.cell(row=current_row, column=2, value="Pre-amortizing Period")
-    for col, val in enumerate([0, 0, 0, 1, 1, 0], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Periodo iniziale di soli interessi (anni)")
-    current_row += 1
-    
-    # RWA
-    ws.cell(row=current_row, column=2, value="RWA (Bonis)")
-    for col, val in enumerate([0.75, 0.60, 0.80, 0.75, 0.75, 0.75], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Ponderazione del rischio per crediti in bonis")
-    current_row += 1
-    
-    # Danger Rate
-    ws.cell(row=current_row, column=2, value="Danger Rate")
-    for col, val in enumerate([0.05, 0.05, 0.05, 0.05, 0.05, 0.05], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tasso di passaggio a default annuale")
-    current_row += 1
-    
-    # LGD
-    ws.cell(row=current_row, column=2, value="LGD")
-    for col, val in enumerate([0.50, 0.40, 0.30, 0.40, 0.30, 0.006], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0.0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Loss Given Default")
-    current_row += 1
-    
-    # Interest Rate
-    ws.cell(row=current_row, column=2, value="Interest Rate")
-    for col, val in enumerate([0.08, 0.08, 0.06, 0.08, 0.06, 0.06], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0.0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tasso di interesse applicato al cliente")
-    current_row += 1
-    
-    # Up-front Fees
-    ws.cell(row=current_row, column=2, value="Up-front Fees")
-    for col, val in enumerate([0.01, 0.01, 0.01, 0.01, 0.01, 0.01], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0.0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Commissioni iniziali sulle erogazioni")
-    current_row += 1
-    
-    # PARAMETRI DEFAULT E RECOVERY per Real Estate
-    # Default Timing (trimestri)
-    ws.cell(row=current_row, column=2, value="Default Timing (Q)")
-    for col in range(3, 9):
-        cell = ws.cell(row=current_row, column=col, value=12)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Trimestre medio di manifestazione default")
-    current_row += 1
-    
-    # Recovery Timing (trimestri)
-    ws.cell(row=current_row, column=2, value="Recovery Timing (Q)")
-    for col in range(3, 9):
-        cell = ws.cell(row=current_row, column=col, value=8)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Trimestre medio di recupero post-default")
-    current_row += 1
-    
-    # Recovery Rate Garanzia Immobiliare
-    ws.cell(row=current_row, column=2, value="Recovery Rate Immobili")
-    for col, val in enumerate([0.60, 0.65, 0.70, 0.65, 0.70, 0.60], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% recupero da garanzie immobiliari")
-    current_row += 1
-    
-    # Recovery Rate Garanzia MCC
-    ws.cell(row=current_row, column=2, value="Recovery Rate MCC")
-    for col in range(3, 9):
-        cell = ws.cell(row=current_row, column=col, value=0.80)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% recupero da garanzie MCC")
-    current_row += 1
-    
-    # PARAMETRI ECL per Real Estate
-    # ECL Horizon (trimestri)
-    ws.cell(row=current_row, column=2, value="ECL Horizon (Q)")
-    for col in range(3, 9):
-        cell = ws.cell(row=current_row, column=col, value=4)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Orizzonte temporale ECL (trimestri)")
-    current_row += 1
-    
-    # PD Multiplier
-    ws.cell(row=current_row, column=2, value="PD Multiplier")
-    for col in range(3, 9):
-        cell = ws.cell(row=current_row, column=col, value=1.5)
-        cell.number_format = '0.0'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Moltiplicatore PD per stress")
-    current_row += 3
-    
-    # ====================
-    # SEZIONE 1.7: Parametri Prodotti SME (con nomi completi)
-    # ====================
-    current_row = insert_section_title("1.7 Parametri Prodotti - SME Division", current_row)
-    
-    # Headers prodotti SME con nomi completi
+    # Headers prodotti SME
     format_headers(current_row, 
                   ["Parametro", "Business Loan", "Refinancing", "State Support", "New Finance", "Restructuring", "", "Descrizione"],
                   [2, 3, 4, 5, 6, 7, 8, 9])
     current_row += 1
     
-    # Mix Prodotti SME
-    ws.cell(row=current_row, column=2, value="Mix Prodotti")
-    for col, val in enumerate([0.15, 0.30, 0.10, 0.40, 0.05], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% allocazione delle nuove erogazioni")
+    # Lista completa dei 20 parametri per SME
+    sme_params = [
+        ("Mix Prodotti (%)", [0.15, 0.30, 0.10, 0.40, 0.05], '0%', "% allocazione delle nuove erogazioni", "input"),
+        ("Amortizing Type", ["bullet", "amortizing", "amortizing", "amortizing", "amortizing"], 'text', "Tipologia di rimborso", "input"),
+        ("Loan Maturity (Anni)", [2, 5, 4, 4, 5], '#,##0', "Durata contrattuale del finanziamento", "input"),
+        ("Pre-amortizing Period", [0, 2, 0, 0, 0], '#,##0', "Periodo iniziale di soli interessi (anni)", "input"),
+        ("LTV (garanzia immobiliare) %", [0.60, 0.65, 0.70, 0.65, 0.55], '0%', "Loan-to-Value ratio per garanzie immobiliari", "input"),
+        ("Garanzia MCC (% su erogato)", [0.60, 0.70, 0.90, 0.80, 0.70], '0%', "Percentuale di garanzia MCC sull'erogato", "input"),
+        ("RW (credito non garantito MCC) %", [0.80, 0.80, 1.00, 1.35, 1.00], '0%', "Risk Weight per porzione non garantita MCC", "input"),
+        ("RW (credito garantito MCC) %", [0.20, 0.20, 0, 0, 0.20], '0%', "Risk Weight per porzione garantita MCC", "input"),
+        ("RW Medio Prodotto %", ["=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA"], '0%', "Risk Weight medio ponderato del prodotto", "formula"),
+        ("Danger Rate %", [0.10, 0.10, 0.10, 0.10, 0.10], '0%', "Tasso di passaggio a default annuale", "input"),
+        ("Abbattimento asta garanzia immobiliare %", [0.20, 0.15, 0.10, 0.15, 0.25], '0%', "Sconto valore immobile all'asta", "input"),
+        ("Costi di recupero garanzia immobiliare %", [0.08, 0.06, 0.05, 0.06, 0.10], '0%', "Costi legali e procedurali per recupero", "input"),
+        ("Spread Attivo Prodotto %", [0.08, 0.08, 0.08, 0.08, 0.08], '0.0%', "Tasso di interesse applicato al cliente", "input"),
+        ("Up-front Fees %", [0.01, 0.01, 0.01, 0.01, 0.01], '0.0%', "Commissioni iniziali sulle erogazioni", "input"),
+        ("Default Timing (Q)", [8, 8, 8, 8, 8], '#,##0', "Trimestre medio di manifestazione default", "input"),
+        ("Recovery Timing Garanzia Immobiliare (Q)", [6, 6, 6, 6, 6], '#,##0', "Trimestre medio recupero garanzia immobiliare", "input"),
+        ("Recovery Timing Garanzia MCC (Q)", [3, 3, 3, 3, 3], '#,##0', "Trimestre medio recupero garanzia MCC", "input"),
+        ("Recovery Rate Immobili %", [0.50, 0.55, 0.40, 0.45, 0.40], '0%', "% recupero da garanzie immobiliari", "input"),
+        ("Recovery Rate MCC %", [0.70, 0.75, 0.80, 0.75, 0.70], '0%', "% recupero da garanzie MCC", "input"),
+        ("LGD %", ["=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA", "=FORMULA"], '0.0%', "Loss Given Default calcolato", "formula")
+    ]
+    
+    # Inserimento parametri SME con formattazione differenziata
+    for param_name, values, num_format, description, cell_type in sme_params:
+        ws.cell(row=current_row, column=2, value=param_name)
+        for col, val in enumerate(values, start=3):
+            cell = ws.cell(row=current_row, column=col, value=val)
+            if cell_type == "input":
+                format_input_cell(cell)
+            else:  # formula
+                format_formula_cell(cell)
+            
+            if num_format != 'text':
+                cell.number_format = num_format
+        
+        ws.cell(row=current_row, column=9, value=description)
+        current_row += 1
+    
+    current_row += 2
+    
+    # Public Guarantee Division
+    ws.cell(row=current_row, column=2, value="Public Guarantee Division")
+    ws.cell(row=current_row, column=2).font = Font(name='Calibri', size=12, bold=True, italic=True)
     current_row += 1
     
-    # Amortizing Type SME
-    ws.cell(row=current_row, column=2, value="Amortizing Type")
-    for col, val in enumerate(["bullet", "amortizing", "amortizing", "amortizing", "amortizing"], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tipologia di rimborso")
-    current_row += 1
-    
-    # Loan Maturity SME
-    ws.cell(row=current_row, column=2, value="Loan Maturity (Anni)")
-    for col, val in enumerate([2, 5, 4, 4, 5], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Durata contrattuale del finanziamento")
-    current_row += 1
-    
-    # Pre-amortizing Period SME
-    ws.cell(row=current_row, column=2, value="Pre-amortizing Period")
-    for col, val in enumerate([0, 2, 0, 0, 0], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Periodo iniziale di soli interessi (anni)")
-    current_row += 1
-    
-    # RWA SME
-    ws.cell(row=current_row, column=2, value="RWA (Bonis)")
-    for col, val in enumerate([0.80, 0.80, 1.00, 1.35, 1.00], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Ponderazione del rischio per crediti in bonis")
-    current_row += 1
-    
-    # Danger Rate SME
-    ws.cell(row=current_row, column=2, value="Danger Rate")
-    for col, val in enumerate([0.10, 0.10, 0.10, 0.10, 0.10], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tasso di passaggio a default annuale")
-    current_row += 1
-    
-    # LGD SME
-    ws.cell(row=current_row, column=2, value="LGD")
-    for col, val in enumerate([0.50, 0.40, 0.30, 0.40, 0.60], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Loss Given Default")
-    current_row += 1
-    
-    # Interest Rate SME
-    ws.cell(row=current_row, column=2, value="Interest Rate")
-    for col, val in enumerate([0.08, 0.08, 0.08, 0.08, 0.08], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0.0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tasso di interesse applicato al cliente")
-    current_row += 1
-    
-    # Up-front Fees SME
-    ws.cell(row=current_row, column=2, value="Up-front Fees")
-    for col, val in enumerate([0.01, 0.01, 0.01, 0.01, 0.01], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0.0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Commissioni iniziali sulle erogazioni")
-    current_row += 1
-    
-    # PARAMETRI DEFAULT E RECOVERY per SME
-    # Default Timing (trimestri)
-    ws.cell(row=current_row, column=2, value="Default Timing (Q)")
-    for col in range(3, 8):
-        cell = ws.cell(row=current_row, column=col, value=8)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Trimestre medio di manifestazione default")
-    current_row += 1
-    
-    # Recovery Timing (trimestri)
-    ws.cell(row=current_row, column=2, value="Recovery Timing (Q)")
-    for col in range(3, 8):
-        cell = ws.cell(row=current_row, column=col, value=6)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Trimestre medio di recupero post-default")
-    current_row += 1
-    
-    # Recovery Rate Garanzia Immobiliare
-    ws.cell(row=current_row, column=2, value="Recovery Rate Immobili")
-    for col, val in enumerate([0.50, 0.55, 0.40, 0.45, 0.40], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% recupero da garanzie immobiliari")
-    current_row += 1
-    
-    # Recovery Rate Garanzia MCC
-    ws.cell(row=current_row, column=2, value="Recovery Rate MCC")
-    for col, val in enumerate([0.70, 0.75, 0.80, 0.75, 0.70], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% recupero da garanzie MCC")
-    current_row += 1
-    
-    # PARAMETRI ECL per SME
-    # ECL Horizon (trimestri)
-    ws.cell(row=current_row, column=2, value="ECL Horizon (Q)")
-    for col in range(3, 8):
-        cell = ws.cell(row=current_row, column=col, value=4)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Orizzonte temporale ECL (trimestri)")
-    current_row += 1
-    
-    # PD Multiplier
-    ws.cell(row=current_row, column=2, value="PD Multiplier")
-    for col in range(3, 8):
-        cell = ws.cell(row=current_row, column=col, value=2.0)
-        cell.number_format = '0.0'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Moltiplicatore PD per stress")
-    current_row += 3
-    
-    # ====================
-    # SEZIONE 1.8: Parametri Prodotti Public Guarantee (con nomi completi)
-    # ====================
-    current_row = insert_section_title("1.8 Parametri Prodotti - Public Guarantee Division", current_row)
-    
-    # Headers prodotti PG con nomi completi
+    # Headers prodotti Public Guarantee
     format_headers(current_row, 
                   ["Parametro", "Anticipo Contratti PA", "Fondo Garanzia Amortizing", "Fondo Garanzia Pre-Amortizing", "", "", "", "Descrizione"],
                   [2, 3, 4, 5, 6, 7, 8, 9])
     current_row += 1
     
-    # Mix Prodotti PG
-    ws.cell(row=current_row, column=2, value="Mix Prodotti")
-    for col, val in enumerate([0.40, 0.30, 0.30], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% allocazione delle nuove erogazioni")
-    current_row += 1
+    # Lista completa dei 20 parametri per Public Guarantee
+    pg_params = [
+        ("Mix Prodotti (%)", [0.40, 0.30, 0.30], '0%', "% allocazione delle nuove erogazioni", "input"),
+        ("Amortizing Type", ["bullet", "amortizing", "amortizing"], 'text', "Tipologia di rimborso", "input"),
+        ("Loan Maturity (Anni)", [1, 5, 7], '#,##0', "Durata contrattuale del finanziamento", "input"),
+        ("Pre-amortizing Period", [0, 0, 2], '#,##0', "Periodo iniziale di soli interessi (anni)", "input"),
+        ("LTV (garanzia immobiliare) %", [0.50, 0.60, 0.65], '0%', "Loan-to-Value ratio per garanzie immobiliari", "input"),
+        ("Garanzia MCC (% su erogato)", [0.80, 1.00, 1.00], '0%', "Percentuale di garanzia MCC sull'erogato", "input"),
+        ("RW (credito non garantito MCC) %", [0.40, 0, 0], '0%', "Risk Weight per porzione non garantita MCC", "input"),
+        ("RW (credito garantito MCC) %", [0, 0, 0], '0%', "Risk Weight per porzione garantita MCC", "input"),
+        ("RW Medio Prodotto %", ["=FORMULA", "=FORMULA", "=FORMULA"], '0%', "Risk Weight medio ponderato del prodotto", "formula"),
+        ("Danger Rate %", [0.05, 0.05, 0.05], '0%', "Tasso di passaggio a default annuale", "input"),
+        ("Abbattimento asta garanzia immobiliare %", [0.15, 0.10, 0.10], '0%', "Sconto valore immobile all'asta", "input"),
+        ("Costi di recupero garanzia immobiliare %", [0.05, 0.04, 0.04], '0%', "Costi legali e procedurali per recupero", "input"),
+        ("Spread Attivo Prodotto %", [0.05, 0.05, 0.05], '0.0%', "Tasso di interesse applicato al cliente", "input"),
+        ("Up-front Fees %", [0.02, 0.02, 0.02], '0.0%', "Commissioni iniziali sulle erogazioni", "input"),
+        ("Default Timing (Q)", [10, 10, 10], '#,##0', "Trimestre medio di manifestazione default", "input"),
+        ("Recovery Timing Garanzia Immobiliare (Q)", [6, 6, 6], '#,##0', "Trimestre medio recupero garanzia immobiliare", "input"),
+        ("Recovery Timing Garanzia MCC (Q)", [2, 2, 2], '#,##0', "Trimestre medio recupero garanzia MCC", "input"),
+        ("Recovery Rate Immobili %", [0.40, 0.45, 0.50], '0%', "% recupero da garanzie immobiliari", "input"),
+        ("Recovery Rate MCC %", [0.90, 0.95, 0.95], '0%', "% recupero da garanzie MCC", "input"),
+        ("LGD %", ["=FORMULA", "=FORMULA", "=FORMULA"], '0.0%', "Loss Given Default calcolato", "formula")
+    ]
     
-    # Amortizing Type PG
-    ws.cell(row=current_row, column=2, value="Amortizing Type")
-    for col, val in enumerate(["bullet", "amortizing", "amortizing"], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tipologia di rimborso")
-    current_row += 1
+    # Inserimento parametri Public Guarantee con formattazione differenziata
+    for param_name, values, num_format, description, cell_type in pg_params:
+        ws.cell(row=current_row, column=2, value=param_name)
+        for col, val in enumerate(values, start=3):
+            cell = ws.cell(row=current_row, column=col, value=val)
+            if cell_type == "input":
+                format_input_cell(cell)
+            else:  # formula
+                format_formula_cell(cell)
+            
+            if num_format != 'text':
+                cell.number_format = num_format
+        
+        ws.cell(row=current_row, column=9, value=description)
+        current_row += 1
     
-    # Loan Maturity PG
-    ws.cell(row=current_row, column=2, value="Loan Maturity (Anni)")
-    for col, val in enumerate([1, 5, 7], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Durata contrattuale del finanziamento")
-    current_row += 1
-    
-    # Pre-amortizing Period PG
-    ws.cell(row=current_row, column=2, value="Pre-amortizing Period")
-    for col, val in enumerate([0, 0, 2], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Periodo iniziale di soli interessi (anni)")
-    current_row += 1
-    
-    # RWA PG
-    ws.cell(row=current_row, column=2, value="RWA (Bonis)")
-    for col, val in enumerate([0.40, 0, 0], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Ponderazione del rischio per crediti in bonis")
-    current_row += 1
-    
-    # Danger Rate PG
-    ws.cell(row=current_row, column=2, value="Danger Rate")
-    for col, val in enumerate([0.05, 0.05, 0.05], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tasso di passaggio a default annuale")
-    current_row += 1
-    
-    # LGD PG
-    ws.cell(row=current_row, column=2, value="LGD")
-    for col, val in enumerate([0.50, 0.50, 0.50], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Loss Given Default")
-    current_row += 1
-    
-    # Interest Rate PG
-    ws.cell(row=current_row, column=2, value="Interest Rate")
-    for col, val in enumerate([0.05, 0.05, 0.05], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0.0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Tasso di interesse applicato al cliente")
-    current_row += 1
-    
-    # Up-front Fees PG
-    ws.cell(row=current_row, column=2, value="Up-front Fees")
-    for col, val in enumerate([0.02, 0.02, 0.02], start=3):
-        cell = ws.cell(row=current_row, column=col, value=val)
-        cell.number_format = '0.0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Commissioni iniziali sulle erogazioni")
-    current_row += 1
-    
-    # PARAMETRI DEFAULT E RECOVERY per Public Guarantee
-    # Default Timing (trimestri)
-    ws.cell(row=current_row, column=2, value="Default Timing (Q)")
-    for col in range(3, 6):
-        cell = ws.cell(row=current_row, column=col, value=10)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Trimestre medio di manifestazione default")
-    current_row += 1
-    
-    # Recovery Timing (trimestri)
-    ws.cell(row=current_row, column=2, value="Recovery Timing (Q)")
-    for col in range(3, 6):
-        cell = ws.cell(row=current_row, column=col, value=4)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Trimestre medio di recupero post-default")
-    current_row += 1
-    
-    # Recovery Rate Garanzia Immobiliare
-    ws.cell(row=current_row, column=2, value="Recovery Rate Immobili")
-    for col in range(3, 6):
-        cell = ws.cell(row=current_row, column=col, value=0.40)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% recupero da garanzie immobiliari")
-    current_row += 1
-    
-    # Recovery Rate Garanzia MCC
-    ws.cell(row=current_row, column=2, value="Recovery Rate MCC")
-    for col in range(3, 6):
-        cell = ws.cell(row=current_row, column=col, value=0.90)
-        cell.number_format = '0%'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="% recupero da garanzie MCC")
-    current_row += 1
-    
-    # PARAMETRI ECL per Public Guarantee
-    # ECL Horizon (trimestri)
-    ws.cell(row=current_row, column=2, value="ECL Horizon (Q)")
-    for col in range(3, 6):
-        cell = ws.cell(row=current_row, column=col, value=4)
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Orizzonte temporale ECL (trimestri)")
-    current_row += 1
-    
-    # PD Multiplier
-    ws.cell(row=current_row, column=2, value="PD Multiplier")
-    for col in range(3, 6):
-        cell = ws.cell(row=current_row, column=col, value=1.2)
-        cell.number_format = '0.0'
-        cell.alignment = Alignment(horizontal='center')
-    ws.cell(row=current_row, column=9, value="Moltiplicatore PD per stress")
     current_row += 3
     
     # ====================
-    # NUOVA SEZIONE 1.9: Parametri Personale - FTE per Divisione e Funzione
+    # SEZIONE 1.7: Parametri Personale - FTE per Divisione e Funzione
     # ====================
-    current_row = insert_section_title("1.9 Parametri Personale - FTE per Divisione e Funzione", current_row)
+    current_row = insert_section_title("1.7 Parametri Personale - FTE per Divisione e Funzione", current_row)
     
     # Sottosezione FTE per Divisione Business
     ws.cell(row=current_row, column=2, value="FTE per Divisione Business")
@@ -809,9 +571,9 @@ def create_input_sheet():
     current_row += 3
     
     # ====================
-    # NUOVA SEZIONE 1.10: Parametri RAL per Seniority e Divisione
+    # SEZIONE 1.8: Parametri RAL per Seniority e Divisione
     # ====================
-    current_row = insert_section_title("1.10 Parametri RAL per Seniority e Divisione", current_row)
+    current_row = insert_section_title("1.8 Parametri RAL per Seniority e Divisione", current_row)
     
     # Sottosezione RAL Media per Seniority
     ws.cell(row=current_row, column=2, value="RAL Media per Seniority (€/anno)")
@@ -946,9 +708,9 @@ def create_input_sheet():
     current_row += 3
     
     # ====================
-    # SEZIONE 1.11: Altri Parametri (Digital, Wealth, Treasury, IT)
+    # SEZIONE 1.9: Altri Parametri (Digital, Wealth, Treasury, IT)
     # ====================
-    current_row = insert_section_title("1.11 Altri Parametri Divisioni", current_row)
+    current_row = insert_section_title("1.9 Altri Parametri Divisioni", current_row)
     
     # Digital Banking parameters (mantenuti come prima)
     ws.cell(row=current_row, column=2, value="Digital Banking")
@@ -1044,9 +806,9 @@ def create_input_sheet():
     current_row += 3
     
     # ====================
-    # SEZIONE 1.12: IT, Telefonia e CAPEX
+    # SEZIONE 1.10: IT, Telefonia e CAPEX
     # ====================
-    current_row = insert_section_title("1.12 IT, Telefonia e CAPEX", current_row)
+    current_row = insert_section_title("1.10 IT, Telefonia e CAPEX", current_row)
     
     format_headers(current_row, 
                   ["Parametro", "Y1", "Y2", "Y3", "Y4", "Y5", "", "Descrizione"],

@@ -42,34 +42,102 @@ Tabella che conterrà lo stock di crediti a fine trimestre per ogni prodotto:
 - Stessa struttura della tabella erogazioni
 - Roll-forward: Stock Iniziale + Erogazioni - Rimborsi - Default
 
-#### 1.3 VINTAGE ANALYSIS - MATRICE EROGAZIONI PER VINTAGE (€ mln)
+### 1.3 MATRICI VINTAGE - BLOCCO A: EROGAZIONI E VOLUMI (€ mln)
+
+**Struttura completa di matrici vintage 20x20 per OGNI prodotto creditizio (14 totali)**
+
+#### A.1 - MATRICE EROGAZIONI PER VINTAGE
 Per ogni prodotto, matrice 20x20 che traccia le erogazioni per vintage:
-- **Righe**: Vintage (V1-V20) = trimestre di erogazione
-- **Colonne**: Tempo (Q1-Q20) = evoluzione temporale
+- **Righe**: Vintage V1(Q1) - V20(Q20) = trimestre di erogazione iniziale
+- **Colonne**: Tempo Q1-Q20 = evoluzione temporale
+- **Totali**: Colonna totale per ogni vintage + riga totali per trimestre
 - **Contenuto**: Volume erogato per vintage che evolve nel tempo
+- **Formattazione**: Sfondo azzurro chiaro (#E6F3FF)
 
-#### 1.4 MATRICE AMMORTAMENTI PER VINTAGE (€ mln)
-Tabella dei rimborsi programmati per vintage:
-- **Struttura**: Per prodotto, rimborsi aggregati per trimestre
+#### A.2 - MATRICE RIMBORSI PER VINTAGE
+Per ogni prodotto, matrice 20x20 dei rimborsi programmati:
+- **Struttura**: Stessa logica delle erogazioni
 - **Logica**: Basata su tipo ammortamento (bullet/amortizing) e maturity
+- **Calcolo**: Piano ammortamento applicato a ciascun vintage
+- **Formattazione**: Sfondo arancione chiaro (#FFE6CC)
 
-#### 1.5 MATRICE DEFAULT PER VINTAGE (€ mln)
-Stock che va in default per trimestre:
-- **Calcolo**: Applica danger rate al timing medio di default
-- **Tracking**: Per prodotto e trimestre
+#### A.3 - MATRICE STOCK LORDO (GBV) PER VINTAGE
+Per ogni prodotto, stock lordo (Gross Book Value) per vintage:
+- **Formula**: Stock Iniziale + Erogazioni - Rimborsi - Default
+- **Roll-forward**: Calcolo cumulativo per ogni trimestre
+- **Formattazione**: Sfondo verde chiaro (#E6FFE6)
 
-#### 1.6 MATRICE RECUPERI SU DEFAULT (€ mln)
-Cash flow di recupero attesi divisi per:
-- **RECUPERI GARANZIA IMMOBILIARE**: Timing e quote per divisione
-- **RECUPERI GARANZIA MCC**: Timing e quote per divisione
+### 1.4 MATRICI VINTAGE - BLOCCO B: RISCHIO CREDITO (€ mln)
 
-#### 1.7 CALCOLO NBV E ECL
-Sezione con le seguenti componenti:
-- **STOCK PERFORMING**: Crediti in bonis per prodotto
-- **ECL STAGE 1**: Expected Credit Loss su performing
-- **NBV PERFORMING**: Stock Performing - ECL
-- **STOCK NPL**: Crediti deteriorati per prodotto
-- **NPV RECUPERI / NBV NON-PERFORMING**: Valore attuale dei recuperi
+#### B.1 - MATRICE DEFAULT PER VINTAGE (CON TIMING DISTRIBUTION)
+Stock che va in default per trimestre con timing distribution:
+- **Calcolo**: Applica danger rate con distribuzione temporale del default
+- **Timing**: Modellazione della concentrazione del default nei primi anni
+- **Formula**: Stock × Danger Rate × Timing Distribution
+- **Formattazione**: Sfondo rosso chiaro (#FFE6E6)
+
+#### B.2 - MATRICE STOCK PERFORMING
+Crediti in bonis per vintage:
+- **Formula**: Stock GBV - Passaggi a Default cumulati
+- **Evoluzione**: Diminuisce nel tempo per default e rimborsi
+- **Formattazione**: Sfondo azzurro chiaro (#E6F3FF)
+
+#### B.3 - MATRICE STOCK NPL
+Crediti deteriorati (Non-Performing Loans) per vintage:
+- **Accumulo**: Default cumulati per vintage
+- **Evoluzione**: Aumenta con i passaggi a default, diminuisce per recuperi
+- **Formattazione**: Sfondo rosa (#FFCCCC)
+
+### 1.5 MATRICI VINTAGE - BLOCCO C: ECL E VALUTAZIONI (€ mln)
+
+#### C.1 - MATRICE ECL STAGE 1 (Stock × Danger Rate × LGD)
+Expected Credit Loss su crediti performing:
+- **Formula**: Stock Performing × Danger Rate × LGD
+- **Applicazione**: IFRS 9 Stage 1 per crediti in bonis
+- **Evoluzione**: Proporzionale allo stock performing
+- **Formattazione**: Sfondo arancione chiaro (#FFE6CC)
+
+#### C.2 - MATRICE NBV PERFORMING (Stock - ECL)
+Net Book Value dei crediti performing:
+- **Formula**: Stock Performing - ECL Stage 1
+- **Significato**: Valore contabile netto dei crediti in bonis
+- **Formattazione**: Sfondo blu chiaro (#CCE6FF)
+
+#### C.3 - MATRICE NPV RECUPERI (Attualizzati con Euribor + Spread)
+Net Present Value dei recuperi attesi:
+- **Attualizzazione**: Euribor + Credit Spread
+- **Cash Flow**: Flussi di recupero su garanzie immobiliari e MCC
+- **Timing**: Distribuzione temporale dei recuperi
+- **Formattazione**: Sfondo verde chiaro (#E6FFE6)
+
+#### C.4 - MATRICE NBV NON-PERFORMING
+Net Book Value dei crediti deteriorati:
+- **Formula**: Stock NPL vs NPV Recuperi (il maggiore)
+- **Logica**: Valore recuperabile dei crediti deteriorati
+- **Formattazione**: Sfondo rosa (#FFCCCC)
+
+### 1.6 MATRICI VINTAGE - BLOCCO D: RICAVI (€ mln)
+
+#### D.1 - MATRICE INTERESSI ATTIVI SU PERFORMING
+Interessi attivi generati da crediti performing per vintage:
+- **Formula**: Stock Performing × Tasso Attivo
+- **Tasso**: Dall'input sheet per prodotto
+- **Base**: Stock medio trimestrale per calcolo pro-rata
+- **Formattazione**: Sfondo azzurro chiaro (#E6F3FF)
+
+#### D.2 - MATRICE INTERESSI DI MORA SU NPL
+Interessi di mora su crediti deteriorati:
+- **Formula**: Stock NPL × Tasso di Mora
+- **Applicazione**: Solo su NPL con tasso maggiorato
+- **Incasso**: Considerare % di incasso effettivo
+- **Formattazione**: Sfondo rosso chiaro (#FFE6E6)
+
+#### D.3 - MATRICE COMMISSIONI UP-FRONT
+Commissioni upfront su nuove erogazioni:
+- **Formula**: Erogazioni × Commissione Up-front %
+- **Timing**: Riconosciute al momento dell'erogazione
+- **Base**: Solo su nuove erogazioni per vintage
+- **Formattazione**: Sfondo verde chiaro (#E6FFE6)
 
 ### 2.2 Logica dei Calcoli (da implementare in STEP 3)
 
@@ -274,12 +342,52 @@ Il foglio Modello implementa un sistema di codifica a colori per distinguere i t
 ### Integrazione con Formula Engine
 Le celle formattate come FORMULA sono predisposte per ricevere le formule nel STEP 3, mantenendo la distinzione visiva anche dopo l'inserimento delle formule tramite il `formula_engine.py`.
 
-## 📝 Note Tecniche - VERSIONE TRIMESTRALE
+## 🎯 Specificità Matrici Vintage
+
+### Prodotti Creditizi Coperti (14 totali)
+
+**Real Estate Division (6 prodotti)**:
+1. CBL - Construction & Bridge Loans
+2. MLA - Mortgage Loans Amortizing
+3. MLAM - Mortgage Loans Amortizing Medium-term
+4. MLPA - Mortgage Loans Partially Amortizing
+5. MLPAM - Mortgage Loans Partially Amortizing Medium-term
+6. NRE - Non-Residential Real Estate
+
+**SME Division (5 prodotti)**:
+1. BL - Business Loans
+2. REFI - Refinancing
+3. SS - Short-term Solutions
+4. NF - New Financing
+5. RES - Restructured Loans
+
+**Public Guarantee Division (3 prodotti)**:
+1. ACFP - Anti-Crisis Fund Programs
+2. FGA - Fund for Guarantee Activities
+3. FGPA - Fund for Guarantee Programs Activities
+
+### Struttura Matrici Vintage
+- **Dimensione**: 20×20 + totali (21×22 effettive)
+- **Righe**: V1(Q1), V2(Q2), ..., V20(Q20) + TOTAL
+- **Colonne**: Q1, Q2, ..., Q20 + Total
+- **Etichettatura**: Vintage indica trimestre di erogazione iniziale
+- **Celle**: Tutte formattate come FORMULA (grigio #F5F5F5)
+
+### Sistema di Codifica Colori
+- **Azzurro (#E6F3FF)**: Erogazioni, Stock Performing, Interessi Attivi
+- **Arancione (#FFE6CC)**: Rimborsi, ECL Stage 1
+- **Verde (#E6FFE6)**: Stock GBV, NPV Recuperi, Commissioni
+- **Rosa/Rosso (#FFE6E6, #FFCCCC)**: Default, NPL, Interessi Mora
+- **Blu (#CCE6FF)**: NBV Performing
+
+## 📝 Note Tecniche - VERSIONE TRIMESTRALE CON MATRICI VINTAGE
 - Le celle marcate con [F] conterranno formule nello STEP 3
+- **168 matrici vintage totali**: 14 prodotti × 12 tipi matrice
 - Tutte le tabelle sono predisposte per ricevere formule parametriche trimestrali
 - Nessun valore hardcoded: tutto farà riferimento al foglio Input
 - **Modello trimestrale**: 20 trimestri (Q1-Q20) invece di 5 anni
 - **Struttura colonne**: B=Voci, C-V=Q1-Q20, W=Spazio, X=Descrizione
+- **Matrici vintage**: Colonne aggiuntive fino alla W (totali)
 - Il file aggiornato mantiene il nome `modello_bancario_completo.xlsx`
 - Questo è lo STEP 2 del processo di creazione del modello bancario completo
 
@@ -294,27 +402,189 @@ Le celle formattate come FORMULA sono predisposte per ricevere le formule nel ST
 ## 🚨 Regola Fondamentale
 **ZERO VALORI HARDCODED**: Il modello deve essere completamente parametrico. Ogni formula nelle sezioni di calcolo e nei report finali deve fare riferimento esclusivamente alle celle delle Assumptions o ad altre celle di calcolo.
 
+### 1.7 MATRICI VINTAGE - BLOCCO E: COSTI E ACCANTONAMENTI (€ mln)
+
+#### E.1 - TABELLA LLP (LOAN LOSS PROVISIONS) PER TRIMESTRE
+Tabella che traccia gli accantonamenti per perdite su crediti per trimestre:
+- **Righe**: Ogni prodotto creditizio (14 totali)
+- **Colonne**: Q1-Q20 (evoluzione trimestrale)
+- **Formula**: Stock Crediti × Danger Rate × LGD
+- **Aggregazione**: Totale LLP per trimestre per tutte le divisioni
+- **Formattazione**: Sfondo arancione chiaro (#FFE6CC)
+
+#### E.2 - TABELLA WRITE-OFF PER TRIMESTRE
+Tabella delle cancellazioni definitive di crediti deteriorati:
+- **Righe**: Ogni prodotto creditizio (14 totali)
+- **Colonne**: Q1-Q20 (evoluzione trimestrale)
+- **Logica**: Write-off di crediti NPL non recuperabili
+- **Timing**: Applicazione dopo periodo di workout
+- **Aggregazione**: Totale Write-off per trimestre
+- **Formattazione**: Sfondo rosa (#FFCCCC)
+
+### 1.8 MATRICI VINTAGE - BLOCCO F: AGGREGAZIONI DIVISIONALI (€ mln)
+
+#### F.1 - RIEPILOGO REAL ESTATE DIVISION (SOMMA 6 PRODOTTI)
+Aggregazione di tutti i valori per Real Estate Division:
+- **Prodotti inclusi**: CBL, MLA, MLAM, MLPA, MLPAM, NRE (6 prodotti)
+- **Voci aggregate**:
+  - RE - TOTALE EROGAZIONI
+  - RE - TOTALE STOCK CREDITI  
+  - RE - TOTALE INTERESSI ATTIVI
+  - RE - TOTALE COMMISSIONI
+  - RE - TOTALE LLP
+  - RE - TOTALE WRITE-OFF
+- **Formattazione**: Sfondo azzurro chiaro (#E6F3FF)
+
+#### F.2 - RIEPILOGO SME DIVISION (SOMMA 5 PRODOTTI)
+Aggregazione di tutti i valori per SME Division:
+- **Prodotti inclusi**: BL, REFI, SS, NF, RES (5 prodotti)
+- **Voci aggregate**: Stessa struttura Real Estate
+- **Formattazione**: Sfondo verde chiaro (#E6FFE6)
+
+#### F.3 - RIEPILOGO PUBLIC GUARANTEE DIVISION (SOMMA 3 PRODOTTI)
+Aggregazione di tutti i valori per Public Guarantee Division:
+- **Prodotti inclusi**: ACFP, FGA, FGPA (3 prodotti)
+- **Voci aggregate**: Stessa struttura Real Estate
+- **Formattazione**: Sfondo arancione chiaro (#FFE6CC)
+
+### 1.9 MATRICI VINTAGE - BLOCCO G: FUNDING E LIQUIDITÀ (€ mln)
+
+#### G.1 - TABELLA DEPOSITI CLIENTELA (EVOLUZIONE TRIMESTRALE)
+Evoluzione depositi clientela per segmento:
+- **Digital Banking - Depositi a Vista**: Conti correnti e depositi liberi
+- **Digital Banking - Depositi Vincolati**: CD e depositi a termine
+- **Wealth Management - Depositi Gestiti**: Depositi connessi a servizi gestione
+- **Corporate - Depositi Operativi**: Conti aziendali operativi
+- **Corporate - Depositi Vincolati**: Depositi corporate a termine
+- **TOTALE DEPOSITI CLIENTELA**: Somma di tutti i segmenti
+- **Formattazione**: Sfondo blu chiaro (#CCE6FF)
+
+#### G.2 - TABELLA FUNDING WHOLESALE
+Fonti di raccolta ingrosso:
+- **Funding BCE - TLTRO**: Targeted Long-Term Refinancing Operations
+- **Funding BCE - Operazioni Principali**: Main Refinancing Operations
+- **Senior Debt Securities**: Obbligazioni senior emesse
+- **Subordinated Debt**: Debito subordinato
+- **Interbank Funding**: Finanziamenti interbancari
+- **TOTALE FUNDING WHOLESALE**: Somma tutte le fonti wholesale
+- **Formattazione**: Sfondo azzurro chiaro (#E6F3FF)
+
+#### G.3 - TABELLA LIQUIDITÀ E RISERVE BCE
+Posizioni di liquidità e riserve regolamentari:
+- **Cassa e Disponibilità Liquide**: Cash positions
+- **Riserva Obbligatoria BCE**: Required reserves at ECB
+- **Depositi presso BCE**: Deposits at central bank
+- **Titoli Eligible per Operazioni BCE**: ECB-eligible securities
+- **LCR Buffer**: Liquidity Coverage Ratio buffer
+- **TOTALE LIQUIDITÀ DISPONIBILE**: Total available liquidity
+- **Formattazione**: Sfondo verde chiaro (#E6FFE6)
+
+### 1.10 MATRICI VINTAGE - BLOCCO H: ALTRI PATRIMONIALI (€ mln)
+
+#### H.1 - ROLL-FORWARD IMMOBILIZZAZIONI
+Evoluzione immobilizzazioni materiali e immateriali:
+- **Stock Iniziale Immobilizzazioni**: Valore netto iniziale periodo
+- **Nuovi Investimenti IT/Software**: CAPEX tecnologici
+- **Nuovi Investimenti Immobili**: CAPEX immobiliari
+- **Ammortamenti Periodo**: Ammortamenti trimestrali
+- **Dismissioni/Vendite**: Realizzi da vendite asset
+- **Stock Finale Immobilizzazioni Nette**: Valore netto finale
+- **Formattazione**: Sfondo arancione chiaro (#FFE6CC)
+
+#### H.2 - PORTAFOGLIO TITOLI
+Composizione portafoglio titoli per categoria:
+- **Titoli di Stato Italiani**: Government bonds Italy
+- **Titoli di Stato Esteri**: Foreign government bonds
+- **Titoli Corporate Investment Grade**: IG corporate bonds
+- **Titoli Corporate High Yield**: HY corporate bonds
+- **Altri Strumenti Finanziari**: Other financial instruments
+- **TOTALE PORTAFOGLIO TITOLI**: Total securities portfolio
+- **Formattazione**: Sfondo blu chiaro (#CCE6FF)
+
+#### H.3 - EVOLUZIONE PATRIMONIO NETTO
+Roll-forward del patrimonio netto consolidato:
+- **Patrimonio Netto Iniziale**: Opening equity balance
+- **Utile/Perdita Netto Periodo**: Net income/loss for period
+- **Aumenti di Capitale**: Capital increases
+- **Distribuzione Dividendi**: Dividend distributions
+- **Altri Movimenti**: Other comprehensive income
+- **Patrimonio Netto Finale**: Closing equity balance
+- **Formattazione**: Sfondo verde chiaro (#E6FFE6)
+
+## 🎯 Logica di Aggregazione Blocchi E-H
+
+### BLOCCO E - COSTI E ACCANTONAMENTI
+- **LLP**: Somma di tutti i prodotti per divisione = input per Conto Economico
+- **Write-off**: Somma per divisione = utilizzo fondi rettifiche crediti
+
+### BLOCCO F - AGGREGAZIONI DIVISIONALI  
+- **RE Division**: Somma 6 prodotti Real Estate → input per CE divisionale
+- **SME Division**: Somma 5 prodotti SME → input per CE divisionale
+- **PG Division**: Somma 3 prodotti Public Guarantee → input per CE divisionale
+
+### BLOCCO G - FUNDING E LIQUIDITÀ
+- **Depositi**: Base per calcolo interessi passivi e LCR
+- **Funding Wholesale**: Costo funding e struttura passività
+- **Liquidità**: Buffer regolamentari e cash management
+
+### BLOCCO H - ALTRI PATRIMONIALI
+- **Immobilizzazioni**: Base per ammortamenti e asset allocation
+- **Portafoglio Titoli**: Trading income e ALM
+- **Patrimonio Netto**: Base per calcolo ROE e capital ratios
+
 ## 📋 Storico Modifiche
 
+### 12/08/2025 - Implementazione Blocchi E-H: Costi, Aggregazioni, Funding, Altri Patrimoniali
+**AGGIUNTA COMPLETA BLOCCHI E, F, G, H**: Implementazione tabelle aggregate per completare il motore di calcolo
+- **BLOCCO E - COSTI E ACCANTONAMENTI**:
+  - E.1: Tabella LLP (Loan Loss Provisions) per trimestre per tutti i 14 prodotti
+  - E.2: Tabella Write-off per trimestre per tutti i 14 prodotti
+  - Totali aggregati per divisione
+- **BLOCCO F - AGGREGAZIONI DIVISIONALI**:
+  - F.1: Riepilogo Real Estate Division (somma 6 prodotti)
+  - F.2: Riepilogo SME Division (somma 5 prodotti)  
+  - F.3: Riepilogo Public Guarantee Division (somma 3 prodotti)
+  - Voci aggregate: Erogazioni, Stock, Interessi, Commissioni, LLP, Write-off
+- **BLOCCO G - FUNDING E LIQUIDITÀ**:
+  - G.1: Tabella Depositi Clientela per segmento (evoluzione trimestrale)
+  - G.2: Tabella Funding Wholesale (BCE, debt securities, interbank)
+  - G.3: Tabella Liquidità e Riserve BCE (cash, reserves, LCR buffer)
+- **BLOCCO H - ALTRI PATRIMONIALI**:
+  - H.1: Roll-forward Immobilizzazioni (CAPEX, ammortamenti, dismissioni)
+  - H.2: Portafoglio Titoli per categoria (governativi, corporate, altri)
+  - H.3: Evoluzione Patrimonio Netto (utili, dividendi, aumenti capitale)
+- **STRUTTURA TABELLE**: Tutte con evoluzione trimestrale Q1-Q20
+- **FORMATTAZIONE**: Codifica colore per tipo (depositi=blu, funding=azzurro, etc.)
+- **AGGREGAZIONI**: Totali per ogni sezione con formattazione grassetto
+- **PREPARAZIONE**: Tabelle predisposte per ricevere formule nel STEP 3
+- **MOTIVAZIONE**: Completamento sistema di calcolo per CE, SP, Capital Requirements e KPI
+
+### 12/08/2025 - Implementazione Completa Matrici Vintage (BLOCCHI A-D)
+**REWORK COMPLETO**: Trasformazione delle sezioni vintage in struttura completa a blocchi
+- **BLOCCO A - EROGAZIONI E VOLUMI**: 
+  - A.1: Matrice Erogazioni per Vintage (20x20 per 14 prodotti)
+  - A.2: Matrice Rimborsi per Vintage (20x20 per 14 prodotti)  
+  - A.3: Matrice Stock Lordo GBV (20x20 per 14 prodotti)
+- **BLOCCO B - RISCHIO CREDITO**:
+  - B.1: Matrice Default per Vintage con Timing Distribution (20x20 per 14 prodotti)
+  - B.2: Matrice Stock Performing (20x20 per 14 prodotti)
+  - B.3: Matrice Stock NPL (20x20 per 14 prodotti)
+- **BLOCCO C - ECL E VALUTAZIONI**:
+  - C.1: Matrice ECL Stage 1 con formula Stock × Danger Rate × LGD (20x20 per 14 prodotti)
+  - C.2: Matrice NBV Performing (Stock - ECL) (20x20 per 14 prodotti)
+  - C.3: Matrice NPV Recuperi attualizzati con Euribor + Spread (20x20 per 14 prodotti)
+  - C.4: Matrice NBV Non-Performing (20x20 per 14 prodotti)
+- **BLOCCO D - RICAVI**:
+  - D.1: Matrice Interessi Attivi su Performing (20x20 per 14 prodotti)
+  - D.2: Matrice Interessi di Mora su NPL (20x20 per 14 prodotti)
+  - D.3: Matrice Commissioni Up-front (20x20 per 14 prodotti)
+- **STRUTTURA MATRICI**: Ogni matrice 20x20 con righe V1(Q1)-V20(Q20), colonne Q1-Q20, totali
+- **FORMATTAZIONE**: Codifica colore per tipo (erogazioni=azzurro, rimborsi=arancione, etc.)
+- **COPERTURA**: 14 prodotti totali × 12 matrici = 168 matrici vintage complete
+- **MOTIVAZIONE**: Sistema completo di vintage analysis per risk management e pricing
+
 ### 11/08/2025 - Aggiunta Sezioni Vintage Analysis e NBV
-**AGGIUNTE**: Nuove sezioni nei Calcoli di Appoggio per gestione vintage
-- **Sezione 1.3**: Vintage Analysis - Matrice Erogazioni per Vintage
-  - Matrici 20x20 per ogni prodotto
-  - Tracking erogazioni per vintage nel tempo
-- **Sezione 1.4**: Matrice Ammortamenti per Vintage
-  - Rimborsi programmati per vintage
-  - Basata su tipo ammortamento e maturity
-- **Sezione 1.5**: Matrice Default per Vintage
-  - Stock che va in default per trimestre
-  - Applica danger rate e timing default
-- **Sezione 1.6**: Matrice Recuperi su Default
-  - Separata per Garanzia Immobiliare e MCC
-  - Cash flow di recupero attesi
-- **Sezione 1.7**: Calcolo NBV e ECL
-  - Stock Performing, ECL Stage 1
-  - NBV Performing e Non-Performing
-  - Stock NPL e NPV Recuperi
-- **Motivazione**: Implementazione completa del motore di calcolo per vintage analysis
+**SOSTITUITA** dalla implementazione completa del 12/08/2025
 
 ### Conversione da Modello Annuale a Trimestrale (Completata)
 Il foglio Modello è stato convertito con successo da **modello annuale (5 anni)** a **modello trimestrale (20 trimestri)**.

@@ -95,46 +95,110 @@ Il foglio Input contiene le seguenti sezioni di parametri organizzate per **mode
 - Ogni cella contiene direttamente il volume di nuove erogazioni previsto per quell'anno
 - Non è più necessario calcolare i volumi partendo da un valore base e applicando tassi di crescita
 
-### 1.6 Parametri Specifici per Prodotto di Credito
+### 1.6 Parametri Specifici per Prodotto di Credito - STRUTTURA COMPLETA (20 PARAMETRI)
 
-#### Real Estate Division
-| Parametro | Construction Bridge Loan | Mezzanine Loan Amortizing | Mezzanine Loan Asset Management | Mezzanine Loan Pre-Amortizing | Mezzanine Loan Pre-Amortizing Asset Management | Non-Recourse Estate |
-|-----------|-------------------------|---------------------------|--------------------------------|------------------------------|-----------------------------------------------|-------------------|
-| Mix Prodotti | 20% | 50% | 0% | 25% | 0% | 5% |
-| Amortizing Type | bullet | amortizing | amortizing | amortizing | amortizing | bullet |
-| Loan Maturity (Anni) | 2 | 7 | 7 | 7 | 7 | 4 |
-| Pre-amortizing Period | 0 | 0 | 0 | 1 | 1 | 0 |
-| RWA (Bonis) | 75% | 60% | 80% | 75% | 75% | 75% |
-| Danger Rate | 5% | 5% | 5% | 5% | 5% | 5% |
-| LGD | 50% | 40% | 30% | 40% | 30% | 0.6% |
-| Interest Rate | 8,0% | 8,0% | 6,0% | 8,0% | 6,0% | 6,0% |
-| Up-front Fees | 1,0% | 1,0% | 1,0% | 1,0% | 1,0% | 1,0% |
+⚠️ **AGGIORNAMENTO IMPORTANTE (12/08/2025)**: La sezione 1.6 è stata completamente ristrutturata per includere tutti i 20 parametri necessari per ogni prodotto creditizio, con **formattazione differenziata** tra celle di INPUT (verde) e celle con FORMULA (grigio).
 
-#### SME Division
-| Parametro | Business Loan | Refinancing | State Support | New Finance | Restructuring |
-|-----------|--------------|-------------|---------------|-------------|---------------|
-| Mix Prodotti | 15% | 30% | 10% | 40% | 5% |
-| Amortizing Type | bullet | amortizing | amortizing | amortizing | amortizing |
-| Loan Maturity (Anni) | 2 | 5 | 4 | 4 | 5 |
-| Pre-amortizing Period | 0 | 2 | 0 | 0 | 0 |
-| RWA (Bonis) | 80% | 80% | 100% | 135% | 100% |
-| Danger Rate | 10% | 10% | 10% | 10% | 10% |
-| LGD | 50% | 40% | 30% | 40% | 60% |
-| Interest Rate | 8,0% | 8,0% | 8,0% | 8,0% | 8,0% |
-| Up-front Fees | 1,0% | 1,0% | 1,0% | 1,0% | 1,0% |
+#### Real Estate Division - 20 Parametri Completi
+| # | Parametro | Construction Bridge | Mezzanine Amortizing | Mezzanine Asset Mgmt | Mezzanine Pre-Amort | Mezzanine Pre-Amort Asset | Non-Recourse Estate | Tipo | Descrizione |
+|---|-----------|--------------------|--------------------|---------------------|-------------------|-------------------------|-------------------|------|-------------|
+| 1 | Mix Prodotti (%) | 20% | 50% | 0% | 25% | 0% | 5% | INPUT | % allocazione nuove erogazioni |
+| 2 | Amortizing Type | bullet | amortizing | amortizing | amortizing | amortizing | bullet | INPUT | Tipologia di rimborso |
+| 3 | Loan Maturity (Anni) | 2 | 7 | 7 | 7 | 7 | 4 | INPUT | Durata contrattuale |
+| 4 | Pre-amortizing Period | 0 | 0 | 0 | 1 | 1 | 0 | INPUT | Periodo soli interessi (anni) |
+| 5 | LTV (garanzia immobiliare) % | 70% | 65% | 60% | 65% | 60% | 75% | INPUT | Loan-to-Value ratio |
+| 6 | Garanzia MCC (% su erogato) | 50% | 60% | 80% | 60% | 80% | 30% | INPUT | % garanzia MCC |
+| 7 | RW (credito non garantito MCC) % | 75% | 60% | 80% | 75% | 75% | 75% | INPUT | Risk Weight porzione non garantita |
+| 8 | RW (credito garantito MCC) % | 20% | 20% | 20% | 20% | 20% | 20% | INPUT | Risk Weight porzione garantita |
+| 9 | **RW Medio Prodotto %** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **FORMULA** | Risk Weight medio ponderato |
+| 10 | Danger Rate % | 5% | 5% | 5% | 5% | 5% | 5% | INPUT | Tasso passaggio a default |
+| 11 | Abbattimento asta garanzia immobiliare % | 15% | 15% | 10% | 15% | 10% | 20% | INPUT | Sconto valore immobile |
+| 12 | Costi di recupero garanzia immobiliare % | 5% | 5% | 5% | 5% | 5% | 5% | INPUT | Costi legali recupero |
+| 13 | Spread Attivo Prodotto % | 8,0% | 8,0% | 6,0% | 8,0% | 6,0% | 6,0% | INPUT | Tasso interesse cliente |
+| 14 | Up-front Fees % | 1,0% | 1,0% | 1,0% | 1,0% | 1,0% | 1,0% | INPUT | Commissioni iniziali |
+| 15 | Default Timing (Q) | 12 | 12 | 12 | 12 | 12 | 12 | INPUT | Trimestre medio default |
+| 16 | Recovery Timing Garanzia Immobiliare (Q) | 8 | 8 | 8 | 8 | 8 | 8 | INPUT | Trimestre recupero immobili |
+| 17 | Recovery Timing Garanzia MCC (Q) | 4 | 4 | 4 | 4 | 4 | 4 | INPUT | Trimestre recupero MCC |
+| 18 | Recovery Rate Immobili % | 60% | 65% | 70% | 65% | 70% | 60% | INPUT | % recupero garanzie immobiliari |
+| 19 | Recovery Rate MCC % | 80% | 80% | 80% | 80% | 80% | 80% | INPUT | % recupero garanzie MCC |
+| 20 | **LGD %** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **FORMULA** | Loss Given Default calcolato |
 
-#### Public Guarantee Division
-| Parametro | Anticipo Contratti PA | Fondo Garanzia Amortizing | Fondo Garanzia Pre-Amortizing |
-|-----------|----------------------|--------------------------|------------------------------|
-| Mix Prodotti | 40% | 30% | 30% |
-| Amortizing Type | bullet | amortizing | amortizing |
-| Loan Maturity (Anni) | 1 | 5 | 7 |
-| Pre-amortizing Period | 0 | 0 | 2 |
-| RWA (Bonis) | 40% | 0% | 0% |
-| Danger Rate | 5% | 5% | 5% |
-| LGD | 50% | 50% | 50% |
-| Interest Rate | 5,0% | 5,0% | 5,0% |
-| Up-front Fees | 2,0% | 2,0% | 2,0% |
+#### SME Division - 20 Parametri Completi
+| # | Parametro | Business Loan | Refinancing | State Support | New Finance | Restructuring | Tipo | Descrizione |
+|---|-----------|--------------|-------------|---------------|-------------|---------------|------|-------------|
+| 1 | Mix Prodotti (%) | 15% | 30% | 10% | 40% | 5% | INPUT | % allocazione nuove erogazioni |
+| 2 | Amortizing Type | bullet | amortizing | amortizing | amortizing | amortizing | INPUT | Tipologia di rimborso |
+| 3 | Loan Maturity (Anni) | 2 | 5 | 4 | 4 | 5 | INPUT | Durata contrattuale |
+| 4 | Pre-amortizing Period | 0 | 2 | 0 | 0 | 0 | INPUT | Periodo soli interessi (anni) |
+| 5 | LTV (garanzia immobiliare) % | 60% | 65% | 70% | 65% | 55% | INPUT | Loan-to-Value ratio |
+| 6 | Garanzia MCC (% su erogato) | 60% | 70% | 90% | 80% | 70% | INPUT | % garanzia MCC |
+| 7 | RW (credito non garantito MCC) % | 80% | 80% | 100% | 135% | 100% | INPUT | Risk Weight porzione non garantita |
+| 8 | RW (credito garantito MCC) % | 20% | 20% | 0% | 0% | 20% | INPUT | Risk Weight porzione garantita |
+| 9 | **RW Medio Prodotto %** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **FORMULA** | Risk Weight medio ponderato |
+| 10 | Danger Rate % | 10% | 10% | 10% | 10% | 10% | INPUT | Tasso passaggio a default |
+| 11 | Abbattimento asta garanzia immobiliare % | 20% | 15% | 10% | 15% | 25% | INPUT | Sconto valore immobile |
+| 12 | Costi di recupero garanzia immobiliare % | 8% | 6% | 5% | 6% | 10% | INPUT | Costi legali recupero |
+| 13 | Spread Attivo Prodotto % | 8,0% | 8,0% | 8,0% | 8,0% | 8,0% | INPUT | Tasso interesse cliente |
+| 14 | Up-front Fees % | 1,0% | 1,0% | 1,0% | 1,0% | 1,0% | INPUT | Commissioni iniziali |
+| 15 | Default Timing (Q) | 8 | 8 | 8 | 8 | 8 | INPUT | Trimestre medio default |
+| 16 | Recovery Timing Garanzia Immobiliare (Q) | 6 | 6 | 6 | 6 | 6 | INPUT | Trimestre recupero immobili |
+| 17 | Recovery Timing Garanzia MCC (Q) | 3 | 3 | 3 | 3 | 3 | INPUT | Trimestre recupero MCC |
+| 18 | Recovery Rate Immobili % | 50% | 55% | 40% | 45% | 40% | INPUT | % recupero garanzie immobiliari |
+| 19 | Recovery Rate MCC % | 70% | 75% | 80% | 75% | 70% | INPUT | % recupero garanzie MCC |
+| 20 | **LGD %** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **FORMULA** | Loss Given Default calcolato |
+
+#### Public Guarantee Division - 20 Parametri Completi
+| # | Parametro | Anticipo Contratti PA | Fondo Garanzia Amortizing | Fondo Garanzia Pre-Amortizing | Tipo | Descrizione |
+|---|-----------|----------------------|--------------------------|------------------------------|------|-------------|
+| 1 | Mix Prodotti (%) | 40% | 30% | 30% | INPUT | % allocazione nuove erogazioni |
+| 2 | Amortizing Type | bullet | amortizing | amortizing | INPUT | Tipologia di rimborso |
+| 3 | Loan Maturity (Anni) | 1 | 5 | 7 | INPUT | Durata contrattuale |
+| 4 | Pre-amortizing Period | 0 | 0 | 2 | INPUT | Periodo soli interessi (anni) |
+| 5 | LTV (garanzia immobiliare) % | 50% | 60% | 65% | INPUT | Loan-to-Value ratio |
+| 6 | Garanzia MCC (% su erogato) | 80% | 100% | 100% | INPUT | % garanzia MCC |
+| 7 | RW (credito non garantito MCC) % | 40% | 0% | 0% | INPUT | Risk Weight porzione non garantita |
+| 8 | RW (credito garantito MCC) % | 0% | 0% | 0% | INPUT | Risk Weight porzione garantita |
+| 9 | **RW Medio Prodotto %** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **FORMULA** | Risk Weight medio ponderato |
+| 10 | Danger Rate % | 5% | 5% | 5% | INPUT | Tasso passaggio a default |
+| 11 | Abbattimento asta garanzia immobiliare % | 15% | 10% | 10% | INPUT | Sconto valore immobile |
+| 12 | Costi di recupero garanzia immobiliare % | 5% | 4% | 4% | INPUT | Costi legali recupero |
+| 13 | Spread Attivo Prodotto % | 5,0% | 5,0% | 5,0% | INPUT | Tasso interesse cliente |
+| 14 | Up-front Fees % | 2,0% | 2,0% | 2,0% | INPUT | Commissioni iniziali |
+| 15 | Default Timing (Q) | 10 | 10 | 10 | INPUT | Trimestre medio default |
+| 16 | Recovery Timing Garanzia Immobiliare (Q) | 6 | 6 | 6 | INPUT | Trimestre recupero immobili |
+| 17 | Recovery Timing Garanzia MCC (Q) | 2 | 2 | 2 | INPUT | Trimestre recupero MCC |
+| 18 | Recovery Rate Immobili % | 40% | 45% | 50% | INPUT | % recupero garanzie immobiliari |
+| 19 | Recovery Rate MCC % | 90% | 95% | 95% | INPUT | % recupero garanzie MCC |
+| 20 | **LGD %** | **=FORMULA** | **=FORMULA** | **=FORMULA** | **FORMULA** | Loss Given Default calcolato |
+
+### 🎨 Formattazione Differenziata per Parametri Prodotti
+
+#### Celle INPUT (Verde Chiaro)
+- **Sfondo**: #E8F5E9 (verde chiaro)
+- **Font**: Calibri 11pt, grassetto, colore verde scuro (#1B5E20)
+- **Bordi**: Medi, colore verde (#4CAF50)
+- **Allineamento**: Centrato
+- **Applicata a**: Parametri 1-8, 10-19 (input utente)
+
+#### Celle FORMULA (Grigio Chiaro)
+- **Sfondo**: #F5F5F5 (grigio chiaro)
+- **Font**: Calibri 11pt, normale, nero (#000000)
+- **Bordi**: Tratteggiati
+- **Allineamento**: Centrato
+- **Applicata a**: Parametri 9 (RW Medio) e 20 (LGD) - calcolati automaticamente
+
+#### Formule Implementate
+
+**RW Medio Prodotto %** (Parametro 9):
+```excel
+= (Garanzia_MCC% * RW_garantito%) + ((1 - Garanzia_MCC%) * RW_non_garantito%)
+```
+
+**LGD %** (Parametro 20):
+```excel
+= 1 - (LTV% * (1 - Abbattimento_asta%) * (1 - Costi_recupero%) * Recovery_Rate_Immobili%) 
+    - (Garanzia_MCC% * Recovery_Rate_MCC%)
+```
 
 ### 1.7 Parametri Altre Divisioni
 
@@ -349,6 +413,34 @@ Il foglio Input è stato convertito con successo da **modello annuale (5 anni)**
 - Formule di conversione implementate
 
 ## 📋 Storico Modifiche
+
+### 12/08/2025 - Ristrutturazione Completa Sezione 1.6 Parametri Prodotti
+**RISTRUTTURAZIONE MAGGIORE**: Implementazione completa 20 parametri per prodotto creditizio
+- **Aggiunta di 11 nuovi parametri** per ogni prodotto delle 3 divisioni:
+  - LTV (garanzia immobiliare) %
+  - Garanzia MCC (% su erogato)
+  - RW (credito non garantito MCC) %
+  - RW (credito garantito MCC) %
+  - **RW Medio Prodotto %** (calcolato via formula)
+  - Abbattimento asta garanzia immobiliare %
+  - Costi di recupero garanzia immobiliare %
+  - Recovery Timing Garanzia Immobiliare (Q)
+  - Recovery Timing Garanzia MCC (Q)
+  - **LGD %** (calcolato via formula)
+
+- **Formattazione Differenziata Implementata**:
+  - **Celle INPUT**: Sfondo verde (#E8F5E9), testo verde scuro, bordi verdi medi
+  - **Celle FORMULA**: Sfondo grigio (#F5F5F5), testo nero, bordi tratteggiati
+  - Applicazione automatica tramite funzioni `format_input_cell()` e `format_formula_cell()`
+
+- **Rinumerazione Sezioni**:
+  - Sezione 1.7: Parametri Personale (era 1.9)
+  - Sezione 1.8: Parametri RAL (era 1.10) 
+  - Sezione 1.9: Altri Parametri Divisioni (era 1.11)
+  - Sezione 1.10: IT, Telefonia e CAPEX (era 1.12)
+
+- **Motivazione**: Supporto completo per calcoli di RWA, LGD e recovery nella formula engine
+- **Impatto**: Il formula_engine.py dovrà utilizzare tutti i 20 parametri per calcoli accurati
 
 ### 11/08/2025 - Aggiunta Sezioni 1.12 e 1.13 per Calcoli di Appoggio
 **AGGIUNTE**: Nuove sezioni per parametri Default, Recupero e ECL

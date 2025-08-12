@@ -106,376 +106,672 @@ def add_model_sheet():
     ws.cell(row=current_row, column=2).alignment = Alignment(horizontal='center')
     current_row += 2
     
-    # 1.1 Tabella Erogazioni per Prodotto
-    ws.cell(row=current_row, column=2, value="1.1 EROGAZIONI PER PRODOTTO (€ mln)")
+    # Definizione prodotti
+    re_products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
+    sme_products = ["BL", "REFI", "SS", "NF", "RES"]
+    pg_products = ["ACFP", "FGA", "FGPA"]
+    
+    # RIMOSSE TABELLE 1.1 E 1.2 - PARTIAMO DIRETTAMENTE CON LE MATRICI VINTAGE
+    # Le tabelle aggregate saranno somme delle matrici vintage
+    
+    # 1.1 MATRICI VINTAGE - BLOCCO A: EROGAZIONI E VOLUMI
+    ws.cell(row=current_row, column=2, value="1.1 MATRICI VINTAGE - BLOCCO A: EROGAZIONI E VOLUMI (€ mln)")
     ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
     ws.cell(row=current_row, column=2).fill = subheader_fill
     ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
     current_row += 1
     
-    # Headers trimestrali
-    create_quarterly_headers(current_row)
+    ws.cell(row=current_row, column=2, value="Matrici 20x20 per ogni prodotto: Erogazioni, Rimborsi, Stock Lordo (GBV)")
+    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
     current_row += 1
     
-    # Prodotti Real Estate
-    re_products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-    for product in re_products:
-        ws.cell(row=current_row, column=2, value=f"RE - {product}").border = thin_border
-        for col in range(3, 23):  # C to V (Q1-Q20)
-            cell = ws.cell(row=current_row, column=col)
-            format_formula_cell(cell, '#,##0.0')
-        current_row += 1
+    # BLOCCO A - Per ogni prodotto, creiamo matrici vintage 20x20
+    all_products = [
+        ("RE", ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]),
+        ("SME", ["BL", "REFI", "SS", "NF", "RES"]),
+        ("PG", ["ACFP", "FGA", "FGPA"])
+    ]
     
-    # Prodotti SME
-    sme_products = ["BL", "REFI", "SS", "NF", "RES"]
-    for product in sme_products:
-        ws.cell(row=current_row, column=2, value=f"SME - {product}").border = thin_border
-        for col in range(3, 23):  # C to V (Q1-Q20)
-            cell = ws.cell(row=current_row, column=col)
-            format_formula_cell(cell, '#,##0.0')
+    # Helper function per creare matrice vintage 20x20
+    def create_vintage_matrix(title, product_name, color_hex):
+        nonlocal current_row
+        
+        ws.cell(row=current_row, column=2, value=f"{title} - {product_name}")
+        ws.cell(row=current_row, column=2).font = Font(bold=True, size=10)
+        ws.cell(row=current_row, column=2).fill = PatternFill(start_color=color_hex, end_color=color_hex, fill_type="solid")
         current_row += 1
+        
+        # Headers vintage
+        ws.cell(row=current_row, column=2, value="Vintage\\Time").border = thin_border
+        ws.cell(row=current_row, column=2).font = Font(bold=True, size=9)
+        ws.cell(row=current_row, column=23, value="Total").border = thin_border  # Colonna totali
+        ws.cell(row=current_row, column=23).font = Font(bold=True, size=9)
+        
+        for q in range(1, 21):
+            cell = ws.cell(row=current_row, column=2+q, value=f"Q{q}")
+            cell.border = thin_border
+            cell.font = Font(bold=True, size=9)
+            cell.alignment = Alignment(horizontal='center')
+        current_row += 1
+        
+        # Righe per ogni vintage V1(Q1) - V20(Q20)
+        for v in range(1, 21):
+            year = ((v-1) // 4) + 1
+            quarter_in_year = ((v-1) % 4) + 1
+            vintage_label = f"V{v}(Q{v})"
+            
+            ws.cell(row=current_row, column=2, value=vintage_label).border = thin_border
+            ws.cell(row=current_row, column=2).font = Font(bold=True, size=9)
+            
+            # Celle dati per Q1-Q20
+            for q in range(1, 21):
+                cell = ws.cell(row=current_row, column=2+q)
+                format_formula_cell(cell, '#,##0.0')
+            
+            # Cella totale per vintage
+            cell = ws.cell(row=current_row, column=23)
+            format_formula_cell(cell, '#,##0.0')
+            current_row += 1
+        
+        # Riga totali
+        ws.cell(row=current_row, column=2, value="TOTAL").border = thin_border
+        ws.cell(row=current_row, column=2).font = Font(bold=True, size=9)
+        ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        
+        for q in range(1, 21):
+            cell = ws.cell(row=current_row, column=2+q)
+            format_formula_cell(cell, '#,##0.0')
+            cell.font = Font(bold=True, size=9)
+            cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        
+        # Totale generale
+        cell = ws.cell(row=current_row, column=23)
+        format_formula_cell(cell, '#,##0.0')
+        cell.font = Font(bold=True, size=9)
+        cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        current_row += 2  # Spazio tra matrici
     
-    # Prodotti Public Guarantee
-    pg_products = ["ACFP", "FGA", "FGPA"]
-    for product in pg_products:
-        ws.cell(row=current_row, column=2, value=f"PG - {product}").border = thin_border
-        for col in range(3, 23):  # C to V (Q1-Q20)
-            cell = ws.cell(row=current_row, column=col)
-            format_formula_cell(cell, '#,##0.0')
-        current_row += 1
+    # A.1 - MATRICE EROGAZIONI PER VINTAGE
+    ws.cell(row=current_row, column=2, value="A.1 - MATRICE EROGAZIONI PER VINTAGE")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6F3FF", end_color="E6F3FF", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - EROGAZIONI", product, "E6F3FF")
+    
+    # A.2 - MATRICE RIMBORSI PER VINTAGE
+    ws.cell(row=current_row, column=2, value="A.2 - MATRICE RIMBORSI PER VINTAGE")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6CC", end_color="FFE6CC", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - RIMBORSI", product, "FFE6CC")
+    
+    # A.3 - MATRICE STOCK LORDO (GBV) PER VINTAGE
+    ws.cell(row=current_row, column=2, value="A.3 - MATRICE STOCK LORDO (GBV) PER VINTAGE")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6FFE6", end_color="E6FFE6", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - STOCK GBV", product, "E6FFE6")
     
     current_row += 2
     
-    # 1.2 Stock Crediti per Prodotto
-    ws.cell(row=current_row, column=2, value="1.2 STOCK CREDITI PER PRODOTTO (€ mln)")
+    # 1.2 MATRICI VINTAGE - BLOCCO B: RISCHIO CREDITO
+    ws.cell(row=current_row, column=2, value="1.2 MATRICI VINTAGE - BLOCCO B: RISCHIO CREDITO (€ mln)")
     ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
     ws.cell(row=current_row, column=2).fill = subheader_fill
     ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
+    current_row += 1
+    
+    ws.cell(row=current_row, column=2, value="Matrici 20x20 per ogni prodotto: Default, Stock Performing, Stock NPL")
+    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
+    current_row += 1
+    
+    # B.1 - MATRICE DEFAULT PER VINTAGE (CON TIMING DISTRIBUTION)
+    ws.cell(row=current_row, column=2, value="B.1 - MATRICE DEFAULT PER VINTAGE (CON TIMING DISTRIBUTION)")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6E6", end_color="FFE6E6", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - DEFAULT", product, "FFE6E6")
+    
+    # B.2 - MATRICE STOCK PERFORMING
+    ws.cell(row=current_row, column=2, value="B.2 - MATRICE STOCK PERFORMING")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6F3FF", end_color="E6F3FF", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - PERFORMING", product, "E6F3FF")
+    
+    # B.3 - MATRICE STOCK NPL
+    ws.cell(row=current_row, column=2, value="B.3 - MATRICE STOCK NPL")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - NPL", product, "FFCCCC")
+    
+    current_row += 2
+    
+    # 1.3 MATRICI VINTAGE - BLOCCO C: ECL E VALUTAZIONI
+    ws.cell(row=current_row, column=2, value="1.3 MATRICI VINTAGE - BLOCCO C: ECL E VALUTAZIONI (€ mln)")
+    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
+    ws.cell(row=current_row, column=2).fill = subheader_fill
+    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
+    current_row += 1
+    
+    ws.cell(row=current_row, column=2, value="Matrici 20x20: ECL Stage 1, NBV Performing, NPV Recuperi, NBV Non-Performing")
+    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
+    current_row += 1
+    
+    # C.1 - MATRICE ECL STAGE 1 (FORMULA: Stock × Danger Rate × LGD)
+    ws.cell(row=current_row, column=2, value="C.1 - MATRICE ECL STAGE 1 (Stock × Danger Rate × LGD)")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6CC", end_color="FFE6CC", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - ECL STAGE 1", product, "FFE6CC")
+    
+    # C.2 - MATRICE NBV PERFORMING (Stock - ECL)
+    ws.cell(row=current_row, column=2, value="C.2 - MATRICE NBV PERFORMING (Stock - ECL)")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCE6FF", end_color="CCE6FF", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - NBV PERFORMING", product, "CCE6FF")
+    
+    # C.3 - MATRICE NPV RECUPERI (ATTUALIZZATI CON EURIBOR + SPREAD)
+    ws.cell(row=current_row, column=2, value="C.3 - MATRICE NPV RECUPERI (Attualizzati con Euribor + Spread)")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6FFE6", end_color="E6FFE6", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - NPV RECUPERI", product, "E6FFE6")
+    
+    # C.4 - MATRICE NBV NON-PERFORMING
+    ws.cell(row=current_row, column=2, value="C.4 - MATRICE NBV NON-PERFORMING")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - NBV NPL", product, "FFCCCC")
+    
+    current_row += 2
+    
+    # 1.4 MATRICI VINTAGE - BLOCCO D: RICAVI
+    ws.cell(row=current_row, column=2, value="1.4 MATRICI VINTAGE - BLOCCO D: RICAVI (€ mln)")
+    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
+    ws.cell(row=current_row, column=2).fill = subheader_fill
+    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
+    current_row += 1
+    
+    ws.cell(row=current_row, column=2, value="Matrici 20x20: Interessi Attivi, Interessi di Mora, Commissioni Up-front")
+    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
+    current_row += 1
+    
+    # D.1 - MATRICE INTERESSI ATTIVI SU PERFORMING
+    ws.cell(row=current_row, column=2, value="D.1 - MATRICE INTERESSI ATTIVI SU PERFORMING")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6F3FF", end_color="E6F3FF", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - INT ATTIVI", product, "E6F3FF")
+    
+    # D.2 - MATRICE INTERESSI DI MORA SU NPL
+    ws.cell(row=current_row, column=2, value="D.2 - MATRICE INTERESSI DI MORA SU NPL")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6E6", end_color="FFE6E6", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - INT MORA", product, "FFE6E6")
+    
+    # D.3 - MATRICE COMMISSIONI UP-FRONT
+    ws.cell(row=current_row, column=2, value="D.3 - MATRICE COMMISSIONI UP-FRONT")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6FFE6", end_color="E6FFE6", fill_type="solid")
+    current_row += 1
+    
+    for division, products in all_products:
+        for product in products:
+            create_vintage_matrix(f"{division} - COMM UP-FRONT", product, "E6FFE6")
+    
+    current_row += 3
+    
+    # 1.5 MATRICI VINTAGE - BLOCCO E: COSTI E ACCANTONAMENTI
+    ws.cell(row=current_row, column=2, value="1.5 MATRICI VINTAGE - BLOCCO E: COSTI E ACCANTONAMENTI (€ mln)")
+    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
+    ws.cell(row=current_row, column=2).fill = subheader_fill
+    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
+    current_row += 1
+    
+    ws.cell(row=current_row, column=2, value="Tabelle LLP (Loan Loss Provisions) e Write-off per trimestre")
+    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
+    current_row += 1
+    
+    # E.1 - TABELLA LLP (LOAN LOSS PROVISIONS) PER TRIMESTRE
+    ws.cell(row=current_row, column=2, value="E.1 - TABELLA LLP (LOAN LOSS PROVISIONS) PER TRIMESTRE")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6CC", end_color="FFE6CC", fill_type="solid")
+    current_row += 1
+    
+    # Headers per LLP
+    create_quarterly_headers(current_row)
+    current_row += 1
+    
+    # LLP per prodotto
+    for division, products in all_products:
+        for product in products:
+            ws.cell(row=current_row, column=2, value=f"{division} - {product} - LLP").border = thin_border
+            for col in range(3, 23):  # C to V (Q1-Q20)
+                cell = ws.cell(row=current_row, column=col)
+                format_formula_cell(cell, '#,##0.0')
+            current_row += 1
+    
+    # Totale LLP
+    ws.cell(row=current_row, column=2, value="TOTALE LLP").border = thin_border
+    ws.cell(row=current_row, column=2).font = Font(bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+    for col in range(3, 23):  # C to V (Q1-Q20)
+        cell = ws.cell(row=current_row, column=col)
+        format_formula_cell(cell, '#,##0.0')
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+    current_row += 2
+    
+    # E.2 - TABELLA WRITE-OFF PER TRIMESTRE
+    ws.cell(row=current_row, column=2, value="E.2 - TABELLA WRITE-OFF PER TRIMESTRE")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+    current_row += 1
+    
+    # Headers per Write-off
+    create_quarterly_headers(current_row)
+    current_row += 1
+    
+    # Write-off per prodotto
+    for division, products in all_products:
+        for product in products:
+            ws.cell(row=current_row, column=2, value=f"{division} - {product} - Write-off").border = thin_border
+            for col in range(3, 23):  # C to V (Q1-Q20)
+                cell = ws.cell(row=current_row, column=col)
+                format_formula_cell(cell, '#,##0.0')
+            current_row += 1
+    
+    # Totale Write-off
+    ws.cell(row=current_row, column=2, value="TOTALE WRITE-OFF").border = thin_border
+    ws.cell(row=current_row, column=2).font = Font(bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+    for col in range(3, 23):  # C to V (Q1-Q20)
+        cell = ws.cell(row=current_row, column=col)
+        format_formula_cell(cell, '#,##0.0')
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+    current_row += 2
+    
+    # 1.6 MATRICI VINTAGE - BLOCCO F: AGGREGAZIONI DIVISIONALI
+    ws.cell(row=current_row, column=2, value="1.6 MATRICI VINTAGE - BLOCCO F: AGGREGAZIONI DIVISIONALI (€ mln)")
+    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
+    ws.cell(row=current_row, column=2).fill = subheader_fill
+    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
+    current_row += 1
+    
+    ws.cell(row=current_row, column=2, value="Riepiloghi divisionali: Real Estate (6 prodotti), SME (5 prodotti), Public Guarantee (3 prodotti)")
+    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
+    current_row += 1
+    
+    # F.1 - RIEPILOGO REAL ESTATE (SOMMA 6 PRODOTTI)
+    ws.cell(row=current_row, column=2, value="F.1 - RIEPILOGO REAL ESTATE DIVISION (SOMMA 6 PRODOTTI)")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6F3FF", end_color="E6F3FF", fill_type="solid")
     current_row += 1
     
     # Headers
     create_quarterly_headers(current_row)
     current_row += 1
     
-    # Ripeti prodotti per stock
-    all_products = re_products + sme_products + pg_products
-    for product in re_products:
-        ws.cell(row=current_row, column=2, value=f"RE - {product}").border = thin_border
+    # Voci di riepilogo Real Estate
+    re_summary_items = [
+        "RE - TOTALE EROGAZIONI",
+        "RE - TOTALE STOCK CREDITI",
+        "RE - TOTALE INTERESSI ATTIVI",
+        "RE - TOTALE COMMISSIONI",
+        "RE - TOTALE LLP",
+        "RE - TOTALE WRITE-OFF"
+    ]
+    
+    for item in re_summary_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
         for col in range(3, 23):  # C to V (Q1-Q20)
             cell = ws.cell(row=current_row, column=col)
             format_formula_cell(cell, '#,##0.0')
         current_row += 1
-    for product in sme_products:
-        ws.cell(row=current_row, column=2, value=f"SME - {product}").border = thin_border
-        for col in range(3, 23):  # C to V (Q1-Q20)
-            cell = ws.cell(row=current_row, column=col)
-            format_formula_cell(cell, '#,##0.0')
-        current_row += 1
-    for product in pg_products:
-        ws.cell(row=current_row, column=2, value=f"PG - {product}").border = thin_border
-        for col in range(3, 23):  # C to V (Q1-Q20)
-            cell = ws.cell(row=current_row, column=col)
-            format_formula_cell(cell, '#,##0.0')
-        current_row += 1
-    
-    current_row += 2
-    
-    # 1.3 VINTAGE ANALYSIS - Matrice Erogazioni per Vintage
-    ws.cell(row=current_row, column=2, value="1.3 VINTAGE ANALYSIS - MATRICE EROGAZIONI PER VINTAGE (€ mln)")
-    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
-    ws.cell(row=current_row, column=2).fill = subheader_fill
-    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
-    current_row += 1
-    
-    ws.cell(row=current_row, column=2, value="Per ogni prodotto, erogazioni per trimestre di origine")
-    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
-    current_row += 1
-    
-    # Per ogni prodotto, creiamo una matrice 20x20 (vintage x tempo)
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
-        
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product} - Vintage Matrix")
-            ws.cell(row=current_row, column=2).font = Font(bold=True)
-            ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6F3FF", end_color="E6F3FF", fill_type="solid")
-            current_row += 1
-            
-            # Headers vintage
-            ws.cell(row=current_row, column=2, value="Vintage\\Time").border = thin_border
-            for q in range(1, 21):
-                cell = ws.cell(row=current_row, column=2+q, value=f"Q{q}")
-                cell.border = thin_border
-                cell.font = Font(bold=True, size=9)
-                cell.alignment = Alignment(horizontal='center')
-            current_row += 1
-            
-            # Righe per ogni vintage
-            for v in range(1, 21):
-                ws.cell(row=current_row, column=2, value=f"V{v}").border = thin_border
-                ws.cell(row=current_row, column=2).font = Font(bold=True, size=9)
-                for q in range(1, 21):
-                    cell = ws.cell(row=current_row, column=2+q)
-                    format_formula_cell(cell, '#,##0.0')
-                current_row += 1
-            current_row += 1
-    
-    current_row += 2
-    
-    # 1.4 MATRICE AMMORTAMENTI PER VINTAGE
-    ws.cell(row=current_row, column=2, value="1.4 MATRICE AMMORTAMENTI PER VINTAGE (€ mln)")
-    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
-    ws.cell(row=current_row, column=2).fill = subheader_fill
-    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
-    current_row += 1
-    
-    ws.cell(row=current_row, column=2, value="Rimborsi programmati per vintage")
-    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
-    current_row += 1
-    
-    # Tabella riassuntiva ammortamenti
-    create_quarterly_headers(current_row)
-    current_row += 1
-    
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
-        
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product} - Rimborsi").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
-    
-    current_row += 2
-    
-    # 1.5 MATRICE DEFAULT PER VINTAGE
-    ws.cell(row=current_row, column=2, value="1.5 MATRICE DEFAULT PER VINTAGE (€ mln)")
-    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
-    ws.cell(row=current_row, column=2).fill = subheader_fill
-    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
-    current_row += 1
-    
-    ws.cell(row=current_row, column=2, value="Stock che va in default per trimestre")
-    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
-    current_row += 1
-    
-    create_quarterly_headers(current_row)
-    current_row += 1
-    
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
-        
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product} - Default").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
-    
-    current_row += 2
-    
-    # 1.6 MATRICE RECUPERI SU DEFAULT
-    ws.cell(row=current_row, column=2, value="1.6 MATRICE RECUPERI SU DEFAULT (€ mln)")
-    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
-    ws.cell(row=current_row, column=2).fill = subheader_fill
-    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
-    current_row += 1
-    
-    ws.cell(row=current_row, column=2, value="Cash flow di recupero attesi")
-    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
-    current_row += 1
-    
-    create_quarterly_headers(current_row)
-    current_row += 1
-    
-    # Recuperi per tipo di garanzia
-    ws.cell(row=current_row, column=2, value="RECUPERI GARANZIA IMMOBILIARE").font = Font(bold=True)
-    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6E6", end_color="FFE6E6", fill_type="solid")
-    current_row += 1
-    
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
-        
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product}").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
     
     current_row += 1
     
-    ws.cell(row=current_row, column=2, value="RECUPERI GARANZIA MCC").font = Font(bold=True)
+    # F.2 - RIEPILOGO SME (SOMMA 5 PRODOTTI)
+    ws.cell(row=current_row, column=2, value="F.2 - RIEPILOGO SME DIVISION (SOMMA 5 PRODOTTI)")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
     ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6FFE6", end_color="E6FFE6", fill_type="solid")
     current_row += 1
     
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
-        
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product}").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
+    # Headers
+    create_quarterly_headers(current_row)
+    current_row += 1
+    
+    # Voci di riepilogo SME
+    sme_summary_items = [
+        "SME - TOTALE EROGAZIONI",
+        "SME - TOTALE STOCK CREDITI",
+        "SME - TOTALE INTERESSI ATTIVI",
+        "SME - TOTALE COMMISSIONI",
+        "SME - TOTALE LLP",
+        "SME - TOTALE WRITE-OFF"
+    ]
+    
+    for item in sme_summary_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
+        for col in range(3, 23):  # C to V (Q1-Q20)
+            cell = ws.cell(row=current_row, column=col)
+            format_formula_cell(cell, '#,##0.0')
+        current_row += 1
+    
+    current_row += 1
+    
+    # F.3 - RIEPILOGO PUBLIC GUARANTEE (SOMMA 3 PRODOTTI)
+    ws.cell(row=current_row, column=2, value="F.3 - RIEPILOGO PUBLIC GUARANTEE DIVISION (SOMMA 3 PRODOTTI)")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6CC", end_color="FFE6CC", fill_type="solid")
+    current_row += 1
+    
+    # Headers
+    create_quarterly_headers(current_row)
+    current_row += 1
+    
+    # Voci di riepilogo Public Guarantee
+    pg_summary_items = [
+        "PG - TOTALE EROGAZIONI",
+        "PG - TOTALE STOCK CREDITI",
+        "PG - TOTALE INTERESSI ATTIVI",
+        "PG - TOTALE COMMISSIONI",
+        "PG - TOTALE LLP",
+        "PG - TOTALE WRITE-OFF"
+    ]
+    
+    for item in pg_summary_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
+        for col in range(3, 23):  # C to V (Q1-Q20)
+            cell = ws.cell(row=current_row, column=col)
+            format_formula_cell(cell, '#,##0.0')
+        current_row += 1
     
     current_row += 2
     
-    # 1.7 CALCOLO NBV E ECL
-    ws.cell(row=current_row, column=2, value="1.7 CALCOLO NBV E ECL")
+    # 1.7 MATRICI VINTAGE - BLOCCO G: FUNDING E LIQUIDITÀ
+    ws.cell(row=current_row, column=2, value="1.7 MATRICI VINTAGE - BLOCCO G: FUNDING E LIQUIDITÀ (€ mln)")
     ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
     ws.cell(row=current_row, column=2).fill = subheader_fill
     ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
     current_row += 1
     
-    # Stock Performing
-    ws.cell(row=current_row, column=2, value="STOCK PERFORMING (€ mln)").font = Font(bold=True)
-    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6F3FF", end_color="E6F3FF", fill_type="solid")
+    ws.cell(row=current_row, column=2, value="Evoluzione trimestrale depositi, funding wholesale e liquidità BCE")
+    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
     current_row += 1
     
-    create_quarterly_headers(current_row)
-    current_row += 1
-    
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
-        
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product}").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
-    
-    current_row += 1
-    
-    # ECL Stage 1
-    ws.cell(row=current_row, column=2, value="ECL STAGE 1 (€ mln)").font = Font(bold=True)
-    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6CC", end_color="FFE6CC", fill_type="solid")
-    current_row += 1
-    
-    create_quarterly_headers(current_row)
-    current_row += 1
-    
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
-        
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product}").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
-    
-    current_row += 1
-    
-    # NBV Performing (Stock - ECL)
-    ws.cell(row=current_row, column=2, value="NBV PERFORMING (Stock - ECL) (€ mln)").font = Font(bold=True)
+    # G.1 - TABELLA DEPOSITI CLIENTELA (EVOLUZIONE TRIMESTRALE)
+    ws.cell(row=current_row, column=2, value="G.1 - TABELLA DEPOSITI CLIENTELA (EVOLUZIONE TRIMESTRALE)")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
     ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCE6FF", end_color="CCE6FF", fill_type="solid")
     current_row += 1
     
+    # Headers
     create_quarterly_headers(current_row)
     current_row += 1
     
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
+    # Depositi per segmento
+    deposit_items = [
+        "Digital Banking - Depositi a Vista",
+        "Digital Banking - Depositi Vincolati",
+        "Wealth Management - Depositi Gestiti",
+        "Corporate - Depositi Operativi",
+        "Corporate - Depositi Vincolati",
+        "TOTALE DEPOSITI CLIENTELA"
+    ]
+    
+    for item in deposit_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
+        is_total = "TOTALE" in item
+        if is_total:
+            ws.cell(row=current_row, column=2).font = Font(bold=True)
+            ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
         
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product}").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
+        for col in range(3, 23):  # C to V (Q1-Q20)
+            cell = ws.cell(row=current_row, column=col)
+            format_formula_cell(cell, '#,##0.0')
+            if is_total:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        current_row += 1
     
     current_row += 1
     
-    # Stock NPL
-    ws.cell(row=current_row, column=2, value="STOCK NPL (€ mln)").font = Font(bold=True)
-    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6E6", end_color="FFE6E6", fill_type="solid")
+    # G.2 - TABELLA FUNDING WHOLESALE
+    ws.cell(row=current_row, column=2, value="G.2 - TABELLA FUNDING WHOLESALE")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6F3FF", end_color="E6F3FF", fill_type="solid")
     current_row += 1
     
+    # Headers
     create_quarterly_headers(current_row)
     current_row += 1
     
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
+    # Funding wholesale
+    funding_items = [
+        "Funding BCE - TLTRO",
+        "Funding BCE - Operazioni Principali",
+        "Senior Debt Securities",
+        "Subordinated Debt",
+        "Interbank Funding",
+        "TOTALE FUNDING WHOLESALE"
+    ]
+    
+    for item in funding_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
+        is_total = "TOTALE" in item
+        if is_total:
+            ws.cell(row=current_row, column=2).font = Font(bold=True)
+            ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
         
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product}").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
+        for col in range(3, 23):  # C to V (Q1-Q20)
+            cell = ws.cell(row=current_row, column=col)
+            format_formula_cell(cell, '#,##0.0')
+            if is_total:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        current_row += 1
     
     current_row += 1
     
-    # NPV Recuperi (NBV Non-Performing)
-    ws.cell(row=current_row, column=2, value="NPV RECUPERI / NBV NON-PERFORMING (€ mln)").font = Font(bold=True)
-    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+    # G.3 - TABELLA LIQUIDITÀ E RISERVE BCE
+    ws.cell(row=current_row, column=2, value="G.3 - TABELLA LIQUIDITÀ E RISERVE BCE")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6FFE6", end_color="E6FFE6", fill_type="solid")
     current_row += 1
     
+    # Headers
     create_quarterly_headers(current_row)
     current_row += 1
     
-    for division in ["RE", "SME", "PG"]:
-        if division == "RE":
-            products = ["CBL", "MLA", "MLAM", "MLPA", "MLPAM", "NRE"]
-        elif division == "SME":
-            products = ["BL", "REFI", "SS", "NF", "RES"]
-        else:
-            products = ["ACFP", "FGA", "FGPA"]
+    # Liquidità
+    liquidity_items = [
+        "Cassa e Disponibilità Liquide",
+        "Riserva Obbligatoria BCE",
+        "Depositi presso BCE",
+        "Titoli Eligible per Operazioni BCE",
+        "LCR Buffer",
+        "TOTALE LIQUIDITÀ DISPONIBILE"
+    ]
+    
+    for item in liquidity_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
+        is_total = "TOTALE" in item
+        if is_total:
+            ws.cell(row=current_row, column=2).font = Font(bold=True)
+            ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
         
-        for product in products:
-            ws.cell(row=current_row, column=2, value=f"{division} - {product}").border = thin_border
-            for col in range(3, 23):
-                cell = ws.cell(row=current_row, column=col)
-                format_formula_cell(cell, '#,##0.0')
-            current_row += 1
+        for col in range(3, 23):  # C to V (Q1-Q20)
+            cell = ws.cell(row=current_row, column=col)
+            format_formula_cell(cell, '#,##0.0')
+            if is_total:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        current_row += 1
+    
+    current_row += 2
+    
+    # 1.8 MATRICI VINTAGE - BLOCCO H: ALTRI PATRIMONIALI
+    ws.cell(row=current_row, column=2, value="1.8 MATRICI VINTAGE - BLOCCO H: ALTRI PATRIMONIALI (€ mln)")
+    ws.cell(row=current_row, column=2).font = Font(size=12, bold=True)
+    ws.cell(row=current_row, column=2).fill = subheader_fill
+    ws.cell(row=current_row, column=2).font = Font(color="FFFFFF", bold=True)
+    current_row += 1
+    
+    ws.cell(row=current_row, column=2, value="Roll-forward immobilizzazioni, portafoglio titoli, evoluzione patrimonio netto")
+    ws.cell(row=current_row, column=2).font = Font(italic=True, size=10)
+    current_row += 1
+    
+    # H.1 - ROLL-FORWARD IMMOBILIZZAZIONI
+    ws.cell(row=current_row, column=2, value="H.1 - ROLL-FORWARD IMMOBILIZZAZIONI")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="FFE6CC", end_color="FFE6CC", fill_type="solid")
+    current_row += 1
+    
+    # Headers
+    create_quarterly_headers(current_row)
+    current_row += 1
+    
+    # Roll-forward immobilizzazioni
+    capex_items = [
+        "Stock Iniziale Immobilizzazioni",
+        "Nuovi Investimenti IT/Software",
+        "Nuovi Investimenti Immobili",
+        "Ammortamenti Periodo",
+        "Dismissioni/Vendite",
+        "Stock Finale Immobilizzazioni Nette"
+    ]
+    
+    for item in capex_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
+        is_total = "Stock Finale" in item
+        if is_total:
+            ws.cell(row=current_row, column=2).font = Font(bold=True)
+            ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        
+        for col in range(3, 23):  # C to V (Q1-Q20)
+            cell = ws.cell(row=current_row, column=col)
+            format_formula_cell(cell, '#,##0.0')
+            if is_total:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        current_row += 1
+    
+    current_row += 1
+    
+    # H.2 - PORTAFOGLIO TITOLI
+    ws.cell(row=current_row, column=2, value="H.2 - PORTAFOGLIO TITOLI")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCE6FF", end_color="CCE6FF", fill_type="solid")
+    current_row += 1
+    
+    # Headers
+    create_quarterly_headers(current_row)
+    current_row += 1
+    
+    # Portafoglio titoli
+    securities_items = [
+        "Titoli di Stato Italiani",
+        "Titoli di Stato Esteri",
+        "Titoli Corporate Investment Grade",
+        "Titoli Corporate High Yield",
+        "Altri Strumenti Finanziari",
+        "TOTALE PORTAFOGLIO TITOLI"
+    ]
+    
+    for item in securities_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
+        is_total = "TOTALE" in item
+        if is_total:
+            ws.cell(row=current_row, column=2).font = Font(bold=True)
+            ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        
+        for col in range(3, 23):  # C to V (Q1-Q20)
+            cell = ws.cell(row=current_row, column=col)
+            format_formula_cell(cell, '#,##0.0')
+            if is_total:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        current_row += 1
+    
+    current_row += 1
+    
+    # H.3 - EVOLUZIONE PATRIMONIO NETTO
+    ws.cell(row=current_row, column=2, value="H.3 - EVOLUZIONE PATRIMONIO NETTO")
+    ws.cell(row=current_row, column=2).font = Font(size=11, bold=True)
+    ws.cell(row=current_row, column=2).fill = PatternFill(start_color="E6FFE6", end_color="E6FFE6", fill_type="solid")
+    current_row += 1
+    
+    # Headers
+    create_quarterly_headers(current_row)
+    current_row += 1
+    
+    # Patrimonio netto
+    equity_items = [
+        "Patrimonio Netto Iniziale",
+        "Utile/Perdita Netto Periodo",
+        "Aumenti di Capitale",
+        "Distribuzione Dividendi",
+        "Altri Movimenti",
+        "Patrimonio Netto Finale"
+    ]
+    
+    for item in equity_items:
+        ws.cell(row=current_row, column=2, value=item).border = thin_border
+        is_total = "Finale" in item
+        if is_total:
+            ws.cell(row=current_row, column=2).font = Font(bold=True)
+            ws.cell(row=current_row, column=2).fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        
+        for col in range(3, 23):  # C to V (Q1-Q20)
+            cell = ws.cell(row=current_row, column=col)
+            format_formula_cell(cell, '#,##0.0')
+            if is_total:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+        current_row += 1
     
     current_row += 3
     
