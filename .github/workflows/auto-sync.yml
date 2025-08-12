@@ -1,0 +1,81 @@
+name: Auto Sync to GitHub
+
+# Schedulazione automatica
+on:
+  schedule:
+    # Esegue ogni ora
+    - cron: '0 * * * *'
+    
+  # Permette esecuzione manuale
+  workflow_dispatch:
+
+  # Su push al branch main
+  push:
+    branches: [ main ]
+    paths:
+      - '*.py'
+      - '*.xlsx'
+      - 'documentazione/**'
+      - 'CLAUDE.md'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas openpyxl xlsxwriter numpy
+        
+    - name: Generate Excel Model
+      run: |
+        echo "🔄 Generazione modello Excel..."
+        python create_input_sheet.py
+        python create_model_sheet.py
+        python formula_engine.py
+        
+    - name: Commit and Push if changed
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add -A
+        if git diff --staged --quiet; then
+          echo "✅ Nessuna modifica da sincronizzare"
+        else
+          git commit -m "🔄 Auto-sync: Aggiornamento modello Excel $(date +'%Y-%m-%d %H:%M')"
+          git push
+          echo "✅ Modifiche sincronizzate con successo"
+        fi
+
+  # Job per backup periodico
+  backup:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Create backup branch
+      run: |
+        BACKUP_BRANCH="backup-$(date +'%Y%m%d-%H%M%S')"
+        git checkout -b $BACKUP_BRANCH
+        git push origin $BACKUP_BRANCH
+        echo "📦 Backup creato: $BACKUP_BRANCH"
+        
+    - name: Clean old backups (keep last 5)
+      run: |
+        git branch -r | grep 'origin/backup-' | sort -r | tail -n +6 | while read branch; do
+          branch_name=${branch#origin/}
+          git push origin --delete $branch_name
+          echo "🗑️ Rimosso vecchio backup: $branch_name"
+        done
