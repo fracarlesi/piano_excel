@@ -3,8 +3,8 @@ name: Auto Sync to GitHub
 # Schedulazione automatica
 on:
   schedule:
-    # Esegue ogni ora
-    - cron: '0 * * * *'
+    # Esegue ogni 30 minuti
+    - cron: '*/30 * * * *'
     
   # Permette esecuzione manuale
   workflow_dispatch:
