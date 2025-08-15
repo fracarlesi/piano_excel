@@ -18,7 +18,7 @@ sync_changes() {
 
 # Se fswatch è installato, usa quello per monitoraggio in tempo reale
 if command -v fswatch &> /dev/null; then
-    fswatch -o modello_bancario_completo.xlsx | while read f; do
+    fswatch -o modello.xlsx | while read f; do
         sync_changes
     done
 else
