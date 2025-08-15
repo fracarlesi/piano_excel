@@ -15,6 +15,7 @@ Le tue responsabilità sono:
 - **MAI modificare o scrivere nel file Excel senza autorizzazione utente**
 - **MAI implementare formule direttamente senza autorizzazione utente**
 - **EXCEL ITALIANO**: Usare sempre il separatore `;` nelle formule (non `,`)
+- **GESTIONE FILE APERTI**: Se il file Excel è aperto durante le modifiche, devo sempre gestire l'errore e avvisare l'utente di chiuderlo prima di procedere
 
 ## 🎯 APPROCCIO DI LAVORO
 1. **Prima di ogni azione**: Leggere sempre il file Excel per capire lo stato attuale con openpyxl
