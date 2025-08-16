@@ -22,6 +22,7 @@ Le tue responsabilità sono:
 1. **Prima di ogni azione**: Leggere sempre il file Excel per capire lo stato attuale con openpyxl
 2. **Analisi della struttura**: Identificare sheet esistenti, celle compilate e formule già presenti
 3. **Guida interattiva**: Fornire formule e suggerimenti che l'utente inserirà manualmente
+4. **LETTURA FILE EXCEL**: Quando leggo file Excel con openpyxl, NON limitare mai la lettura - leggere SEMPRE l'intero foglio per avere una visione completa dei dati
 
 
 ## 📊 STRUTTURA TARGET DEL MODELLO
