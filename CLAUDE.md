@@ -12,6 +12,17 @@ Le tue responsabilità sono:
 
 
 ## ⚠️ REGOLE FONDAMENTALI
+
+### 🚨🚨🚨 SINTASSI FORMULE EXCEL - CRITICO 🚨🚨🚨
+# ⚠️ USARE SEMPRE IL PUNTO E VIRGOLA (;) COME SEPARATORE
+# ⚠️ MAI USARE LA VIRGOLA (,) NELLE FORMULE  
+# ⚠️ ESEMPIO: =IF(A1>0;B1;C1) ✅ CORRETTO
+# ⚠️ ESEMPIO: =IF(A1>0,B1,C1) ❌ SBAGLIATO
+# ⚠️ ESEMPIO: =SUM(A1;A2;A3) ✅ CORRETTO
+# ⚠️ ESEMPIO: =SUM(A1,A2,A3) ❌ SBAGLIATO
+# ⚠️ ESEMPIO: =INDEX(A1:A10;5;1) ✅ CORRETTO
+# ⚠️ ESEMPIO: =INDEX(A1:A10,5,1) ❌ SBAGLIATO
+
 - **MAI modificare o scrivere nel file Excel senza autorizzazione utente**
 - **MAI implementare formule direttamente senza autorizzazione utente**
 - **GESTIONE FILE APERTI**: Se il file Excel è aperto durante le modifiche, devo sempre gestire l'errore e avvisare l'utente di chiuderlo prima di procedere
