@@ -1,0 +1,164 @@
+================================================================================
+🔧 FORMULA RIMBORSI CORRETTA - RISOLVE ERRORE #REF!
+================================================================================
+
+PROBLEMA IDENTIFICATO:
+- Il range $B$9:$CC$48 termina alla colonna CC (81)
+- Quando la formula va oltre, genera #REF!
+- Dobbiamo estendere il range per coprire tutti i 20 prodotti
+
+================================================================================
+FORMULA CORRETTA CON RANGE ESTESO
+================================================================================
+
+=IF(
+    INDEX(Input!$D$67:$W$67;1;INT((COLUMN()-2)/43)+1)="bullet";
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-52+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1);
+        OFFSET($B$9;ROW()-53;ROW()-53+(INT((COLUMN()-2)/43)*43));
+        0
+    );
+    IF(
+        AND(
+            MOD(COLUMN()-2;43)+1>ROW()-52+INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1);
+            MOD(COLUMN()-2;43)+1<=ROW()-52+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)
+        );
+        OFFSET($B$9;ROW()-53;ROW()-53+(INT((COLUMN()-2)/43)*43))/
+        (INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1));
+        0
+    )
+)
+
+================================================================================
+ALTERNATIVA CON INDIRECT (PIÙ FLESSIBILE)
+================================================================================
+
+=IF(
+    INDEX(Input!$D$67:$W$67;1;INT((COLUMN()-2)/43)+1)="bullet";
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-52+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1);
+        INDIRECT("R"&(ROW()-44)&"C"&(ROW()-53+2+(INT((COLUMN()-2)/43)*43));FALSE);
+        0
+    );
+    IF(
+        AND(
+            MOD(COLUMN()-2;43)+1>ROW()-52+INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1);
+            MOD(COLUMN()-2;43)+1<=ROW()-52+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)
+        );
+        INDIRECT("R"&(ROW()-44)&"C"&(ROW()-53+2+(INT((COLUMN()-2)/43)*43));FALSE)/
+        (INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1));
+        0
+    )
+)
+
+================================================================================
+SOLUZIONE PIÙ SEMPLICE - ESTENDI IL RANGE MANUALMENTE
+================================================================================
+
+Se prevedi di usare fino a 10 prodotti (colonna GU):
+Sostituisci $B$9:$CC$48 con $B$9:$GU$48
+
+Se prevedi tutti i 20 prodotti (colonna RO circa):
+Sostituisci $B$9:$CC$48 con $B$9:$RO$48
+
+Formula con range esteso a 10 prodotti:
+----------------------------------------
+=IF(
+    INDEX(Input!$D$67:$W$67;1;INT((COLUMN()-2)/43)+1)="bullet";
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-52+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1);
+        INDEX($B$9:$GU$48;ROW()-52;ROW()-52+(INT((COLUMN()-2)/43)*43));
+        0
+    );
+    IF(
+        AND(
+            MOD(COLUMN()-2;43)+1>ROW()-52+INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1);
+            MOD(COLUMN()-2;43)+1<=ROW()-52+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)
+        );
+        INDEX($B$9:$GU$48;ROW()-52;ROW()-52+(INT((COLUMN()-2)/43)*43))/
+        (INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1));
+        0
+    )
+)
+
+================================================================================
+CALCOLO COLONNE PER 20 PRODOTTI
+================================================================================
+
+Prodotto 1:  B-AO    (colonne 2-41)
+Prodotto 2:  AS-CF   (colonne 45-84)
+Prodotto 3:  CJ-DW   (colonne 88-127)
+Prodotto 4:  EA-FN   (colonne 131-170)
+Prodotto 5:  FR-HE   (colonne 174-213)
+Prodotto 6:  HI-IV   (colonne 217-256)
+Prodotto 7:  JZ-LM   (colonne 260-299)
+Prodotto 8:  MQ-OD   (colonne 303-342)
+Prodotto 9:  OH-PU   (colonne 346-385)
+Prodotto 10: PY-RL   (colonne 389-428)
+...fino a...
+Prodotto 20: Circa colonna 860
+
+Per sicurezza, usa $B$9:$AAA$48 per coprire tutti i 20 prodotti
+
+================================================================================
+FORMULA DEFINITIVA CONSIGLIATA (CON OFFSET)
+================================================================================
+
+Questa versione usa OFFSET e non ha limiti di range:
+
+=LET(
+    prod;INT((COLUMN()-2)/43)+1;
+    tipo;INDEX(Input!$D$67:$W$67;1;prod);
+    mat;INDEX(Input!$D$68:$W$68;1;prod);
+    pre;INDEX(Input!$D$69:$W$69;1;prod);
+    riga_rel;ROW()-52;
+    col_rel;MOD(COLUMN()-2;43)+1;
+    cella_erog;OFFSET($B$9;riga_rel-1;riga_rel-1+(prod-1)*43);
+    
+    IF(tipo="bullet";
+        IF(col_rel=riga_rel+mat;cella_erog;0);
+        IF(AND(col_rel>riga_rel+pre;col_rel<=riga_rel+mat);
+            cella_erog/(mat-pre);
+            0
+        )
+    )
+)
+
+Nota: LET richiede Excel 365
+
+================================================================================
+VERSIONE SENZA LET CON OFFSET (COMPATIBILE)
+================================================================================
+
+=IF(
+    INDEX(Input!$D$67:$W$67;1;INT((COLUMN()-2)/43)+1)="bullet";
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-52+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1);
+        OFFSET($B$9;ROW()-53;ROW()-53+(INT((COLUMN()-2)/43)*43));
+        0
+    );
+    IF(
+        AND(
+            MOD(COLUMN()-2;43)+1>ROW()-52+INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1);
+            MOD(COLUMN()-2;43)+1<=ROW()-52+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)
+        );
+        OFFSET($B$9;ROW()-53;ROW()-53+(INT((COLUMN()-2)/43)*43))/
+        (INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1));
+        0
+    )
+)
+
+================================================================================
+ISTRUZIONI
+================================================================================
+
+1. USA LA VERSIONE CON OFFSET (non ha limiti di range)
+2. Oppure ESTENDI IL RANGE a $B$9:$AAA$48 nella formula originale
+3. APPLICA nel range B53:AAA92 (o quanto serve per i tuoi prodotti)
+
+La versione con OFFSET è la più robusta perché:
+- Non dipende da range fissi
+- Funziona per qualsiasi numero di prodotti
+- Non genera mai #REF!
+
+================================================================================

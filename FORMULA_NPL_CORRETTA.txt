@@ -1,0 +1,129 @@
+================================================================================
+🔧 FORMULA NPL CORRETTA - PRENDE STOCK GBV AL TRIMESTRE t-1
+================================================================================
+
+IL PROBLEMA:
+La formula precedente prendeva lo Stock GBV al trimestre del default.
+DEVE invece prendere lo Stock GBV del trimestre PRIMA (quando ancora non è defaulted).
+
+================================================================================
+FORMULA CORRETTA DEFINITIVA
+================================================================================
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-138+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+    OFFSET($B$97;ROW()-139;ROW()-139+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-2+(INT((COLUMN()-2)/43)*43))*
+    INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1);
+    0
+)
+
+NOTA LA DIFFERENZA: -2 invece di -1 nell'OFFSET per prendere il trimestre precedente
+
+
+================================================================================
+VERSIONE ANCORA PIÙ CHIARA
+================================================================================
+
+=LET(
+    prod;INT((COLUMN()-2)/43)+1;
+    riga_rel;ROW()-138;
+    col_rel;MOD(COLUMN()-2;43)+1;
+    timing;INDEX(Input!$D$80:$W$80;1;prod);
+    danger;INDEX(Input!$D$75:$W$75;1;prod);
+    trim_default;riga_rel+timing;
+    
+    IF(col_rel=trim_default;
+        OFFSET($B$97;riga_rel-1;trim_default-3+(prod-1)*43)*danger;
+        0
+    )
+)
+
+
+================================================================================
+LOGICA CORRETTA
+================================================================================
+
+1. Al trimestre t=12 (esempio), il credito è ancora performing
+2. Al trimestre t=13, diventa NPL
+3. Quindi NPL_t13 = Stock_GBV_t12 × Danger_Rate
+
+La formula deve:
+- Verificare se siamo al trimestre di default (erog + timing)
+- Prendere lo Stock GBV del trimestre PRECEDENTE
+- Moltiplicare per Danger Rate
+
+================================================================================
+ESEMPIO NUMERICO CORRETTO
+================================================================================
+
+Stock GBV: 0.15 al trimestre 12
+Danger Rate: 10%
+Default Timing: 12 trimestri dopo erogazione
+
+Al trimestre 13 (1+12):
+NPL = Stock_GBV[12] × 10% = 0.15 × 0.10 = 0.015 ✅
+
+
+================================================================================
+FORMULA ALTERNATIVA (PIÙ ESPLICITA)
+================================================================================
+
+Se preferisci una formula che rende più chiaro il concetto di "trimestre precedente":
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-138+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+    IF(MOD(COLUMN()-2;43)>0;
+        OFFSET($B$97;ROW()-139;MOD(COLUMN()-2;43)-1+(INT((COLUMN()-2)/43)*43))*
+        INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1);
+        0
+    );
+    0
+)
+
+
+================================================================================
+VERIFICA VELOCE
+================================================================================
+
+Per verificare che funzioni:
+
+1. Guarda lo Stock GBV al trimestre 12 (dovrebbe essere 0.15)
+2. Al trimestre 13 deve apparire NPL = 0.15 × 0.10 = 0.015
+3. Tutti gli altri trimestri devono essere 0
+
+Se vedi 0.045, probabilmente sta prendendo lo Stock GBV sbagliato (magari del trimestre 13 invece del 12).
+
+
+================================================================================
+DEBUGGING
+================================================================================
+
+Se ancora non funziona, prova questa formula di test semplificata:
+
+Per Prodotto 1, con Default Timing fisso a 12:
+
+=IF(
+    COLUMN()-1=ROW()-138+12;
+    INDEX($B$97:$AM$136;ROW()-140;COLUMN()-2)*0.10;
+    0
+)
+
+Questa prende sempre lo Stock GBV della colonna precedente e applica 10%.
+
+
+================================================================================
+ISTRUZIONI
+================================================================================
+
+1️⃣ CANCELLA la formula vecchia
+
+2️⃣ COPIA la FORMULA CORRETTA DEFINITIVA
+
+3️⃣ INCOLLA in B141
+
+4️⃣ ESTENDI al range completo
+
+5️⃣ VERIFICA che NPL = 0.015 (non 0.045)
+
+
+================================================================================

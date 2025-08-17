@@ -1,0 +1,214 @@
+================================================================================
+🎯 FORMULA STOCK GBV - VERSIONE SEMPLICE E ROBUSTA
+================================================================================
+
+FORMULA UNIVERSALE DEFINITIVA
+================================================================================
+
+Copia questa formula nel range B97:CC136 (e oltre per più prodotti):
+
+=IF(
+    MOD(COLUMN()-2;43)+1>=ROW()-96;
+    MAX(0;
+        OFFSET($B$9;ROW()-97;ROW()-97+(INT((COLUMN()-2)/43)*43))-
+        IF(MOD(COLUMN()-2;43)+1>ROW()-96;
+            SUM(OFFSET($B$53;ROW()-97;ROW()-96+(INT((COLUMN()-2)/43)*43);1;MIN(40;MOD(COLUMN()-2;43)-ROW()+97)));
+            0
+        )
+    );
+    0
+)
+
+
+================================================================================
+VERSIONE ANCORA PIÙ SEMPLICE (SE HAI PROBLEMI)
+================================================================================
+
+Se la formula sopra dà problemi, usa questa versione step-by-step:
+
+Per Prodotto 1 (colonne B-AM):
+-------------------------------
+=IF(
+    COLUMN()-1>=ROW()-96;
+    MAX(0;
+        INDEX($B$9:$AM$48;ROW()-96;ROW()-96)-
+        IF(COLUMN()>ROW()-96+1;
+            SUM(OFFSET($B$53;ROW()-97;ROW()-97;1;MIN(40;COLUMN()-ROW()+95)));
+            0
+        )
+    );
+    0
+)
+
+Per Prodotto 2 (colonne AR-CC):
+--------------------------------
+=IF(
+    COLUMN()-43>=ROW()-96;
+    MAX(0;
+        INDEX($AR$9:$CC$48;ROW()-96;ROW()-96)-
+        IF(COLUMN()>ROW()-96+43;
+            SUM(OFFSET($AR$53;ROW()-97;ROW()-97;1;MIN(40;COLUMN()-ROW()+95-43)));
+            0
+        )
+    );
+    0
+)
+
+
+================================================================================
+FORMULA SUPER-SEMPLIFICATA PER CAPIRE LA LOGICA
+================================================================================
+
+Esempio per la prima riga (97) del Prodotto 1:
+
+Cella B97: =B9
+Cella C97: =B9-B53
+Cella D97: =B9-SUM($B$53:C53)
+Cella E97: =B9-SUM($B$53:D53)
+Cella F97: =B9-SUM($B$53:E53)
+
+Pattern: Stock = Erogazione iniziale - Somma rimborsi fino a quel trimestre
+
+
+================================================================================
+FORMULA INTELLIGENTE CON CONTROLLI
+================================================================================
+
+Questa versione include tutti i controlli necessari:
+
+=IFERROR(
+    IF(
+        AND(
+            MOD(COLUMN()-2;43)>=0;
+            MOD(COLUMN()-2;43)<40;
+            ROW()>=97;
+            ROW()<=136
+        );
+        IF(
+            MOD(COLUMN()-2;43)+1>=ROW()-96;
+            LET(
+                prod;INT((COLUMN()-2)/43)+1;
+                r_rel;ROW()-96;
+                c_rel;MOD(COLUMN()-2;43)+1;
+                erog;OFFSET($B$9;r_rel-1;r_rel-1+(prod-1)*43);
+                rimb_tot;IF(c_rel>r_rel;
+                    SUM(OFFSET($B$53;r_rel-1;r_rel-1+(prod-1)*43;1;c_rel-r_rel));
+                    0
+                );
+                MAX(0;erog-rimb_tot)
+            );
+            0
+        );
+        0
+    );
+    0
+)
+
+Nota: LET richiede Excel 365
+
+
+================================================================================
+COME FUNZIONA (SPIEGAZIONE SEMPLICE)
+================================================================================
+
+La formula fa 3 cose:
+
+1️⃣ PRENDE L'EROGAZIONE INIZIALE
+   - Dalla diagonale della matrice erogazioni (riga 9-48)
+   - Es: Prima coorte prende da B9, seconda da C10, etc.
+
+2️⃣ SOTTRAE I RIMBORSI CUMULATI
+   - Somma tutti i rimborsi effettuati fino a quel trimestre
+   - Dalla matrice rimborsi (riga 53-92)
+
+3️⃣ MOSTRA IL RISULTATO
+   - Stock = Erogazione - Rimborsi totali
+   - 0 se negativo o prima dell'erogazione
+
+
+================================================================================
+ESEMPI PRATICI DI CALCOLO
+================================================================================
+
+📊 SCENARIO BULLET (tutto alla fine):
+--------------------------------------
+Trimestre:    Q1   Q2   Q3   Q4   Q5
+Erogazione:   100  -    -    -    -
+Rimborsi:     0    0    0    0    100
+Stock GBV:    100  100  100  100  0
+
+📊 SCENARIO AMORTIZING (rate costanti):
+----------------------------------------
+Trimestre:    Q1   Q2   Q3   Q4   Q5
+Erogazione:   100  -    -    -    -
+Rimborsi:     0    25   25   25   25
+Stock GBV:    100  75   50   25   0
+
+📊 SCENARIO PRE-AMMORTAMENTO (2 trim):
+---------------------------------------
+Trimestre:    Q1   Q2   Q3   Q4   Q5   Q6   Q7
+Erogazione:   120  -    -    -    -    -    -
+Rimborsi:     0    0    0    30   30   30   30
+Stock GBV:    120  120  120  90   60   30   0
+
+
+================================================================================
+ISTRUZIONI PASSO-PASSO
+================================================================================
+
+1️⃣ SELEZIONA la cella B97 nel foglio Calcoli
+
+2️⃣ INCOLLA la FORMULA UNIVERSALE DEFINITIVA
+
+3️⃣ PREMI Invio
+
+4️⃣ COPIA la formula (Ctrl+C o Cmd+C)
+
+5️⃣ SELEZIONA il range B97:CC136
+
+6️⃣ INCOLLA (Ctrl+V o Cmd+V)
+
+7️⃣ VERIFICA che:
+   - Diagonale = erogazioni iniziali
+   - Stock diminuisce con i rimborsi
+   - Stock = 0 quando tutto è rimborsato
+
+
+================================================================================
+TROUBLESHOOTING RAPIDO
+================================================================================
+
+❌ ERRORE #REF!
+✅ Usa OFFSET invece di INDEX con range fissi
+
+❌ Stock sempre = erogazione
+✅ Verifica che la matrice rimborsi sia popolata
+
+❌ Stock negativo
+✅ Aggiungi MAX(0;...) intorno alla formula
+
+❌ Valori strani
+✅ Controlla che:
+   - Matrice 1 (erogazioni) sia alla riga 9
+   - Matrice 2 (rimborsi) sia alla riga 53
+   - Matrice 3 (stock) sia alla riga 97
+
+
+================================================================================
+TEST VELOCE
+================================================================================
+
+Per testare se funziona:
+
+1. Metti 100 in B9 (prima erogazione)
+2. Metti 100 in F53 (rimborso bullet al Q5)
+3. Verifica in riga 97:
+   - B97 = 100
+   - C97 = 100
+   - D97 = 100
+   - E97 = 100
+   - F97 = 0
+
+Se vedi questi valori, la formula funziona! 🎉
+
+================================================================================

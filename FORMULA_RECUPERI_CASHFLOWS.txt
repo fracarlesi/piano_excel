@@ -1,0 +1,189 @@
+================================================================================
+🎯 FORMULA MATRICE 5 - CASHFLOWS RECUPERI
+================================================================================
+
+LOGICA DI CALCOLO
+================================================================================
+
+Per ogni coorte che va in default:
+1. Al trimestre T_default: GBV diventa NPL
+2. Al trimestre T_default + Recovery_MCC: recupero garanzia MCC (senza haircut)
+3. Al trimestre T_default + Recovery_Imm: recupero garanzia immobiliare (con haircut)
+
+IMPORTANTE: Il recupero immobiliare si calcola sul GBV residuo dopo MCC
+
+================================================================================
+FORMULA UNIVERSALE PER RECUPERI
+================================================================================
+
+=LET(
+    prod;INT((COLUMN()-2)/43)+1;
+    riga_rel;ROW()-184;
+    col_rel;MOD(COLUMN()-2;43)+1;
+    
+    default_timing;INDEX(Input!$D$80:$W$80;1;prod);
+    recovery_mcc_timing;INDEX(Input!$D$82:$W$82;1;prod);
+    recovery_imm_timing;INDEX(Input!$D$81:$W$81;1;prod);
+    
+    trim_recupero_mcc;riga_rel+default_timing+recovery_mcc_timing;
+    trim_recupero_imm;riga_rel+default_timing+recovery_imm_timing;
+    
+    gbv_defaulted;INDEX($B$141:$ZZ$180;riga_rel;riga_rel+default_timing+(prod-1)*43);
+    
+    garanzia_mcc;INDEX(Input!$D$71:$W$71;1;prod);
+    ltv;INDEX(Input!$D$70:$W$70;1;prod);
+    haircut;INDEX(Input!$D$76:$W$76;1;prod);
+    costi;INDEX(Input!$D$77:$W$77;1;prod);
+    
+    recupero_mcc;gbv_defaulted*garanzia_mcc;
+    gbv_residuo;gbv_defaulted-recupero_mcc;
+    recupero_imm;gbv_residuo*ltv*(1-haircut-costi);
+    
+    IFS(
+        col_rel=trim_recupero_mcc;recupero_mcc;
+        col_rel=trim_recupero_imm;recupero_imm;
+        TRUE;0
+    )
+)
+
+Nota: LET e IFS richiedono Excel 365
+
+
+================================================================================
+VERSIONE SENZA LET (COMPATIBILE)
+================================================================================
+
+Questa formula gestisce entrambi i recuperi:
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+    INDEX($B$141:$ZZ$180;ROW()-184;ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+(INT((COLUMN()-2)/43)*43))*
+    INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$81:$W$81;1;INT((COLUMN()-2)/43)+1);
+        (INDEX($B$141:$ZZ$180;ROW()-184;ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+(INT((COLUMN()-2)/43)*43))*
+        (1-INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1)))*
+        INDEX(Input!$D$70:$W$70;1;INT((COLUMN()-2)/43)+1)*
+        (1-INDEX(Input!$D$76:$W$76;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$77:$W$77;1;INT((COLUMN()-2)/43)+1));
+        0
+    )
+)
+
+
+================================================================================
+FORMULA SEMPLIFICATA PIÙ LEGGIBILE
+================================================================================
+
+Per capire meglio, dividiamo in due formule separate:
+
+FORMULA 1 - RECUPERO MCC (arriva prima):
+-----------------------------------------
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+    OFFSET($B$141;ROW()-185;ROW()-185+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+    INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+    0
+)
+
+FORMULA 2 - RECUPERO IMMOBILIARE (arriva dopo):
+------------------------------------------------
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$81:$W$81;1;INT((COLUMN()-2)/43)+1);
+    OFFSET($B$141;ROW()-185;ROW()-185+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+    (1-INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1))*
+    INDEX(Input!$D$70:$W$70;1;INT((COLUMN()-2)/43)+1)*
+    (1-INDEX(Input!$D$76:$W$76;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$77:$W$77;1;INT((COLUMN()-2)/43)+1));
+    0
+)
+
+Poi sommarle: =FORMULA1+FORMULA2
+
+
+================================================================================
+FORMULA COMBINATA DEFINITIVA (CONSIGLIATA)
+================================================================================
+
+Questa versione gestisce tutto in una formula:
+
+=IFERROR(
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+        OFFSET($B$141;ROW()-185;ROW()-185+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+        INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+        IF(
+            MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$81:$W$81;1;INT((COLUMN()-2)/43)+1);
+            OFFSET($B$141;ROW()-185;ROW()-185+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+            (1-INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1))*
+            INDEX(Input!$D$70:$W$70;1;INT((COLUMN()-2)/43)+1)*
+            (1-INDEX(Input!$D$76:$W$76;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$77:$W$77;1;INT((COLUMN()-2)/43)+1));
+            0
+        )
+    );
+    0
+)
+
+
+================================================================================
+ESEMPI DI CALCOLO
+================================================================================
+
+📊 ESEMPIO - Prodotto 1:
+-------------------------
+GBV defaulted: 0.015 (al trimestre 6)
+Garanzia MCC: 50%
+LTV: 70%
+Haircut: 15%
+Costi: 5%
+Recovery MCC timing: 4 trimestri
+Recovery Imm timing: 8 trimestri
+
+RECUPERO MCC (trimestre 10 = 6+4):
+- Importo: 0.015 × 0.50 = 0.0075
+
+RECUPERO IMMOBILIARE (trimestre 14 = 6+8):
+- GBV residuo: 0.015 - 0.0075 = 0.0075
+- Importo: 0.0075 × 0.70 × (1-0.15-0.05) = 0.0075 × 0.70 × 0.80 = 0.0042
+
+
+================================================================================
+POSIZIONAMENTO
+================================================================================
+
+Matrice 5 Recuperi: righe 185-224
+
+Relazione con altre matrici:
+- NPL (Matrice 4): righe 141-180 (44 righe sopra)
+- Recuperi (Matrice 5): righe 185-224
+
+
+================================================================================
+VERIFICA CALCOLI
+================================================================================
+
+1. TIMING RECUPERO MCC:
+   Colonna = Riga - 184 + Default_Timing + Recovery_MCC_Timing
+
+2. TIMING RECUPERO IMM:
+   Colonna = Riga - 184 + Default_Timing + Recovery_Imm_Timing
+
+3. IMPORTI:
+   - MCC: GBV_defaulted × Garanzia_MCC%
+   - Imm: (GBV_defaulted - Recupero_MCC) × LTV × (1-Haircut-Costi)
+
+
+================================================================================
+NOTE IMPORTANTI
+================================================================================
+
+⚠️ ASSUNZIONI:
+- Solo 2 cashflows per coorte (MCC + Immobiliare)
+- MCC arriva sempre prima (timing più breve)
+- Nessun haircut su MCC (garanzia statale)
+- Haircut e costi solo su immobiliare
+
+✅ La formula gestisce automaticamente:
+- Prodotti senza garanzia MCC (E71=0 per Prodotto 2)
+- Diversi timing di recupero per prodotto
+- GBV residuo dopo primo recupero
+
+================================================================================

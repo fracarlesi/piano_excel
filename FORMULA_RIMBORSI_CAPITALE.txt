@@ -1,0 +1,227 @@
+================================================================================
+FORMULA UNIVERSALE MATRICE 2 - RIMBORSI CAPITALE
+================================================================================
+
+FORMULA MASTER UNIVERSALE - GESTISCE BULLET E AMORTIZING
+================================================================================
+
+Questa formula gestisce automaticamente:
+- BULLET: rimborso totale alla maturity
+- AMORTIZING: piano di ammortamento alla francese
+- PRE-AMMORTAMENTO: periodo iniziale senza rimborso capitale
+
+FORMULA COMPLETA:
+-----------------
+=LET(
+    prodotto_num;INT((COLUMN()-2)/43)+1;
+    tipo_amm;INDEX(Input!$D$67:$W$67;1;prodotto_num);
+    maturity;INDEX(Input!$D$68:$W$68;1;prodotto_num);
+    pre_amm;INDEX(Input!$D$69:$W$69;1;prodotto_num);
+    riga_erog;ROW()-51;
+    col_rimb;COLUMN()-1-INT((COLUMN()-2)/43)*43;
+    trim_erog;riga_erog;
+    trim_rimb;col_rimb;
+    trim_inizio_rimb;trim_erog+pre_amm;
+    trim_fine;trim_erog+maturity-1;
+    capitale_erog;INDEX(Calcoli!$B$9:$CC$48;riga_erog;riga_erog+INT((prodotto_num-1)*43));
+    
+    IF(tipo_amm="bullet";
+        IF(trim_rimb=trim_fine+1;capitale_erog;0);
+        IF(tipo_amm="amortizing";
+            IF(AND(trim_rimb>trim_inizio_rimb;trim_rimb<=trim_fine+1);
+                capitale_erog/(maturity-pre_amm);
+                0
+            );
+            0
+        )
+    )
+)
+
+NOTA: LET richiede Excel 365
+
+
+================================================================================
+VERSIONE SENZA LET (COMPATIBILE CON TUTTE LE VERSIONI)
+================================================================================
+
+Formula per rimborsi con logica incorporata:
+
+=IF(
+    INDEX(Input!$D$67:$W$67;1;INT((COLUMN()-2)/43)+1)="bullet";
+    IF(
+        COLUMN()-1-INT((COLUMN()-2)/43)*43=ROW()-51+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1);
+        INDEX($B$9:$CC$48;ROW()-51;ROW()-51+INT((INT((COLUMN()-2)/43))*43));
+        0
+    );
+    IF(
+        INDEX(Input!$D$67:$W$67;1;INT((COLUMN()-2)/43)+1)="amortizing";
+        IF(
+            AND(
+                COLUMN()-1-INT((COLUMN()-2)/43)*43>ROW()-51+INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1);
+                COLUMN()-1-INT((COLUMN()-2)/43)*43<=ROW()-51+INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)
+            );
+            INDEX($B$9:$CC$48;ROW()-51;ROW()-51+INT((INT((COLUMN()-2)/43))*43))/
+            (INDEX(Input!$D$68:$W$68;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$69:$W$69;1;INT((COLUMN()-2)/43)+1));
+            0
+        );
+        0
+    )
+)
+
+
+================================================================================
+VERSIONE SEMPLIFICATA PER TESTING
+================================================================================
+
+Per Prodotto 1 (bullet - maturity 4 trimestri):
+-----------------------------------------------
+Nella cella B53 (prima riga matrice rimborsi):
+=IF(COLUMN()-1=4;B9;0)
+
+Nella cella C54:
+=IF(COLUMN()-2=4;C10;0)
+
+Formula generica per Prodotto 1 bullet:
+=IF(COLUMN()=ROW()-53+4+1;INDEX($B$9:$AM$48;ROW()-52;ROW()-52);0)
+
+
+Per Prodotto 2 (amortizing - maturity 4 trimestri):
+---------------------------------------------------
+Nella cella AR53 (prima riga matrice rimborsi):
+=IF(AND(COLUMN()-43>=1;COLUMN()-43<=4);AR9/4;0)
+
+Formula generica per Prodotto 2 amortizing:
+=IF(AND(COLUMN()-43>=1;COLUMN()-43<=4);INDEX($AR$9:$CC$48;ROW()-52;ROW()-52)/4;0)
+
+
+================================================================================
+FORMULA SUPER-INTELLIGENTE (CONSIGLIATA)
+================================================================================
+
+Questa formula gestisce tutto automaticamente e in modo leggibile:
+
+=LET(
+    prod;INT((COLUMN()-2)/43)+1;
+    tipo;VLOOKUP(prod;Input!$D$64:$W$69;4;0);
+    mat;VLOOKUP(prod;Input!$D$64:$W$69;5;0);
+    pre;VLOOKUP(prod;Input!$D$64:$W$69;6;0);
+    r_erog;ROW()-52;
+    c_rimb;MOD(COLUMN()-2;43)+1;
+    erog_val;INDEX($B$9:$CC$48;r_erog;r_erog+(prod-1)*43);
+    
+    IFS(
+        tipo="bullet";IF(c_rimb=mat+1;erog_val;0);
+        tipo="amortizing";IF(AND(c_rimb>pre;c_rimb<=mat);erog_val/(mat-pre);0);
+        TRUE;0
+    )
+)
+
+
+================================================================================
+LOGICA DI CALCOLO DETTAGLIATA
+================================================================================
+
+1. BULLET (rimborso unico alla scadenza):
+   - Tutto il capitale viene rimborsato alla maturity
+   - Formula: se trimestre = maturity → capitale_erogato; altrimenti 0
+   - Esempio: prestito 100 a 4 trimestri → 0,0,0,0,100
+
+2. AMORTIZING (piano francese):
+   - Capitale diviso equamente tra i trimestri (semplificato)
+   - Formula: capitale_erogato / (maturity - pre_ammortamento)
+   - Esempio: prestito 100 a 4 trimestri → 25,25,25,25
+
+3. PRE-AMMORTAMENTO:
+   - Periodo iniziale senza rimborso capitale
+   - Solo per amortizing
+   - Esempio: prestito 100, 6 trim, 2 pre-amm → 0,0,25,25,25,25
+
+
+================================================================================
+POSIZIONAMENTO NELLE MATRICI
+================================================================================
+
+Le matrici rimborsi iniziano alla riga 53 del foglio Calcoli:
+
+Prodotto 1: B53:AM92 (40 righe × 40 colonne)
+Prodotto 2: AR53:CC92 (40 righe × 40 colonne)
+Prodotto 3: CH53:DT92 (quando creato)
+etc.
+
+Struttura:
+- Ogni riga rappresenta un'erogazione (coorte)
+- Ogni colonna rappresenta un trimestre di rimborso
+- I rimborsi si distribuiscono orizzontalmente dalla diagonale
+
+
+================================================================================
+PARAMETRI DAL FOGLIO INPUT
+================================================================================
+
+Riga 67 (D67:W67): Tipo ammortamento ("bullet" o "amortizing")
+Riga 68 (D68:W68): Maturity in trimestri (es. 4, 8, 12)
+Riga 69 (D69:W69): Periodo pre-ammortamento in trimestri (es. 0, 2, 4)
+
+Prodotto 1: colonna D
+Prodotto 2: colonna E
+Prodotto 3: colonna F
+etc.
+
+
+================================================================================
+ESEMPI PRATICI
+================================================================================
+
+ESEMPIO 1 - Prodotto 1 Bullet (maturity 4):
+-------------------------------------------
+Erogazione Q1 = 100
+Rimborsi: Q1=0, Q2=0, Q3=0, Q4=0, Q5=100
+
+ESEMPIO 2 - Prodotto 2 Amortizing (maturity 4):
+-----------------------------------------------
+Erogazione Q1 = 100
+Rimborsi: Q1=0, Q2=25, Q3=25, Q4=25, Q5=25
+
+ESEMPIO 3 - Prodotto 3 Amortizing con pre-amm 2 (mat 6):
+---------------------------------------------------------
+Erogazione Q1 = 120
+Rimborsi: Q1=0, Q2=0, Q3=0, Q4=30, Q5=30, Q6=30, Q7=30
+
+
+================================================================================
+ISTRUZIONI PER L'IMPLEMENTAZIONE
+================================================================================
+
+1. COPIA la formula SUPER-INTELLIGENTE (se hai Excel 365) o la VERSIONE SENZA LET
+
+2. SELEZIONA il range della matrice rimborsi:
+   - Prodotto 1: B53:AM92
+   - Prodotto 2: AR53:CC92
+
+3. INCOLLA la formula e premi INVIO
+
+4. VERIFICA che:
+   - Bullet: rimborso totale appare solo alla maturity+1
+   - Amortizing: rimborsi distribuiti uniformemente
+   - Pre-ammortamento: primi trimestri vuoti se presente
+
+5. TESTA con valori diversi in Input per verificare il comportamento
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+PROBLEMA: #VALUE! o #NAME!
+SOLUZIONE: Verifica che i tipi in D67:W67 siano esattamente "bullet" o "amortizing"
+
+PROBLEMA: Rimborsi non allineati con erogazioni
+SOLUZIONE: Verifica che la matrice erogazioni (B9:CC48) sia popolata correttamente
+
+PROBLEMA: Somma rimborsi ≠ erogazione
+SOLUZIONE: Controlla maturity e pre-ammortamento siano coerenti
+
+PROBLEMA: Formula troppo complessa
+SOLUZIONE: Usa versioni semplificate per prodotto singolo prima di implementare quella universale
+
+================================================================================

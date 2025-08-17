@@ -1,0 +1,136 @@
+================================================================================
+🔧 FORMULA RECUPERI CORRETTA - RISOLVE PROBLEMA ZERI
+================================================================================
+
+PROBLEMA IDENTIFICATO:
+La formula cercava NPL con offset sbagliato. 
+NPL è alla riga 141, Recuperi alla riga 185.
+Offset corretto: 141-185 = -44
+
+================================================================================
+FORMULA CORRETTA DEFINITIVA
+================================================================================
+
+=IFERROR(
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+        INDEX($B$141:$ZZ$180;ROW()-184;ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+        INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+        IF(
+            MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$81:$W$81;1;INT((COLUMN()-2)/43)+1);
+            INDEX($B$141:$ZZ$180;ROW()-184;ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+            (1-INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1))*
+            INDEX(Input!$D$70:$W$70;1;INT((COLUMN()-2)/43)+1)*
+            (1-INDEX(Input!$D$76:$W$76;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$77:$W$77;1;INT((COLUMN()-2)/43)+1));
+            0
+        )
+    );
+    0
+)
+
+
+================================================================================
+VERSIONE PIÙ SEMPLICE PER TESTING
+================================================================================
+
+Per verificare che funzioni, testa prima queste formule semplificate:
+
+TEST 1 - Verifica che prenda NPL corretto:
+-------------------------------------------
+In una cella qualsiasi metti:
+=H141
+
+Dovrebbe mostrare 0.015 (o il valore NPL che hai)
+
+
+TEST 2 - Formula recupero MCC semplificata per prima coorte:
+-------------------------------------------------------------
+In L185 (colonna 12, trimestre 11 = 1+6+4):
+=H141*$D$71
+
+Dovrebbe dare: 0.015 × 0.50 = 0.0075
+
+
+TEST 3 - Formula recupero Immobiliare per prima coorte:
+--------------------------------------------------------
+In P185 (colonna 16, trimestre 15 = 1+6+8):
+=H141*(1-$D$71)*$D$70*(1-$D$76-$D$77)
+
+Dovrebbe dare: 0.015 × 0.50 × 0.70 × 0.80 = 0.0042
+
+
+================================================================================
+FORMULA ALTERNATIVA CON OFFSET (PIÙ ROBUSTA)
+================================================================================
+
+=IFERROR(
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+        OFFSET($B$141;ROW()-185;ROW()-185+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+        INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+        IF(
+            MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$81:$W$81;1;INT((COLUMN()-2)/43)+1);
+            OFFSET($B$141;ROW()-185;ROW()-185+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+            (1-INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1))*
+            INDEX(Input!$D$70:$W$70;1;INT((COLUMN()-2)/43)+1)*
+            (1-INDEX(Input!$D$76:$W$76;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$77:$W$77;1;INT((COLUMN()-2)/43)+1));
+            0
+        )
+    );
+    0
+)
+
+
+================================================================================
+VERIFICA PASSO PASSO
+================================================================================
+
+Per la prima coorte (riga 185):
+
+1. DEFAULT al trimestre 7 (colonna H)
+   - NPL in H141 = 0.015
+
+2. RECUPERO MCC al trimestre 11 (colonna L = 1+6+4)
+   - Garanzia MCC (D71) = 50%
+   - Recupero = 0.015 × 0.50 = 0.0075
+
+3. RECUPERO IMMOBILIARE al trimestre 15 (colonna P = 1+6+8)
+   - GBV residuo = 0.015 - 0.0075 = 0.0075
+   - LTV (D70) = 70%
+   - Haircut (D76) = 15%
+   - Costi (D77) = 5%
+   - Recupero = 0.0075 × 0.70 × (1-0.15-0.05) = 0.0042
+
+
+================================================================================
+CONTROLLI DA FARE
+================================================================================
+
+1. VERIFICA che in H141 ci sia effettivamente 0.015
+2. VERIFICA i parametri in Input:
+   - D71 (Garanzia MCC) = 0.50
+   - D70 (LTV) = 0.70
+   - D76 (Haircut) = 0.15
+   - D77 (Costi) = 0.05
+   - D80 (Default Timing) = 6
+   - D82 (Recovery MCC) = 4
+   - D81 (Recovery Imm) = 8
+
+3. VERIFICA i timing:
+   - Recupero MCC dovrebbe apparire in L185
+   - Recupero Imm dovrebbe apparire in P185
+
+
+================================================================================
+NOTA SUL DEFAULT TIMING
+================================================================================
+
+Ho notato che nei tuoi dati il Default Timing potrebbe essere 4 (non 6).
+Se è così:
+- Default al Q5 (colonna F)
+- Recupero MCC al Q9 (colonna J = 1+4+4)
+- Recupero Imm al Q13 (colonna N = 1+4+8)
+
+Adatta la formula di conseguenza verificando D80.
+
+================================================================================

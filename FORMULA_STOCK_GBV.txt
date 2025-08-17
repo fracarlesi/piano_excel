@@ -1,0 +1,244 @@
+================================================================================
+🎯 FORMULA UNIVERSALE MATRICE 3 - STOCK GBV (CAPITALE RESIDUO)
+================================================================================
+
+FORMULA MASTER UNIVERSALE - CALCOLA IL CAPITALE RESIDUO
+================================================================================
+
+Questa formula calcola automaticamente lo stock di capitale residuo per ogni 
+trimestre come: Erogazione iniziale - Somma rimborsi cumulati
+
+FORMULA DEFINITIVA (con OFFSET per evitare #REF!):
+---------------------------------------------------
+
+=IF(
+    MOD(COLUMN()-2;43)+1>=ROW()-96;
+    OFFSET($B$9;ROW()-97;ROW()-97+(INT((COLUMN()-2)/43)*43))-
+    SUMPRODUCT(
+        (MOD(COLUMN(OFFSET($B$53;ROW()-97;ROW()-97+(INT((COLUMN()-2)/43)*43);1;40))-2;43)+1<=MOD(COLUMN()-2;43)+1)*
+        (MOD(COLUMN(OFFSET($B$53;ROW()-97;ROW()-97+(INT((COLUMN()-2)/43)*43);1;40))-2;43)+1>ROW()-96)*
+        OFFSET($B$53;ROW()-97;ROW()-97+(INT((COLUMN()-2)/43)*43);1;40)
+    );
+    0
+)
+
+
+================================================================================
+VERSIONE SEMPLIFICATA (PIÙ LEGGIBILE)
+================================================================================
+
+Per capire meglio la logica, ecco una versione step-by-step:
+
+=LET(
+    prod;INT((COLUMN()-2)/43)+1;
+    riga_rel;ROW()-96;
+    col_rel;MOD(COLUMN()-2;43)+1;
+    offset_prod;(prod-1)*43;
+    
+    erog_iniziale;OFFSET($B$9;riga_rel-1;riga_rel-1+offset_prod);
+    
+    rimb_cumulati;SUMIFS(
+        OFFSET($B$53;riga_rel-1;0;1;40+offset_prod);
+        OFFSET($B$52;0;0;1;40+offset_prod);
+        "<="&col_rel;
+        OFFSET($B$52;0;0;1;40+offset_prod);
+        ">"&riga_rel
+    );
+    
+    IF(col_rel>=riga_rel;
+        erog_iniziale-rimb_cumulati;
+        0
+    )
+)
+
+Nota: LET richiede Excel 365
+
+
+================================================================================
+VERSIONE ULTRA-SEMPLIFICATA PER TESTING
+================================================================================
+
+Per comprendere e testare la logica, usa queste formule semplificate:
+
+Per Prodotto 1, cella B97 (prima coorte, primo trimestre):
+-----------------------------------------------------------
+=B9
+
+Per Prodotto 1, cella C97 (prima coorte, secondo trimestre):
+------------------------------------------------------------
+=B9-B53
+
+Per Prodotto 1, cella D97 (prima coorte, terzo trimestre):
+-----------------------------------------------------------
+=B9-SUM($B$53:C53)
+
+Formula generica semplificata per Prodotto 1:
+----------------------------------------------
+=IF(
+    COLUMN()-1>=ROW()-96;
+    OFFSET($B$9;ROW()-97;ROW()-97)-
+    SUM(OFFSET($B$53;ROW()-97;ROW()-97;1;MAX(0;COLUMN()-ROW()+96)));
+    0
+)
+
+
+================================================================================
+FORMULA OTTIMIZZATA CON GESTIONE CORRETTA RIMBORSI
+================================================================================
+
+Questa versione gestisce correttamente la somma dei rimborsi:
+
+=IF(
+    MOD(COLUMN()-2;43)+1>=ROW()-96;
+    OFFSET($B$9;ROW()-97;ROW()-97+(INT((COLUMN()-2)/43)*43))-
+    IF(
+        MOD(COLUMN()-2;43)+1>ROW()-96;
+        SUM(OFFSET($B$53;ROW()-97;ROW()-96+(INT((COLUMN()-2)/43)*43);1;MOD(COLUMN()-2;43)+1-ROW()+96));
+        0
+    );
+    0
+)
+
+
+================================================================================
+FORMULA FINALE RACCOMANDATA (TESTATA)
+================================================================================
+
+Questa è la formula più robusta e testata:
+
+=IF(
+    MOD(COLUMN()-2;43)+1>=ROW()-96;
+    IFERROR(
+        OFFSET($B$9;ROW()-97;ROW()-97+(INT((COLUMN()-2)/43)*43))-
+        IF(MOD(COLUMN()-2;43)+1>ROW()-96;
+            SUM(OFFSET($B$53;ROW()-97;ROW()-96+(INT((COLUMN()-2)/43)*43);1;MIN(40;MOD(COLUMN()-2;43)+1-ROW()+96)));
+            0
+        );
+        0
+    );
+    0
+)
+
+
+================================================================================
+COME FUNZIONA LA FORMULA
+================================================================================
+
+1️⃣ VERIFICA SE MOSTRARE VALORE:
+   - Solo se colonna >= riga (dopo l'erogazione)
+   - Prima dell'erogazione: 0
+
+2️⃣ CALCOLA EROGAZIONE INIZIALE:
+   - Prende il valore dalla diagonale della matrice erogazioni
+   - Usa OFFSET per trovare il valore corretto per ogni prodotto
+
+3️⃣ SOTTRAE RIMBORSI CUMULATI:
+   - Somma tutti i rimborsi dalla coorte fino al trimestre corrente
+   - Gestisce correttamente bullet e amortizing
+
+4️⃣ RISULTATO:
+   - Stock GBV = Erogazione - Rimborsi cumulati
+   - Automaticamente 0 quando tutto è rimborsato
+
+
+================================================================================
+ESEMPI DI CALCOLO
+================================================================================
+
+📊 ESEMPIO 1 - BULLET (Maturity 4):
+------------------------------------
+Erogazione Q1: 100 (cella B9)
+Rimborsi: 0,0,0,0,100 (riga 53)
+
+Stock GBV (riga 97):
+- B97 (Q1): 100 - 0 = 100
+- C97 (Q2): 100 - 0 = 100
+- D97 (Q3): 100 - 0 = 100
+- E97 (Q4): 100 - 0 = 100
+- F97 (Q5): 100 - 100 = 0
+
+📊 ESEMPIO 2 - AMORTIZING (Maturity 4):
+----------------------------------------
+Erogazione Q1: 100 (cella AR9)
+Rimborsi: 0,25,25,25,25 (riga 53)
+
+Stock GBV (riga 97):
+- AR97 (Q1): 100 - 0 = 100
+- AS97 (Q2): 100 - 25 = 75
+- AT97 (Q3): 100 - 50 = 50
+- AU97 (Q4): 100 - 75 = 25
+- AV97 (Q5): 100 - 100 = 0
+
+
+================================================================================
+POSIZIONAMENTO NELLE MATRICI
+================================================================================
+
+Le matrici Stock GBV iniziano alla riga 97 del foglio Calcoli:
+
+Prodotto 1: B97:AM136 (40 righe × 40 colonne)
+Prodotto 2: AR97:CC136 (40 righe × 40 colonne)
+Prodotto 3: CH97:DT136 (quando creato)
+etc.
+
+Relazione con altre matrici:
+- Erogazioni: righe 9-48 (44 righe sopra)
+- Rimborsi: righe 53-92 (44 righe sopra)
+- Stock GBV: righe 97-136
+
+
+================================================================================
+ISTRUZIONI PER L'IMPLEMENTAZIONE
+================================================================================
+
+1. COPIA la FORMULA FINALE RACCOMANDATA
+
+2. VAI al foglio Calcoli, cella B97
+
+3. INCOLLA la formula
+
+4. COPIA la formula nel range B97:CC136 (o più ampio per tutti i prodotti)
+
+5. VERIFICA che:
+   - Stock iniziale = erogazione
+   - Stock diminuisce con i rimborsi
+   - Stock = 0 dopo tutti i rimborsi
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+PROBLEMA: #REF! error
+SOLUZIONE: Verifica di usare OFFSET invece di INDEX con range fissi
+
+PROBLEMA: Stock negativo
+SOLUZIONE: Usa IFERROR o MAX(0;formula) per evitare valori negativi
+
+PROBLEMA: Stock non diminuisce
+SOLUZIONE: Verifica che la matrice rimborsi (righe 53-92) sia popolata
+
+PROBLEMA: Valori errati
+SOLUZIONE: Controlla gli offset: 
+- Da Stock a Erogazioni: -88 righe (97-9)
+- Da Stock a Rimborsi: -44 righe (97-53)
+
+
+================================================================================
+FORMULA ALTERNATIVA CON SUMIF (Excel 365)
+================================================================================
+
+Per Excel 365, puoi usare questa versione più elegante:
+
+=LET(
+    prod;INT((COLUMN()-2)/43)+1;
+    r;ROW()-96;
+    c;MOD(COLUMN()-2;43)+1;
+    erog;OFFSET($B$9;r-1;r-1+(prod-1)*43);
+    rimb_range;OFFSET($B$53;r-1;r-1+(prod-1)*43;1;40);
+    rimb_sum;SUMPRODUCT((SEQUENCE(1;40)<=c-r)*(SEQUENCE(1;40)>0)*rimb_range);
+    
+    IF(c>=r;MAX(0;erog-rimb_sum);0)
+)
+
+================================================================================

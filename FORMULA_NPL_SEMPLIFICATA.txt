@@ -1,0 +1,199 @@
+================================================================================
+🎯 FORMULA NPL (MATRICE 4) - DEFAULT SINGOLO SEMPLIFICATO
+================================================================================
+
+LOGICA DI CALCOLO
+================================================================================
+
+Per ogni coorte di erogazione:
+1. Parte dal trimestre di erogazione (riga nella matrice)
+2. Aspetta il numero di trimestri indicato in Default Timing (es. 12)
+3. AL trimestre esatto (erogazione + default timing), applica il Danger Rate
+4. NPL = Stock GBV × Danger Rate (una sola volta)
+5. NPL rimane costante nei trimestri successivi
+
+Esempio:
+- Erogazione al Q1
+- Default Timing = 12 trimestri
+- Default avviene al Q13 (1+12)
+- NPL dal Q13 in poi = Stock_GBV_Q12 × Danger_Rate
+
+================================================================================
+FORMULA UNIVERSALE DEFINITIVA
+================================================================================
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-138+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+    OFFSET($B$97;ROW()-139;COLUMN()-3-(INT((COLUMN()-2)/43)*43))*
+    INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1);
+    IF(
+        MOD(COLUMN()-2;43)+1>ROW()-138+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+        OFFSET($B$141;ROW()-139;COLUMN()-4-(INT((COLUMN()-2)/43)*43));
+        0
+    )
+)
+
+
+================================================================================
+VERSIONE PIÙ SEMPLICE E CHIARA
+================================================================================
+
+Questa versione è più facile da capire:
+
+=LET(
+    prod;INT((COLUMN()-2)/43)+1;
+    riga_rel;ROW()-138;
+    col_rel;MOD(COLUMN()-2;43)+1;
+    timing;INDEX(Input!$D$80:$W$80;1;prod);
+    danger;INDEX(Input!$D$75:$W$75;1;prod);
+    trim_default;riga_rel+timing;
+    
+    stock_gbv;OFFSET($B$97;riga_rel-1;col_rel-2+(prod-1)*43);
+    
+    IF(col_rel=trim_default;
+        stock_gbv*danger;
+        IF(col_rel>trim_default;
+            OFFSET($B$141;riga_rel-1;col_rel-2+(prod-1)*43);
+            0
+        )
+    )
+)
+
+Nota: LET richiede Excel 365
+
+
+================================================================================
+FORMULA SUPER-SEMPLIFICATA (CONSIGLIATA)
+================================================================================
+
+Questa è la più robusta e facile da implementare:
+
+=IF(
+    AND(
+        MOD(COLUMN()-2;43)+1>=ROW()-138+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+        ROW()>=141;
+        ROW()<=180
+    );
+    OFFSET($B$97;ROW()-139;ROW()-139+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+    INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1);
+    0
+)
+
+
+================================================================================
+ESEMPI DI CALCOLO
+================================================================================
+
+📊 ESEMPIO 1 - Prodotto 1:
+---------------------------
+- Erogazione Q1: 100 (Stock GBV)
+- Default Timing: 12 trimestri
+- Danger Rate: 5%
+- Trimestre default: Q1 + 12 = Q13
+
+Riga 141 (coorte Q1):
+- Colonne B-M (Q1-Q12): NPL = 0
+- Colonna N (Q13): NPL = 100 × 0.05 = 5
+- Colonne O-AM (Q14+): NPL = 5 (costante)
+
+📊 ESEMPIO 2 - Prodotto 2:
+---------------------------
+- Erogazione Q2: 80 (Stock GBV)
+- Default Timing: 12 trimestri
+- Danger Rate: 5%
+- Trimestre default: Q2 + 12 = Q14
+
+Riga 142 (coorte Q2):
+- Colonne AS-BE (Q2-Q13): NPL = 0
+- Colonna BF (Q14): NPL = 80 × 0.05 = 4
+- Colonne BG-CC (Q15+): NPL = 4 (costante)
+
+
+================================================================================
+POSIZIONE MATRICI
+================================================================================
+
+Matrice 4 NPL: righe 141-180 del foglio Calcoli
+
+Relazione con altre matrici:
+- Stock GBV (Matrice 3): righe 97-136 (44 righe sopra)
+- NPL (Matrice 4): righe 141-180
+
+Parametri Input utilizzati:
+- Danger Rate (riga 75): D75-W75 per prodotti 1-20
+- Default Timing (riga 80): D80-W80 per prodotti 1-20
+
+
+================================================================================
+FORMULA ALTERNATIVA - NPL PROGRESSIVO
+================================================================================
+
+Se preferisci che NPL si accumuli progressivamente dopo il default:
+
+=IF(
+    MOD(COLUMN()-2;43)+1>=ROW()-138+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+    MIN(
+        OFFSET($B$97;ROW()-139;COLUMN()-3-(INT((COLUMN()-2)/43)*43));
+        (MOD(COLUMN()-2;43)+1-ROW()+139-INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1))*
+        OFFSET($B$97;ROW()-139;ROW()-139+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43))*
+        INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1)/4
+    );
+    0
+)
+
+
+================================================================================
+ISTRUZIONI PER L'IMPLEMENTAZIONE
+================================================================================
+
+1️⃣ USA LA FORMULA SUPER-SEMPLIFICATA (più robusta)
+
+2️⃣ COPIA la formula nella cella B141
+
+3️⃣ ESTENDI al range B141:CC180 (o oltre per più prodotti)
+
+4️⃣ VERIFICA che:
+   - NPL = 0 prima del default timing
+   - NPL = Stock × Danger Rate al trimestre esatto
+   - NPL rimane costante dopo
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+❌ NPL sempre 0
+✅ Verifica che Default Timing (riga 80) sia compilato
+✅ Verifica che Danger Rate (riga 75) sia > 0
+
+❌ NPL appare subito
+✅ Controlla che la formula verifichi: col >= row + timing
+
+❌ NPL cambia ogni trimestre
+✅ Usa la formula che mantiene NPL costante dopo il default
+
+❌ #REF! error
+✅ Verifica che Stock GBV (matrice 3) sia popolato
+✅ Usa OFFSET invece di INDEX con range fissi
+
+
+================================================================================
+NOTE IMPORTANTI
+================================================================================
+
+⚠️ Questa è una SEMPLIFICAZIONE:
+- Default avviene UNA SOLA VOLTA al trimestre specificato
+- Non c'è accumulo progressivo
+- Non ci sono recuperi (gestiti in altra matrice)
+
+✅ Vantaggi di questo approccio:
+- Semplice da capire e verificare
+- Facile da modificare
+- Chiara relazione causa-effetto
+
+🔄 Per un modello più sofisticato potresti:
+- Aggiungere NPL progressivo
+- Includere cure rate
+- Gestire recuperi nella stessa matrice
+
+================================================================================

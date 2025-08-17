@@ -1,0 +1,158 @@
+================================================================================
+🧪 FORMULE TEST SEMPLIFICATE PER RECUPERI
+================================================================================
+
+STEP 1: VERIFICA MANUALE DEI DATI
+================================================================================
+
+Prima di tutto, controlla:
+
+1. In quale cella ESATTA vedi il valore NPL 0.015?
+   - Se è in H141 → Default al Q7
+   - Se è in F141 → Default al Q5
+   - Se è in altra cella, dimmi quale
+
+2. Verifica in Input:
+   - Cella D80 (Default Timing): che valore ha?
+   - Cella D82 (Recovery MCC): che valore ha?
+   - Cella D81 (Recovery Imm): che valore ha?
+   - Cella D71 (Garanzia MCC): che valore ha?
+
+
+================================================================================
+STEP 2: FORMULE TEST MANUALI
+================================================================================
+
+Basandoti su dove vedi NPL, usa una di queste:
+
+OPZIONE A - Se NPL è in H141 (Default Timing = 6):
+---------------------------------------------------
+Metti in L185:
+=H141*0.5
+
+Metti in P185:
+=H141*0.5*0.7*0.8
+
+
+OPZIONE B - Se NPL è in F141 (Default Timing = 4):
+---------------------------------------------------
+Metti in J185:
+=F141*0.5
+
+Metti in N185:
+=F141*0.5*0.7*0.8
+
+
+================================================================================
+STEP 3: FORMULA SEMPLIFICATA SENZA AUTOMAZIONE
+================================================================================
+
+Per Prodotto 1, con valori fissi:
+
+RECUPERO MCC (assumendo Default Q7, Recovery Q11):
+---------------------------------------------------
+In L185:
+=IF(COLUMN()=12;$H$141*$D$71;0)
+
+RECUPERO IMMOBILIARE (assumendo Default Q7, Recovery Q15):
+-----------------------------------------------------------
+In P185:
+=IF(COLUMN()=16;$H$141*(1-$D$71)*$D$70*(1-$D$76-$D$77);0)
+
+
+================================================================================
+STEP 4: FORMULA SEMI-AUTOMATICA
+================================================================================
+
+Questa versione usa i parametri ma con logica semplificata:
+
+Per la prima coorte (riga 185), metti questa formula e copiala lungo la riga:
+
+=IF(
+    COLUMN()-1=1+$D$80+$D$82;
+    INDEX($B$141:$AM$141;1;1+$D$80)*$D$71;
+    IF(
+        COLUMN()-1=1+$D$80+$D$81;
+        INDEX($B$141:$AM$141;1;1+$D$80)*(1-$D$71)*$D$70*(1-$D$76-$D$77);
+        0
+    )
+)
+
+
+================================================================================
+STEP 5: DEBUG - COSA CONTROLLARE
+================================================================================
+
+Se ancora vedi zeri:
+
+1. NPL MANCANTE:
+   - Verifica che ci sia davvero un valore > 0 nella matrice NPL
+   - Potrebbe essere che NPL sia 0 per qualche motivo
+
+2. TIMING SBAGLIATO:
+   - I recuperi potrebbero cadere fuori dal range visibile
+   - Es: se Default Timing = 12, i recuperi sarebbero al Q16 e Q20
+
+3. PARAMETRI ZERO:
+   - Se D71 (MCC) = 0, non ci sarà recupero MCC
+   - Se D70 (LTV) = 0, non ci sarà recupero immobiliare
+
+4. FORMULA NON ESTESA:
+   - Assicurati di copiare la formula su tutto il range
+
+
+================================================================================
+FORMULA UNIVERSALE RISCRITTA DA ZERO
+================================================================================
+
+Proviamo con un approccio completamente diverso:
+
+=LET(
+    prod;INT((COLUMN()-2)/43)+1;
+    coorte;ROW()-184;
+    trim_corrente;MOD(COLUMN()-2;43)+1;
+    
+    def_timing;INDEX(Input!$D$80:$W$80;1;prod);
+    mcc_timing;INDEX(Input!$D$82:$W$82;1;prod);
+    imm_timing;INDEX(Input!$D$81:$W$81;1;prod);
+    
+    trim_default;coorte+def_timing;
+    trim_rec_mcc;trim_default+mcc_timing;
+    trim_rec_imm;trim_default+imm_timing;
+    
+    npl_value;INDEX($B$141:$AM$180;coorte;trim_default);
+    
+    gar_mcc;INDEX(Input!$D$71:$W$71;1;prod);
+    ltv;INDEX(Input!$D$70:$W$70;1;prod);
+    haircut;INDEX(Input!$D$76:$W$76;1;prod);
+    costi;INDEX(Input!$D$77:$W$77;1;prod);
+    
+    IF(trim_corrente=trim_rec_mcc;
+        npl_value*gar_mcc;
+        IF(trim_corrente=trim_rec_imm;
+            npl_value*(1-gar_mcc)*ltv*(1-haircut-costi);
+            0
+        )
+    )
+)
+
+Nota: richiede Excel 365
+
+
+================================================================================
+AIUTAMI A DEBUGGARE
+================================================================================
+
+Per aiutarti meglio, dimmi:
+
+1. In quale cella ESATTA vedi NPL = 0.015?
+2. Quali valori hai in Input:
+   - D80 = ?
+   - D82 = ?
+   - D81 = ?
+   - D71 = ?
+   - D70 = ?
+
+Con queste info posso darti la formula esatta che funziona!
+
+================================================================================

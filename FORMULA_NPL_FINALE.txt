@@ -1,0 +1,136 @@
+================================================================================
+🎯 FORMULA NPL FINALE - CORRETTA PER COLONNA H
+================================================================================
+
+PROBLEMA IDENTIFICATO:
+Il default avviene nella colonna H (8), non nella colonna N (14).
+Per la prima coorte (riga 141), se il default è in H:
+- Coorte inizia al trimestre 1 (colonna B)
+- Default al trimestre 7 (colonna H)
+- Quindi Default Timing = 6 trimestri (non 12)
+
+================================================================================
+FORMULA CORRETTA FINALE
+================================================================================
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-140+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+    INDEX(
+        $B$97:$ZZ$136;
+        ROW()-140;
+        ROW()-140+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43)
+    )*INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1);
+    0
+)
+
+
+================================================================================
+VERIFICA CALCOLO COLONNA
+================================================================================
+
+Per la prima coorte (riga 141):
+- Inizia al trimestre 1 (colonna B = 2)
+- Se Default Timing in Input = 6
+- Default al trimestre 1+6 = 7 (colonna H = 8)
+
+Verifica in Input cella D80:
+- Se contiene 6 → default in colonna H ✅
+- Se contiene 12 → default in colonna N ❌
+
+================================================================================
+FORMULA DI TEST SPECIFICA PER COLONNA H
+================================================================================
+
+Per testare direttamente nella cella H141:
+
+=G97*$D$75
+
+O se vuoi una formula che funziona solo in H141:
+
+=IF(COLUMN()=8;G97*0.10;0)
+
+Questa dovrebbe dare 0.015 se G97 = 0.15 (essendo bullet dovrebbe essere così)
+
+
+================================================================================
+FORMULA ALTERNATIVA PIÙ ESPLICITA
+================================================================================
+
+Se continua a non funzionare, usa questa versione che rende tutto esplicito:
+
+Per Prodotto 1 (assumendo Default Timing = 6):
+
+=IF(
+    COLUMN()=ROW()-140+1+$D$80;
+    INDEX($B$97:$AM$136;ROW()-140;COLUMN()-2)*$D$75;
+    0
+)
+
+Questa formula:
+- Verifica se siamo al trimestre giusto (coorte + timing)
+- Prende Stock GBV dalla colonna precedente
+- Moltiplica per Danger Rate
+
+
+================================================================================
+FORMULA UNIVERSALE DEBUGGATA
+================================================================================
+
+Versione finale con tutti i controlli:
+
+=IF(
+    AND(
+        MOD(COLUMN()-2;43)>=0;
+        MOD(COLUMN()-2;43)<40;
+        ROW()>=141;
+        ROW()<=180
+    );
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-140+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+        IFERROR(
+            INDEX(
+                $B$97:$ZZ$136;
+                ROW()-140;
+                MOD(COLUMN()-2;43)+(INT((COLUMN()-2)/43)*43)
+            )*INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1);
+            0
+        );
+        0
+    );
+    0
+)
+
+
+================================================================================
+CONTROLLI FINALI
+================================================================================
+
+1️⃣ VERIFICA in Input D80 il valore:
+   - Se è 6 → default in colonna H ✅
+   - Se è 7 → default in colonna I
+   - Se è 12 → default in colonna N
+
+2️⃣ VERIFICA lo Stock GBV in G97:
+   - Dovrebbe essere 0.15 (o simile)
+
+3️⃣ VERIFICA il Danger Rate in D75:
+   - Dovrebbe essere 0.10 (non 10)
+
+4️⃣ TEST DIRETTO in H141:
+   =G97*0.10
+   Deve dare 0.015
+
+================================================================================
+NOTA IMPORTANTE
+================================================================================
+
+La formula prende lo Stock GBV dalla colonna PRECEDENTE al default.
+Quindi:
+- Se default in colonna H (8)
+- Prende Stock da colonna G (7)
+- Che corrisponde al trimestre 6 dopo l'erogazione
+
+Questo è corretto perché il default avviene DURANTE il trimestre 7,
+quindi usiamo lo stock di FINE trimestre 6.
+
+================================================================================

@@ -1,0 +1,158 @@
+================================================================================
+🔧 FORMULE RECUPERI CORRETTE - TIMING E MULTI-PRODOTTO
+================================================================================
+
+PROBLEMA IDENTIFICATO:
+- Default in F (colonna 6, trimestre 5)
+- Recovery MCC timing = 1 (non 4!)
+- Recupero MCC dovrebbe essere in G (colonna 7, trimestre 6)
+- Prodotto 2 inizia da colonna AR (44)
+
+================================================================================
+MATRICE 5 - RECUPERI MCC CORRETTA
+================================================================================
+
+FORMULA TEST PER PRODOTTO 1 (con timing corretto):
+---------------------------------------------------
+In G185 (non J185!):
+=F141*0,5
+
+Formula completa Prodotto 1:
+-----------------------------
+=IF(
+    COLUMN()=ROW()-184+4+1;
+    INDEX($B$141:$AM$180;ROW()-184;ROW()-184+4)*0,5;
+    0
+)
+
+Spiegazione:
+- Prima coorte (riga 185): ROW()-184 = 1
+- Default al trimestre: 1+4 = 5 (colonna F)
+- Recupero MCC al trimestre: 5+1 = 6 (colonna G)
+- COLUMN()=6 → ROW()-184+4+1 = 1+4+1 = 6 ✓
+
+================================================================================
+FORMULA UNIVERSALE MULTI-PRODOTTO
+================================================================================
+
+Questa formula funziona per tutti i prodotti:
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+    INDEX($B$141:$CC$180;ROW()-184;ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+(INT((COLUMN()-2)/43)*43))*
+    INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+    0
+)
+
+Per Prodotto 1:
+- MOD(COLUMN()-2;43)+1 → colonna relativa nel prodotto
+- INT((COLUMN()-2)/43)+1 → 1
+
+Per Prodotto 2:
+- Colonne AR-CC (44-81)
+- MOD(44-2;43)+1 = 43 (sbagliato!)
+- Deve essere MOD(44-44;43)+1 = 1
+
+================================================================================
+FORMULA CORRETTA PER PRODOTTO 2
+================================================================================
+
+Il problema è che il Prodotto 2 inizia alla colonna 44 (AR), non 45.
+Dobbiamo adattare la formula.
+
+FORMULA SEMPLIFICATA PER PRODOTTO 2:
+--------------------------------------
+=IF(
+    COLUMN()-43=ROW()-184+$E$80+$E$82;
+    INDEX($AR$141:$CC$180;ROW()-184;ROW()-184+$E$80)*$E$71;
+    0
+)
+
+Nota: usa E80, E82, E71 per i parametri del Prodotto 2
+
+================================================================================
+VERSIONE CON PARAMETRI DINAMICI
+================================================================================
+
+Per Prodotto 1 (range B185:AM224):
+------------------------------------
+=IF(
+    COLUMN()=ROW()-184+$D$80+$D$82;
+    INDEX($B$141:$AM$180;ROW()-184;ROW()-184+$D$80)*$D$71;
+    0
+)
+
+Per Prodotto 2 (range AR185:CC224):
+------------------------------------
+=IF(
+    COLUMN()-43=ROW()-184+$E$80+$E$82;
+    INDEX($AR$141:$CC$180;ROW()-184;ROW()-184+$E$80)*$E$71;
+    0
+)
+
+================================================================================
+MATRICE 6 - RECUPERI IMMOBILIARI CORRETTA
+================================================================================
+
+Per Prodotto 1 (con timing corretto):
+---------------------------------------
+=IF(
+    COLUMN()=ROW()-228+$D$80+$D$81;
+    (INDEX($B$141:$AM$180;ROW()-228;ROW()-228+$D$80)-
+     INDEX($B$185:$AM$224;ROW()-228;ROW()-228+$D$80+$D$82))*
+    $D$70*(1-$D$76-$D$77);
+    0
+)
+
+Per Prodotto 2:
+----------------
+=IF(
+    COLUMN()-43=ROW()-228+$E$80+$E$81;
+    (INDEX($AR$141:$CC$180;ROW()-228;ROW()-228+$E$80)-
+     INDEX($AR$185:$CC$224;ROW()-228;ROW()-228+$E$80+$E$82))*
+    $E$70*(1-$E$76-$E$77);
+    0
+)
+
+================================================================================
+VERIFICA TIMING
+================================================================================
+
+Con i tuoi parametri:
+- Default Timing (D80) = 4
+- Recovery MCC (D82) = 1
+- Recovery Imm (D81) = 8 (presumo)
+
+PRODOTTO 1 - Prima coorte:
+- Erogazione: Q1 (B)
+- Default: Q5 (F)
+- Recupero MCC: Q6 (G) ← CORRETTO!
+- Recupero Imm: Q13 (N)
+
+PRODOTTO 2 - Prima coorte:
+- Erogazione: Q1 (AR)
+- Default: Q5 (AV)
+- Recupero MCC: Q6 (AW) se E82=1
+- Recupero Imm: Q13 (BD) se E81=8
+
+================================================================================
+TEST RAPIDO
+================================================================================
+
+PRODOTTO 1:
+In G185 metti: =F141*$D$71
+Dovrebbe dare il recupero MCC
+
+PRODOTTO 2:
+In AW185 metti: =AV141*$E$71
+Dovrebbe dare il recupero MCC (se E71>0)
+
+================================================================================
+NOTA IMPORTANTE
+================================================================================
+
+Il Prodotto 2 potrebbe non avere garanzia MCC (E71=0).
+In tal caso, la Matrice 5 sarà zero per il Prodotto 2.
+Verifica il valore in E71!
+
+================================================================================

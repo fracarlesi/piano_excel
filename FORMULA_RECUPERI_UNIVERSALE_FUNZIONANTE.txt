@@ -1,0 +1,151 @@
+================================================================================
+✅ FORMULA RECUPERI UNIVERSALE - VERSIONE FUNZIONANTE
+================================================================================
+
+Partendo dalla formula test che funziona, costruiamo quella universale.
+
+================================================================================
+FORMULA TEST CHE FUNZIONA (con virgola decimale italiana):
+================================================================================
+
+=IF(
+    COLUMN()=10;
+    $F$141*0,5;
+    IF(
+        COLUMN()=14;
+        $F$141*0,5*0,7*0,8;
+        0
+    )
+)
+
+================================================================================
+FORMULA UNIVERSALE SEMPLIFICATA
+================================================================================
+
+Questa versione è più semplice e dovrebbe funzionare:
+
+=IF(
+    COLUMN()=ROW()-185+1+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+    OFFSET($F$141;ROW()-185;0)*INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+    IF(
+        COLUMN()=ROW()-185+1+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$81:$W$81;1;INT((COLUMN()-2)/43)+1);
+        OFFSET($F$141;ROW()-185;0)*(1-INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1))*INDEX(Input!$D$70:$W$70;1;INT((COLUMN()-2)/43)+1)*(1-INDEX(Input!$D$76:$W$76;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$77:$W$77;1;INT((COLUMN()-2)/43)+1));
+        0
+    )
+)
+
+PROBLEMA: Questa prende sempre da F141. Dobbiamo renderla dinamica.
+
+================================================================================
+FORMULA UNIVERSALE CORRETTA - STEP BY STEP
+================================================================================
+
+Per la prima coorte (riga 185):
+- Deve prendere NPL da F141 (trimestre 5 = 1+4)
+- Recupero MCC al trimestre 9 (1+4+4) = colonna J (10)
+- Recupero Imm al trimestre 13 (1+4+8) = colonna N (14)
+
+Per la seconda coorte (riga 186):
+- Deve prendere NPL da G142 (trimestre 6 = 2+4)
+- Recupero MCC al trimestre 10 (2+4+4) = colonna K (11)
+- Recupero Imm al trimestre 14 (2+4+8) = colonna O (15)
+
+================================================================================
+FORMULA UNIVERSALE DEFINITIVA CORRETTA
+================================================================================
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+    INDEX($B$141:$AM$180;ROW()-184;ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1))*INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+    IF(
+        MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$81:$W$81;1;INT((COLUMN()-2)/43)+1);
+        INDEX($B$141:$AM$180;ROW()-184;ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1))*(1-INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1))*INDEX(Input!$D$70:$W$70;1;INT((COLUMN()-2)/43)+1)*(1-INDEX(Input!$D$76:$W$76;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$77:$W$77;1;INT((COLUMN()-2)/43)+1));
+        0
+    )
+)
+
+================================================================================
+VERSIONE PIÙ SEMPLICE PER PRODOTTO 1
+================================================================================
+
+Se la formula universale non funziona, usa questa per il Prodotto 1:
+
+=IF(
+    COLUMN()=ROW()-184+$D$80+$D$82;
+    INDEX($B$141:$AM$141;1;ROW()-184+$D$80)*$D$71;
+    IF(
+        COLUMN()=ROW()-184+$D$80+$D$81;
+        INDEX($B$141:$AM$141;1;ROW()-184+$D$80)*(1-$D$71)*$D$70*(1-$D$76-$D$77);
+        0
+    )
+)
+
+Poi per estenderla alle altre righe:
+
+=IF(
+    COLUMN()=ROW()-184+$D$80+$D$82;
+    INDEX($B$141:$AM$180;ROW()-184;ROW()-184+$D$80)*$D$71;
+    IF(
+        COLUMN()=ROW()-184+$D$80+$D$81;
+        INDEX($B$141:$AM$180;ROW()-184;ROW()-184+$D$80)*(1-$D$71)*$D$70*(1-$D$76-$D$77);
+        0
+    )
+)
+
+================================================================================
+FORMULA ANCORA PIÙ SEMPLICE (CONSIGLIATA)
+================================================================================
+
+Prova questa che è la più diretta:
+
+=IF(
+    COLUMN()-1=ROW()-185+1+4+4;
+    INDEX($B$141:$AM$180;ROW()-184;ROW()-185+1+4)*0,5;
+    IF(
+        COLUMN()-1=ROW()-185+1+4+8;
+        INDEX($B$141:$AM$180;ROW()-184;ROW()-185+1+4)*0,5*0,7*0,8;
+        0
+    )
+)
+
+Questa usa:
+- Valori fissi per i timing (4, 4, 8)
+- Virgola decimale italiana
+- INDEX per prendere il valore NPL giusto
+
+================================================================================
+DEBUG: VERIFICA MANUALE
+================================================================================
+
+Per capire perché la formula universale non funziona:
+
+1. In J185 (colonna 10), la condizione dovrebbe essere:
+   - MOD(10-2;43)+1 = 9
+   - ROW()-184+4+4 = 185-184+4+4 = 9
+   - 9 = 9 ✓ Dovrebbe funzionare!
+
+2. Verifica che:
+   - D80 = 4
+   - D82 = 4
+   - D81 = 8
+   - D71 = 0,5 (con virgola!)
+
+3. Prova a mettere direttamente in J185:
+   =INDEX($B$141:$AM$180;1;5)*0,5
+   
+   Dovrebbe dare 0,0075
+
+================================================================================
+NOTA SUI SEPARATORI DECIMALI
+================================================================================
+
+In Italia Excel usa:
+- Virgola (,) per i decimali
+- Punto e virgola (;) per separare argomenti
+
+Assicurati che tutti i valori in Input usino la virgola:
+- 0,5 invece di 0.5
+- 0,7 invece di 0.7
+- etc.
+
+================================================================================

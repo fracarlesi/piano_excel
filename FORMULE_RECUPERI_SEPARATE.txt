@@ -1,0 +1,144 @@
+================================================================================
+🎯 MATRICI SEPARATE PER RECUPERI - PIÙ SEMPLICE E CHIARO
+================================================================================
+
+Creiamo due matrici distinte:
+- MATRICE 5 (righe 185-224): Recuperi MCC
+- MATRICE 6 (righe 229-268): Recuperi Immobiliari
+
+================================================================================
+MATRICE 5 - RECUPERI MCC (GARANZIA STATALE)
+================================================================================
+
+Formula semplice - prende NPL e applica garanzia MCC:
+
+VERSIONE TEST (con valori fissi):
+----------------------------------
+=IF(
+    COLUMN()=ROW()-184+4+4;
+    INDEX($B$141:$AM$180;ROW()-184;ROW()-184+4)*0,5;
+    0
+)
+
+VERSIONE CON PARAMETRI INPUT:
+------------------------------
+=IF(
+    COLUMN()=ROW()-184+$D$80+$D$82;
+    INDEX($B$141:$AM$180;ROW()-184;ROW()-184+$D$80)*$D$71;
+    0
+)
+
+VERSIONE UNIVERSALE (multi-prodotto):
+--------------------------------------
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1);
+    INDEX($B$141:$CC$180;ROW()-184;ROW()-184+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+(INT((COLUMN()-2)/43)*43))*
+    INDEX(Input!$D$71:$W$71;1;INT((COLUMN()-2)/43)+1);
+    0
+)
+
+================================================================================
+MATRICE 6 - RECUPERI IMMOBILIARI (CON HAIRCUT)
+================================================================================
+
+Formula che calcola su GBV residuo (NPL - recupero MCC):
+
+VERSIONE TEST (con valori fissi):
+----------------------------------
+=IF(
+    COLUMN()=ROW()-228+4+8;
+    (INDEX($B$141:$AM$180;ROW()-228;ROW()-228+4)-
+     INDEX($B$185:$AM$224;ROW()-228;ROW()-228+4+4))*0,7*0,8;
+    0
+)
+
+VERSIONE CON PARAMETRI INPUT:
+------------------------------
+=IF(
+    COLUMN()=ROW()-228+$D$80+$D$81;
+    (INDEX($B$141:$AM$180;ROW()-228;ROW()-228+$D$80)-
+     INDEX($B$185:$AM$224;ROW()-228;ROW()-228+$D$80+$D$82))*
+    $D$70*(1-$D$76-$D$77);
+    0
+)
+
+VERSIONE UNIVERSALE (multi-prodotto):
+--------------------------------------
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-228+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$81:$W$81;1;INT((COLUMN()-2)/43)+1);
+    (INDEX($B$141:$CC$180;ROW()-228;ROW()-228+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+(INT((COLUMN()-2)/43)*43))-
+     INDEX($B$185:$CC$224;ROW()-228;ROW()-228+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)+INDEX(Input!$D$82:$W$82;1;INT((COLUMN()-2)/43)+1)+(INT((COLUMN()-2)/43)*43)))*
+    INDEX(Input!$D$70:$W$70;1;INT((COLUMN()-2)/43)+1)*
+    (1-INDEX(Input!$D$76:$W$76;1;INT((COLUMN()-2)/43)+1)-INDEX(Input!$D$77:$W$77;1;INT((COLUMN()-2)/43)+1));
+    0
+)
+
+================================================================================
+FORMULE SEMPLIFICATE PER TESTING
+================================================================================
+
+MATRICE 5 - TEST DIRETTO IN J185:
+----------------------------------
+=F141*0,5
+
+Dovrebbe dare: 0,0075
+
+MATRICE 6 - TEST DIRETTO IN N229:
+----------------------------------
+=(F141-J185)*0,7*0,8
+
+Dovrebbe dare: (0,015-0,0075)*0,7*0,8 = 0,0042
+
+================================================================================
+IMPLEMENTAZIONE PASSO PASSO
+================================================================================
+
+PASSO 1 - Test Matrice 5 (Recuperi MCC):
+-----------------------------------------
+1. Metti in J185: =F141*0,5
+2. Verifica che dia 0,0075
+3. Se funziona, applica la formula con IF
+
+PASSO 2 - Test Matrice 6 (Recuperi Immobiliari):
+-------------------------------------------------
+1. Metti in N229: =(F141-J185)*0,7*0,8
+2. Verifica che dia 0,0042
+3. Se funziona, applica la formula con IF
+
+PASSO 3 - Estendi le formule:
+------------------------------
+1. Matrice 5: applica su B185:AM224
+2. Matrice 6: applica su B229:AM268
+
+================================================================================
+VANTAGGI DI QUESTO APPROCCIO
+================================================================================
+
+✅ PIÙ SEMPLICE: Due formule separate invece di una complessa
+✅ PIÙ CHIARO: Si vede chiaramente MCC vs Immobiliare
+✅ DEBUG FACILE: Puoi verificare ogni matrice separatamente
+✅ GBV RESIDUO: La Matrice 6 può facilmente sottrarre i recuperi MCC
+✅ FLESSIBILE: Puoi modificare una senza toccare l'altra
+
+================================================================================
+VERIFICA DEI RISULTATI
+================================================================================
+
+MATRICE 5 (Recuperi MCC):
+- Prima coorte: J185 = 0,0075
+- Seconda coorte: K186 = 0,0075
+
+MATRICE 6 (Recuperi Immobiliari):
+- Prima coorte: N229 = 0,0042
+- Seconda coorte: O230 = 0,0042
+
+================================================================================
+NOTE IMPORTANTI
+================================================================================
+
+1. La Matrice 6 DEVE sottrarre i recuperi MCC per calcolare il GBV residuo
+2. Se non c'è garanzia MCC (D71=0), la Matrice 5 sarà zero
+3. Se non c'è garanzia immobiliare (D70=0), la Matrice 6 sarà zero
+4. I timing sono indipendenti per le due matrici
+
+================================================================================

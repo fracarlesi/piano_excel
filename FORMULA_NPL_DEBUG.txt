@@ -1,0 +1,146 @@
+================================================================================
+🔧 FORMULA NPL - VERSIONE CORRETTA E SEMPLIFICATA
+================================================================================
+
+PROBLEMA IDENTIFICATO:
+La formula precedente aveva un errore nel calcolo dell'offset colonna.
+Per un bullet, lo Stock GBV rimane costante, quindi con Stock = 0.15 
+e Danger Rate = 10%, NPL deve essere 0.015.
+
+================================================================================
+FORMULA CORRETTA TESTATA
+================================================================================
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-138+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+    INDEX(
+        OFFSET($B$97;0;0;40;40+(INT((COLUMN()-2)/43)*43));
+        ROW()-140;
+        ROW()-140+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1
+    )*INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1);
+    0
+)
+
+
+================================================================================
+VERSIONE ULTRA-SEMPLIFICATA PER DEBUGGING
+================================================================================
+
+Per verificare passo passo, usa queste formule di test:
+
+1. FORMULA TEST PER PRODOTTO 1 (colonne B-AM):
+----------------------------------------------
+Metti in N141 (colonna 14, trimestre 13 per prima coorte):
+
+=M97*0.10
+
+Se M97 = 0.15, deve dare 0.015
+
+
+2. FORMULA SEMI-AUTOMATICA PRODOTTO 1:
+---------------------------------------
+=IF(
+    COLUMN()-1=ROW()-140+12;
+    INDEX($B$97:$AM$136;ROW()-140;ROW()-140+11)*0.10;
+    0
+)
+
+Questa assume Default Timing = 12 e Danger Rate = 10%
+
+
+3. FORMULA GENERICA SEMPLIFICATA:
+----------------------------------
+=IF(
+    COLUMN()-1=ROW()-140+$D$80;
+    INDEX($B$97:$AM$136;ROW()-140;ROW()-140+$D$80-1)*$D$75;
+    0
+)
+
+
+================================================================================
+FORMULA FINALE UNIVERSALE RISCRITTA
+================================================================================
+
+Questa versione è completamente riscritta per evitare errori:
+
+=LET(
+    prodotto;INT((COLUMN()-2)/43)+1;
+    riga_npl;ROW();
+    col_npl;COLUMN();
+    riga_coorte;riga_npl-140;
+    col_relativa;MOD(col_npl-2;43)+1;
+    default_timing;INDEX(Input!$D$80:$W$80;1;prodotto);
+    danger_rate;INDEX(Input!$D$75:$W$75;1;prodotto);
+    trim_default;riga_coorte+default_timing;
+    
+    IF(col_relativa=trim_default;
+        INDEX(
+            $B$97:$ZZ$136;
+            riga_coorte;
+            riga_coorte+default_timing-1+(prodotto-1)*43
+        )*danger_rate;
+        0
+    )
+)
+
+Nota: LET richiede Excel 365
+
+
+================================================================================
+FORMULA DEFINITIVA SENZA LET
+================================================================================
+
+=IF(
+    MOD(COLUMN()-2;43)+1=ROW()-140+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1);
+    INDEX(
+        $B$97:$ZZ$136;
+        ROW()-140;
+        ROW()-140+INDEX(Input!$D$80:$W$80;1;INT((COLUMN()-2)/43)+1)-1+(INT((COLUMN()-2)/43)*43)
+    )*INDEX(Input!$D$75:$W$75;1;INT((COLUMN()-2)/43)+1);
+    0
+)
+
+
+================================================================================
+VERIFICA PASSO PASSO
+================================================================================
+
+Per la prima coorte (riga 141), Prodotto 1:
+
+1. Riga coorte = 141 - 140 = 1
+2. Default Timing = 12 (da Input D80)
+3. Trimestre default = 1 + 12 = 13 (colonna N)
+4. Stock GBV da prendere = riga 97, colonna M (trimestre 12)
+5. Se Stock GBV in M97 = 0.15
+6. NPL = 0.15 × 0.10 = 0.015 ✅
+
+================================================================================
+COSA CONTROLLARE SE NON FUNZIONA
+================================================================================
+
+1. VERIFICA che in M97 ci sia effettivamente 0.15
+   - Se è un bullet, dovrebbe essere costante da B97 a M97
+
+2. VERIFICA che D75 contenga 0.10 (10%)
+   - Non 10 ma 0.10
+
+3. VERIFICA che D80 contenga 12
+   - Il timing in trimestri
+
+4. PROVA la formula test diretta:
+   In N141 metti: =M97*$D$75
+   Dovrebbe dare 0.015
+
+================================================================================
+NOTA IMPORTANTE SUL RIFERIMENTO RIGA
+================================================================================
+
+Ho notato che usavo ROW()-138 in alcune versioni e ROW()-140 in altre.
+La versione corretta dipende da dove inizia la matrice NPL:
+
+- Se NPL inizia alla riga 139: usa ROW()-138
+- Se NPL inizia alla riga 141: usa ROW()-140
+
+Verifica quale è corretta nel tuo file e adatta di conseguenza.
+
+================================================================================
