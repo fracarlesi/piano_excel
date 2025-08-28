@@ -1,109 +1,259 @@
-# 🤖 ASSISTENTE MODELLO EXCEL - PIANO INDUSTRIALE BANCARIO
+# 🎯 INVESTOR PRESENTATION CREATOR
+
+## 📚 DOCUMENTAZIONE MODULARE - UNICI DOCUMENTI DA CONSULTARE
+
+### ⚠️ IMPORTANTE: QUESTI SONO GLI UNICI 2 DOCUMENTI PER LE PRESENTAZIONI
+
+### 📖 1. STORYTELLING E NARRATIVA
+usa indicazioni utente senza prendere iniziative
+
+### 🎨 2. LAYOUT E DESIGN 
+**FILE**: `standard template/slide_template.html`
+
+
+
+### 🚫 NON USARE ALTRI DOCUMENTI
+
+
+## 🎯 OUTPUT FINALE - SOLO QUESTI FILE HTML
+
+### ⚠️ REGOLA CRITICA: SOLO FILE HTML IN CARTELLA OUTPUT - ZERO BACKUP
+**L'utente vuole SOLO questi file come output finale nella cartella `output/`:**
+1. **output/slide_00.html** = File master con navigazione tra le slide
+2. **output/slide_01.html** a **output/slide_xx.html** = Le slide della presentazione
+
+**🚫 DIVIETO ASSOLUTO DI BACKUP:**
+- ❌ MAI creare file `slide_XX_backup.html`
+- ❌ MAI creare file `slide_XX_v2.html` o versioni numerate
+- ❌ MAI duplicare slide con nomi diversi
+- ✅ SEMPRE una sola versione per slide
+- ✅ Se serve backup, usare Git, NON file duplicati
+
+### 📁 STRUTTURA CARTELLE ORGANIZZATA
+```
+piano industriale excel/
+├── output/                    # 📌 CARTELLA PRINCIPALE OUTPUT
+│   ├── slide_00.html          # Master con navigazione
+│   ├── slide_01.html          # Slide 1
+│   ├── slide_02.html          # Slide 2
+│   └── ... fino a slide_23.html
+├── screenshots/               # 📌 UNICA cartella per screenshot MCP (temporanei)
+└── CLAUDE.md                  # Questo file
+
+Non creare altri file
+
+**⚠️ NOTA IMPORTANTE SU SCREENSHOTS:**
+- **SOLO UNA CARTELLA**: Usare SOLO `screenshots/` per tutti gli screenshot
+- **NO DUPLICAZIONI**: MAI creare cartella `analysis/` o simili
+- **PULIZIA AUTOMATICA**: Cancellare screenshots dopo ogni sessione di lavoro
+- **USO MCP**: Tutti gli screenshot del connettore Playwright MCP vanno qui
+
+**DIVIETI ASSOLUTI:**
+- ❌ **MAI creare file HTML di test** (test_a4.html, powerpoint_view.html, etc.)
+- ❌ **MAI creare file HTML temporanei o di prova**
+- ❌ **MAI duplicare slide** con nomi diversi
+- ❌ **MAI creare file di backup** (slide_XX_backup.html)
+- ❌ **MAI tenere versioni multiple** della stessa slide
+- ✅ **SEMPRE modificare SOLO i file in output/slide_XX.html**
+- ✅ **Ogni modifica va fatta DIRETTAMENTE sui file definitivi in output/**
+- ✅ **Una slide = Un file**, niente duplicazioni
+
+### 🧹 PULIZIA AUTOMATICA E GESTIONE SCREENSHOTS
+
+#### REGOLE PER SCREENSHOTS:
+1. **UNICA CARTELLA**: Solo `screenshots/` per TUTTI gli screenshot
+2. **CANCELLA LA CARTELLA `analysis/`**: Se esiste, eliminarla subito
+3. **WORKFLOW SCREENSHOTS**:
+   - Prima di fare nuovi screenshot → cancella quelli vecchi
+   - Dopo aver finito il lavoro → cancella tutti gli screenshot
+   - MAI lasciare screenshot vecchi nel progetto
+4. **NAMING CONVENTION**: 
+   - Per review: `screenshots/review_slide_XX.png`
+   - Per analisi: `screenshots/analysis_slide_XX.png`
+   - Per validazione: `screenshots/validation_slide_XX.png`
+
+#### COSA MANTENERE:
+- ✅ Solo la cartella `output/` con le slide finali
+- ❌ MAI tenere screenshot dopo il lavoro
+- ❌ MAI duplicare cartelle per screenshot
+
+### 📐 VISUALIZZAZIONE BORDI A4
+Se l'utente chiede di vedere i bordi del foglio A4:
+- **AGGIUNGI IL CODICE nei file slide esistenti in output/** (non creare nuovi file)
+- Usa CSS per mostrare i bordi direttamente nelle slide_XX.html
+- Il bordo A4 deve essere visibile in modalità sviluppo/preview
+- Tasto 'B' per toggle veloce del bordo
 
 ## 📋 RUOLO E OBIETTIVO
-Sei un assistente specializzato in excel e piani industriali bancari.
+Sei un assistente specializzato nella creazione di presentazioni per investitori in stile McKinsey.
 
-Le tue responsabilità sono:
-1. **USARE** gli agenti specializzati quando appropriato (es: python-pro per analisi con Python, data-scientist per analisi dati, business-analyst per logiche di business)
-2. **LEGGERE** tutto il file Excel `modello.xlsx` per comprendere contesto e la struttura attuale ogni volta che viene chiesto di fare qualcosa
-3. **GUIDARE** l'utente step-by-step nella finalizzazione del modello
-4. **SUGGERIRE** formule Excel (in inglese e con separatore ; degli argomenti) appropriate per ogni calcolo
-5. **VERIFICARE** la coerenza e correttezza delle formule esistenti rileggendo il file dopo le modifiche
+## 🤖 USO AUTOMATICO DEGLI AGENTI SPECIALIZZATI
 
+### ⚡ AGENTI SPECIALIZZATI PER PRESENTAZIONI
+**Gli agenti sotto elencati sono configurati nel progetto (directory `.claude/agents/`).**
+**DEVI USARLI tramite il Task tool per delegare compiti specifici!**
 
-## ⚠️ REGOLE FONDAMENTALI
+### AGENTI DISPONIBILI
+| Tipo di Richiesta | Agente da Usare | Quando Usarlo | Status |
+|-------------------|-----------------|---------------|---------|
+| **Design Slide** | `presentation-designer` | Layout, visual design, HTML/CSS | ✅ ATTIVO |
+| **Storytelling** | `investor-storyteller` | Narrativa, messaging, sequenza slide | ✅ ATTIVO |
+| **Visualizzazioni** | `data-visualizer` | Grafici, dashboard, KPI visualization | ✅ ATTIVO |
+| **Analisi Business** | `bank-business-analyst` | Logiche bancarie, KPI, regulatory | ✅ ATTIVO |
+| **Validazione Estetica** | `slide-aesthetics-reviewer` | Controllo geometrico, omogeneità, allineamenti | ✅ ATTIVO |
 
-### 🚨🚨🚨 SINTASSI FORMULE EXCEL - CRITICO 🚨🚨🚨
-# ⚠️ USARE SEMPRE IL PUNTO E VIRGOLA (;) COME SEPARATORE
-# ⚠️ MAI USARE LA VIRGOLA (,) NELLE FORMULE  
-# ⚠️ ESEMPIO: =IF(A1>0;B1;C1) ✅ CORRETTO
-# ⚠️ ESEMPIO: =IF(A1>0,B1,C1) ❌ SBAGLIATO
-# ⚠️ ESEMPIO: =SUM(A1;A2;A3) ✅ CORRETTO
-# ⚠️ ESEMPIO: =SUM(A1,A2,A3) ❌ SBAGLIATO
-# ⚠️ ESEMPIO: =INDEX(A1:A10;5;1) ✅ CORRETTO
-# ⚠️ ESEMPIO: =INDEX(A1:A10,5,1) ❌ SBAGLIATO
+### ESEMPI DI ATTIVAZIONE
 
-### 🚨 RIFERIMENTI TRA FOGLI EXCEL - CRITICO 🚨
-# ⚠️ USARE SEMPRE IL PUNTO ESCLAMATIVO (!) PER RIFERIMENTI TRA FOGLI
-# ⚠️ MAI USARE IL PUNTO (.) PER I RIFERIMENTI
-# ⚠️ ESEMPIO: =Input!A1 ✅ CORRETTO
-# ⚠️ ESEMPIO: =Input.A1 ❌ SBAGLIATO
-# ⚠️ ESEMPIO: =VLOOKUP(A1;Input!B:C;2;FALSE) ✅ CORRETTO
-# ⚠️ ESEMPIO: =VLOOKUP(A1;Input.B:C;2;FALSE) ❌ SBAGLIATO
+- "Crea slide per..." → USA `presentation-designer`
+- "Definisci la narrativa..." → USA `investor-storyteller`
+- "Crea grafico per..." → USA `data-visualizer`
+- "Analizza metriche..." → USA `bank-business-analyst`
+- "Controlla/valida slide..." → USA `slide-aesthetics-reviewer`
 
-### 🚨 FORMATTAZIONE FORMULE PER COPIA-INCOLLA 🚨
-# ⚠️ ANDARE A CAPO SOLO DOPO IL PUNTO E VIRGOLA (;)
-# ⚠️ MAI SPEZZARE UNA FUNZIONE O UN ARGOMENTO
-# ⚠️ QUESTO EVITA SPAZI INDESIDERATI NEL COPIA-INCOLLA
-# ⚠️ ESEMPIO CORRETTO:
-# =IF(A1>0;
-# B1;
-# C1)
-# ⚠️ ESEMPIO SBAGLIATO:
-# =IF(A1>0;B1
-# ;C1)
+### 🚀 WORKFLOW PARALLELO OBBLIGATORIO PER OGNI SLIDE
 
-- **MAI modificare o scrivere nel file Excel senza autorizzazione utente**
-- **MAI implementare formule direttamente senza autorizzazione utente**
-- **GESTIONE FILE APERTI**: Se il file Excel è aperto durante le modifiche, devo sempre gestire l'errore e avvisare l'utente di chiuderlo prima di procedere
-- **SINTASSI FORMULE EXCEL**: Usare SEMPRE il punto e virgola (;) come separatore degli argomenti, NON la virgola (,)
-- **FUNZIONI IN INGLESE**: Le funzioni devono essere in inglese (IF, SUM, etc.) ma con separatore ; per gli argomenti
+#### ⚠️ REGOLA CRITICA: UN SOLO FILE PER SLIDE - NO DUPLICAZIONI
 
-## 🎯 APPROCCIO DI LAVORO
-1. **Prima di ogni azione**: Leggere sempre il file Excel per capire lo stato attuale con openpyxl
-2. **Analisi della struttura**: Identificare sheet esistenti, celle compilate e formule già presenti
-3. **Guida interattiva**: Fornire formule e suggerimenti che l'utente inserirà manualmente
-4. **LETTURA FILE EXCEL**: Quando leggo file Excel con openpyxl, NON limitare mai la lettura - leggere SEMPRE l'intero foglio per avere una visione completa dei dati
+**TUTTI GLI AGENTI DEVONO LAVORARE SULLO STESSO FILE**
+- ❌ MAI creare versioni multiple (slide_v2.html, slide_new.html, etc.)
+- ✅ SEMPRE modificare il file originale esistente
+- ✅ SOLO UNA VERSIONE FINALE per slide
 
-
-## 📊 STRUTTURA TARGET DEL MODELLO
-
-### Sheet principali:
-1. **Input**: Parametri e assumptions
-2. **Calcoli**: Motore di calcolo
-3. **Output**: Conto economico, stato patrimoniale, KPI etc
-
-
-## 🚀 METODOLOGIA DI SUCCESSO TESTATA
-
-### Approccio per Formule Universali:
-1. **ANALISI STRUTTURA**: Prima analizzare sempre con Python la struttura esatta delle matrici
-2. **IDENTIFICARE PATTERN**: Capire la logica (es. diagonale, offset colonne ogni 43 posizioni)
-3. **FORMULA UNIVERSALE**: Creare UNA formula che funzioni per TUTTI i prodotti usando:
-   - `INT((COLUMN()-2)/43)+1` per identificare il prodotto
-   - `MOD(COLUMN()-2;43)` per la posizione relativa nella matrice
-   - `OFFSET` invece di `INDEX` con range fissi per evitare #REF!
-4. **USARE FUNZIONE LET**: Per formule complesse, utilizzare sempre LET per:
-   - Definire variabili intermedie chiare e riutilizzabili
-   - Rendere la formula più leggibile e manutenibile
-   - Evitare calcoli ripetuti migliorando le performance
-   - Facilitare il debug testando singole variabili
-5. **DOCUMENTAZIONE CHIARA**: Fornire sempre esempi pratici e troubleshooting
-
-### Formule Testate con Successo:
-- **Matrice Erogazioni**: Formula universale con calcolo diagonale
-- **Matrice Rimborsi**: Formula con gestione bullet/amortizing/pre-ammortamento
-- **Matrice NBV NPL**: Formula con LET per calcolo NPV recuperi con tasso fisso al default
-
-### Esempio Formula con LET (Matrice 7 - NBV NPL):
-```excel
-=IF(B$8="";
-"";
-LET(prodotto;
-INT((COLUMN()-2)/43)+1;
-offset_nella_matrice;
-MOD(COLUMN()-2;43);
-anno_default;
-ROW()-272;
-periodo_corrente;
-B$8+offset_nella_matrice;
-[... altre variabili ...];
-npv))
+#### PER OGNI SINGOLA SLIDE, ATTIVA TUTTI GLI AGENTI IN PARALLELO:
+```
+SLIDE N → [ATTIVAZIONE SIMULTANEA - STESSO FILE]
+    ├── investor-storyteller → Definisce narrativa e messaging
+    ├── bank-business-analyst → Fornisce KPI e metriche corrette  
+    ├── data-visualizer → Suggerisce layout e visualizzazioni
+    ├── presentation-designer → [UNICO] che scrive codice HTML/CSS
+    └── slide-aesthetics-reviewer → Valida geometria e omogeneità
 ```
 
-### Best Practices:
-- Usare `OFFSET` per riferimenti dinamici senza limiti di range
-- Testare sempre con valori reali prima di estendere
-- Fornire versioni alternative (con/senza LET per compatibilità)
+#### ESEMPIO PRATICO - SLIDE 3 (EXECUTIVE SUMMARY):
+```python
+# STEP 1: ATTIVAZIONE PARALLELA (raccolta feedback)
+Task 1: investor-storyteller → "Narrativa per Executive Summary"
+Task 2: bank-business-analyst → "KPI Anno 5 da includere" 
+Task 3: data-visualizer → "Layout ottimale per KPI display"
+
+# STEP 2: INTEGRAZIONE IN UN SOLO FILE
+presentation-designer → "Integra TUTTI i feedback in slide-03-executive.html"
+                      → NON creare nuovi file, modifica quello esistente
+
+# STEP 3: VALIDAZIONE FINALE
+slide-aesthetics-reviewer → "Valida slide-03-executive.html finale"
+```
+
+### WORKFLOW OBBLIGATORIO CON VALIDAZIONE - ANTI-DUPLICAZIONE
+1. **IDENTIFICA** la slide da creare (es. Slide 3 - Executive Summary)
+2. **ATTIVA IN PARALLELO** agenti per feedback (NON per creare file)
+3. **INTEGRA** tutti i feedback nel file unico esistente
+4. **VALIDA** sempre con `slide-aesthetics-reviewer` sullo stesso file
+5. **CORREGGI** lo stesso file basandoti sul feedback geometrico
+6. **ITERA** sullo stesso file fino a validazione PASS
+
+### 🚫 COSA NON FARE MAI:
+- ❌ Creare slide-02-agenda.html E slide-02-agenda-v2.html  
+- ❌ Avere agenti che creano file separati
+- ❌ Avere versioni multiple della stessa slide
+- ❌ Lasciare file duplicati nel progetto
+
+### ✅ COSA FARE SEMPRE:
+- ✅ Un agente raccoglie feedback, un agente implementa nel file unico
+- ✅ Tutti lavorano per migliorare LO STESSO file
+- ✅ Una sola versione finale per slide
+- ✅ File naming consistency: slide-XX-nome.html
+
+### ⚠️ NOTA CRITICA
+**GLI AGENTI CUSTOM SONO STATI CREATI APPOSITAMENTE PER QUESTO PROGETTO.**
+**NON USARLI SIGNIFICA SPRECARE IL LAVORO DI CONFIGURAZIONE FATTO.**
+**OGNI VOLTA CHE NON USI UN AGENTE APPROPRIATO, STAI IGNORANDO LE COMPETENZE SPECIALIZZATE CREATE PER QUESTO PROGETTO!**
+
+
+
+Le tue responsabilità sono:
+1. **USARE SEMPRE** gli agenti specializzati appropriati per ogni richiesta
+2. **LEGGERE DATI NUMERICI** da utente:
+   -
+   - **NON USARE**: Altri file PDF, Excel o JSON per i numeri del piano
+
+3. **CREARE PRESENTAZIONI** in HTML/CSS (formato PowerPoint-like):
+   - **FORMATO**: Creare presentazioni HTML5 con layout 16:9 (1920x1080) come PowerPoint
+   - **STRUTTURA**: Slide a pagina intera, navigabili con frecce come PPT
+   - **EXPORT**: DEVE essere esportabile in PDF mantenendo il formato slide PowerPoint
+   - **LAYOUT**: Ogni slide deve occupare esattamente una pagina A4 landscape nel PDF
+   - **TEMPLATE**: Utilizzare template HTML business-oriented stile PowerPoint
+   - Seguire McKinsey style guide
+   - Applicare storytelling per investitori
+4. **VISUALIZZARE E VALIDARE** con Playwright MCP:
+   - Preview presentazioni HTML
+   - Screenshot per validazione
+   - **ANALISI GEOMETRICA AUTOMATICA**:
+     - `browser_evaluate`: calcola getBoundingClientRect() per rilevare sovrapposizioni
+     - `browser_snapshot`: cattura struttura DOM per analisi allineamenti
+     - `browser_take_screenshot`: documenta problemi visivi specifici
+   - **CORREZIONI GUIDATE**:
+     - Coordinate precise degli elementi problematici
+     - Misurazioni pixel-perfect per correzioni
+     - Validazione iterativa fino a perfezione geometrica
+   - Feedback loop automatico per miglioramenti
+
+
+## ⚠️ REGOLE FONDAMENTALI PER PRESENTAZIONI
+
+
+
+### 🎯 WORKFLOW PRESENTAZIONI CON VALIDAZIONE AUTOMATICA
+
+
+ 
+
+### ESEMPIO DI CORREZIONE AUTOMATICA
+
+Quando `slide-aesthetics-reviewer` trova problemi:
+```
+🔍 Detailed Geometric Issues:
+- [Overlap]: Logo overlaps Title by 15px on Slide 1
+- [Misalignment]: Main content off-center by 24px left on Slide 2
+- [Spacing]: Gap inconsistency (32px vs 48px) between KPI boxes on Slide 3
+```
+
+Il sistema corregge automaticamente:
+1. Sposta logo: `margin-top: -15px` → `margin-top: 0`
+2. Centra contenuto: `margin-left: auto; margin-right: auto`
+3. Uniforma spacing: tutti i gap a `32px`
+
+
+## 🔧 STRUMENTI PER PRESENTAZIONI
+
+
+### TECNOLOGIE
+- **HTML5/CSS3**: Formato PowerPoint-like STATICO
+- **SVG inline**: Per grafici statici (NO Chart.js - non funziona in PDF)
+- **Playwright**: Solo per preview, NON per interattività
+- **CSS @page**: Paginazione PDF corretta
+- **CSS @media print**: Ottimizzazione stampa
+
+### 🚨 IMPORTANTE: SOLO CONTENUTO STATICO PER PDF
+**LA PRESENTAZIONE È SOLO PER EXPORT PDF - NESSUNA INTERATTIVITÀ**
+- ❌ NO JavaScript, animazioni, hover, transizioni
+- ❌ NO Chart.js o altre librerie dinamiche
+- ✅ SOLO SVG statici inline per grafici
+- ✅ SOLO CSS per layout (no JS)
+- ✅ Contrasti alti per stampa (min 7:1)
+- ✅ Font min 12px (ideale 14px+)
+
+
+
+
+### ⚠️ REGOLA IMPORTANTE PER VERIFICA
+**SEMPRE** usare Playwright per verificare il lavoro HTML prima di dichiarare completato:
+- Aprire l'HTML nel browser
+- Fare screenshot per conferma visuale
+- Contare il numero di slide effettive
+- Verificare che tutti i contenuti siano presenti
+
+
+
 
 

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presentazione Completa Investitori</title>
+    <style>
+        /* Reset e Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --success-green: #22c55e;
+            --warning-amber: #f59e0b;
+            --danger-red: #ef4444;
+            --dark-grey: #333333;
+            --medium-grey: #2a2a2a;
+            --light-grey: #E0E0E0;
+            --background-grey: #f8f9fa;
+            --white: #FFFFFF;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: var(--white);
+            color: var(--dark-grey);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Presentazione Container */
+        .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            background: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-nav {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .slide-counter {
+            font-size: 14px;
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: var(--white);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 12px;
+        }
+
+        .view-btn {
+            background: var(--secondary-blue);
+            border: none;
+            color: var(--white);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+
+        }
+
+        .view-btn.active {
+            background: var(--success-green);
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            height: 4px;
+            background: var(--light-grey);
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-blue), var(--success-green));
+
+        }
+
+        /* Slide Viewer */
+        .slide-viewer {
+            flex: 1;
+            position: relative;
+            background: var(--background-grey);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-frame {
+            width: 90%;
+            height: 90%;
+            background: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Overview Mode */
+        .overview-grid {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            overflow-y: auto;
+            height: calc(100vh - 120px);
+        }
+
+        .overview-mode .overview-grid {
+            display: grid;
+        }
+
+        .overview-mode .slide-viewer {
+            display: none;
+        }
+
+        .slide-thumbnail {
+            background: var(--white);
+            border: 2px solid var(--light-grey);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            position: relative;
+            aspect-ratio: 16/9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-thumbnail.active {
+            border-color: var(--success-green);
+            background: var(--background-grey);
+        }
+
+        .thumbnail-number {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: var(--primary-blue);
+            color: var(--white);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .thumbnail-title {
+            font-size: 14px;
+            color: var(--dark-grey);
+            text-align: center;
+            padding: 8px;
+        }
+
+        /* Fullscreen Mode */
+        .fullscreen-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+        }
+
+        .fullscreen-mode .nav-bar {
+            display: none;
+        }
+
+        .fullscreen-mode .progress-bar {
+            display: none;
+        }
+
+        .fullscreen-mode .slide-frame {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        /* Keyboard Shortcuts Overlay */
+        .shortcuts-overlay {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--white);
+            padding: 32px;
+            border-radius: 12px;
+
+            z-index: 10000;
+        }
+
+        .shortcuts-overlay.show {
+            display: block;
+        }
+
+        .shortcuts-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary-blue);
+        }
+
+        .shortcut-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--light-grey);
+        }
+
+        .shortcut-key {
+            background: var(--background-grey);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--primary-blue);
+        }
+
+        .shortcut-desc {
+            font-size: 14px;
+            color: var(--medium-grey);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--light-grey);
+            border-top: 4px solid var(--secondary-blue);
+            border-radius: 50%;
+
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-bar {
+                flex-direction: column;
+            gap: 12px;
+            padding: 12px;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 0;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .slide {
+                width: 1122px !important;
+                height: 794px !important;
+                margin: 0;
+                padding: 40px !important;
+                page-break-after: always;
+            }
+        }
+
+            .slide-viewer {
+                height: 100vh;
+            }
+
+            .slide-frame {
+                width: 100%;
+                height: 100%;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container" id="presentationContainer">
+        <!-- Navigation Bar -->
+        <div class="nav-bar">
+            <div class="nav-left">
+                <span class="logo-nav"></span>
+                <span class="slide-counter">
+                    <span id="currentSlide">1</span> / <span id="totalSlides">21</span>
+                </span>
+            </div>
+            
+            <div class="nav-center">
+                <div class="nav-buttons">
+                    <button class="nav-btn" onclick="previousSlide()" id="prevBtn">← Precedente</button>
+                    <button class="nav-btn" onclick="nextSlide()" id="nextBtn">Successiva →</button>
+                </div>
+            </div>
+            
+            <div class="nav-right">
+                <button class="view-btn" onclick="toggleOverview()" id="overviewBtn">Panoramica</button>
+                <button class="view-btn" onclick="toggleFullscreen()" id="fullscreenBtn">Schermo Intero</button>
+                <button class="view-btn" onclick="showShortcuts()">Tasti Rapidi</button>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- Slide Viewer -->
+        <div class="slide-viewer" id="slideViewer">
+            <div class="slide-frame">
+                <div class="loading" id="loading"></div>
+                <iframe id="slideFrame" src=""></iframe>
+            </div>
+        </div>
+        
+        <!-- Overview Grid -->
+        <div class="overview-grid" id="overviewGrid"></div>
+        
+        <!-- Keyboard Shortcuts Overlay -->
+        <div class="shortcuts-overlay" id="shortcutsOverlay">
+            <h3 class="shortcuts-title">Tasti Rapidi</h3>
+            <div class="shortcut-row">
+                <span class="shortcut-key">→</span>
+                <span class="shortcut-desc">Slide successiva</span>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-key">←</span>
+                <span class="shortcut-desc">Slide precedente</span>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-key">Home</span>
+                <span class="shortcut-desc">Prima slide</span>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-key">End</span>
+                <span class="shortcut-desc">Ultima slide</span>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-key">O</span>
+                <span class="shortcut-desc">Toggle panoramica</span>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-key">F</span>
+                <span class="shortcut-desc">Toggle schermo intero</span>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-key">ESC</span>
+                <span class="shortcut-desc">Chiudi overlay/fullscreen</span>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-key">?</span>
+                <span class="shortcut-desc">Mostra tasti rapidi</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Slide Data
+        const slides = [
+            { num: 1, title: "Progetto Nuova Banca Specializzata e Digitale", file: "slide_01.html" },
+            { num: 2, title: "Agenda", file: "slide_02.html" },
+            { num: 3, title: "Executive Summary", file: "slide_03.html" },
+            { num: 4, title: "Contesto Strategico - Why Now", file: "slide_04.html" },
+            { num: 5, title: "La Nostra Soluzione", file: "slide_05.html" },
+            { num: 6, title: "Le 6 Divisioni", file: "slide_06.html" },
+            { num: 7, title: "Digital Banking", file: "slide_07.html" },
+            { num: 8, title: "Wealth Management", file: "slide_08.html" },
+            { num: 9, title: "Real Estate Financing", file: "slide_09.html" },
+            { num: 10, title: "Finanza Agevolata PMI", file: "slide_10.html" },
+            { num: 11, title: "PMI in Difficoltà", file: "slide_11.html" },
+            { num: 12, title: "Piano Investimenti Tecnologici", file: "slide_12.html" },
+            { num: 13, title: "Banking as a Service - Spin-off", file: "slide_13.html" },
+            { num: 14, title: "Architettura AI-Driven", file: "slide_14.html" },
+            { num: 15, title: "Central Functions", file: "slide_15.html" },
+            { num: 16, title: "Path to Profitability", file: "slide_16.html" },
+            { num: 17, title: "Struttura Stato Patrimoniale", file: "slide_17.html" },
+            { num: 18, title: "KPI Finanziari", file: "slide_18.html" },
+            { num: 19, title: "Ritorno per l'Investitore", file: "slide_19.html" },
+            { num: 20, title: "Allegati", file: "slide_20.html" },
+            { num: 21, title: "Assumptions del Piano", file: "slide_21.html" }
+        ];
+        
+        // State
+        let currentSlideIndex = 0;
+        let isOverviewMode = false;
+        let isFullscreen = false;
+        
+        // Elements
+        const slideFrame = document.getElementById('slideFrame');
+        const currentSlideEl = document.getElementById('currentSlide');
+        const totalSlidesEl = document.getElementById('totalSlides');
+        const progressFill = document.getElementById('progressFill');
+        const presentationContainer = document.getElementById('presentationContainer');
+        const overviewGrid = document.getElementById('overviewGrid');
+        const loading = document.getElementById('loading');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        // Initialize
+        function init() {
+            totalSlidesEl.textContent = slides.length;
+            loadSlide(0);
+            createOverviewGrid();
+            setupKeyboardNavigation();
+        }
+        
+        // Load Slide
+        function loadSlide(index) {
+            if (index < 0 || index >= slides.length) return;
+            
+            currentSlideIndex = index;
+            const slide = slides[index];
+            
+            // Show loading
+            loading.style.display = 'block';
+            
+            // Load iframe
+            slideFrame.src = slide.file;
+            slideFrame.onload = () => {
+                loading.style.display = 'none';
+            }
+            
+            // Update UI
+            currentSlideEl.textContent = slide.num;
+            progressFill.style.width = ((index + 1) / slides.length * 100) + '%';
+            
+            // Update buttons
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === slides.length - 1;
+            
+            // Update overview thumbnails
+            updateOverviewSelection();
+        }
+        
+        // Navigation
+        function nextSlide() {
+            if (currentSlideIndex < slides.length - 1) {
+                loadSlide(currentSlideIndex + 1);
+            }
+        }
+        
+        function previousSlide() {
+            if (currentSlideIndex > 0) {
+                loadSlide(currentSlideIndex - 1);
+            }
+        }
+        
+        function goToSlide(index) {
+            loadSlide(index);
+            if (isOverviewMode) {
+                toggleOverview();
+            }
+        }
+        
+        // Overview Mode
+        function createOverviewGrid() {
+            slides.forEach((slide, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'slide-thumbnail';
+                thumbnail.onclick = () => goToSlide(index);
+                
+                const number = document.createElement('div');
+                number.className = 'thumbnail-number';
+                number.textContent = slide.num;
+                
+                const title = document.createElement('div');
+                title.className = 'thumbnail-title';
+                title.textContent = slide.title;
+                
+                thumbnail.appendChild(number);
+                thumbnail.appendChild(title);
+                overviewGrid.appendChild(thumbnail);
+            });
+        }
+        
+        function updateOverviewSelection() {
+            const thumbnails = overviewGrid.querySelectorAll('.slide-thumbnail');
+            thumbnails.forEach((thumb, index) => {
+                thumb.classList.toggle('active', index === currentSlideIndex);
+            });
+        }
+        
+        function toggleOverview() {
+            isOverviewMode = !isOverviewMode;
+            presentationContainer.classList.toggle('overview-mode', isOverviewMode);
+            document.getElementById('overviewBtn').classList.toggle('active', isOverviewMode);
+        }
+        
+        // Fullscreen Mode
+        function toggleFullscreen() {
+            isFullscreen = !isFullscreen;
+            
+            if (isFullscreen) {
+                if (presentationContainer.requestFullscreen) {
+                    presentationContainer.requestFullscreen();
+                } else if (presentationContainer.webkitRequestFullscreen) {
+                    presentationContainer.webkitRequestFullscreen();
+                } else if (presentationContainer.msRequestFullscreen) {
+                    presentationContainer.msRequestFullscreen();
+                }
+                presentationContainer.classList.add('fullscreen-mode');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                presentationContainer.classList.remove('fullscreen-mode');
+            }
+            
+            document.getElementById('fullscreenBtn').classList.toggle('active', isFullscreen);
+        }
+        
+        // Keyboard Navigation
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', (e) => {
+                switch(e.key) {
+                    case 'ArrowRight':
+                        nextSlide();
+                        break;
+                    case 'ArrowLeft':
+                        previousSlide();
+                        break;
+                    case 'Home':
+                        goToSlide(0);
+                        break;
+                    case 'End':
+                        goToSlide(slides.length - 1);
+                        break;
+                    case 'o':
+                    case 'O':
+                        toggleOverview();
+                        break;
+                    case 'f':
+                    case 'F':
+                        toggleFullscreen();
+                        break;
+                    case 'Escape':
+                        if (document.getElementById('shortcutsOverlay').classList.contains('show')) {
+                            hideShortcuts();
+                        } else if (isFullscreen) {
+                            toggleFullscreen();
+                        }
+                        break;
+                    case '?':
+                        showShortcuts();
+                        break;
+                }
+            });
+        }
+        
+        // Shortcuts Overlay
+        function showShortcuts() {
+            document.getElementById('shortcutsOverlay').classList.add('show');
+        }
+        
+        function hideShortcuts() {
+            document.getElementById('shortcutsOverlay').classList.remove('show');
+        }
+        
+        // Click outside to close shortcuts
+        document.getElementById('shortcutsOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                hideShortcuts();
+            }
+        });
+        
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

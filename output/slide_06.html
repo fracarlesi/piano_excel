@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide 6 - Le 6 Divisioni: Un Ecosistema a Doppio Valore</title>
+        <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --light-blue: #4dabf7;
+            --dark-grey: #333333;
+            --medium-grey: #666666;
+            --light-grey: #E0E0E0;
+            --background-grey: #f8f9fa;
+            --white: #FFFFFF;
+            --digital: #00B4D8;
+            --wealth: #90E0EF;
+            --real-estate: #0077B6;
+            --finanza-agevolata: #023E8A;
+            --turnaround: #0096C7;
+            --tech: #48CAE4;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: #404040;
+            color: var(--dark-grey);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .slide {
+            width: 1122px;
+            height: 794px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
+            padding: 40px;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            page-break-after: always;
+        }
+
+        .slide-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 40px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            border-bottom: 2px solid #0051a5;
+            padding-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--medium-grey);
+            font-style: italic;
+            margin-bottom: 32px;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 40px !important;
+            right: 40px !important;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+            z-index: 100;
+        }
+
+        /* Premium elements */
+        .highlight-box {
+            background: var(--background-grey);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 16px 0;
+        }
+
+        .metric-card {
+            background: white;
+            border: 1px solid var(--light-grey);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 0;
+            }
+            body {
+                background: white;
+            }
+            .slide {
+                width: 1122px !important;
+                height: 794px !important;
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        /* Custom styles for this slide */
+        .divisions-container {
+            margin: 16px 0;
+        }
+        
+        .division-group {
+            margin-bottom: 20px;
+        }
+        
+        .group-header {
+            background: var(--primary-blue);
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .divisions-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .bottom-message {
+            position: absolute;
+            bottom: 80px;
+            left: 40px;
+            right: 40px;
+            text-align: center;
+            border-top: 1px solid var(--light-grey);
+            padding-top: 12px;
+        }
+
+        .bottom-message-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 4px;
+        }
+
+        .bottom-message-detail {
+            font-size: 14px;
+            color: var(--medium-grey);
+            font-style: italic;
+        }
+.division-card {
+            background: var(--background-grey);
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid var(--light-grey);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            min-height: 180px;
+            max-height: 200px;
+        }
+.division-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--secondary-blue);
+        }
+.division-card.digital::before { background: var(--digital); }
+.division-card.wealth::before { background: var(--wealth); }
+.division-card.real-estate::before { background: var(--real-estate); }
+.division-card.finanza::before { background: var(--finanza-agevolata); }
+.division-card.turnaround::before { background: var(--turnaround); }
+.division-card.tech::before { background: var(--tech); }
+.division-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--secondary-blue);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+.division-card.digital .division-number { background: var(--digital); }
+.division-card.wealth .division-number { background: var(--wealth); }
+.division-card.real-estate .division-number { background: var(--real-estate); }
+.division-card.finanza .division-number { background: var(--finanza-agevolata); }
+.division-card.turnaround .division-number { background: var(--turnaround); }
+.division-card.tech .division-number { background: var(--tech); }
+.division-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 12px;
+        }
+.division-description {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #1a1a1a;
+            margin-bottom: auto;
+            flex: 1;
+            font-weight: 400;
+        }
+.division-metric {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--secondary-blue);
+            margin-bottom: 4px;
+        }
+.division-card.digital .division-metric { color: var(--digital); }
+.division-card.wealth .division-metric { color: var(--wealth); }
+.division-card.real-estate .division-metric { color: var(--real-estate); }
+.division-card.finanza .division-metric { color: var(--finanza-agevolata); }
+.division-card.turnaround .division-metric { color: var(--turnaround); }
+.division-card.tech .division-metric { color: var(--tech); }
+.division-metric-label {
+            font-size: 12px;
+            color: #2a2a2a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            flex: 1;
+        }
+        .division-metrics {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    </div>
+
+    <div class="slide">
+        <div class="slide-header">
+            <div class="breadcrumb">Modello di Business</div>
+            <h1 class="action-title">6 divisioni sinergiche generano €139M ricavi con doppio valore (banking+tech)</h1>
+        </div>
+
+        <div class="divisions-container">
+            <div class="division-group">
+                <div class="group-header">DIVISIONI CREDITO</div>
+                <div class="divisions-row">
+                    <div class="division-card real-estate">
+                        <span class="division-number">1</span>
+                        <h3 class="division-name">Real Estate Financing</h3>
+                        <p class="division-description">Credito per acquisto e sviluppo di immobili in mercato non presidiato dalle banche tradizionali</p>
+                        <div class="division-metrics">
+                            <div class="division-metric">€1.2B</div>
+                            <div class="division-metric-label">Finanziamenti Totali 5 Anni</div>
+                        </div>
+                    </div>
+
+                    <div class="division-card finanza">
+                        <span class="division-number">2</span>
+                        <h3 class="division-name">Finanza Agevolata PMI</h3>
+                        <p class="division-description">Expertise garanzie MCC/SACE per credito alle PMI italiane</p>
+                        <div class="division-metrics">
+                            <div class="division-metric">€1.2B</div>
+                            <div class="division-metric-label">Finanziamenti Totali 5 Anni</div>
+                        </div>
+                    </div>
+
+                    <div class="division-card turnaround">
+                        <span class="division-number">3</span>
+                        <h3 class="division-name">Turnaround</h3>
+                        <p class="division-description">Rilancio PMI con fondamentali solidi</p>
+                        <div class="division-metrics">
+                            <div class="division-metric">€1.2B</div>
+                            <div class="division-metric-label">Finanziamenti Totali 5 Anni</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="division-group">
+                <div class="group-header">FUNDING + COMMISSIONI</div>
+                <div class="divisions-row">
+                    <div class="division-card digital">
+                        <span class="division-number">4</span>
+                        <h3 class="division-name">Digital Bank</h3>
+                        <p class="division-description">Raccolta da clienti retail per finanziare il credito delle altre divisioni</p>
+                        <div class="division-metrics">
+                            <div class="division-metric">60k</div>
+                            <div class="division-metric-label">Clienti Target</div>
+                        </div>
+                    </div>
+
+                    <div class="division-card wealth">
+                        <span class="division-number">5</span>
+                        <h3 class="division-name">Wealth Management</h3>
+                        <p class="division-description">Cross-selling clienti Digital Bank per offrire prodotti investimento via divisioni credito</p>
+                        <div class="division-metrics">
+                            <div class="division-metric">6k</div>
+                            <div class="division-metric-label">Clienti Target</div>
+                        </div>
+                    </div>
+
+                    <div class="division-card tech">
+                        <span class="division-number">6</span>
+                        <h3 class="division-name">Piattaforma Tecnologica (IT)</h3>
+                        <p class="division-description">Banking-as-a-Service genera ricavi extra (non inclusi nel piano)</p>
+                        <div class="division-metrics">
+                            <div class="division-metric">€27M</div>
+                            <div class="division-metric-label">CAPEX IT</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-message">
+            <div class="bottom-message-detail">Cross-selling: Digital Bank → Wealth Management (clienti) → Divisioni Credito (prodotti investimento)</div>
+        </div>
+
+        <span class="slide-number">6</span>
+    </div>
+
+    <script>
+    // Clean script
+</script>
+</body>
+</html>

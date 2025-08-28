@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide 12 - Costi IT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --light-blue: #E6F2FF;
+            --accent-blue: #4A90E2;
+            --dark-grey: #333333;
+            --medium-grey: #666666;
+            --light-grey: #E0E0E0;
+            --background-grey: #F8F9FA;
+            --white: #FFFFFF;
+            --success: #10B981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: #404040;
+            color: var(--dark-grey);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .slide {
+            width: 1122px;
+            height: 794px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
+            padding: 60px;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            page-break-after: always;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .breadcrumb {
+            font-size: 14px;
+            color: var(--medium-grey);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 40px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            border-bottom: 2px solid #0051a5;
+            padding-bottom: 16px;
+        }
+
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 0;
+            }
+            body {
+                background: white;
+            }
+            .slide {
+                width: 1122px !important;
+                height: 794px !important;
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        /* Layout principale */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            height: calc(100% - 180px);
+            max-height: 550px;
+        }
+
+        /* Box orizzontale blu in alto */
+        .total-cost-banner {
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%);
+            border-radius: 12px;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 16px rgba(0, 58, 112, 0.15);
+        }
+
+        .total-cost-content {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            width: 100%;
+        }
+
+        .total-cost-label {
+            font-size: 18px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .total-cost-amount {
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.03em;
+        }
+
+        .total-cost-period {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-left: auto;
+        }
+
+        /* Citazione McKinsey */
+        .mckinsey-quote {
+            background: var(--background-grey);
+            border-left: 4px solid var(--primary-blue);
+            border-radius: 8px;
+            padding: 20px 24px;
+            position: relative;
+        }
+
+        .quote-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--dark-grey);
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .quote-source {
+            font-size: 13px;
+            color: var(--medium-grey);
+            font-style: normal;
+        }
+
+        /* Container per i tre box affiancati */
+        .boxes-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            flex: 0 1 auto;
+            margin-bottom: 40px;
+        }
+
+        /* Box CAPEX e OPEX */
+        .detail-box {
+            background: white;
+            border: 2px solid var(--light-grey);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-box.capex {
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .detail-box.opex {
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .detail-box.personnel {
+            border-left: 4px solid var(--success);
+        }
+
+        .box-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .box-percentage {
+            font-size: 16px;
+            color: var(--medium-grey);
+            font-weight: 500;
+        }
+
+        .detail-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .detail-item {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(224, 224, 224, 0.5);
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-bullet {
+            width: 6px;
+            height: 6px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            margin-right: 12px;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .detail-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--dark-grey);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide">
+        <div class="breadcrumb">TECH PLATFORM > COSTI IT</div>
+        <h1 class="action-title">Spesa IT di €69M in 5 anni allineata ai benchmark per la trasformazione digitale</h1>
+
+        <div class="content-container">
+            <!-- Box orizzontale blu in alto -->
+            <div class="total-cost-banner">
+                <div class="total-cost-content">
+                    <div>
+                        <div class="total-cost-label">SPESA COMPLESSIVA IT</div>
+                    </div>
+                    <div class="total-cost-amount">€69M</div>
+                    <div class="total-cost-period">nei 5 anni del piano</div>
+                </div>
+            </div>
+
+            <!-- Citazione McKinsey -->
+            <div class="mckinsey-quote">
+                <div class="quote-text">
+                    "I costi IT dell'Anno 5 sono pari a €16.5M e rappresentano circa il 12% dei ricavi totali della banca all'Anno 5, in linea con i benchmark di mercato delle banche digitali (McKinsey Digital 20/20 Survey: 10-15% per banche efficienti)"
+                </div>
+                <div class="quote-source">
+                    Fonte: McKinsey - Transforming banks' IT productivity (2019)
+                </div>
+            </div>
+
+            <!-- Due box affiancati -->
+            <div class="boxes-container">
+                <!-- Box CAPEX -->
+                <div class="detail-box capex">
+                    <div class="box-title">
+                        <span>CAPEX - €27M</span>
+                        <span class="box-percentage">(39%)</span>
+                    </div>
+                    <ul class="detail-list">
+                        <li class="detail-item">
+                            <span class="detail-bullet"></span>
+                            <span class="detail-text">Sviluppo Software AI (CAPEX)</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet"></span>
+                            <span class="detail-text">Temenos Corebanking Setup</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet"></span>
+                            <span class="detail-text">Infrastruttura Cloud/Server</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet"></span>
+                            <span class="detail-text">Digital Bank (App e Piattaforma)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Box OPEX -->
+                <div class="detail-box opex">
+                    <div class="box-title">
+                        <span>OPEX - €37M</span>
+                        <span class="box-percentage">(54%)</span>
+                    </div>
+                    <ul class="detail-list">
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--accent-blue);"></span>
+                            <span class="detail-text">Licenza Temenos (Core Banking)</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--accent-blue);"></span>
+                            <span class="detail-text">Costi Cloud (Infrastruttura Google Cloud)</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--accent-blue);"></span>
+                            <span class="detail-text">Canone Internet e connettività</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--accent-blue);"></span>
+                            <span class="detail-text">Licenze Software varie</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--accent-blue);"></span>
+                            <span class="detail-text">Noleggio Dispositivi per FTE</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Box Personale -->
+                <div class="detail-box personnel">
+                    <div class="box-title">
+                        <span>PERSONALE IT - €4.9M</span>
+                        <span class="box-percentage">(7%)</span>
+                    </div>
+                    <ul class="detail-list">
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--success);"></span>
+                            <span class="detail-text">13 FTE all'Anno 5</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--success);"></span>
+                            <span class="detail-text">Crescita graduale organico</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--success);"></span>
+                            <span class="detail-text">Team specializzato IT</span>
+                        </li>
+                        <li class="detail-item">
+                            <span class="detail-bullet" style="background: var(--success);"></span>
+                            <span class="detail-text">Competenze digitali e bancarie</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide-number">12</div>
+    </div>
+
+</body>
+</html>

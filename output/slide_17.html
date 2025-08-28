@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide 18 - Stato Patrimoniale</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --light-blue: #4dabf7;
+            --dark-grey: #333333;
+            --medium-grey: #666666;
+            --light-grey: #E0E0E0;
+            --background-grey: #f8f9fa;
+            --white: #FFFFFF;
+            --positive-green: #10b981;
+            --negative-red: #dc2626;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: #404040;
+            color: var(--dark-grey);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .slide {
+            width: 1122px;
+            height: 794px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
+            padding: 40px;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            page-break-after: always;
+        }
+
+        .slide-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 24px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 40px !important;
+            right: 40px !important;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+            z-index: 100;
+        }
+
+        /* Container for Balance Sheet */
+        .balance-container {
+            display: flex;
+            gap: 24px;
+            height: calc(100% - 100px);
+        }
+
+        .balance-table-section {
+            flex: 2;
+        }
+
+        .balance-charts {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Financial Table Style */
+        .financial-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 2px solid var(--primary-blue);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .financial-table th,
+        .financial-table td {
+            padding: 10px 12px;
+            text-align: right;
+            font-size: 13px;
+            border-right: 1px solid var(--light-grey);
+        }
+
+        .financial-table th:first-child,
+        .financial-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+            width: 35%;
+        }
+
+        .financial-table th {
+            background: var(--background-grey);
+            font-weight: 600;
+            color: var(--primary-blue);
+            border-bottom: 2px solid var(--light-grey);
+        }
+
+        .financial-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .financial-table .section-header td {
+            background: var(--primary-blue) !important;
+            color: white !important;
+            font-weight: 600;
+        }
+
+        .financial-table .subtotal {
+            font-weight: 700;
+            background: #f0f0f0;
+            border-top: 1px solid var(--medium-grey);
+            border-bottom: 1px solid var(--medium-grey);
+            color: var(--dark-grey);
+        }
+
+        .financial-table .total {
+            font-weight: 700;
+            background: var(--background-grey);
+            border-top: 2px solid var(--primary-blue);
+            font-size: 14px;
+        }
+
+        .negative {
+            color: var(--negative-red);
+        }
+
+        .positive {
+            color: var(--positive-green);
+        }
+
+        .growth-positive {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--positive-green);
+        }
+
+        .chart-container {
+            background: white;
+            border: 1px solid var(--light-grey);
+            border-radius: 8px;
+            padding: 16px;
+            flex: 1;
+        }
+
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 0;
+            }
+            body {
+                background: white;
+            }
+            .slide {
+                width: 1122px !important;
+                height: 794px !important;
+                border: none;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide">
+        <div class="slide-content">
+            <div class="breadcrumb">Risultati Finanziari > Stato Patrimoniale</div>
+            
+            <h1 class="action-title">Stato patrimoniale cresce di 3.4x in 5 anni con solida capitalizzazione</h1>
+            
+            <div class="balance-container">
+                <div class="balance-table-section">
+                    <table class="financial-table">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>0</th>
+                                <th>1</th>
+                                <th>2</th>
+                                <th>3</th>
+                                <th>4</th>
+                                <th>5</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="section-header">
+                                <td colspan="7">Assets</td>
+                            </tr>
+                            <tr>
+                                <td>Net Performing Assets</td>
+                                <td>555.4</td>
+                                <td>1,029.5</td>
+                                <td>1,380.0</td>
+                                <td>1,721.3</td>
+                                <td>1,988.3</td>
+                                <td>1,988.3</td>
+                            </tr>
+                            <tr>
+                                <td>Non Performing Assets</td>
+                                <td>14.1</td>
+                                <td>42.3</td>
+                                <td>65.7</td>
+                                <td>94.1</td>
+                                <td>122.4</td>
+                                <td>122.4</td>
+                            </tr>
+                            <tr>
+                                <td>Operating assets</td>
+                                <td>10.1</td>
+                                <td>17.0</td>
+                                <td>14.7</td>
+                                <td>12.0</td>
+                                <td>6.6</td>
+                                <td>6.6</td>
+                            </tr>
+                            <tr>
+                                <td>High liquid assets (cash)</td>
+                                <td>100.0</td>
+                                <td>100.0</td>
+                                <td>100.0</td>
+                                <td>115.1</td>
+                                <td>225.1</td>
+                                <td>225.1</td>
+                            </tr>
+                            <tr>
+                                <td>DTA</td>
+                                <td>4.7</td>
+                                <td>4.7</td>
+                                <td>8.5</td>
+                                <td>1.7</td>
+                                <td>0.3</td>
+                                <td>0.3</td>
+                            </tr>
+                            
+                            <tr class="subtotal">
+                                <td>Total Assets</td>
+                                <td>684.2</td>
+                                <td>1,193.4</td>
+                                <td>1,569.0</td>
+                                <td>1,944.2</td>
+                                <td>2,342.9</td>
+                                <td>2,342.9</td>
+                            </tr>
+                            
+                            <tr class="section-header">
+                                <td colspan="7">Liabilities</td>
+                            </tr>
+                            <tr>
+                                <td>Shareholders' Equity</td>
+                                <td>200.0</td>
+                                <td>182.1</td>
+                                <td>180.4</td>
+                                <td>199.3</td>
+                                <td>229.3</td>
+                                <td>271.0</td>
+                            </tr>
+                            <tr>
+                                <td>Sight deposits</td>
+                                <td>0.0</td>
+                                <td>12.3</td>
+                                <td>33.9</td>
+                                <td>72.4</td>
+                                <td>141.6</td>
+                                <td>141.6</td>
+                            </tr>
+                            <tr>
+                                <td>Term deposits</td>
+                                <td>0.0</td>
+                                <td>117.8</td>
+                                <td>325.2</td>
+                                <td>695.0</td>
+                                <td>1,359.3</td>
+                                <td>1,359.3</td>
+                            </tr>
+                            <tr>
+                                <td>Total wholesale</td>
+                                <td>502.1</td>
+                                <td>882.9</td>
+                                <td>1,010.7</td>
+                                <td>947.5</td>
+                                <td>571.0</td>
+                                <td>571.0</td>
+                            </tr>
+                            
+                            <tr class="subtotal">
+                                <td>Total Liabilities</td>
+                                <td>684.2</td>
+                                <td>1,193.4</td>
+                                <td>1,569.0</td>
+                                <td>1,944.2</td>
+                                <td>2,342.9</td>
+                                <td>2,342.9</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="balance-charts">
+                    <!-- Grafico Composizione Attivo -->
+                    <div class="chart-container">
+                        <div style="font-size: 14px; font-weight: 600; color: #003A70; margin-bottom: 12px; text-align: center;">
+                            Composizione Attivo (€M)
+                        </div>
+                        <svg viewBox="0 0 320 200" style="width: 100%; height: calc(100% - 30px);">
+                            <!-- Grid lines -->
+                            <line x1="40" y1="170" x2="280" y2="170" stroke="#e0e0e0" stroke-width="1"/>
+                            <line x1="40" y1="20" x2="40" y2="170" stroke="#e0e0e0" stroke-width="1"/>
+                            
+                            <!-- Stacked bars for Assets -->
+                            <!-- Year 1 -->
+                            <rect x="50" y="120" width="30" height="50" fill="#003A70" opacity="0.9"/> <!-- Crediti 569 -->
+                            <rect x="50" y="118" width="30" height="2" fill="#ff7b00" opacity="0.9"/> <!-- NPL 14 -->
+                            <rect x="50" y="105" width="30" height="13" fill="#4dabf7" opacity="0.9"/> <!-- Liquidity 101 -->
+                            <text x="65" y="185" font-size="11" text-anchor="middle" fill="#666">Y1</text>
+                            <text x="65" y="100" font-size="10" text-anchor="middle" fill="#333" font-weight="600">684</text>
+                            
+                            <!-- Year 2 -->
+                            <rect x="100" y="75" width="30" height="95" fill="#003A70" opacity="0.9"/> <!-- Crediti 1072 -->
+                            <rect x="100" y="71" width="30" height="4" fill="#ff7b00" opacity="0.9"/> <!-- NPL 42 -->
+                            <rect x="100" y="64" width="30" height="7" fill="#4dabf7" opacity="0.9"/> <!-- Liquidity 79 -->
+                            <text x="115" y="185" font-size="11" text-anchor="middle" fill="#666">Y2</text>
+                            <text x="115" y="59" font-size="10" text-anchor="middle" fill="#333" font-weight="600">1,193</text>
+                            
+                            <!-- Year 3 -->
+                            <rect x="150" y="50" width="30" height="120" fill="#003A70" opacity="0.9"/> <!-- Crediti 1446 -->
+                            <rect x="150" y="45" width="30" height="5" fill="#ff7b00" opacity="0.9"/> <!-- NPL 66 -->
+                            <rect x="150" y="40" width="30" height="5" fill="#4dabf7" opacity="0.9"/> <!-- Liquidity 56 -->
+                            <text x="165" y="185" font-size="11" text-anchor="middle" fill="#666">Y3</text>
+                            <text x="165" y="35" font-size="10" text-anchor="middle" fill="#333" font-weight="600">1,568</text>
+                            
+                            <!-- Year 4 -->
+                            <rect x="200" y="30" width="30" height="140" fill="#003A70" opacity="0.9"/> <!-- Crediti 1815 -->
+                            <rect x="200" y="23" width="30" height="7" fill="#ff7b00" opacity="0.9"/> <!-- NPL 94 -->
+                            <rect x="200" y="20" width="30" height="3" fill="#4dabf7" opacity="0.9"/> <!-- Liquidity 35 -->
+                            <text x="215" y="185" font-size="11" text-anchor="middle" fill="#666">Y4</text>
+                            <text x="215" y="15" font-size="10" text-anchor="middle" fill="#333" font-weight="600">1,944</text>
+                            
+                            <!-- Year 5 -->
+                            <rect x="250" y="20" width="30" height="150" fill="#003A70" opacity="0.9"/> <!-- Crediti 2111 -->
+                            <rect x="250" y="12" width="30" height="8" fill="#ff7b00" opacity="0.9"/> <!-- NPL 122 -->
+                            <rect x="250" y="5" width="30" height="7" fill="#4dabf7" opacity="0.9"/> <!-- Liquidity 110 -->
+                            <text x="265" y="185" font-size="11" text-anchor="middle" fill="#666">Y5</text>
+                            <text x="265" y="0" font-size="10" text-anchor="middle" fill="#333" font-weight="600">2,343</text>
+                            
+                            <!-- Legend -->
+                            <rect x="20" y="200" width="10" height="10" fill="#003A70" opacity="0.9"/>
+                            <text x="33" y="208" font-size="9" fill="#666">Crediti</text>
+                            
+                            <rect x="80" y="200" width="10" height="10" fill="#ff7b00" opacity="0.9"/>
+                            <text x="93" y="208" font-size="9" fill="#666">NPL</text>
+                            
+                            <rect x="130" y="200" width="10" height="10" fill="#4dabf7" opacity="0.9"/>
+                            <text x="143" y="208" font-size="9" fill="#666">Liquidity</text>
+                        </svg>
+                    </div>
+
+                    <!-- Grafico Composizione Passivo -->
+                    <div class="chart-container">
+                        <div style="font-size: 14px; font-weight: 600; color: #003A70; margin-bottom: 12px; text-align: center;">
+                            Composizione Passivo (€M)
+                        </div>
+                        <svg viewBox="0 0 320 200" style="width: 100%; height: calc(100% - 30px);">
+                            <!-- Grid lines -->
+                            <line x1="40" y1="170" x2="280" y2="170" stroke="#e0e0e0" stroke-width="1"/>
+                            <line x1="40" y1="20" x2="40" y2="170" stroke="#e0e0e0" stroke-width="1"/>
+                            
+                            <!-- Stacked bars for Liabilities -->
+                            <!-- Year 1 -->
+                            <rect x="50" y="120" width="30" height="50" fill="#dc2626" opacity="0.9"/> <!-- Interbank 501 -->
+                            <rect x="50" y="100" width="30" height="20" fill="#003A70" opacity="0.9"/> <!-- Equity 183 -->
+                            <text x="65" y="185" font-size="11" text-anchor="middle" fill="#666">Y1</text>
+                            <text x="65" y="95" font-size="10" text-anchor="middle" fill="#333" font-weight="600">684</text>
+                            
+                            <!-- Year 2 -->
+                            <rect x="100" y="95" width="30" height="75" fill="#dc2626" opacity="0.9"/> <!-- Interbank 881 -->
+                            <rect x="100" y="89" width="30" height="6" fill="#10b981" opacity="0.9"/> <!-- Vista 65 -->
+                            <rect x="100" y="83" width="30" height="6" fill="#ff7b00" opacity="0.9"/> <!-- Vincolati 65 -->
+                            <rect x="100" y="68" width="30" height="15" fill="#003A70" opacity="0.9"/> <!-- Equity 182 -->
+                            <text x="115" y="185" font-size="11" text-anchor="middle" fill="#666">Y2</text>
+                            <text x="115" y="63" font-size="10" text-anchor="middle" fill="#333" font-weight="600">1,193</text>
+                            
+                            <!-- Year 3 -->
+                            <rect x="150" y="80" width="30" height="90" fill="#dc2626" opacity="0.9"/> <!-- Interbank 1009 -->
+                            <rect x="150" y="64" width="30" height="16" fill="#10b981" opacity="0.9"/> <!-- Vista 180 -->
+                            <rect x="150" y="48" width="30" height="16" fill="#ff7b00" opacity="0.9"/> <!-- Vincolati 179 -->
+                            <rect x="150" y="30" width="30" height="18" fill="#003A70" opacity="0.9"/> <!-- Equity 200 -->
+                            <text x="165" y="185" font-size="11" text-anchor="middle" fill="#666">Y3</text>
+                            <text x="165" y="25" font-size="10" text-anchor="middle" fill="#333" font-weight="600">1,568</text>
+                            
+                            <!-- Year 4 -->
+                            <rect x="200" y="90" width="30" height="80" fill="#dc2626" opacity="0.9"/> <!-- Interbank 946 -->
+                            <rect x="200" y="50" width="30" height="40" fill="#10b981" opacity="0.9"/> <!-- Vista 460 -->
+                            <rect x="200" y="24" width="30" height="26" fill="#ff7b00" opacity="0.9"/> <!-- Vincolati 307 -->
+                            <rect x="200" y="5" width="30" height="19" fill="#003A70" opacity="0.9"/> <!-- Equity 231 -->
+                            <text x="215" y="185" font-size="11" text-anchor="middle" fill="#666">Y4</text>
+                            <text x="215" y="0" font-size="10" text-anchor="middle" fill="#333" font-weight="600">1,944</text>
+                            
+                            <!-- Year 5 -->
+                            <rect x="250" y="120" width="30" height="50" fill="#dc2626" opacity="0.9"/> <!-- Interbank 569 -->
+                            <rect x="250" y="40" width="30" height="80" fill="#10b981" opacity="0.9"/> <!-- Vista 900 -->
+                            <rect x="250" y="-10" width="30" height="50" fill="#ff7b00" opacity="0.9"/> <!-- Vincolati 601 -->
+                            <rect x="250" y="-30" width="30" height="20" fill="#003A70" opacity="0.9"/> <!-- Equity 273 -->
+                            <text x="265" y="185" font-size="11" text-anchor="middle" fill="#666">Y5</text>
+                            <text x="265" y="-35" font-size="10" text-anchor="middle" fill="#333" font-weight="600">2,343</text>
+                            
+                            <!-- Legend -->
+                            <rect x="5" y="200" width="10" height="10" fill="#10b981" opacity="0.9"/>
+                            <text x="18" y="208" font-size="9" fill="#666">Vista</text>
+                            
+                            <rect x="55" y="200" width="10" height="10" fill="#ff7b00" opacity="0.9"/>
+                            <text x="68" y="208" font-size="9" fill="#666">Vincolati</text>
+                            
+                            <rect x="120" y="200" width="10" height="10" fill="#dc2626" opacity="0.9"/>
+                            <text x="133" y="208" font-size="9" fill="#666">Interbank</text>
+                            
+                            <rect x="190" y="200" width="10" height="10" fill="#003A70" opacity="0.9"/>
+                            <text x="203" y="208" font-size="9" fill="#666">Equity</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slide-number">18</div>
+    </div>
+
+</body>
+</html>

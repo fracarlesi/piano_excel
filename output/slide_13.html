@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide 13 - Banking as a Service</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --light-blue: #E6F2FF;
+            --accent-blue: #4A90E2;
+            --dark-grey: #333333;
+            --medium-grey: #666666;
+            --light-grey: #E0E0E0;
+            --background-grey: #F8F9FA;
+            --white: #FFFFFF;
+            --success: #10B981;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: #404040;
+            color: var(--dark-grey);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .slide {
+            width: 1122px;
+            height: 794px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
+            padding: 60px;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            page-break-after: always;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .breadcrumb {
+            font-size: 14px;
+            color: var(--medium-grey);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 40px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            border-bottom: 2px solid #0051a5;
+            padding-bottom: 16px;
+        }
+
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 0;
+            }
+            body {
+                background: white;
+            }
+            .slide {
+                width: 1122px !important;
+                height: 794px !important;
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        /* Layout principale */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: 500px !important;
+            max-height: 500px !important;
+            overflow: visible;
+        }
+
+        /* Opportunity Context Box */
+        .opportunity-context {
+            background: linear-gradient(135deg, #f8fafc 0%, #e6f2ff 100%);
+            border-left: 4px solid var(--primary-blue);
+            border-radius: 8px;
+            padding: 18px 24px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .opportunity-text {
+            font-size: 14px;
+            color: var(--dark-grey);
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .opportunity-text strong {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .market-opportunity {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-top: 10px;
+        }
+
+        .market-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .market-stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .market-stat-label {
+            color: var(--medium-grey);
+            line-height: 1.3;
+        }
+
+        /* Corporate Structure */
+        .structure-section {
+            display: flex;
+            gap: 20px;
+            height: 140px;
+            margin-bottom: 15px;
+        }
+
+        .phase-container {
+            flex: 1;
+            background: var(--background-grey);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .phase-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .ownership-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex: 1;
+        }
+
+        .entity-box {
+            background: white;
+            border: 2px solid var(--primary-blue);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            min-width: 120px;
+            position: relative;
+        }
+
+        .entity-box.primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+        }
+
+        .entity-box.secondary {
+            background: #f8fafc;
+        }
+
+        .entity-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .entity-detail {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .ownership-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .arrow-line {
+            width: 25px;
+            height: 0;
+            border-top: 2px solid var(--primary-blue);
+            position: relative;
+        }
+
+        .arrow-line::after {
+            content: "▶";
+            position: absolute;
+            right: -8px;
+            top: -9px;
+            font-size: 14px;
+            color: var(--primary-blue);
+        }
+
+        .ownership-percentage {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--primary-blue);
+        }
+
+        /* Business Model */
+        .business-model {
+            background: white;
+            border: 2px solid var(--light-grey);
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 10px;
+        }
+
+        .model-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .model-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .model-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .model-item::before {
+            content: "✓";
+            color: var(--success);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+
+        /* Revenue Projections */
+        .revenue-projection {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            border-radius: 10px;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 0;
+            position: relative;
+            max-width: 100%;
+            max-height: 70px;
+        }
+
+        .projection-metrics {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .metric-box {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        .revenue-range {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .range-item {
+            text-align: center;
+        }
+
+        .range-separator {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        /* Timeline */
+        .timeline-visual {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timeline-steps {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .timeline-dot {
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            margin-bottom: 5px;
+        }
+
+        .timeline-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+        }
+
+        .timeline-line {
+            width: 35px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Footer note */
+        .footer-note {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide">
+        <div class="breadcrumb">STRATEGIA DI CRESCITA / BANKING AS A SERVICE</div>
+        <h1 class="action-title">La societarizzazione della divisione IT genera €30-50M di ricavi addizionali attraverso il modello Banking as a Service</h1>
+
+        <div class="content-container">
+            <!-- Opportunity Context -->
+            <div class="opportunity-context">
+                <div class="opportunity-text">
+                    <strong>Opportunità strategica:</strong> Nel corso del piano industriale si valuterà la cessione del <strong>51% della TechCompany IT</strong> ad investitori esterni, 
+                    creando un modello di <strong>revenue sharing</strong> che permetterà di aggredire il mercato delle banche piccole e medie italiane.
+                </div>
+                <div class="market-opportunity">
+                    <div class="market-stat">
+                        <div class="market-stat-value">55%</div>
+                        <div class="market-stat-label">Banche italiane con<br>infrastrutture legacy anni '80</div>
+                    </div>
+                    <div class="market-stat">
+                        <div class="market-stat-value">€2.5B</div>
+                        <div class="market-stat-label">Spesa IT annua<br>sistema bancario italiano</div>
+                    </div>
+                    <div class="market-stat">
+                        <div class="market-stat-value">Banking as a Service</div>
+                        <div class="market-stat-label">Modello per superare<br>il gap tecnologico del settore</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Corporate Structure - Two Phases -->
+            <div class="structure-section">
+                <!-- Prima Fase -->
+                <div class="phase-container">
+                    <div class="phase-title">Prima Fase</div>
+                    <div class="ownership-diagram">
+                        <div class="entity-box primary">
+                            <div class="entity-name">New Bank</div>
+                            <div class="entity-detail">Capogruppo</div>
+                        </div>
+                        <div class="ownership-arrow">
+                            <span class="ownership-percentage">100%</span>
+                            <div class="arrow-line"></div>
+                        </div>
+                        <div class="entity-box secondary">
+                            <div class="entity-name">TechCompany</div>
+                            <div class="entity-detail">Divisione IT</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Fase Successiva -->
+                <div class="phase-container">
+                    <div class="phase-title">Fase Successiva</div>
+                    <div class="ownership-diagram" style="justify-content: space-between; position: relative;">
+                        <!-- Investitori a sinistra -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="entity-box secondary">
+                                <div class="entity-name">Investitori</div>
+                                <div class="entity-detail">Esterni</div>
+                            </div>
+                            <div class="ownership-arrow">
+                                <span class="ownership-percentage">51%</span>
+                                <div class="arrow-line"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- TechCompany al centro -->
+                        <div class="entity-box secondary" style="margin: 0 10px;">
+                            <div class="entity-name">TechCompany</div>
+                            <div class="entity-detail">Divisione IT</div>
+                        </div>
+                        
+                        <!-- New Bank a destra con freccia verso sinistra -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div class="ownership-arrow" style="transform: scaleX(-1);">
+                                <span class="ownership-percentage" style="transform: scaleX(-1);">49%</span>
+                                <div class="arrow-line"></div>
+                            </div>
+                            <div class="entity-box primary">
+                                <div class="entity-name">New Bank</div>
+                                <div class="entity-detail">Socio minoritario</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Model Revenue Sharing -->
+            <div class="business-model">
+                <div class="model-title">Modello di Revenue Sharing</div>
+                <div class="model-items">
+                    <div class="model-item">Licenze core banking system</div>
+                    <div class="model-item">Fee per transazione processata</div>
+                    <div class="model-item">Monetizzazione API e servizi</div>
+                    <div class="model-item">Consulenza e supporto tecnico</div>
+                </div>
+            </div>
+            
+            <!-- Revenue Projections -->
+            <div class="revenue-projection">
+                <div class="projection-metrics">
+                    <div class="metric-box">
+                        <div class="metric-value">15-20</div>
+                        <div class="metric-label">Banche Target</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-value">€2-3M</div>
+                        <div class="metric-label">Contratto per Banca</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-label">Stima Ricavi Totali</div>
+                        <div class="revenue-range">
+                            <div class="range-item">
+                                <div class="metric-value">€30M</div>
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 2px;">con 15 banche</div>
+                            </div>
+                            <div class="range-separator">-</div>
+                            <div class="range-item">
+                                <div class="metric-value">€60M</div>
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 2px;">con 20 banche</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-note">
+            *Ricavi non inclusi nel piano industriale base - potenziale upside attraverso vendita tecnologia core banking ad altre banche
+        </div>
+
+        <div class="slide-number">13</div>
+    </div>
+
+</body>
+</html>

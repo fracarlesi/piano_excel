@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide 19: Ritorno per l'Investitore</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --light-blue: #4dabf7;
+            --dark-grey: #333333;
+            --medium-grey: #666666;
+            --light-grey: #E0E0E0;
+            --background-grey: #f8f9fa;
+            --white: #FFFFFF;
+            --success-green: #28a745;
+            --highlight-yellow: #FFD700;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: #404040;
+            color: var(--dark-grey);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .slide {
+            width: 1122px;
+            height: 794px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
+            padding: 60px;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 30px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--secondary-blue);
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Key Metrics Banner */
+        .key-metrics-banner {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .metric-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .metric-sublabel {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        /* Investment Timeline */
+        .timeline-section {
+            background: var(--background-grey);
+            border-radius: 10px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .timeline-track {
+            height: 4px;
+            background: var(--light-grey);
+            border-radius: 2px;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--success-green) 100%);
+            border-radius: 2px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        .timeline-points {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-top: -44px;
+        }
+
+        .timeline-point {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .point-marker {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 3px solid var(--primary-blue);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .point-marker.highlight {
+            width: 20px;
+            height: 20px;
+            border-color: var(--success-green);
+            background: var(--success-green);
+        }
+
+        .point-label {
+            font-size: 11px;
+            color: var(--medium-grey);
+            text-align: center;
+        }
+
+        .point-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        /* Exit Scenarios */
+        .scenarios-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .scenario-card {
+            background: white;
+            border: 1px solid var(--light-grey);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .scenario-card.base {
+            border: 2px solid var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(0, 58, 112, 0.1);
+        }
+
+        .scenario-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: var(--medium-grey);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .scenario-valuation {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 8px;
+        }
+
+        .scenario-multiple {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--secondary-blue);
+            margin-bottom: 12px;
+        }
+
+        .scenario-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .detail-label {
+            color: var(--medium-grey);
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--dark-grey);
+        }
+
+        /* Value Drivers */
+        .value-drivers {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .driver-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .driver-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--background-grey);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .driver-text {
+            flex: 1;
+            font-size: 13px;
+            color: var(--dark-grey);
+            line-height: 1.4;
+        }
+
+        /* Tech Upside Banner */
+        .tech-upside-banner {
+            background: linear-gradient(135deg, #fff8dc 0%, #ffeaa7 100%);
+            border-left: 4px solid var(--highlight-yellow);
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .upside-icon {
+            font-size: 24px;
+        }
+
+        .upside-content {
+            flex: 1;
+        }
+
+        .upside-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 4px;
+        }
+
+        .upside-text {
+            font-size: 12px;
+            color: var(--medium-grey);
+            line-height: 1.4;
+        }
+
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 0;
+            }
+            body {
+                background: white;
+            }
+            .slide {
+                width: 1122px !important;
+                height: 794px !important;
+                border: none;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="breadcrumb">Strategia di Funding e Ritorno per l'Investitore</div>
+        <h1 class="action-title">Exit a 10 anni genera MOIC 2.66x con IRR 10.3% + upside tech non incluso</h1>
+        
+        <div class="content-area">
+            <!-- Key Metrics Banner -->
+            <div class="key-metrics-banner">
+                <div class="metric-item">
+                    <div class="metric-label">Multiple on Invested Capital</div>
+                    <div class="metric-value">2.66x</div>
+                    <div class="metric-sublabel">MOIC</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Internal Rate of Return</div>
+                    <div class="metric-value">10.3%</div>
+                    <div class="metric-sublabel">IRR</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Exit Timeline</div>
+                    <div class="metric-value">Year 10</div>
+                    <div class="metric-sublabel">2034</div>
+                </div>
+            </div>
+
+            <!-- Investment Timeline -->
+            <div class="timeline-section">
+                <div class="timeline-track">
+                    <div class="timeline-progress"></div>
+                </div>
+                <div class="timeline-points">
+                    <div class="timeline-point">
+                        <div class="point-marker"></div>
+                        <div class="point-label">Investment</div>
+                        <div class="point-value">€200M</div>
+                        <div class="point-label">Year 0</div>
+                    </div>
+                    <div class="timeline-point">
+                        <div class="point-marker"></div>
+                        <div class="point-label">Breakeven</div>
+                        <div class="point-value">Year 3</div>
+                    </div>
+                    <div class="timeline-point">
+                        <div class="point-marker"></div>
+                        <div class="point-label">ROE 15.8%</div>
+                        <div class="point-value">Year 5</div>
+                    </div>
+                    <div class="timeline-point">
+                        <div class="point-marker highlight"></div>
+                        <div class="point-label">Exit</div>
+                        <div class="point-value">€532M</div>
+                        <div class="point-label">Year 10</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exit Scenarios -->
+            <div class="scenarios-container">
+                <div class="scenario-card">
+                    <div class="scenario-title">Conservative</div>
+                    <div class="scenario-valuation">€480M</div>
+                    <div class="scenario-multiple">MOIC: 2.40x</div>
+                    <div class="scenario-details">
+                        <div class="detail-row">
+                            <span class="detail-label">P/BV</span>
+                            <span class="detail-value">1.2x</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">IRR</span>
+                            <span class="detail-value">9.1%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scenario-card base">
+                    <div class="scenario-title">Base Case</div>
+                    <div class="scenario-valuation">€532M</div>
+                    <div class="scenario-multiple">MOIC: 2.66x</div>
+                    <div class="scenario-details">
+                        <div class="detail-row">
+                            <span class="detail-label">P/BV</span>
+                            <span class="detail-value">1.4x</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">IRR</span>
+                            <span class="detail-value">10.3%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="scenario-card">
+                    <div class="scenario-title">Optimistic</div>
+                    <div class="scenario-valuation">€600M</div>
+                    <div class="scenario-multiple">MOIC: 3.00x</div>
+                    <div class="scenario-details">
+                        <div class="detail-row">
+                            <span class="detail-label">P/BV</span>
+                            <span class="detail-value">1.6x</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">IRR</span>
+                            <span class="detail-value">11.6%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Value Drivers -->
+            <div class="value-drivers">
+                <div class="driver-item">
+                    <div class="driver-icon">1</div>
+                    <div class="driver-text">ROE stabile al 15.8% con business maturo</div>
+                </div>
+                <div class="driver-item">
+                    <div class="driver-icon">2</div>
+                    <div class="driver-text">€2B+ AUM con Cost/Income 32.7% best-in-class</div>
+                </div>
+                <div class="driver-item">
+                    <div class="driver-icon">3</div>
+                    <div class="driver-text">50k+ clienti Digital con alta conversione Wealth</div>
+                </div>
+                <div class="driver-item">
+                    <div class="driver-icon">4</div>
+                    <div class="driver-text">Leadership in finanza agevolata e special situations</div>
+                </div>
+            </div>
+
+            <!-- Tech Upside Banner -->
+            <div class="tech-upside-banner">
+                <div class="upside-icon">🚀</div>
+                <div class="upside-content">
+                    <div class="upside-title">Tech Platform Upside Non Incluso nella Valutazione</div>
+                    <div class="upside-text">
+                        La piattaforma tecnologica AI-nativa rappresenta un asset separato con potenziale spin-off/licensing. 
+                        Valutazione potenziale €100-200M basata su comparables fintech (5-10x ricavi ricorrenti SaaS).
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slide-number">19</div>
+    </div>
+</body>
+</html>

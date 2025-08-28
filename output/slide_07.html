@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide 7 - Digital Banking: La Base della Raccolta Granulare</title>
+        <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --light-blue: #4dabf7;
+            --dark-grey: #333333;
+            --medium-grey: #666666;
+            --light-grey: #E0E0E0;
+            --background-grey: #f8f9fa;
+            --white: #FFFFFF;
+            --digital: #00B4D8;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: #404040;
+            color: var(--dark-grey);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .slide {
+            width: 1122px;
+            height: 794px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
+            padding: 40px;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            page-break-after: always;
+        }
+
+        .slide-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .breadcrumb {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 24px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            border-bottom: 2px solid #0051a5;
+            padding-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--medium-grey);
+            font-style: italic;
+            margin-bottom: 32px;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 40px !important;
+            right: 40px !important;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+            z-index: 100;
+        }
+
+        /* Premium elements */
+        .highlight-box {
+            background: var(--background-grey);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 16px 0;
+        }
+
+        .metric-card {
+            background: white;
+            border: 1px solid var(--light-grey);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 0;
+            }
+            body {
+                background: white;
+            }
+            .slide {
+                width: 1122px !important;
+                height: 794px !important;
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        /* Custom styles for this slide */
+        .content-container {
+            display: flex;
+            gap: 24px;
+            height: calc(100% - 160px);
+            margin-top: 16px;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .chart-box {
+            background: white;
+            border: 1px solid var(--light-grey);
+            border-radius: 8px;
+            padding: 16px;
+            height: 180px;
+        }
+
+        .chart-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 120px;
+        }
+
+        .pnl-table {
+            width: 100%;
+            margin-top: 12px;
+            border-collapse: collapse;
+        }
+
+        .pnl-table th,
+        .pnl-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--light-grey);
+            font-size: 13px;
+        }
+
+        .pnl-table th {
+            background: var(--background-grey);
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .pnl-table .value {
+            text-align: right;
+            font-weight: 600;
+            color: var(--dark-grey);
+        }
+
+        .pnl-table .negative {
+            color: #dc2626;
+        }
+
+        .pnl-table .total {
+            background: var(--background-grey);
+            font-weight: 700;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            height: 100%;
+        }
+
+        .section {
+            background: var(--background-grey);
+            border-radius: 8px;
+            padding: 18px;
+            border-left: 4px solid var(--digital);
+        }
+
+        .section.obiettivo {
+            height: 46%;
+            margin-bottom: 8px;
+        }
+
+        .section.evoluzione {
+            height: 50%;
+            margin-top: 0;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 16px;
+        }
+
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bullet-list li {
+            margin-bottom: 12px;
+            position: relative;
+            padding-left: 20px;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .bullet-list li::before {
+            content: '•';
+            color: var(--digital);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .focus-box {
+            width: 280px;
+            background: white;
+            border: 2px solid var(--digital);
+            border-radius: 8px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: calc(100% - 15px);
+            max-height: 665px;
+        }
+
+        .focus-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            text-align: center;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--digital);
+            padding-bottom: 8px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            flex: 1;
+            align-content: space-evenly;
+        }
+
+        .value-props {
+            border-top: 1px solid var(--light-grey);
+            padding-top: 16px;
+        }
+
+        .value-props-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .value-props-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .value-props-list li {
+            font-size: 12px;
+            line-height: 1.4;
+            margin-bottom: 6px;
+            position: relative;
+            padding-left: 16px;
+        }
+
+        .value-props-list li::before {
+            content: '✓';
+            color: var(--digital);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+.metric-box {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 14px;
+            text-align: center;
+            border: 2px solid var(--digital);
+            height: 95px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+.metric-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--digital);
+            margin-bottom: 6px;
+        }
+.metric-label {
+            font-size: 12px;
+            color: var(--medium-grey);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+            font-weight: 500;
+        }
+.metric-description {
+            font-size: 11px;
+            color: var(--medium-grey);
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+
+    </div>
+
+    <div class="slide">
+        <div class="slide-header">
+            <div class="breadcrumb">Le 6 Divisioni > Digital Banking</div>
+            <h1 class="action-title">Digital Banking acquisisce 60k clienti per generare €1.5B di funding stabile per le divisioni creditizie</h1>
+        </div>
+
+        <div class="content-container">
+            <div class="main-content">
+                <div class="section obiettivo">
+                    <h3 class="section-title">Obiettivo Strategico</h3>
+                    <ul class="bullet-list">
+                        <li>Acquisire <strong>60k clienti in 5 anni</strong> investendo €15M complessivi (CAC €250/cliente) con retention del 95% annuo</li>
+                        <li>Offrire <strong>3 prodotti distintivi iper-tecnologici</strong> per massimizzare valore per segmento di clientela:
+                            <ul style="margin-top: 8px; list-style: circle; margin-left: 20px;">
+                                <li style="font-size: 13px; margin-bottom: 4px;"><strong>Base:</strong> gratuito, giacenza media €10k, servizi standard</li>
+                                <li style="font-size: 13px; margin-bottom: 4px;"><strong>Premium:</strong> €30/mese, giacenza media €15k, EURIBOR+50bps, servizi avanzati</li>
+                                <li style="font-size: 13px; margin-bottom: 4px;"><strong>Deposito:</strong> tasso fisso 4.5%, funding per divisioni creditizie</li>
+                            </ul>
+                        </li>
+                        <li>Garantire <strong>eccellenza nel servizio</strong> con customer care dedicato outsourced (€1M/anno)</li>
+                    </ul>
+                </div>
+
+                <div class="section evoluzione">
+                    <h3 class="section-title">Evoluzione Clienti per Prodotto</h3>
+                    <div style="margin-top: -15px;">
+                        <div style="background: white; border: 1px solid var(--light-grey); border-radius: 8px; padding: 16px; height: 220px;">
+                            <svg style="width: 100%; height: 180px;" viewBox="0 0 500 180">
+                                <!-- Asse X e Y (sinistra per clienti) -->
+                                <line x1="40" y1="150" x2="460" y2="150" stroke="#ccc" stroke-width="1"/>
+                                <line x1="40" y1="20" x2="40" y2="150" stroke="#ccc" stroke-width="1"/>
+                                
+                                <!-- Y1: 0 clienti -->
+                                <rect x="70" y="149" width="60" height="1" fill="#00B4D8"/>
+                                
+                                <!-- Y2: 4.819k clienti (491 base + 491 premium + 3.928 deposito) -->
+                                <!-- Scale: 60k = 130px, so 1k = 2.17px -->
+                                <rect x="150" y="148" width="60" height="1.1" fill="#003A70"/> <!-- base 491 -->
+                                <rect x="150" y="146.9" width="60" height="1.1" fill="#0051a5"/> <!-- premium 491 -->
+                                <rect x="150" y="138.4" width="60" height="8.5" fill="#00B4D8"/> <!-- deposito 3928 -->
+                                
+                                <!-- Y3: 14.584k clienti (1.355 base + 1.355 premium + 10.838 deposito) -->
+                                <rect x="230" y="147.1" width="60" height="2.9" fill="#003A70"/> <!-- base 1355 -->
+                                <rect x="230" y="144.2" width="60" height="2.9" fill="#0051a5"/> <!-- premium 1355 -->
+                                <rect x="230" y="120.7" width="60" height="23.5" fill="#00B4D8"/> <!-- deposito 10838 -->
+                                
+                                <!-- Y4: 28.969k clienti (2.896 base + 2.896 premium + 23.167 deposito) -->
+                                <rect x="310" y="143.7" width="60" height="6.3" fill="#003A70"/> <!-- base 2896 -->
+                                <rect x="310" y="137.4" width="60" height="6.3" fill="#0051a5"/> <!-- premium 2896 -->
+                                <rect x="310" y="87.1" width="60" height="50.3" fill="#00B4D8"/> <!-- deposito 23167 -->
+                                
+                                <!-- Y5: 56.635k clienti (5.664 base + 5.664 premium + 45.308 deposito) -->
+                                <rect x="390" y="137.7" width="60" height="12.3" fill="#003A70"/> <!-- base 5664 -->
+                                <rect x="390" y="125.4" width="60" height="12.3" fill="#0051a5"/> <!-- premium 5664 -->
+                                <rect x="390" y="27" width="60" height="98.4" fill="#00B4D8"/> <!-- deposito 45308 -->
+                                
+                                <!-- X axis labels -->
+                                <text x="100" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 1</text>
+                                <text x="180" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 2</text>
+                                <text x="260" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 3</text>
+                                <text x="340" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 4</text>
+                                <text x="420" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 5</text>
+                                
+                                <!-- Values on top of bars (clienti) -->
+                                <text x="100" y="145" font-size="10" text-anchor="middle" fill="#333" font-weight="600">0</text>
+                                <text x="180" y="134" font-size="10" text-anchor="middle" fill="#333" font-weight="600">4.8k</text>
+                                <text x="260" y="116" font-size="10" text-anchor="middle" fill="#333" font-weight="600">14.6k</text>
+                                <text x="340" y="82" font-size="10" text-anchor="middle" fill="#333" font-weight="600">29.0k</text>
+                                <text x="420" y="21" font-size="10" text-anchor="middle" fill="#333" font-weight="600">56.6k</text>
+                                
+                                <!-- Y axis labels (left - clienti) -->
+                                <text x="30" y="155" font-size="9" text-anchor="end" fill="#666">0</text>
+                                <text x="30" y="110" font-size="9" text-anchor="end" fill="#666">20k</text>
+                                <text x="30" y="65" font-size="9" text-anchor="end" fill="#666">40k</text>
+                                <text x="30" y="25" font-size="9" text-anchor="end" fill="#666">60k</text>
+                                
+                            </svg>
+                            <!-- Legend -->
+                            <div style="margin-top: 2px; font-size: 10px; display: flex; gap: 15px; justify-content: center;">
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <div style="width: 14px; height: 8px; background: #003A70; border-radius: 2px;"></div>
+                                    <span>Conto Base</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <div style="width: 14px; height: 8px; background: #0051a5; border-radius: 2px;"></div>
+                                    <span>Conto Premium</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <div style="width: 14px; height: 8px; background: #00B4D8; border-radius: 2px;"></div>
+                                    <span>Conto Deposito</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="focus-box">
+                <h3 class="focus-title">Target Metrics Anno 5</h3>
+                
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-label">Ricavi Anno 5</div>
+                        <div class="metric-value">€1.7M</div>
+                        <div class="metric-description">Commissioni</div>
+                    </div>
+
+                    <div class="metric-box">
+                        <div class="metric-label">Costi Anno 5</div>
+                        <div class="metric-value">(€5.1M)</div>
+                        <div class="metric-description">Costi operativi</div>
+                    </div>
+
+                    <div class="metric-box">
+                        <div class="metric-label">Net Income</div>
+                        <div class="metric-value">(€3.4M)</div>
+                        <div class="metric-description">Perdita prevista</div>
+                    </div>
+
+
+
+                    <div class="metric-box">
+                        <div class="metric-label">Funding Anno 5</div>
+                        <div class="metric-value">€1.5B</div>
+                        <div class="metric-description">Funding disponibile</div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <div style="position: absolute; bottom: 20px; left: 40px; right: 120px; font-size: 10px; color: #999; line-height: 1.3;">
+            <strong>Nota:</strong> I costi non includono gli interessi passivi sulla raccolta, allocati sulle divisioni creditizie che generano impieghi
+        </div>
+
+        <span class="slide-number">7</span>
+    </div>
+
+    <script>
+    // Clean script
+</script>
+</body>
+</html>

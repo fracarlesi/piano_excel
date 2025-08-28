@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1122, height=794">
+    <title>Slide 14 - Architettura AI-Driven</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #404040;
+            color: #1a1a1a;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Container principale */
+        .slide-container {
+            width: 1122px;
+            height: 794px;
+            background: white;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .slide-header {
+            padding: 30px 60px 20px 60px;
+            background: white;
+        }
+
+        .breadcrumb {
+            font-size: 13px;
+            color: #666666;
+            margin-bottom: 12px;
+            letter-spacing: 0.02em;
+        }
+
+        .action-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #003A70;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            padding-bottom: 16px;
+            border-bottom: 3px solid #003A70;
+        }
+
+        /* Content area */
+        .slide-content {
+            flex: 1;
+            padding: 15px 60px 20px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+        }
+
+        /* Architecture flow container */
+        .architecture-flow {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            padding: 5px 0;
+        }
+
+        /* Data flow sections */
+        .flow-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .flow-section.sources {
+            width: 240px;
+        }
+
+        .flow-section.engine {
+            width: 280px;
+        }
+
+        .flow-section.agents {
+            width: 380px;
+            transform: translate(-9px, -14px);
+        }
+
+        /* Section headers */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #003A70;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 auto 20px;
+            text-align: center;
+            width: 100%;
+            transform: translateX(0);
+        }
+
+        /* Data sources box */
+        .data-sources {
+            background: linear-gradient(135deg, #E8F1F8 0%, #F0F7FB 100%);
+            border: 2px solid #003A70;
+            border-radius: 12px;
+            padding: 25px;
+            width: 100%;
+            transform: translate(-13px, -4px);
+        }
+
+        .source-item {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,58,112,0.08);
+            transition: all 0.2s ease;
+        }
+
+        .source-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .source-item:hover {
+            transform: translateX(3px);
+            box-shadow: 0 3px 8px rgba(0,58,112,0.15);
+        }
+
+        .source-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .source-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a1a1a;
+            flex: 1;
+        }
+
+        /* AI Engine box */
+        .ai-engine {
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%);
+            border-radius: 16px;
+            padding: 25px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0,58,112,0.25);
+            transform: translate(-15px, -14px);
+        }
+
+
+        .engine-capability {
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #003A70;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .engine-capability:last-child {
+            margin-bottom: 0;
+        }
+
+        .engine-capability:hover {
+            background: white;
+            transform: scale(1.02);
+        }
+
+        /* AI Agents section */
+        .ai-agents {
+            width: 100%;
+            position: static;
+            height: auto;
+        }
+
+        .agent-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #003A70 0%, #0076A8 100%);
+        }
+
+        .agent-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,58,112,0.12);
+            border-color: #003A70;
+        }
+
+        .agent-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #E8F1F8 0%, #D0E4F2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #003A70;
+            margin-bottom: 2px;
+        }
+
+        .agent-benefit {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .agent-impact {
+            background: #00A76F;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        /* Flow arrows */
+        .flow-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 5px;
+            background: linear-gradient(90deg, rgba(0,58,112,0.5) 0%, rgba(0,58,112,1) 50%, rgba(0,58,112,0.5) 100%);
+            z-index: 1;
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0,58,112,0.2);
+        }
+
+        .flow-arrow::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 16px solid rgba(0,58,112,0.8);
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+        }
+
+        .flow-arrow.arrow-1 {
+            left: 260px;
+        }
+
+        .flow-arrow.arrow-2 {
+            left: 540px;
+        }
+
+        /* Impact section */
+        .impact-section {
+            background: linear-gradient(135deg, #F8FBFD 0%, #EFF6FB 100%);
+            border-radius: 12px;
+            padding: 10px 30px;
+            border: 1px solid #D0E4F2;
+            margin-top: 5px;
+        }
+
+        .impact-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #003A70;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .impact-metrics {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+        }
+
+        .impact-metric {
+            flex: 1;
+            text-align: center;
+        }
+
+        .impact-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #003A70;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .impact-value.green {
+            color: #00A76F;
+        }
+
+        .impact-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .impact-sublabel {
+            font-size: 11px;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        /* Footer */
+        .slide-footer {
+            padding: 20px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e6e6e6;
+            background: #fafbfc;
+        }
+
+        .slide-number {
+            font-size: 13px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .source-note {
+            font-size: 11px;
+            color: #999;
+        }
+
+        /* Gradient overlay per depth */
+        .architecture-flow::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -60px;
+            right: -60px;
+            bottom: -20px;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,58,112,0.02) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animation on hover for entire flow */
+        .architecture-flow:hover .source-item,
+        .architecture-flow:hover .engine-capability,
+        .architecture-flow:hover .agent-card {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Header -->
+        <div class="slide-header">
+            <div class="breadcrumb">LA PIATTAFORMA TECNOLOGICA AI-NATIVA</div>
+            <h1 class="action-title">Architettura AI-Driven - Moltiplicatore di Produttività</h1>
+        </div>
+
+        <!-- Content -->
+        <div class="slide-content">
+            <!-- Architecture Flow -->
+            <div class="architecture-flow">
+                <!-- Data Sources -->
+                <div class="flow-section sources">
+                    <h3 class="section-title">Data Sources</h3>
+                    <div class="data-sources">
+                        <div class="source-item">
+                            <div class="source-icon">💳</div>
+                            <div class="source-name">Dati Transazionali</div>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-icon">📊</div>
+                            <div class="source-name">Dati di Mercato</div>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-icon">🏛️</div>
+                            <div class="source-name">Dati Esterni</div>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-icon">👥</div>
+                            <div class="source-name">Dati Comportamentali</div>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-icon">🔗</div>
+                            <div class="source-name">Open Banking APIs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Arrow 1 -->
+                <div class="flow-arrow arrow-1"></div>
+
+                <!-- AI Engine -->
+                <div class="flow-section engine">
+                    <h3 class="section-title">AI Engine</h3>
+                    <div class="ai-engine">
+                        <div class="engine-capability">Data Lake Centralizzato</div>
+                        <div class="engine-capability">Machine Learning Models</div>
+                        <div class="engine-capability">Natural Language Processing</div>
+                        <div class="engine-capability">Predictive Analytics</div>
+                        <div class="engine-capability">Real-time Processing</div>
+                    </div>
+                </div>
+
+                <!-- Flow Arrow 2 -->
+                <div class="flow-arrow arrow-2"></div>
+
+                <!-- AI Agents -->
+                <div class="flow-section agents">
+                    <h3 class="section-title">AI Agents Supporting Employees</h3>
+                    <div class="ai-agents">
+                        <div class="agent-card">
+                            <div class="agent-icon">📊</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Credit Risk Agent</div>
+                                <div class="agent-benefit">Supporta analisti credito</div>
+                            </div>
+                            <div class="agent-impact">-40% tempo</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-icon">🎧</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Customer Service Agent</div>
+                                <div class="agent-benefit">Supporta contact center</div>
+                            </div>
+                            <div class="agent-impact">-60% chiamate</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-icon">🛡️</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Compliance Agent</div>
+                                <div class="agent-benefit">Automatizza AML/KYC</div>
+                            </div>
+                            <div class="agent-impact">-50% effort</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-icon">💼</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Sales Agent</div>
+                                <div class="agent-benefit">Suggerisce next best action</div>
+                            </div>
+                            <div class="agent-impact">+30% conversion</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-icon">⚙️</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Operations Agent</div>
+                                <div class="agent-benefit">Automatizza back-office</div>
+                            </div>
+                            <div class="agent-impact">-70% task manuali</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impact Section -->
+            <div class="impact-section">
+                <h3 class="impact-title">
+                    <span>📈</span>
+                    BUSINESS IMPACT - TRASFORMAZIONE DELLA PRODUTTIVITÀ
+                </h3>
+                <div class="impact-metrics">
+                    <div class="impact-metric">
+                        <div class="impact-value green">-35%</div>
+                        <div class="impact-label">Riduzione FTE</div>
+                        <div class="impact-sublabel">non fattorizzata nel piano</div>
+                    </div>
+                    <div class="impact-metric">
+                        <div class="impact-value green">&lt;30%</div>
+                        <div class="impact-label">Cost/Income Ratio</div>
+                        <div class="impact-sublabel">potenziale con riduzione FTE</div>
+                    </div>
+                    <div class="impact-metric">
+                        <div class="impact-value green">+2.5x</div>
+                        <div class="impact-label">Produttività</div>
+                        <div class="impact-sublabel">per dipendente</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="slide-footer">
+            <div class="source-note">Fonte: Technology Architecture 2025 | Google Cloud AI Platform</div>
+            <div class="slide-number">Slide 14</div>
+        </div>
+    </div>
+</body>
+</html>
