@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slide 12 - Costi IT</title>
+    <title>Slide 12 - IT Costs</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -22,6 +22,7 @@
             --light-grey: #E0E0E0;
             --background-grey: #F8F9FA;
             --white: #FFFFFF;
+            --digital: #00B4D8;
             --success: #10B981;
         }
 
@@ -43,7 +44,7 @@
             background: white;
             border: 1px solid #d0d0d0;
             box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
-            padding: 60px;
+            padding: 40px;
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
@@ -52,17 +53,28 @@
 
         .slide-number {
             position: absolute;
-            bottom: 30px;
-            right: 40px;
+            bottom: 40px !important;
+            right: 40px !important;
             font-size: 14px;
             color: #666;
             font-weight: 500;
+            z-index: 100;
+        }
+
+        .footer-note {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            right: 120px;
+            font-size: 10px;
+            color: #999;
+            line-height: 1.3;
         }
 
         .breadcrumb {
-            font-size: 14px;
-            color: var(--medium-grey);
-            margin-bottom: 20px;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -176,12 +188,13 @@
 
         /* Box CAPEX e OPEX */
         .detail-box {
-            background: white;
-            border: 2px solid var(--light-grey);
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            border: 1px solid var(--light-grey);
             border-radius: 12px;
             padding: 14px;
             display: flex;
             flex-direction: column;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.06);
         }
 
         .detail-box.capex {
@@ -249,28 +262,30 @@
 <body>
 
     <div class="slide">
-        <div class="breadcrumb">TECH PLATFORM > COSTI IT</div>
-        <h1 class="action-title">Spesa IT di €69M in 5 anni allineata ai benchmark per la trasformazione digitale</h1>
+        <div class="slide-header">
+            <div class="breadcrumb">TECH PLATFORM > IT COSTS</div>
+            <h1 class="action-title">€69M IT spend over 5 years aligned with digital transformation benchmarks</h1>
+        </div>
 
         <div class="content-container">
             <!-- Box orizzontale blu in alto -->
             <div class="total-cost-banner">
                 <div class="total-cost-content">
                     <div>
-                        <div class="total-cost-label">SPESA COMPLESSIVA IT</div>
+                        <div class="total-cost-label">TOTAL IT SPEND</div>
                     </div>
                     <div class="total-cost-amount">€69M</div>
-                    <div class="total-cost-period">nei 5 anni del piano</div>
+                    <div class="total-cost-period">over 5-year plan</div>
                 </div>
             </div>
 
             <!-- Citazione McKinsey -->
             <div class="mckinsey-quote">
                 <div class="quote-text">
-                    "I costi IT dell'Anno 5 sono pari a €16.5M e rappresentano circa il 12% dei ricavi totali della banca all'Anno 5, in linea con i benchmark di mercato delle banche digitali (McKinsey Digital 20/20 Survey: 10-15% per banche efficienti)"
+                    "Year 5 IT costs of €16.5M represent approximately 12% of the bank's total Year 5 revenues, aligned with digital bank market benchmarks (McKinsey Digital 20/20 Survey: 10-15% for efficient banks)"
                 </div>
                 <div class="quote-source">
-                    Fonte: McKinsey - Transforming banks' IT productivity (2019)
+                    Source: McKinsey - Transforming banks' IT productivity (2019)
                 </div>
             </div>
 
@@ -285,19 +300,19 @@
                     <ul class="detail-list">
                         <li class="detail-item">
                             <span class="detail-bullet"></span>
-                            <span class="detail-text">Sviluppo Software AI (CAPEX)</span>
+                            <span class="detail-text">AI Software Development (CAPEX)</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet"></span>
-                            <span class="detail-text">Temenos Corebanking Setup</span>
+                            <span class="detail-text">Core Banking Platform Setup</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet"></span>
-                            <span class="detail-text">Infrastruttura Cloud/Server</span>
+                            <span class="detail-text">Cloud/Server Infrastructure</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet"></span>
-                            <span class="detail-text">Digital Bank (App e Piattaforma)</span>
+                            <span class="detail-text">Digital Bank (App & Platform)</span>
                         </li>
                     </ul>
                 </div>
@@ -311,23 +326,23 @@
                     <ul class="detail-list">
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--accent-blue);"></span>
-                            <span class="detail-text">Licenza Temenos (Core Banking)</span>
+                            <span class="detail-text">Core Banking License</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--accent-blue);"></span>
-                            <span class="detail-text">Costi Cloud (Infrastruttura Google Cloud)</span>
+                            <span class="detail-text">Cloud Infrastructure Costs</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--accent-blue);"></span>
-                            <span class="detail-text">Canone Internet e connettività</span>
+                            <span class="detail-text">Internet & Connectivity Fees</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--accent-blue);"></span>
-                            <span class="detail-text">Licenze Software varie</span>
+                            <span class="detail-text">Various Software Licenses</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--accent-blue);"></span>
-                            <span class="detail-text">Noleggio Dispositivi per FTE</span>
+                            <span class="detail-text">FTE Device Leasing</span>
                         </li>
                     </ul>
                 </div>
@@ -335,32 +350,32 @@
                 <!-- Box Personale -->
                 <div class="detail-box personnel">
                     <div class="box-title">
-                        <span>PERSONALE IT - €4.9M</span>
+                        <span>IT PERSONNEL - €4.9M</span>
                         <span class="box-percentage">(7%)</span>
                     </div>
                     <ul class="detail-list">
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--success);"></span>
-                            <span class="detail-text">13 FTE all'Anno 5</span>
+                            <span class="detail-text">13 FTEs by Year 5</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--success);"></span>
-                            <span class="detail-text">Crescita graduale organico</span>
+                            <span class="detail-text">Gradual team growth</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--success);"></span>
-                            <span class="detail-text">Team specializzato IT</span>
+                            <span class="detail-text">Specialized IT team</span>
                         </li>
                         <li class="detail-item">
                             <span class="detail-bullet" style="background: var(--success);"></span>
-                            <span class="detail-text">Competenze digitali e bancarie</span>
+                            <span class="detail-text">Digital & banking expertise</span>
                         </li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <div class="slide-number">12</div>
+        <span class="slide-number">12</span>
     </div>
 
 </body>

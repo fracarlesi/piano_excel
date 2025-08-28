@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assunzioni Costi e Personale</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+        
+        :root {
+            /* Colori McKinsey */
+            --mckinsey-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --accent-blue: #0070c0;
+            --light-blue: #e6f2ff;
+            --charcoal: #1a1a1a;
+            --medium-gray: #666666;
+            --light-gray: #cccccc;
+            --pale-gray: #f5f5f5;
+            --white: #ffffff;
+            --success-green: #059669;
+            --danger-red: #dc2626;
+            --warning-amber: #f59e0b;
+            
+            /* Spacing System */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: white;
+            color: var(--charcoal);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .slide {
+            width: 1122px;
+            height: 794px;
+            padding: var(--space-2xl);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: white;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            margin-bottom: var(--space-lg);
+        }
+        
+        .breadcrumb {
+            color: var(--medium-gray);
+            font-size: 14px;
+            margin-bottom: var(--space-md);
+        }
+        
+        .slide-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--charcoal);
+            line-height: 1.2;
+            margin-bottom: var(--space-sm);
+        }
+        
+        .title-line {
+            height: 3px;
+            background: var(--secondary-blue);
+            margin-bottom: var(--space-xl);
+        }
+        
+        /* Content */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+        }
+        
+        /* Layout Grid */
+        .two-column-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-xl);
+            height: 100%;
+        }
+        
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+        }
+        
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+        }
+        
+        /* Section Styles */
+        .section {
+            background: white;
+            border: 1px solid var(--light-gray);
+            border-radius: 4px;
+            padding: var(--space-md);
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--mckinsey-blue);
+            text-transform: uppercase;
+            margin-bottom: var(--space-sm);
+            letter-spacing: 0.5px;
+        }
+        
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+        
+        .data-table th {
+            background: var(--pale-gray);
+            padding: 6px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--charcoal);
+            border-bottom: 2px solid var(--secondary-blue);
+        }
+        
+        .data-table td {
+            padding: 6px;
+            border-bottom: 1px solid var(--pale-gray);
+        }
+        
+        .data-table tr:hover {
+            background: var(--light-blue);
+        }
+        
+        .metric-value {
+            font-weight: 600;
+            color: var(--charcoal);
+        }
+        
+        .trend-positive {
+            color: var(--success-green);
+        }
+        
+        .trend-negative {
+            color: var(--danger-red);
+        }
+        
+        /* FTE Distribution Chart */
+        .fte-distribution {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-top: var(--space-sm);
+        }
+        
+        .pie-chart-container {
+            width: 120px;
+            height: 120px;
+        }
+        
+        .division-legend {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-xs);
+            font-size: 11px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        /* Progress Bars */
+        .efficiency-item {
+            margin-bottom: var(--space-sm);
+        }
+        
+        .efficiency-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: var(--pale-gray);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-blue), var(--accent-blue));
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: var(--space-sm);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        /* Cost/Income Ratio */
+        .ratio-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-md);
+            margin-top: var(--space-sm);
+        }
+        
+        .ratio-card {
+            text-align: center;
+            padding: var(--space-sm);
+            background: var(--pale-gray);
+            border-radius: 4px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .ratio-card.target {
+            border-color: var(--success-green);
+            background: #f0fdf4;
+        }
+        
+        .ratio-year {
+            font-size: 11px;
+            color: var(--medium-gray);
+            margin-bottom: 4px;
+        }
+        
+        .ratio-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--mckinsey-blue);
+        }
+        
+        /* Footer */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--space-lg);
+            margin-top: var(--space-lg);
+            border-top: 1px solid var(--light-gray);
+            font-size: 12px;
+            color: var(--medium-gray);
+        }
+        
+        .page-number {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <!-- Header -->
+        <div class="header">
+            <div class="breadcrumb">Piano Industriale 2024-2027 | Appendice | Assunzioni Costi</div>
+            <h1 class="slide-title">Le assunzioni sui costi prevedono efficientamenti e investimenti mirati</h1>
+            <div class="title-line"></div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <div class="two-column-grid">
+                <!-- Left Column -->
+                <div class="left-column">
+                    <!-- Costo del Personale -->
+                    <div class="section">
+                        <div class="section-title">1. Costo del Personale</div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Metrica</th>
+                                    <th>2024</th>
+                                    <th>2025</th>
+                                    <th>2026</th>
+                                    <th>2027</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Organico medio (FTE)</td>
+                                    <td class="metric-value">850</td>
+                                    <td class="metric-value">892</td>
+                                    <td class="metric-value">927</td>
+                                    <td class="metric-value">964</td>
+                                </tr>
+                                <tr>
+                                    <td>Costo medio (€'000)</td>
+                                    <td class="metric-value">75</td>
+                                    <td class="metric-value">77</td>
+                                    <td class="metric-value">79</td>
+                                    <td class="metric-value">81</td>
+                                </tr>
+                                <tr>
+                                    <td>Costo totale (€Mln)</td>
+                                    <td class="metric-value">63.8</td>
+                                    <td class="metric-value">68.7</td>
+                                    <td class="metric-value">73.2</td>
+                                    <td class="metric-value">78.1</td>
+                                </tr>
+                                <tr>
+                                    <td>% su costi operativi</td>
+                                    <td>58%</td>
+                                    <td>57%</td>
+                                    <td>56%</td>
+                                    <td class="trend-positive">55%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <!-- FTE Distribution -->
+                        <div class="fte-distribution">
+                            <div class="pie-chart-container">
+                                <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Pie Chart for FTE Distribution -->
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#003A70" stroke-width="20" 
+                                            stroke-dasharray="47.1 314.16" stroke-dashoffset="0" />
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#0051a5" stroke-width="20" 
+                                            stroke-dasharray="31.4 314.16" stroke-dashoffset="-47.1" />
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#0070c0" stroke-width="20" 
+                                            stroke-dasharray="47.1 314.16" stroke-dashoffset="-78.5" />
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#4a90e2" stroke-width="20" 
+                                            stroke-dasharray="31.4 314.16" stroke-dashoffset="-125.6" />
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#7db3f2" stroke-width="20" 
+                                            stroke-dasharray="31.4 314.16" stroke-dashoffset="-157" />
+                                    <circle cx="60" cy="60" r="50" fill="none" stroke="#b8d4f1" stroke-width="20" 
+                                            stroke-dasharray="47.1 314.16" stroke-dashoffset="-188.4" />
+                                    <circle cx="60" cy="60" r="40" fill="white" />
+                                    <text x="60" y="65" text-anchor="middle" font-size="16" font-weight="700" fill="#003A70">964</text>
+                                    <text x="60" y="78" text-anchor="middle" font-size="10" fill="#666666">FTE 2027</text>
+                                </svg>
+                            </div>
+                            <div class="division-legend">
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #003A70;"></div>
+                                    <span>Retail 289 (30%)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #0051a5;"></div>
+                                    <span>SME 193 (20%)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #0070c0;"></div>
+                                    <span>Corporate 145 (15%)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #4a90e2;"></div>
+                                    <span>Wealth 96 (10%)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #7db3f2;"></div>
+                                    <span>Digital 96 (10%)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #b8d4f1;"></div>
+                                    <span>Funzioni 145 (15%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Altri Costi Operativi -->
+                    <div class="section">
+                        <div class="section-title">2. Altri Costi Operativi (€Mln)</div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th>2024</th>
+                                    <th>2025</th>
+                                    <th>2026</th>
+                                    <th>2027</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>IT e Tecnologia</td>
+                                    <td>18</td>
+                                    <td>20</td>
+                                    <td>22</td>
+                                    <td class="metric-value">24</td>
+                                    <td class="trend-negative">↑ 10%</td>
+                                </tr>
+                                <tr>
+                                    <td>Real Estate</td>
+                                    <td>8</td>
+                                    <td>7.5</td>
+                                    <td>7</td>
+                                    <td class="metric-value">6.5</td>
+                                    <td class="trend-positive">↓ -19%</td>
+                                </tr>
+                                <tr>
+                                    <td>Marketing</td>
+                                    <td>5</td>
+                                    <td>6</td>
+                                    <td>7</td>
+                                    <td class="metric-value">8</td>
+                                    <td>↑ 60%</td>
+                                </tr>
+                                <tr>
+                                    <td>Consulenze</td>
+                                    <td>7</td>
+                                    <td>6.5</td>
+                                    <td>6</td>
+                                    <td class="metric-value">5.5</td>
+                                    <td class="trend-positive">↓ -21%</td>
+                                </tr>
+                                <tr>
+                                    <td>Altri amministrativi</td>
+                                    <td>8</td>
+                                    <td>8.2</td>
+                                    <td>8.4</td>
+                                    <td class="metric-value">8.6</td>
+                                    <td>↑ 7.5%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="right-column">
+                    <!-- Investimenti -->
+                    <div class="section">
+                        <div class="section-title">3. Piano Investimenti (€Mln)</div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Area</th>
+                                    <th>2024</th>
+                                    <th>2025</th>
+                                    <th>2026</th>
+                                    <th>2027</th>
+                                    <th>Tot</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Trasf. Digitale</td>
+                                    <td>15</td>
+                                    <td>18</td>
+                                    <td>20</td>
+                                    <td>15</td>
+                                    <td class="metric-value">68</td>
+                                </tr>
+                                <tr>
+                                    <td>Infrastruttura IT</td>
+                                    <td>8</td>
+                                    <td>10</td>
+                                    <td>10</td>
+                                    <td>8</td>
+                                    <td class="metric-value">36</td>
+                                </tr>
+                                <tr>
+                                    <td>Formazione</td>
+                                    <td>2</td>
+                                    <td>2.5</td>
+                                    <td>3</td>
+                                    <td>3</td>
+                                    <td class="metric-value">10.5</td>
+                                </tr>
+                                <tr>
+                                    <td>Compliance</td>
+                                    <td>3</td>
+                                    <td>3.5</td>
+                                    <td>3.5</td>
+                                    <td>3</td>
+                                    <td class="metric-value">13</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Efficientamenti -->
+                    <div class="section">
+                        <div class="section-title">4. Efficientamenti Previsti</div>
+                        <div class="efficiency-item">
+                            <div class="efficiency-label">
+                                <span>Digitalizzazione processi</span>
+                                <span>Target: -15%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 15%;">
+                                    -15%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="efficiency-item">
+                            <div class="efficiency-label">
+                                <span>Ottimizzazione rete fisica</span>
+                                <span>Target: -20%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 20%;">
+                                    -20%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="efficiency-item">
+                            <div class="efficiency-label">
+                                <span>Automazione back office</span>
+                                <span>Target: -25%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 25%;">
+                                    -25%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="efficiency-item">
+                            <div class="efficiency-label">
+                                <span>Rinegoziazione fornitori</span>
+                                <span>Target: -10%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 10%;">
+                                    -10%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cost/Income Ratio -->
+                    <div class="section">
+                        <div class="section-title">5. Cost/Income Ratio Target</div>
+                        <div class="ratio-grid">
+                            <div class="ratio-card">
+                                <div class="ratio-year">2024</div>
+                                <div class="ratio-value">62%</div>
+                            </div>
+                            <div class="ratio-card">
+                                <div class="ratio-year">2025</div>
+                                <div class="ratio-value">58%</div>
+                            </div>
+                            <div class="ratio-card">
+                                <div class="ratio-year">2026</div>
+                                <div class="ratio-value">55%</div>
+                            </div>
+                            <div class="ratio-card target">
+                                <div class="ratio-year">2027</div>
+                                <div class="ratio-value">52%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <span>Piano Industriale 2024-2027 - Documento Riservato</span>
+            <span class="page-number">25</span>
+        </div>
+    </div>
+</body>
+</html>

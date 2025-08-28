@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slide 19: Ritorno per l'Investitore</title>
+    <title>Slide 19 - Scenari di Exit</title>
     <style>
         * {
             margin: 0;
@@ -20,8 +20,11 @@
             --light-grey: #E0E0E0;
             --background-grey: #f8f9fa;
             --white: #FFFFFF;
-            --success-green: #28a745;
-            --highlight-yellow: #FFD700;
+            --digital: #00B4D8;
+            --positive-green: #10b981;
+            --negative-red: #dc2626;
+            --accent-purple: #7c3aed;
+            --accent-orange: #f97316;
         }
 
         body {
@@ -42,11 +45,15 @@
             background: white;
             border: 1px solid #d0d0d0;
             box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
-            padding: 60px;
+            padding: 40px;
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
             page-break-after: always;
+        }
+
+        .slide-content {
+            height: 100%;
             display: flex;
             flex-direction: column;
         }
@@ -60,264 +67,24 @@
         }
 
         .action-title {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
             color: var(--primary-blue);
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             line-height: 1.3;
             letter-spacing: -0.02em;
             padding-bottom: 16px;
-            border-bottom: 2px solid var(--secondary-blue);
-        }
-
-        .content-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+            border-bottom: 2px solid #0051a5;
         }
 
         .slide-number {
             position: absolute;
-            bottom: 40px;
-            right: 40px;
+            bottom: 40px !important;
+            right: 40px !important;
             font-size: 14px;
             color: #666;
             font-weight: 500;
-        }
-
-        /* Key Metrics Banner */
-        .key-metrics-banner {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 24px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-
-        .metric-item {
-            text-align: center;
-            flex: 1;
-        }
-
-        .metric-label {
-            font-size: 11px;
-            opacity: 0.9;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .metric-value {
-            font-size: 36px;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .metric-sublabel {
-            font-size: 13px;
-            opacity: 0.8;
-            margin-top: 4px;
-        }
-
-        /* Investment Timeline */
-        .timeline-section {
-            background: var(--background-grey);
-            border-radius: 10px;
-            padding: 24px;
-            position: relative;
-        }
-
-        .timeline-track {
-            height: 4px;
-            background: var(--light-grey);
-            border-radius: 2px;
-            margin: 30px 0;
-            position: relative;
-        }
-
-        .timeline-progress {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary-blue) 0%, var(--success-green) 100%);
-            border-radius: 2px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-        }
-
-        .timeline-points {
-            display: flex;
-            justify-content: space-between;
-            position: relative;
-            margin-top: -44px;
-        }
-
-        .timeline-point {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .point-marker {
-            width: 16px;
-            height: 16px;
-            background: white;
-            border: 3px solid var(--primary-blue);
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .point-marker.highlight {
-            width: 20px;
-            height: 20px;
-            border-color: var(--success-green);
-            background: var(--success-green);
-        }
-
-        .point-label {
-            font-size: 11px;
-            color: var(--medium-grey);
-            text-align: center;
-        }
-
-        .point-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--primary-blue);
-        }
-
-        /* Exit Scenarios */
-        .scenarios-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-
-        .scenario-card {
-            background: white;
-            border: 1px solid var(--light-grey);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .scenario-card.base {
-            border: 2px solid var(--primary-blue);
-            box-shadow: 0 4px 12px rgba(0, 58, 112, 0.1);
-        }
-
-        .scenario-title {
-            font-size: 13px;
-            text-transform: uppercase;
-            color: var(--medium-grey);
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .scenario-valuation {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary-blue);
-            margin-bottom: 8px;
-        }
-
-        .scenario-multiple {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--secondary-blue);
-            margin-bottom: 12px;
-        }
-
-        .scenario-details {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 12px;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-        }
-
-        .detail-label {
-            color: var(--medium-grey);
-        }
-
-        .detail-value {
-            font-weight: 600;
-            color: var(--dark-grey);
-        }
-
-        /* Value Drivers */
-        .value-drivers {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-        }
-
-        .driver-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .driver-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--background-grey);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-blue);
-            font-weight: 700;
-            font-size: 14px;
-        }
-
-        .driver-text {
-            flex: 1;
-            font-size: 13px;
-            color: var(--dark-grey);
-            line-height: 1.4;
-        }
-
-        /* Tech Upside Banner */
-        .tech-upside-banner {
-            background: linear-gradient(135deg, #fff8dc 0%, #ffeaa7 100%);
-            border-left: 4px solid var(--highlight-yellow);
-            border-radius: 8px;
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .upside-icon {
-            font-size: 24px;
-        }
-
-        .upside-content {
-            flex: 1;
-        }
-
-        .upside-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--primary-blue);
-            margin-bottom: 4px;
-        }
-
-        .upside-text {
-            font-size: 12px;
-            color: var(--medium-grey);
-            line-height: 1.4;
+            z-index: 100;
         }
 
         @media print {
@@ -335,143 +102,251 @@
                 box-shadow: none;
             }
         }
+
+        /* Exit Scenarios Layout */
+        .exit-scenarios-container {
+            display: flex;
+            gap: 32px;
+            height: calc(100% - 100px);
+        }
+
+        .scenario-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .scenario-header {
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .scenario-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .scenario-subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Waterfall Chart Container */
+        .waterfall-container {
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            border: 1px solid var(--light-grey);
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.06);
+        }
+
+        /* KPI Cards */
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .kpi-card {
+            background: var(--background-grey);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid var(--light-grey);
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            color: var(--medium-grey);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .kpi-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            line-height: 1;
+        }
+
+        .kpi-value.highlight {
+            color: var(--positive-green);
+        }
+
+        /* Comparison Section */
+        .comparison-section {
+            position: absolute;
+            bottom: 80px;
+            left: 40px;
+            right: 40px;
+            height: 140px;
+            background: var(--background-grey);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--light-grey);
+        }
+
+        .comparison-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
+
     <div class="slide">
-        <div class="breadcrumb">Strategia di Funding e Ritorno per l'Investitore</div>
-        <h1 class="action-title">Exit a 10 anni genera MOIC 2.66x con IRR 10.3% + upside tech non incluso</h1>
-        
-        <div class="content-area">
-            <!-- Key Metrics Banner -->
-            <div class="key-metrics-banner">
-                <div class="metric-item">
-                    <div class="metric-label">Multiple on Invested Capital</div>
-                    <div class="metric-value">2.66x</div>
-                    <div class="metric-sublabel">MOIC</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-label">Internal Rate of Return</div>
-                    <div class="metric-value">10.3%</div>
-                    <div class="metric-sublabel">IRR</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-label">Exit Timeline</div>
-                    <div class="metric-value">Year 10</div>
-                    <div class="metric-sublabel">2034</div>
-                </div>
-            </div>
-
-            <!-- Investment Timeline -->
-            <div class="timeline-section">
-                <div class="timeline-track">
-                    <div class="timeline-progress"></div>
-                </div>
-                <div class="timeline-points">
-                    <div class="timeline-point">
-                        <div class="point-marker"></div>
-                        <div class="point-label">Investment</div>
-                        <div class="point-value">€200M</div>
-                        <div class="point-label">Year 0</div>
+        <div class="slide-content">
+            <div class="breadcrumb">Exit Strategy > Scenarios</div>
+            
+            <h1 class="action-title">Both exit scenarios guarantee above-market returns with IRR >13%</h1>
+            
+            <div class="exit-scenarios-container">
+                <!-- Scenario 1: Exit a 5 anni -->
+                <div class="scenario-column">
+                    <div class="scenario-header">
+                        <div class="scenario-title">Scenario 1: 5-Year Exit</div>
+                        <div class="scenario-subtitle">Rapid growth and medium-term exit</div>
                     </div>
-                    <div class="timeline-point">
-                        <div class="point-marker"></div>
-                        <div class="point-label">Breakeven</div>
-                        <div class="point-value">Year 3</div>
+                    
+                    <div class="waterfall-container">
+                        <svg viewBox="0 0 380 280" style="width: 100%; height: 100%;">
+                            <!-- Grid and axes -->
+                            <g stroke="#e0e0e0" stroke-width="0.5">
+                                <line x1="40" y1="20" x2="40" y2="220"/>
+                                <line x1="40" y1="220" x2="360" y2="220"/>
+                                <!-- Horizontal grid -->
+                                <line x1="40" y1="50" x2="360" y2="50" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="80" x2="360" y2="80" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="110" x2="360" y2="110" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="140" x2="360" y2="140" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="170" x2="360" y2="170" stroke-dasharray="2,2"/>
+                            </g>
+                            
+                            <!-- Y-axis labels removed -->
+                            
+                            <!-- Waterfall bars -->
+                            <!-- Initial Investment (negative) -->
+                            <rect x="60" y="140" width="60" height="30" fill="#dc2626"/>
+                            <text x="90" y="240" font-size="10" text-anchor="middle" fill="#666">Investment</text>
+                            <text x="90" y="135" font-size="12" font-weight="600" text-anchor="middle" fill="#dc2626">-200</text>
+                            
+                            
+                            <!-- Dividends -->
+                            <rect x="140" y="140" width="60" height="0" fill="#4dabf7"/>
+                            <text x="170" y="240" font-size="10" text-anchor="middle" fill="#666">Dividends</text>
+                            <text x="170" y="135" font-size="12" font-weight="600" text-anchor="middle" fill="#4dabf7">0</text>
+                            
+                            
+                            <!-- Capital Gain -->
+                            <rect x="220" y="110" width="60" height="30" fill="#10b981"/>
+                            <text x="250" y="240" font-size="10" text-anchor="middle" fill="#666">Capital Gain</text>
+                            <text x="250" y="105" font-size="12" font-weight="600" text-anchor="middle" fill="#10b981">+315</text>
+                            
+                            
+                            <!-- Total Return -->
+                            <rect x="300" y="125" width="50" height="15" fill="#003A70"/>
+                            <text x="325" y="240" font-size="10" text-anchor="middle" fill="#666">Total</text>
+                            <text x="325" y="118" font-size="12" font-weight="700" text-anchor="middle" fill="#003A70">115</text>
+                            
+                            <!-- Value annotations -->
+                            <g font-size="9" fill="#999">
+                                <text x="90" y="260" text-anchor="middle">Initial Equity</text>
+                                <text x="170" y="260" text-anchor="middle" font-size="8">(not expected</text>
+                                <text x="170" y="270" text-anchor="middle" font-size="8">in first 5 years)</text>
+                                <text x="250" y="260" text-anchor="middle">P/E 7x</text>
+                                <text x="325" y="260" text-anchor="middle">Net Gain</text>
+                            </g>
+                        </svg>
                     </div>
-                    <div class="timeline-point">
-                        <div class="point-marker"></div>
-                        <div class="point-label">ROE 15.8%</div>
-                        <div class="point-value">Year 5</div>
-                    </div>
-                    <div class="timeline-point">
-                        <div class="point-marker highlight"></div>
-                        <div class="point-label">Exit</div>
-                        <div class="point-value">€532M</div>
-                        <div class="point-label">Year 10</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Exit Scenarios -->
-            <div class="scenarios-container">
-                <div class="scenario-card">
-                    <div class="scenario-title">Conservative</div>
-                    <div class="scenario-valuation">€480M</div>
-                    <div class="scenario-multiple">MOIC: 2.40x</div>
-                    <div class="scenario-details">
-                        <div class="detail-row">
-                            <span class="detail-label">P/BV</span>
-                            <span class="detail-value">1.2x</span>
+                    
+                    <div class="kpi-cards">
+                        <div class="kpi-card">
+                            <div class="kpi-label">MOIC</div>
+                            <div class="kpi-value highlight">2.15x</div>
                         </div>
-                        <div class="detail-row">
-                            <span class="detail-label">IRR</span>
-                            <span class="detail-value">9.1%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="scenario-card base">
-                    <div class="scenario-title">Base Case</div>
-                    <div class="scenario-valuation">€532M</div>
-                    <div class="scenario-multiple">MOIC: 2.66x</div>
-                    <div class="scenario-details">
-                        <div class="detail-row">
-                            <span class="detail-label">P/BV</span>
-                            <span class="detail-value">1.4x</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">IRR</span>
-                            <span class="detail-value">10.3%</span>
+                        <div class="kpi-card">
+                            <div class="kpi-label">IRR</div>
+                            <div class="kpi-value highlight">13.5%</div>
                         </div>
                     </div>
                 </div>
-
-                <div class="scenario-card">
-                    <div class="scenario-title">Optimistic</div>
-                    <div class="scenario-valuation">€600M</div>
-                    <div class="scenario-multiple">MOIC: 3.00x</div>
-                    <div class="scenario-details">
-                        <div class="detail-row">
-                            <span class="detail-label">P/BV</span>
-                            <span class="detail-value">1.6x</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">IRR</span>
-                            <span class="detail-value">11.6%</span>
-                        </div>
+                
+                <!-- Scenario 2: Exit a 10 anni -->
+                <div class="scenario-column">
+                    <div class="scenario-header">
+                        <div class="scenario-title">Scenario 2: 10-Year Exit</div>
+                        <div class="scenario-subtitle">Sustainable growth and value maximization</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Value Drivers -->
-            <div class="value-drivers">
-                <div class="driver-item">
-                    <div class="driver-icon">1</div>
-                    <div class="driver-text">ROE stabile al 15.8% con business maturo</div>
-                </div>
-                <div class="driver-item">
-                    <div class="driver-icon">2</div>
-                    <div class="driver-text">€2B+ AUM con Cost/Income 32.7% best-in-class</div>
-                </div>
-                <div class="driver-item">
-                    <div class="driver-icon">3</div>
-                    <div class="driver-text">50k+ clienti Digital con alta conversione Wealth</div>
-                </div>
-                <div class="driver-item">
-                    <div class="driver-icon">4</div>
-                    <div class="driver-text">Leadership in finanza agevolata e special situations</div>
-                </div>
-            </div>
-
-            <!-- Tech Upside Banner -->
-            <div class="tech-upside-banner">
-                <div class="upside-icon">🚀</div>
-                <div class="upside-content">
-                    <div class="upside-title">Tech Platform Upside Non Incluso nella Valutazione</div>
-                    <div class="upside-text">
-                        La piattaforma tecnologica AI-nativa rappresenta un asset separato con potenziale spin-off/licensing. 
-                        Valutazione potenziale €100-200M basata su comparables fintech (5-10x ricavi ricorrenti SaaS).
+                    
+                    <div class="waterfall-container">
+                        <svg viewBox="0 0 380 280" style="width: 100%; height: 100%;">
+                            <!-- Grid and axes -->
+                            <g stroke="#e0e0e0" stroke-width="0.5">
+                                <line x1="40" y1="20" x2="40" y2="220"/>
+                                <line x1="40" y1="220" x2="360" y2="220"/>
+                                <!-- Horizontal grid -->
+                                <line x1="40" y1="50" x2="360" y2="50" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="80" x2="360" y2="80" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="110" x2="360" y2="110" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="140" x2="360" y2="140" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="170" x2="360" y2="170" stroke-dasharray="2,2"/>
+                            </g>
+                            
+                            <!-- Y-axis labels removed -->
+                            
+                            <!-- Waterfall bars -->
+                            <!-- Initial Investment (negative) -->
+                            <rect x="60" y="140" width="60" height="30" fill="#dc2626"/>
+                            <text x="90" y="240" font-size="10" text-anchor="middle" fill="#666">Investment</text>
+                            <text x="90" y="135" font-size="12" font-weight="600" text-anchor="middle" fill="#dc2626">-200</text>
+                            
+                            
+                            <!-- Dividends -->
+                            <rect x="140" y="131" width="60" height="9" fill="#4dabf7"/>
+                            <text x="170" y="240" font-size="10" text-anchor="middle" fill="#666">Dividends</text>
+                            <text x="170" y="126" font-size="12" font-weight="600" text-anchor="middle" fill="#4dabf7">+87</text>
+                            
+                            
+                            <!-- Capital Gain -->
+                            <rect x="220" y="60" width="60" height="80" fill="#10b981"/>
+                            <text x="250" y="240" font-size="10" text-anchor="middle" fill="#666">Capital Gain</text>
+                            <text x="250" y="54" font-size="12" font-weight="600" text-anchor="middle" fill="#10b981">+640</text>
+                            
+                            
+                            <!-- Total Return -->
+                            <rect x="300" y="74" width="50" height="66" fill="#003A70"/>
+                            <text x="325" y="240" font-size="10" text-anchor="middle" fill="#666">Total</text>
+                            <text x="325" y="68" font-size="12" font-weight="700" text-anchor="middle" fill="#003A70">527</text>
+                            
+                            <!-- Value annotations -->
+                            <g font-size="9" fill="#999">
+                                <text x="90" y="260" text-anchor="middle">Initial Equity</text>
+                                <text x="170" y="260" text-anchor="middle" font-size="8">Payout 30%</text>
+                                <text x="170" y="270" text-anchor="middle" font-size="8">from 6th year</text>
+                                <text x="250" y="260" text-anchor="middle">P/E 10x</text>
+                                <text x="325" y="260" text-anchor="middle">Net Gain</text>
+                            </g>
+                        </svg>
+                    </div>
+                    
+                    <div class="kpi-cards">
+                        <div class="kpi-card">
+                            <div class="kpi-label">MOIC</div>
+                            <div class="kpi-value highlight">3.63x</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-label">IRR</div>
+                            <div class="kpi-value highlight">14.2%</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -479,5 +354,6 @@
         
         <div class="slide-number">19</div>
     </div>
+
 </body>
 </html>

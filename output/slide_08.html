@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slide 8 - Wealth Management: [Titolo da definire]</title>
+    <title>Slide 8 - Wealth Management: Converting Digital Clients into Investors</title>
         <style>
         * {
             margin: 0;
@@ -20,7 +20,8 @@
             --light-grey: #E0E0E0;
             --background-grey: #f8f9fa;
             --white: #FFFFFF;
-            --wealth: #FFB800;  /* Colore distintivo per Wealth Management */
+            --digital: #00B4D8;
+            --wealth: #FFB800;  /* Distinctive color for Wealth Management */
         }
 
         body {
@@ -96,6 +97,16 @@
             color: #666;
             font-weight: 500;
             z-index: 100;
+        }
+
+        .footer-note {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            right: 120px;
+            font-size: 10px;
+            color: #999;
+            line-height: 1.3;
         }
 
         /* Premium elements */
@@ -321,11 +332,13 @@
             left: 0;
         }
 .metric-box {
-            background: var(--white);
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            border: 1px solid var(--light-grey);
             border-radius: 8px;
             padding: 14px;
             text-align: center;
-            border: 2px solid var(--wealth);
+            border-left: 4px solid var(--wealth);
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.06);
             height: 95px;
             display: flex;
             flex-direction: column;
@@ -358,24 +371,24 @@
 
     <div class="slide">
         <div class="slide-header">
-            <div class="breadcrumb">Le 6 Divisioni > Wealth Management</div>
-            <h1 class="action-title">Wealth Management converte 10% clienti Digital in investitori per €1.0B AUM target</h1>
+            <div class="breadcrumb">The 6 Divisions > Wealth Management</div>
+            <h1 class="action-title">Wealth Management converts 10% of Digital clients into investors to reach €1.0B AUM target</h1>
         </div>
 
         <div class="content-container">
             <div class="main-content">
                 <div class="section obiettivo">
-                    <h3 class="section-title">Obiettivo Strategico</h3>
+                    <h3 class="section-title">Strategic Objective</h3>
                     <ul class="bullet-list">
-                        <li>Acquisire <strong>10% clientela Digital Bank</strong> offrendo investimenti in operazioni originate dalle divisioni creditizie con <strong>skin in the game</strong> della banca</li>
-                        <li>Prodotti di investimento <strong>ticket medio €200k</strong> quali Note Senior o Note Mezzanine con <strong>durata media 5 anni</strong></li>
-                        <li>Ricavi fee-based: <strong>1% structuring fee</strong> upfront + <strong>0.5% management fee</strong> annua su AUM</li>
-                        <li><strong>Potenziale non incluso nei numeri:</strong> 20% performance fee su extra-rendimenti oltre target IRR</li>
+                        <li>Acquire <strong>10% of Digital Bank clients</strong> (approximately 5,000 clients) offering investments in deals originated by the bank's credit divisions, with the bank co-investing alongside clients</li>
+                        <li>Investment products with <strong>€200k average ticket</strong>, e.g. Senior Notes and Mezzanine Notes, with <strong>5-year average maturity</strong></li>
+                        <li>Fee-based revenues: <strong>1% structuring fee</strong> upfront + <strong>0.5% annual management fee</strong> on AUM</li>
+                        <li><strong>Potential not included in numbers:</strong> 20% performance fee on excess returns above target IRR</li>
                     </ul>
                 </div>
 
                 <div class="section evoluzione">
-                    <h3 class="section-title">Evoluzione Clienti e AUM</h3>
+                    <h3 class="section-title">Client and AUM Evolution</h3>
                     <div style="margin-top: -15px;">
                         <div style="background: white; border: 1px solid var(--light-grey); border-radius: 8px; padding: 16px; height: 220px;">
                             <svg style="width: 100%; height: 180px;" viewBox="0 0 500 180">
@@ -428,11 +441,11 @@
                                 <rect x="425" y="31.9" width="25" height="118.1" fill="#FFB800" opacity="0.4"/>
                                 
                                 <!-- X axis labels -->
-                                <text x="100" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 1</text>
-                                <text x="180" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 2</text>
-                                <text x="260" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 3</text>
-                                <text x="340" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 4</text>
-                                <text x="420" y="170" font-size="12" text-anchor="middle" fill="#666">Anno 5</text>
+                                <text x="100" y="170" font-size="12" text-anchor="middle" fill="#666">Year 1</text>
+                                <text x="180" y="170" font-size="12" text-anchor="middle" fill="#666">Year 2</text>
+                                <text x="260" y="170" font-size="12" text-anchor="middle" fill="#666">Year 3</text>
+                                <text x="340" y="170" font-size="12" text-anchor="middle" fill="#666">Year 4</text>
+                                <text x="420" y="170" font-size="12" text-anchor="middle" fill="#666">Year 5</text>
                                 
                                 <!-- Values on top of bars for Clienti -->
                                 <text x="83" y="145" font-size="9" text-anchor="middle" fill="#333" font-weight="600">0</text>
@@ -467,11 +480,11 @@
                             <div style="margin-top: 2px; font-size: 10px; display: flex; gap: 20px; justify-content: center;">
                                 <div style="display: flex; align-items: center; gap: 4px;">
                                     <div style="width: 14px; height: 8px; background: #FFB800; border-radius: 2px;"></div>
-                                    <span>Clienti (scala sx)</span>
+                                    <span>Clients (left scale)</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 4px;">
                                     <div style="width: 14px; height: 8px; background: #FFB800; opacity: 0.4; border-radius: 2px;"></div>
-                                    <span>AUM (scala dx)</span>
+                                    <span>AUM (right scale)</span>
                                 </div>
                             </div>
                         </div>
@@ -481,31 +494,31 @@
             </div>
 
             <div class="focus-box">
-                <h3 class="focus-title">Target Metrics Anno 5</h3>
+                <h3 class="focus-title">Year 5 Target Metrics</h3>
                 
                 <div class="metrics-grid">
                     <div class="metric-box">
-                        <div class="metric-label">Ricavi Anno 5</div>
+                        <div class="metric-label">Operating Income</div>
                         <div class="metric-value">€10.3M</div>
-                        <div class="metric-description">Commissioni totali</div>
+                        <div class="metric-description">Total fees</div>
                     </div>
 
                     <div class="metric-box">
-                        <div class="metric-label">Costi Anno 5</div>
+                        <div class="metric-label">COSTS & PROVISIONS</div>
                         <div class="metric-value">(€5.1M)</div>
-                        <div class="metric-description">Costi operativi</div>
+                        <div class="metric-description">Operating costs</div>
                     </div>
 
                     <div class="metric-box">
                         <div class="metric-label">Net Income</div>
                         <div class="metric-value">€4.0M</div>
-                        <div class="metric-description">Utile netto</div>
+                        <div class="metric-description">Net profit</div>
                     </div>
 
                     <div class="metric-box">
                         <div class="metric-label">AUM Target</div>
                         <div class="metric-value">€1.0B</div>
-                        <div class="metric-description">Assets gestiti</div>
+                        <div class="metric-description">Assets under management</div>
                     </div>
                 </div>
                 
@@ -513,7 +526,7 @@
         </div>
 
         <div style="position: absolute; bottom: 20px; left: 40px; right: 120px; font-size: 10px; color: #999; line-height: 1.3;">
-            <strong>Nota:</strong> I clienti Wealth provengono dalla conversione del 10% dei clienti Digital Banking acquisiti nel tempo
+            <strong>Note:</strong> Wealth clients come from converting 10% of Digital Banking clients acquired over time
         </div>
 
         <span class="slide-number">8</span>

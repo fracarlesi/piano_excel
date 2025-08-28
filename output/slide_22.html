@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide 22 - Appendice</title>
+    <style>
+        /* ====================================== */
+        /* BASE STYLES - DO NOT MODIFY           */
+        /* ====================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --light-blue: #4dabf7;
+            --dark-grey: #333333;
+            --medium-grey: #666666;
+            --light-grey: #E0E0E0;
+            --background-grey: #f8f9fa;
+            --white: #FFFFFF;
+            --digital: #00B4D8;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
+            background: #404040; /* PowerPoint-style dark background */
+            color: var(--dark-grey);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .slide {
+            width: 1122px;  /* A4 landscape proportions */
+            height: 794px;  /* A4 landscape proportions */
+            background: white;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
+            padding: 40px;
+            box-sizing: border-box;
+            overflow: hidden;
+            position: relative;
+            page-break-after: always;
+        }
+
+        .slide-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ====================================== */
+        /* HEADER ELEMENTS                        */
+        /* ====================================== */
+        .breadcrumb {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 24px;
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+            border-bottom: 2px solid #0051a5;
+            padding-bottom: 16px;
+        }
+
+        /* ====================================== */
+        /* CONTENT AREA                           */
+        /* ====================================== */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .divider-content {
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .section-number {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 700;
+            margin: 0 auto 32px;
+        }
+
+        .section-description {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--medium-grey);
+            margin-bottom: 32px;
+        }
+
+        .section-topics {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 40px;
+        }
+
+        .topic-badge {
+            background: var(--background-grey);
+            border: 1px solid var(--light-grey);
+            border-radius: 20px;
+            padding: 8px 20px;
+            font-size: 14px;
+            color: var(--dark-grey);
+            font-weight: 500;
+        }
+
+        /* ====================================== */
+        /* FOOTER & SLIDE NUMBER                  */
+        /* ====================================== */
+        .slide-number {
+            position: absolute;
+            bottom: 40px !important;
+            right: 40px !important;
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+            z-index: 100;
+        }
+
+        /* ====================================== */
+        /* PRINT STYLES                           */
+        /* ====================================== */
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 0;
+            }
+            body {
+                background: white;
+            }
+            .slide {
+                width: 1122px !important;
+                height: 794px !important;
+                border: none;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="slide-content">
+            <div class="breadcrumb">Piano Industriale 2024-2027 | Appendice</div>
+            <h1 class="action-title">APPENDICE: ASSUNZIONI DEL PIANO</h1>
+            
+            <div class="content-area">
+                <div class="divider-content">
+                    <div class="section-number">A</div>
+                    
+                    <p class="section-description">
+                        La sezione seguente presenta le assunzioni tecniche e metodologiche<br>
+                        alla base delle proiezioni finanziarie e operative del piano industriale.<br>
+                        Include dettagli su parametri regolamentari, ipotesi di crescita<br>
+                        e metodologie di calcolo utilizzate nelle simulazioni.
+                    </p>
+                    
+                    <div class="section-topics">
+                        <div class="topic-badge">Assunzioni Macroeconomiche</div>
+                        <div class="topic-badge">Parametri Regolamentari</div>
+                        <div class="topic-badge">Ipotesi di Crescita</div>
+                        <div class="topic-badge">Metodologie di Calcolo</div>
+                        <div class="topic-badge">Analisi di Sensitività</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slide-number">22</div>
+    </div>
+</body>
+</html>

@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slide 2 - Agenda</title>
-        <style>
+    <style>
+        /* ====================================== */
+        /* BASE STYLES - DO NOT MODIFY           */
+        /* ====================================== */
         * {
             margin: 0;
             padding: 0;
@@ -20,11 +23,12 @@
             --light-grey: #E0E0E0;
             --background-grey: #f8f9fa;
             --white: #FFFFFF;
+            --digital: #00B4D8;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
-            background: #404040;
+            background: #404040; /* PowerPoint-style dark background */
             color: var(--dark-grey);
             margin: 0;
             padding: 0;
@@ -35,8 +39,8 @@
         }
 
         .slide {
-            width: 1122px;
-            height: 794px;
+            width: 1122px;  /* A4 landscape proportions */
+            height: 794px;  /* A4 landscape proportions */
             background: white;
             border: 1px solid #d0d0d0;
             box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
@@ -53,6 +57,9 @@
             flex-direction: column;
         }
 
+        /* ====================================== */
+        /* HEADER ELEMENTS                        */
+        /* ====================================== */
         .breadcrumb {
             font-size: 12px;
             color: #999;
@@ -68,6 +75,8 @@
             margin-bottom: 24px;
             line-height: 1.3;
             letter-spacing: -0.02em;
+            border-bottom: 2px solid #0051a5;
+            padding-bottom: 16px;
         }
 
         .subtitle {
@@ -78,13 +87,9 @@
             margin-bottom: 32px;
         }
 
-        .content-area {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+        /* ====================================== */
+        /* FOOTER & SLIDE NUMBER                  */
+        /* ====================================== */
         .slide-number {
             position: absolute;
             bottom: 40px !important;
@@ -95,22 +100,19 @@
             z-index: 100;
         }
 
-        /* Premium elements */
-        .highlight-box {
-            background: var(--background-grey);
-            border-radius: 8px;
-            padding: 24px;
-            margin: 16px 0;
+        .footer-note {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            right: 120px;
+            font-size: 10px;
+            color: #999;
+            line-height: 1.3;
         }
 
-        .metric-card {
-            background: white;
-            border: 1px solid var(--light-grey);
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
+        /* ====================================== */
+        /* PRINT STYLES                           */
+        /* ====================================== */
         @media print {
             @page { 
                 size: A4 landscape; 
@@ -208,7 +210,7 @@
 
     <div class="slide">
         <div class="slide-content">
-            <div class="breadcrumb">Presentazione Investitori</div>
+            <div class="breadcrumb">Investor Presentation</div>
             <h1 class="action-title">Agenda</h1>
             
             <div class="agenda-container">
@@ -217,7 +219,7 @@
                     <div class="agenda-number">1</div>
                     <div class="agenda-content">
                         <div class="agenda-title">Executive Summary</div>
-                        <div class="agenda-description">Il progetto in sintesi: visione, modello e KPI target</div>
+                        <div class="agenda-description">Vision and value proposition of our AI-native specialized bank</div>
                     </div>
                     <div class="agenda-indicator"></div>
                 </li>
@@ -225,8 +227,8 @@
                 <li class="agenda-item">
                     <div class="agenda-number">2</div>
                     <div class="agenda-content">
-                        <div class="agenda-title">Contesto Strategico: L'Opportunità</div>
-                        <div class="agenda-description">Why now: le vulnerabilità del sistema bancario italiano</div>
+                        <div class="agenda-title">Strategic Context & Market Opportunity</div>
+                        <div class="agenda-description">Why now: disrupting the Italian banking landscape</div>
                     </div>
                     <div class="agenda-indicator"></div>
                 </li>
@@ -234,8 +236,8 @@
                 <li class="agenda-item">
                     <div class="agenda-number">3</div>
                     <div class="agenda-content">
-                        <div class="agenda-title">La Soluzione: Un Ecosistema Bancario a 6 Divisioni</div>
-                        <div class="agenda-description">Modello operativo integrato e sinergico</div>
+                        <div class="agenda-title">Business Model: 6 Specialized Divisions</div>
+                        <div class="agenda-description">Digital Banking, Wealth Management, Real Estate, Turnaround, SME Finance, Central Functions</div>
                     </div>
                     <div class="agenda-indicator"></div>
                 </li>
@@ -243,8 +245,8 @@
                 <li class="agenda-item">
                     <div class="agenda-number">4</div>
                     <div class="agenda-content">
-                        <div class="agenda-title">La Piattaforma Tecnologica AI-Nativa</div>
-                        <div class="agenda-description">Differenziazione attraverso l'intelligenza artificiale</div>
+                        <div class="agenda-title">Technology & AI Platform</div>
+                        <div class="agenda-description">AI-driven architecture, IT investments and Banking as a Service opportunity</div>
                     </div>
                     <div class="agenda-indicator"></div>
                 </li>
@@ -252,8 +254,8 @@
                 <li class="agenda-item">
                     <div class="agenda-number">5</div>
                     <div class="agenda-content">
-                        <div class="agenda-title">Proiezioni Finanziarie</div>
-                        <div class="agenda-description">Path to profitability e metriche di performance</div>
+                        <div class="agenda-title">Financial Plan & Projections</div>
+                        <div class="agenda-description">P&L evolution, balance sheet growth, KPIs and path to profitability</div>
                     </div>
                     <div class="agenda-indicator"></div>
                 </li>
@@ -261,8 +263,8 @@
                 <li class="agenda-item">
                     <div class="agenda-number">6</div>
                     <div class="agenda-content">
-                        <div class="agenda-title">Strategia di Funding e Ritorno per l'Investitore</div>
-                        <div class="agenda-description">Struttura del capitale e scenari di exit</div>
+                        <div class="agenda-title">Investor Returns & Exit Scenarios</div>
+                        <div class="agenda-description">Value creation, exit multiples and implementation roadmap</div>
                     </div>
                     <div class="agenda-indicator"></div>
                 </li>
@@ -270,8 +272,8 @@
                 <li class="agenda-item">
                     <div class="agenda-number">7</div>
                     <div class="agenda-content">
-                        <div class="agenda-title">Allegati</div>
-                        <div class="agenda-description">Documentazione di supporto e dettagli tecnici</div>
+                        <div class="agenda-title">Appendices</div>
+                        <div class="agenda-description">Detailed assumptions, supporting analyses and technical documentation</div>
                     </div>
                     <div class="agenda-indicator"></div>
                 </li>

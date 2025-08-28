@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slide 19 - KPI Finanziari</title>
+    <title>Slide 18 - KPI Finanziari</title>
     <style>
         * {
             margin: 0;
@@ -20,6 +20,7 @@
             --light-grey: #E0E0E0;
             --background-grey: #f8f9fa;
             --white: #FFFFFF;
+            --digital: #00B4D8;
             --positive-green: #10b981;
             --negative-red: #dc2626;
         }
@@ -70,6 +71,8 @@
             margin-bottom: 24px;
             line-height: 1.3;
             letter-spacing: -0.02em;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #0051a5;
         }
 
         .slide-number {
@@ -80,6 +83,16 @@
             color: #666;
             font-weight: 500;
             z-index: 100;
+        }
+
+        .footer-note {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            right: 120px;
+            font-size: 10px;
+            color: #999;
+            line-height: 1.3;
         }
 
         @media print {
@@ -128,9 +141,9 @@
 
         .financial-table th,
         .financial-table td {
-            padding: 10px 12px;
+            padding: 6px 10px;
             text-align: right;
-            font-size: 13px;
+            font-size: 12px;
             border-right: 1px solid var(--light-grey);
         }
 
@@ -146,6 +159,7 @@
             font-weight: 600;
             color: var(--primary-blue);
             border-bottom: 2px solid var(--light-grey);
+            padding: 8px 10px;
         }
 
         .financial-table tr:nth-child(even) {
@@ -153,18 +167,18 @@
         }
 
         .financial-table .section-header {
-            background: var(--primary-blue);
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%);
             color: white;
             font-weight: 600;
         }
         
         .financial-table .section-header td {
-            background: var(--primary-blue);
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%);
             color: white;
             font-weight: 600;
             text-align: left;
-            padding: 12px;
-            font-size: 14px;
+            padding: 6px 10px;
+            font-size: 13px;
         }
 
         .financial-table .subtotal {
@@ -178,7 +192,7 @@
             font-weight: 700;
             background: var(--background-grey);
             border-top: 2px solid var(--primary-blue);
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .negative {
@@ -218,7 +232,7 @@
 
     <div class="slide">
         <div class="slide-content">
-            <div class="breadcrumb">Risultati Finanziari > KPI</div>
+            <div class="breadcrumb">Financial Results > KPI</div>
             
             <h1 class="action-title">All Key Performance Indicators Show Strong Improvement Path to Year 5 Targets</h1>
             
@@ -228,26 +242,24 @@
                         <thead>
                             <tr>
                                 <th>Key Performance Indicators</th>
-                                <th>Year 0</th>
-                                <th>Year 1</th>
-                                <th>Year 2</th>
-                                <th>Year 3</th>
-                                <th>Year 4</th>
-                                <th>Year 5</th>
+                                <th>Y1</th>
+                                <th>Y2</th>
+                                <th>Y3</th>
+                                <th>Y4</th>
+                                <th>Y5</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="section-header">
-                                <td colspan="7">🎯 EFFICIENZA OPERATIVA</td>
+                                <td colspan="6">🎯 EFFICIENZA OPERATIVA</td>
                             </tr>
                             <tr>
                                 <td>Cost/Income Ratio</td>
-                                <td>105.5%</td>
-                                <td>53.3%</td>
-                                <td>39.7%</td>
-                                <td>34.4%</td>
-                                <td>32.7%</td>
-                                <td class="positive">32.6%</td>
+                                <td>105.6%</td>
+                                <td>53.4%</td>
+                                <td>39.6%</td>
+                                <td>34.5%</td>
+                                <td>32.8%</td>
                             </tr>
                             <tr>
                                 <td>RW Density (CIR Density)</td>
@@ -256,7 +268,6 @@
                                 <td>70.4%</td>
                                 <td>70.6%</td>
                                 <td>67.4%</td>
-                                <td class="positive">67.4%</td>
                             </tr>
                             <tr>
                                 <td>Cost of Risk (bps)</td>
@@ -265,38 +276,34 @@
                                 <td>148</td>
                                 <td>130</td>
                                 <td>116</td>
-                                <td class="positive">116</td>
                             </tr>
                             <tr>
                                 <td>Gross Organic NPE Ratio (%)</td>
-                                <td class="positive">2.5%</td>
+                                <td>2.5%</td>
                                 <td>3.9%</td>
                                 <td>4.5%</td>
                                 <td>5.2%</td>
                                 <td>5.8%</td>
-                                <td>5.8%</td>
                             </tr>
                             
                             <tr class="section-header">
-                                <td colspan="7">💰 REDDITIVITÀ</td>
+                                <td colspan="6">💰 REDDITIVITÀ</td>
                             </tr>
                             <tr>
                                 <td>ROE (%)</td>
-                                <td class="negative">-2.6%</td>
-                                <td class="negative">-1.0%</td>
-                                <td class="positive">10.1%</td>
-                                <td class="positive">13.8%</td>
-                                <td class="positive">15.8%</td>
-                                <td class="positive">15.8%</td>
+                                <td>-10%</td>
+                                <td>-1.0%</td>
+                                <td>10.3%</td>
+                                <td>13.8%</td>
+                                <td>15.8%</td>
                             </tr>
                             <tr>
                                 <td>ROA (%)</td>
-                                <td class="negative">-2.5%</td>
-                                <td class="negative">-0.1%</td>
-                                <td class="positive">1.2%</td>
-                                <td class="positive">1.6%</td>
-                                <td class="positive">1.8%</td>
-                                <td class="positive">1.8%</td>
+                                <td>-2.5%</td>
+                                <td>-0.1%</td>
+                                <td>1.2%</td>
+                                <td>1.6%</td>
+                                <td>1.8%</td>
                             </tr>
                             <tr>
                                 <td>Cost of Funding (%)</td>
@@ -305,33 +312,46 @@
                                 <td>-3.70%</td>
                                 <td>-3.73%</td>
                                 <td>-3.64%</td>
-                                <td>-3.64%</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 30px; font-size: 11px; color: #666;">o/w Retail</td>
+                                <td style="font-size: 11px;">0.00%</td>
+                                <td style="font-size: 11px;">-2.65%</td>
+                                <td style="font-size: 11px;">-3.00%</td>
+                                <td style="font-size: 11px;">-3.41%</td>
+                                <td style="font-size: 11px;">-3.41%</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-left: 30px; font-size: 11px; color: #666;">o/w Wholesale</td>
+                                <td style="font-size: 11px;">-3.63%</td>
+                                <td style="font-size: 11px;">-3.67%</td>
+                                <td style="font-size: 11px;">-3.87%</td>
+                                <td style="font-size: 11px;">-4.00%</td>
+                                <td style="font-size: 11px;">-4.07%</td>
                             </tr>
                             
                             <tr class="section-header">
-                                <td colspan="7">🏛️ SOLIDITÀ PATRIMONIALE</td>
+                                <td colspan="6">🏛️ SOLIDITÀ PATRIMONIALE</td>
                             </tr>
                             <tr>
                                 <td>CET1 Ratio (%)</td>
-                                <td class="positive">40.7%</td>
-                                <td class="positive">20.0%</td>
-                                <td class="positive">16.8%</td>
-                                <td class="positive">15.9%</td>
-                                <td class="positive">16.8%</td>
-                                <td class="positive">16.7%</td>
+                                <td>40.7%</td>
+                                <td>19.9%</td>
+                                <td>16.9%</td>
+                                <td>15.9%</td>
+                                <td>16.8%</td>
                             </tr>
                             <tr>
                                 <td>Leverage Ratio (%)</td>
                                 <td>25.15%</td>
-                                <td>13.79%</td>
-                                <td>11.76%</td>
-                                <td>11.18%</td>
-                                <td>11.28%</td>
-                                <td class="positive">11.28%</td>
+                                <td>13.78%</td>
+                                <td>11.83%</td>
+                                <td>11.20%</td>
+                                <td>11.30%</td>
                             </tr>
                             
                             <tr class="section-header">
-                                <td colspan="7">💧 LIQUIDITÀ</td>
+                                <td colspan="6">💧 LIQUIDITÀ</td>
                             </tr>
                             <tr>
                                 <td>LCR (%)</td>
@@ -340,28 +360,150 @@
                                 <td>180%</td>
                                 <td>200%</td>
                                 <td>473%</td>
-                                <td class="positive">473%</td>
                             </tr>
                             <tr>
                                 <td>NSFR (%)</td>
-                                <td>-</td>
+                                <td>134.77%</td>
                                 <td>124.22%</td>
-                                <td>121.24%</td>
-                                <td>119.74%</td>
-                                <td>124.19%</td>
-                                <td class="positive">124.19%</td>
+                                <td>120.86%</td>
+                                <td>119.65%</td>
+                                <td>124.17%</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <div class="kpi-charts">
-                    <!-- Removed charts to maximize table space -->
+                    <!-- ROE Evolution Chart -->
+                    <div class="chart-container">
+                        <h4 style="font-size: 14px; color: var(--primary-blue); margin: 0 0 10px 0; font-weight: 600;">ROE Evolution (%)</h4>
+                        <svg viewBox="0 0 320 180" style="width: 100%; height: 180px;">
+                            <!-- Grid lines -->
+                            <g stroke="#e0e0e0" stroke-width="0.5">
+                                <line x1="40" y1="30" x2="40" y2="150"/>
+                                <line x1="40" y1="150" x2="300" y2="150"/>
+                                <!-- Horizontal grid -->
+                                <line x1="40" y1="30" x2="300" y2="30" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="60" x2="300" y2="60" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="90" x2="300" y2="90" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="120" x2="300" y2="120" stroke-dasharray="2,2"/>
+                            </g>
+                            
+                            <!-- Y-axis labels -->
+                            <g font-size="10" fill="#666">
+                                <text x="35" y="33" text-anchor="end">20%</text>
+                                <text x="35" y="63" text-anchor="end">10%</text>
+                                <text x="35" y="93" text-anchor="end">0%</text>
+                                <text x="35" y="123" text-anchor="end">-10%</text>
+                                <text x="35" y="153" text-anchor="end">-20%</text>
+                            </g>
+                            
+                            <!-- X-axis labels -->
+                            <g font-size="10" fill="#666">
+                                <text x="72" y="165" text-anchor="middle">Y1</text>
+                                <text x="124" y="165" text-anchor="middle">Y2</text>
+                                <text x="176" y="165" text-anchor="middle">Y3</text>
+                                <text x="228" y="165" text-anchor="middle">Y4</text>
+                                <text x="280" y="165" text-anchor="middle">Y5</text>
+                            </g>
+                            
+                            <!-- ROE line -->
+                            <polyline 
+                                points="72,114 124,92 176,54 228,42 280,36"
+                                fill="none" 
+                                stroke="#0051a5" 
+                                stroke-width="2.5"
+                            />
+                            
+                            <!-- Data points -->
+                            <g fill="#0051a5">
+                                <circle cx="72" cy="114" r="4"/>
+                                <circle cx="124" cy="92" r="4"/>
+                                <circle cx="176" cy="54" r="4"/>
+                                <circle cx="228" cy="42" r="4"/>
+                                <circle cx="280" cy="36" r="4"/>
+                            </g>
+                            
+                            <!-- Value labels -->
+                            <g font-size="9" fill="#333" font-weight="500">
+                                <text x="72" y="108" text-anchor="middle">-10%</text>
+                                <text x="124" y="86" text-anchor="middle">-1.0%</text>
+                                <text x="176" y="48" text-anchor="middle">10.3%</text>
+                                <text x="228" y="36" text-anchor="middle">13.8%</text>
+                                <text x="280" y="30" text-anchor="middle">15.8%</text>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- CET1 Evolution Chart -->
+                    <div class="chart-container">
+                        <h4 style="font-size: 14px; color: var(--primary-blue); margin: 0 0 10px 0; font-weight: 600;">CET1 Ratio Evolution (%)</h4>
+                        <svg viewBox="0 0 320 180" style="width: 100%; height: 180px;">
+                            <!-- Grid lines -->
+                            <g stroke="#e0e0e0" stroke-width="0.5">
+                                <line x1="40" y1="30" x2="40" y2="150"/>
+                                <line x1="40" y1="150" x2="300" y2="150"/>
+                                <!-- Horizontal grid -->
+                                <line x1="40" y1="30" x2="300" y2="30" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="60" x2="300" y2="60" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="90" x2="300" y2="90" stroke-dasharray="2,2"/>
+                                <line x1="40" y1="120" x2="300" y2="120" stroke-dasharray="2,2"/>
+                            </g>
+                            
+                            <!-- Y-axis labels -->
+                            <g font-size="10" fill="#666">
+                                <text x="35" y="33" text-anchor="end">50%</text>
+                                <text x="35" y="63" text-anchor="end">40%</text>
+                                <text x="35" y="93" text-anchor="end">30%</text>
+                                <text x="35" y="123" text-anchor="end">20%</text>
+                                <text x="35" y="153" text-anchor="end">10%</text>
+                            </g>
+                            
+                            <!-- X-axis labels -->
+                            <g font-size="10" fill="#666">
+                                <text x="72" y="165" text-anchor="middle">Y1</text>
+                                <text x="124" y="165" text-anchor="middle">Y2</text>
+                                <text x="176" y="165" text-anchor="middle">Y3</text>
+                                <text x="228" y="165" text-anchor="middle">Y4</text>
+                                <text x="280" y="165" text-anchor="middle">Y5</text>
+                            </g>
+                            
+                            <!-- CET1 line -->
+                            <polyline 
+                                points="72,60 124,120 176,132 228,138 280,132"
+                                fill="none" 
+                                stroke="#10b981" 
+                                stroke-width="2.5"
+                            />
+                            
+                            <!-- Regulatory minimum line at 15% -->
+                            <line x1="40" y1="138" x2="300" y2="138" stroke="#dc2626" stroke-width="1" stroke-dasharray="4,2"/>
+                            <text x="305" y="140" font-size="8" fill="#dc2626">Min 15%</text>
+                            
+                            <!-- Data points -->
+                            <g fill="#10b981">
+                                <circle cx="72" cy="60" r="4"/>
+                                <circle cx="124" cy="120" r="4"/>
+                                <circle cx="176" cy="132" r="4"/>
+                                <circle cx="228" cy="138" r="4"/>
+                                <circle cx="280" cy="132" r="4"/>
+                            </g>
+                            
+                            <!-- Value labels -->
+                            <g font-size="9" fill="#333" font-weight="500">
+                                <text x="72" y="54" text-anchor="middle">40.7%</text>
+                                <text x="124" y="114" text-anchor="middle">19.9%</text>
+                                <text x="176" y="126" text-anchor="middle">16.9%</text>
+                                <text x="228" y="132" text-anchor="middle">15.9%</text>
+                                <text x="280" y="126" text-anchor="middle">16.8%</text>
+                            </g>
+                        </svg>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="slide-number">19</div>
+        <div class="slide-number">18</div>
     </div>
 
 </body>

@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slide 21: Assumptions del Piano</title>
+    <title>Slide 21 - Appendix</title>
     <style>
+        /* ====================================== */
+        /* BASE STYLES - DO NOT MODIFY           */
+        /* ====================================== */
         * {
             margin: 0;
             padding: 0;
@@ -20,12 +23,12 @@
             --light-grey: #E0E0E0;
             --background-grey: #f8f9fa;
             --white: #FFFFFF;
-            --success-green: #28a745;
+            --digital: #00B4D8;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Arial', sans-serif;
-            background: #404040;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background: #404040; /* PowerPoint-style dark background */
             color: var(--dark-grey);
             margin: 0;
             padding: 0;
@@ -36,343 +39,122 @@
         }
 
         .slide {
-            width: 1122px;
-            height: 794px;
-            background: white;
-            border: 1px solid #d0d0d0;
-            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
-            padding: 60px;
+            width: 1122px;  /* A4 landscape proportions */
+            height: 794px;  /* A4 landscape proportions */
+            background: var(--primary-blue); /* Dark blue background for divider */
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.3);
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
             page-break-after: always;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        .breadcrumb {
-            font-size: 12px;
-            color: #999;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        /* ====================================== */
+        /* DIVIDER SLIDE SPECIFIC STYLES         */
+        /* ====================================== */
+        .divider-content {
+            text-align: center;
+            position: relative;
         }
 
-        .action-title {
-            font-size: 30px;
+        .divider-title {
+            font-size: 52px;
             font-weight: 700;
-            color: var(--primary-blue);
-            margin-bottom: 30px;
-            line-height: 1.3;
-            letter-spacing: -0.02em;
+            color: var(--white);
+            letter-spacing: -1px;
+            text-transform: uppercase;
+            opacity: 1;
+            animation: fadeIn 0.8s ease-out;
         }
 
-        .content-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
+        /* Subtle decorative element */
+        .divider-accent {
+            position: absolute;
+            width: 120px;
+            height: 2px;
+            background: var(--white);
+            opacity: 0.3;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
+        /* Optional: Subtle pattern overlay for depth */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(0, 81, 165, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(0, 81, 165, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* Slide number for consistency */
         .slide-number {
             position: absolute;
             bottom: 40px;
             right: 40px;
             font-size: 14px;
-            color: #666;
-            font-weight: 500;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 400;
+            z-index: 100;
         }
 
-        /* Assumptions Grid */
-        .assumptions-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
-
-        .assumption-category {
-            background: var(--background-grey);
-            border-radius: 8px;
-            padding: 20px;
-            border-left: 4px solid var(--primary-blue);
-        }
-
-        .assumption-category.pricing {
-            border-left-color: var(--success-green);
-        }
-
-        .assumption-category.risk {
-            border-left-color: #ff7b00;
-        }
-
-        .assumption-category.volumes {
-            border-left-color: var(--secondary-blue);
-        }
-
-        .assumption-category.efficiency {
-            border-left-color: #6c757d;
-        }
-
-        .category-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--primary-blue);
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .assumption-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .assumption-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid var(--light-grey);
-        }
-
-        .assumption-label {
-            font-size: 13px;
-            color: var(--dark-grey);
-            font-weight: 500;
-            flex: 1;
-        }
-
-        .assumption-value {
-            font-size: 14px;
-            color: var(--primary-blue);
-            font-weight: 700;
-            font-family: 'SF Mono', 'Monaco', monospace;
-            text-align: right;
-            min-width: 100px;
-        }
-
-        /* Key Assumptions Banner */
-        .key-assumptions-banner {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
-            color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .banner-content {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-        }
-
-        .banner-item {
-            text-align: center;
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .banner-item:last-child {
-            border-right: none;
-        }
-
-        .banner-label {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .banner-value {
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        /* Footer Note */
-        .footer-note {
-            background: #fff8dc;
-            border-left: 4px solid #FFD700;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-top: auto;
-        }
-
-        .footer-note-text {
-            font-size: 12px;
-            color: var(--medium-grey);
-            line-height: 1.5;
-            font-style: italic;
-        }
-
-        @media print {
-            @page { 
-                size: A4 landscape; 
-                margin: 0;
+        /* Animation for elegant appearance */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
+            to {
+                opacity: 0.95;
+                transform: translateY(0);
+            }
+        }
+
+        /* ====================================== */
+        /* PRINT STYLES                          */
+        /* ====================================== */
+        @media print {
             body {
                 background: white;
+                margin: 0;
+                padding: 0;
             }
+
             .slide {
-                width: 1122px !important;
-                height: 794px !important;
-                border: none;
+                width: 297mm;
+                height: 210mm;
+                max-width: 297mm;
+                max-height: 210mm;
                 box-shadow: none;
+                border: none;
+                page-break-after: always;
+                page-break-inside: avoid;
+            }
+
+            @page {
+                size: A4 landscape;
+                margin: 0;
             }
         }
     </style>
 </head>
 <body>
     <div class="slide">
-        <div class="breadcrumb">Appendice</div>
-        <h1 class="action-title">Gli assumptions del piano sono conservativi e basati su benchmark di mercato</h1>
-        
-        <div class="content-area">
-            <!-- Key Assumptions Banner -->
-            <div class="key-assumptions-banner">
-                <div class="banner-content">
-                    <div class="banner-item">
-                        <div class="banner-label">NIM Target</div>
-                        <div class="banner-value">3.5-4.0%</div>
-                    </div>
-                    <div class="banner-item">
-                        <div class="banner-label">Cost/Income</div>
-                        <div class="banner-value">32.4%</div>
-                    </div>
-                    <div class="banner-item">
-                        <div class="banner-label">ROE Anno 5</div>
-                        <div class="banner-value">15.8%</div>
-                    </div>
-                    <div class="banner-item">
-                        <div class="banner-label">CET1 Ratio</div>
-                        <div class="banner-value">>16%</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Assumptions Categories -->
-            <div class="assumptions-grid">
-                <!-- Pricing & Margini -->
-                <div class="assumption-category pricing">
-                    <div class="category-title">Pricing & Margini</div>
-                    <div class="assumption-list">
-                        <div class="assumption-item">
-                            <span class="assumption-label">Tasso attivo Real Estate</span>
-                            <span class="assumption-value">9.5%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Tasso attivo PMI</span>
-                            <span class="assumption-value">8.0%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Tasso attivo NPL</span>
-                            <span class="assumption-value">11.0%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Tasso passivo depositi</span>
-                            <span class="assumption-value">2.5-3.0%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">NIM target range</span>
-                            <span class="assumption-value">3.5-4.0%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Risk & Coverage -->
-                <div class="assumption-category risk">
-                    <div class="category-title">Risk & Coverage</div>
-                    <div class="assumption-list">
-                        <div class="assumption-item">
-                            <span class="assumption-label">Recovery rate NPL</span>
-                            <span class="assumption-value">>40%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Garanzie pubbliche PMI</span>
-                            <span class="assumption-value">80%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">LTV Real Estate max</span>
-                            <span class="assumption-value">75%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Cost of risk range</span>
-                            <span class="assumption-value">1.0-1.5%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">NPL ratio target</span>
-                            <span class="assumption-value"><7%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Volumi & Clienti -->
-                <div class="assumption-category volumes">
-                    <div class="category-title">Volumi & Clienti</div>
-                    <div class="assumption-list">
-                        <div class="assumption-item">
-                            <span class="assumption-label">Deposito medio retail</span>
-                            <span class="assumption-value">€30k</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">AUM medio Wealth</span>
-                            <span class="assumption-value">€200k</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Ticket medio RE</span>
-                            <span class="assumption-value">€10M</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Ticket medio PMI</span>
-                            <span class="assumption-value">€2M</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Conv. Digital→Wealth</span>
-                            <span class="assumption-value">10%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Efficienza Operativa -->
-                <div class="assumption-category efficiency">
-                    <div class="category-title">Efficienza Operativa</div>
-                    <div class="assumption-list">
-                        <div class="assumption-item">
-                            <span class="assumption-label">FTE per €1M ricavi</span>
-                            <span class="assumption-value">1.3</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">vs sistema bancario</span>
-                            <span class="assumption-value">2.5</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Cost/Income target</span>
-                            <span class="assumption-value">32.4%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Automazione con AI</span>
-                            <span class="assumption-value">70%</span>
-                        </div>
-                        <div class="assumption-item">
-                            <span class="assumption-label">Costo medio FTE</span>
-                            <span class="assumption-value">€125k</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Note -->
-            <div class="footer-note">
-                <div class="footer-note-text">
-                    Nota: Tutti gli assumptions sono stati validati con benchmark di mercato e dati di sistema bancario italiano. 
-                    I valori utilizzati sono conservativi rispetto alle best practice di challenger banks europee. 
-                    Sensitivities e stress test disponibili nell'appendice tecnica del business plan completo.
-                </div>
-            </div>
+        <div class="divider-content">
+            <h1 class="divider-title">APPENDIX</h1>
+            <div class="divider-accent"></div>
         </div>
         
+        <!-- Slide number -->
         <div class="slide-number">21</div>
     </div>
 </body>

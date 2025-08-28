@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slide 17 - Central Functions Organization</title>
+    <title>Slide 15 - Central Functions Organization</title>
         <style>
         * {
             margin: 0;
@@ -20,6 +20,7 @@
             --light-grey: #E0E0E0;
             --background-grey: #f8f9fa;
             --white: #FFFFFF;
+            --digital: #00B4D8;
             --exec-color: #003A70;
             --board-color: #0051a5;
             --committee-color: #4dabf7;
@@ -71,6 +72,8 @@
             margin-bottom: 18px;
             line-height: 1.3;
             letter-spacing: -0.02em;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #0051a5;
         }
 
         .slide-number {
@@ -81,6 +84,16 @@
             color: #666;
             font-weight: 500;
             z-index: 100;
+        }
+
+        .footer-note {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            right: 120px;
+            font-size: 10px;
+            color: #999;
+            line-height: 1.3;
         }
 
         @media print {
@@ -162,11 +175,12 @@
         }
 
         .function-card {
-            background: white;
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
             border: 1px solid var(--light-grey);
             border-radius: 8px;
             padding: 16px;
             transition: transform 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 58, 112, 0.06);
         }
 
         .function-header {
@@ -208,7 +222,7 @@
 
         .cost-evolution {
             background: white;
-            border: 1px solid var(--light-grey);
+            border: none;
             border-radius: 8px;
             padding: 16px;
             margin-top: 0;
@@ -219,7 +233,7 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            height: 80px;
+            height: 50px;
             margin: 0 0 16px 0;
             border-bottom: 1px solid var(--light-grey);
             padding: 8px 0 8px 0;
@@ -288,7 +302,7 @@
         <div class="slide-content">
             <div class="breadcrumb">Organization > Central Functions</div>
             
-            <h1 class="action-title">Central Functions ottimizzate per supportare la crescita del business</h1>
+            <h1 class="action-title">Central Functions optimized to support business growth</h1>
             
             <div class="central-functions-container">
                 <!-- Summary Box -->
@@ -298,19 +312,19 @@
                         <div class="metrics-grid">
                             <div class="metric-card">
                                 <div class="metric-value">116</div>
-                                <div class="metric-label">FTE Totali Anno 5</div>
+                                <div class="metric-label">Total FTEs Year 5</div>
                             </div>
                             <div class="metric-card">
                                 <div class="metric-value">€11.48M</div>
-                                <div class="metric-label">Costo Anno 5</div>
+                                <div class="metric-label">Year 5 Cost</div>
                             </div>
                             <div class="metric-card">
                                 <div class="metric-value">€99.0k</div>
-                                <div class="metric-label">Costo Medio FTE</div>
+                                <div class="metric-label">Average FTE Cost</div>
                             </div>
                             <div class="metric-card">
                                 <div class="metric-value">64%</div>
-                                <div class="metric-label">% FTE Totali</div>
+                                <div class="metric-label">% of Total FTEs</div>
                             </div>
                         </div>
                     </div>
@@ -326,7 +340,6 @@
                         <div class="function-details">
                             Credit Risk, Market Risk, Operational Risk, Compliance
                         </div>
-                        <div class="function-cost">€2.77M costi annuali</div>
                     </div>
 
                     <div class="function-card">
@@ -337,7 +350,6 @@
                         <div class="function-details">
                             Internal Controls, Audit Planning, Risk Assessment, Process Review
                         </div>
-                        <div class="function-cost">€0.99M costi annuali</div>
                     </div>
 
                     <div class="function-card">
@@ -348,7 +360,6 @@
                         <div class="function-details">
                             Chief Legal Officer, Regulatory Affairs, Corporate Legal
                         </div>
-                        <div class="function-cost">€0.99M costi annuali</div>
                     </div>
 
                     <div class="function-card">
@@ -359,7 +370,6 @@
                         <div class="function-details">
                             Legal Affairs, Contracts, Litigation, Corporate Secretary
                         </div>
-                        <div class="function-cost">€0.69M costi annuali</div>
                     </div>
 
                     <div class="function-card">
@@ -370,73 +380,56 @@
                         <div class="function-details">
                             CFO Office, Planning & Control, Accounting, Treasury, ALM
                         </div>
-                        <div class="function-cost">€1.98M costi annuali</div>
                     </div>
 
                     <div class="function-card">
                         <div class="function-header">
-                            <span class="function-name">Other Support</span>
+                            <span class="function-name">Other</span>
                             <span class="function-fte">41 FTE</span>
                         </div>
                         <div class="function-details">
                             CEO, IT, Operations, HR, Organization, Marketing, Facilities, Strategy, Communications
                         </div>
-                        <div class="function-cost">€4.06M costi annuali</div>
                     </div>
                 </div>
 
                 <!-- Chart Title Outside -->
-                <h3 style="font-size: 16px; font-weight: 600; color: var(--primary-blue); margin-bottom: 6px; margin-top: -4px; text-align: center;">Evoluzione Costi Central Functions</h3>
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--primary-blue); margin-bottom: 6px; margin-top: -4px; text-align: center;">Central Functions Cost Evolution</h3>
                 
                 <!-- Cost Evolution Chart -->
                 <div class="cost-evolution" style="margin-top: -2px;">
                     <div class="chart-container">
                         <div class="year-bar">
                             <div class="bar-value">€8.7M</div>
-                            <div class="bar" style="height: 54px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
-                            <div class="year-label">Anno 1</div>
+                            <div class="bar" style="height: 8px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
+                            <div class="year-label">Year 1</div>
                         </div>
                         <div class="year-bar">
                             <div class="bar-value">€9.5M</div>
-                            <div class="bar" style="height: 58px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
-                            <div class="year-label">Anno 2</div>
+                            <div class="bar" style="height: 16px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
+                            <div class="year-label">Year 2</div>
                         </div>
                         <div class="year-bar">
                             <div class="bar-value">€10.2M</div>
-                            <div class="bar" style="height: 62px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
-                            <div class="year-label">Anno 3</div>
+                            <div class="bar" style="height: 24px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
+                            <div class="year-label">Year 3</div>
                         </div>
                         <div class="year-bar">
                             <div class="bar-value">€10.9M</div>
-                            <div class="bar" style="height: 67px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
-                            <div class="year-label">Anno 4</div>
+                            <div class="bar" style="height: 32px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
+                            <div class="year-label">Year 4</div>
                         </div>
                         <div class="year-bar">
                             <div class="bar-value">€11.5M</div>
-                            <div class="bar" style="height: 70px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
-                            <div class="year-label">Anno 5</div>
-                        </div>
-                    </div>
-
-                    <div class="efficiency-metrics">
-                        <div class="efficiency-item">
-                            <span>Central/Total FTE:</span>
-                            <strong>64%</strong>
-                        </div>
-                        <div class="efficiency-item">
-                            <span>Cost/Income Central:</span>
-                            <strong>8.3%</strong>
-                        </div>
-                        <div class="efficiency-item">
-                            <span>Central Cost/Assets:</span>
-                            <strong>0.49%</strong>
+                            <div class="bar" style="height: 40px; background: linear-gradient(to top, #003A70, #0051a5);"></div>
+                            <div class="year-label">Year 5</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="slide-number">17</div>
+        <div class="slide-number">15</div>
     </div>
 
     <script>

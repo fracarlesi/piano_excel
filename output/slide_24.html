@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assunzioni Volumi per Divisione</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+        
+        :root {
+            /* Colori McKinsey */
+            --mckinsey-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --charcoal: #1a1a1a;
+            --medium-gray: #666666;
+            --light-gray: #f5f5f5;
+            --border-gray: #e0e0e0;
+            --white: #ffffff;
+            --success-green: #059669;
+            --muted-green: #10b981;
+            
+            /* Spaziatura */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            
+            /* Tipografia */
+            --font-primary: 'Source Sans Pro', sans-serif;
+            --text-xs: 11px;
+            --text-sm: 13px;
+            --text-base: 14px;
+            --text-lg: 16px;
+            --text-xl: 20px;
+            --text-2xl: 24px;
+            --text-3xl: 28px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-primary);
+            background: white;
+            color: var(--charcoal);
+            line-height: 1.5;
+            font-size: var(--text-base);
+        }
+        
+        .slide-container {
+            width: 1122px;
+            height: 794px;
+            margin: 0 auto;
+            padding: var(--space-2xl);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        /* Header */
+        .slide-header {
+            margin-bottom: var(--space-xl);
+        }
+        
+        .breadcrumb {
+            font-size: var(--text-sm);
+            color: var(--medium-gray);
+            margin-bottom: var(--space-md);
+            font-weight: 400;
+        }
+        
+        .slide-title {
+            font-size: var(--text-3xl);
+            font-weight: 700;
+            color: var(--charcoal);
+            line-height: 1.2;
+            padding-bottom: var(--space-md);
+            border-bottom: 3px solid var(--secondary-blue);
+        }
+        
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-lg);
+            overflow-y: auto;
+            padding-right: var(--space-sm);
+        }
+        
+        /* Division Section */
+        .division-section {
+            background: white;
+            border: 1px solid var(--border-gray);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .division-header {
+            background: var(--mckinsey-blue);
+            color: white;
+            padding: var(--space-sm) var(--space-md);
+            font-size: var(--text-base);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cagr-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: var(--text-xs);
+            font-weight: 400;
+        }
+        
+        /* Data Table */
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--text-sm);
+        }
+        
+        .metrics-table th {
+            background: var(--light-gray);
+            padding: var(--space-xs) var(--space-sm);
+            text-align: left;
+            font-weight: 600;
+            color: var(--medium-gray);
+            border-bottom: 1px solid var(--border-gray);
+        }
+        
+        .metrics-table th.year {
+            text-align: right;
+            width: 80px;
+        }
+        
+        .metrics-table th.metric-name {
+            width: 45%;
+        }
+        
+        .metrics-table td {
+            padding: var(--space-xs) var(--space-sm);
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .metrics-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .metrics-table td.metric-label {
+            color: var(--charcoal);
+            font-weight: 400;
+        }
+        
+        .metrics-table td.value {
+            text-align: right;
+            font-weight: 500;
+            color: var(--charcoal);
+        }
+        
+        .metrics-table td.growth-indicator {
+            text-align: right;
+            font-weight: 600;
+            color: var(--success-green);
+            font-size: var(--text-xs);
+        }
+        
+        /* Specific division colors */
+        .division-section.retail .division-header {
+            background: var(--mckinsey-blue);
+        }
+        
+        .division-section.sme .division-header {
+            background: #004d8c;
+        }
+        
+        .division-section.corporate .division-header {
+            background: #005aa3;
+        }
+        
+        .division-section.wealth .division-header {
+            background: #0066b8;
+        }
+        
+        .division-section.npl .division-header {
+            background: #666666;
+        }
+        
+        .division-section.npl .growth-indicator {
+            color: #dc2626;
+        }
+        
+        /* Compact mode for fitting all content */
+        .compact .metrics-table {
+            font-size: 12px;
+        }
+        
+        .compact .metrics-table th,
+        .compact .metrics-table td {
+            padding: 2px 6px;
+        }
+        
+        .compact .division-header {
+            padding: 4px 12px;
+            font-size: 13px;
+        }
+        
+        /* Footer */
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--space-lg);
+            margin-top: auto;
+            border-top: 1px solid var(--border-gray);
+        }
+        
+        .footer-left {
+            font-size: var(--text-xs);
+            color: var(--medium-gray);
+        }
+        
+        .slide-number {
+            font-size: var(--text-sm);
+            color: var(--medium-gray);
+            font-weight: 500;
+        }
+        
+        /* Print styles */
+        @media print {
+            .slide-container {
+                width: 297mm;
+                height: 210mm;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Header -->
+        <div class="slide-header">
+            <div class="breadcrumb">Piano Industriale 2024-2027 | Appendice | Assunzioni Volumi</div>
+            <h1 class="slide-title">I volumi di business assumono una crescita differenziata per divisione</h1>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area compact">
+            
+            <!-- DIVISIONE RETAIL -->
+            <div class="division-section retail">
+                <div class="division-header">
+                    <span>DIVISIONE RETAIL</span>
+                    <span class="cagr-badge">CAGR principali: 4-10%</span>
+                </div>
+                <table class="metrics-table">
+                    <thead>
+                        <tr>
+                            <th class="metric-name">Metrica</th>
+                            <th class="year">2024</th>
+                            <th class="year">2025</th>
+                            <th class="year">2026</th>
+                            <th class="year">2027</th>
+                            <th class="year">CAGR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="metric-label">Stock Mutui (€Mln)</td>
+                            <td class="value">5,400</td>
+                            <td class="value">5,670</td>
+                            <td class="value">5,954</td>
+                            <td class="value">6,251</td>
+                            <td class="growth-indicator">+5%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Stock Prestiti Personali (€Mln)</td>
+                            <td class="value">800</td>
+                            <td class="value">840</td>
+                            <td class="value">882</td>
+                            <td class="value">926</td>
+                            <td class="growth-indicator">+5%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Nuove erogazioni mutui annue (€Mln)</td>
+                            <td class="value">540</td>
+                            <td class="value">567</td>
+                            <td class="value">595</td>
+                            <td class="value">625</td>
+                            <td class="growth-indicator">+5%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">N. conti correnti ('000)</td>
+                            <td class="value">450</td>
+                            <td class="value">468</td>
+                            <td class="value">486</td>
+                            <td class="value">506</td>
+                            <td class="growth-indicator">+4%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Assets Under Management (€Mln)</td>
+                            <td class="value">3,200</td>
+                            <td class="value">3,520</td>
+                            <td class="value">3,872</td>
+                            <td class="value">4,259</td>
+                            <td class="growth-indicator">+10%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- DIVISIONE SME -->
+            <div class="division-section sme">
+                <div class="division-header">
+                    <span>DIVISIONE SME</span>
+                    <span class="cagr-badge">CAGR Stock: 5%</span>
+                </div>
+                <table class="metrics-table">
+                    <thead>
+                        <tr>
+                            <th class="metric-name">Metrica</th>
+                            <th class="year">2024</th>
+                            <th class="year">2025</th>
+                            <th class="year">2026</th>
+                            <th class="year">2027</th>
+                            <th class="year">CAGR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="metric-label">Stock Crediti (€Mln)</td>
+                            <td class="value">4,200</td>
+                            <td class="value">4,410</td>
+                            <td class="value">4,631</td>
+                            <td class="value">4,862</td>
+                            <td class="growth-indicator">+5%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Nuove erogazioni annue (€Mln)</td>
+                            <td class="value">1,260</td>
+                            <td class="value">1,323</td>
+                            <td class="value">1,389</td>
+                            <td class="value">1,459</td>
+                            <td class="growth-indicator">+5%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">N. clienti attivi</td>
+                            <td class="value">12,000</td>
+                            <td class="value">12,600</td>
+                            <td class="value">13,230</td>
+                            <td class="value">13,891</td>
+                            <td class="growth-indicator">+5%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Penetrazione prodotti (n. medio)</td>
+                            <td class="value">2.8</td>
+                            <td class="value">3.0</td>
+                            <td class="value">3.2</td>
+                            <td class="value">3.5</td>
+                            <td class="growth-indicator">+7.7%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- DIVISIONE CORPORATE -->
+            <div class="division-section corporate">
+                <div class="division-header">
+                    <span>DIVISIONE CORPORATE</span>
+                    <span class="cagr-badge">IB CAGR: 20%</span>
+                </div>
+                <table class="metrics-table">
+                    <thead>
+                        <tr>
+                            <th class="metric-name">Metrica</th>
+                            <th class="year">2024</th>
+                            <th class="year">2025</th>
+                            <th class="year">2026</th>
+                            <th class="year">2027</th>
+                            <th class="year">CAGR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="metric-label">Stock Crediti (€Mln)</td>
+                            <td class="value">3,500</td>
+                            <td class="value">3,640</td>
+                            <td class="value">3,786</td>
+                            <td class="value">3,937</td>
+                            <td class="growth-indicator">+4%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Commissioni Investment Banking (€Mln)</td>
+                            <td class="value">45</td>
+                            <td class="value">54</td>
+                            <td class="value">65</td>
+                            <td class="value">78</td>
+                            <td class="growth-indicator">+20%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Volumi Trade Finance (€Mln)</td>
+                            <td class="value">2,100</td>
+                            <td class="value">2,310</td>
+                            <td class="value">2,541</td>
+                            <td class="value">2,795</td>
+                            <td class="growth-indicator">+10%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- DIVISIONE WEALTH -->
+            <div class="division-section wealth">
+                <div class="division-header">
+                    <span>DIVISIONE WEALTH</span>
+                    <span class="cagr-badge">AUM CAGR: 15%</span>
+                </div>
+                <table class="metrics-table">
+                    <thead>
+                        <tr>
+                            <th class="metric-name">Metrica</th>
+                            <th class="year">2024</th>
+                            <th class="year">2025</th>
+                            <th class="year">2026</th>
+                            <th class="year">2027</th>
+                            <th class="year">CAGR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="metric-label">AUM Gestito (€Mln)</td>
+                            <td class="value">8,000</td>
+                            <td class="value">9,200</td>
+                            <td class="value">10,580</td>
+                            <td class="value">12,167</td>
+                            <td class="growth-indicator">+15%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">N. clienti HNWI</td>
+                            <td class="value">2,500</td>
+                            <td class="value">2,750</td>
+                            <td class="value">3,025</td>
+                            <td class="value">3,328</td>
+                            <td class="growth-indicator">+10%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Ticket medio (€'000)</td>
+                            <td class="value">3,200</td>
+                            <td class="value">3,345</td>
+                            <td class="value">3,499</td>
+                            <td class="value">3,657</td>
+                            <td class="growth-indicator">+4.5%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- DIVISIONE NPL/TURNAROUND -->
+            <div class="division-section npl">
+                <div class="division-header">
+                    <span>DIVISIONE NPL/TURNAROUND</span>
+                    <span class="cagr-badge">Riduzione: -20% YoY</span>
+                </div>
+                <table class="metrics-table">
+                    <thead>
+                        <tr>
+                            <th class="metric-name">Metrica</th>
+                            <th class="year">2024</th>
+                            <th class="year">2025</th>
+                            <th class="year">2026</th>
+                            <th class="year">2027</th>
+                            <th class="year">Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="metric-label">Stock NPL gestiti (€Mln)</td>
+                            <td class="value">1,200</td>
+                            <td class="value">960</td>
+                            <td class="value">768</td>
+                            <td class="value">614</td>
+                            <td class="growth-indicator">-20%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">Recovery rate (%)</td>
+                            <td class="value">35%</td>
+                            <td class="value">38%</td>
+                            <td class="value">42%</td>
+                            <td class="value">45%</td>
+                            <td class="growth-indicator">+8.7%</td>
+                        </tr>
+                        <tr>
+                            <td class="metric-label">NPL venduti (€Mln)</td>
+                            <td class="value">300</td>
+                            <td class="value">240</td>
+                            <td class="value">192</td>
+                            <td class="value">154</td>
+                            <td class="growth-indicator">-20%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+        
+        <!-- Footer -->
+        <div class="slide-footer">
+            <div class="footer-left">Piano Industriale 2024-2027 - Documento Riservato</div>
+            <div class="slide-number">24</div>
+        </div>
+    </div>
+</body>
+</html>

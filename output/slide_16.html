@@ -20,6 +20,7 @@
             --light-grey: #E0E0E0;
             --background-grey: #f8f9fa;
             --white: #FFFFFF;
+            --digital: #00B4D8;
             --positive-green: #10b981;
             --negative-red: #dc2626;
         }
@@ -70,6 +71,8 @@
             margin-bottom: 24px;
             line-height: 1.3;
             letter-spacing: -0.02em;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #0051a5;
         }
 
         .slide-number {
@@ -80,6 +83,16 @@
             color: #666;
             font-weight: 500;
             z-index: 100;
+        }
+
+        .footer-note {
+            position: absolute;
+            bottom: 20px;
+            left: 40px;
+            right: 120px;
+            font-size: 10px;
+            color: #999;
+            line-height: 1.3;
         }
 
         @media print {
@@ -113,7 +126,7 @@
             flex: 0.8;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 20px;
         }
 
         .financial-table {
@@ -131,13 +144,14 @@
             text-align: right;
             font-size: 12px;
             border-right: 1px solid var(--light-grey);
+            width: 11.5%;
         }
 
         .financial-table th:first-child,
         .financial-table td:first-child {
             text-align: left;
             font-weight: 500;
-            width: 30%;
+            width: 31%;
         }
 
         .financial-table th {
@@ -152,16 +166,27 @@
         }
 
         .financial-table .section-header {
-            background: var(--primary-blue);
-            color: white;
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%) !important;
+            color: white !important;
             font-weight: 600;
+        }
+        
+        .financial-table .section-header td {
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%) !important;
+            color: white !important;
+            font-weight: 600;
+            padding: 8px 10px;
         }
 
         .financial-table .subtotal {
             font-weight: 600;
-            background: #f0f4f8;
+            background: var(--background-grey);
             border-top: 1px solid var(--light-grey);
             border-bottom: 1px solid var(--light-grey);
+        }
+        
+        .financial-table .subtotal td {
+            font-weight: 600;
         }
 
         .financial-table .total {
@@ -229,7 +254,9 @@
             border: 1px solid var(--light-grey);
             border-radius: 8px;
             padding: 16px;
-            height: 200px;
+            height: 240px;
+            display: flex;
+            flex-direction: column;
         }
     </style>
 </head>
@@ -237,27 +264,27 @@
 
     <div class="slide">
         <div class="slide-content">
-            <div class="breadcrumb">Risultati Finanziari > Conto Economico</div>
+            <div class="breadcrumb">Financial Results > Income Statement</div>
             
-            <h1 class="action-title">Breakeven Anno 3 e €71.0M utile netto Anno 5 con CAGR ricavi 65%</h1>
+            <h1 class="action-title">Breakeven Year 3 and €41.7M net profit Year 5 with 60% revenue CAGR</h1>
             
             <div class="pnl-container">
                 <div class="pnl-table-section">
                     <table class="financial-table">
                         <thead>
                             <tr>
-                                <th>€ Milioni</th>
-                                <th>Anno 1</th>
-                                <th>Anno 2</th>
-                                <th>Anno 3</th>
-                                <th>Anno 4</th>
-                                <th>Anno 5</th>
-                                <th>Totale 5Y</th>
+                                <th>Euro Million</th>
+                                <th>Y1</th>
+                                <th>Y2</th>
+                                <th>Y3</th>
+                                <th>Y4</th>
+                                <th>Y5</th>
+                                <th>Tot 5Y</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="section-header">
-                                <td colspan="7">RICAVI</td>
+                                <td colspan="7">OPERATING INCOME</td>
                             </tr>
                             <tr>
                                 <td>Interest Income</td>
@@ -272,19 +299,19 @@
                                 <td>Interest Expense</td>
                                 <td class="negative">(18.2)</td>
                                 <td class="negative">(35.8)</td>
-                                <td class="negative">(50.7)</td>
+                                <td class="negative">(50.4)</td>
                                 <td class="negative">(64.0)</td>
-                                <td class="negative">(75.5)</td>
-                                <td class="negative">(244.2)</td>
+                                <td class="negative">(75.4)</td>
+                                <td class="negative">(243.8)</td>
                             </tr>
                             <tr>
                                 <td>Net Interest Income (NII)</td>
                                 <td>15.4</td>
                                 <td>46.3</td>
-                                <td>73.7</td>
+                                <td>74.0</td>
                                 <td>97.7</td>
-                                <td>117.5</td>
-                                <td>350.6</td>
+                                <td>117.6</td>
+                                <td>351.0</td>
                             </tr>
                             <tr>
                                 <td>Commission Income</td>
@@ -314,17 +341,17 @@
                                 <td>59.2</td>
                             </tr>
                             <tr class="subtotal">
-                                <td>Total Revenues</td>
+                                <td>Total Operating Income</td>
                                 <td>21.4</td>
                                 <td>54.1</td>
-                                <td>83.8</td>
-                                <td>111.9</td>
+                                <td>84.1</td>
+                                <td>112.0</td>
                                 <td>138.5</td>
-                                <td>409.7</td>
+                                <td>410.1</td>
                             </tr>
                             
                             <tr class="section-header">
-                                <td colspan="7">COSTI OPERATIVI</td>
+                                <td colspan="7">COSTS & PROVISIONS</td>
                             </tr>
                             <tr>
                                 <td>Personnel cost</td>
@@ -353,25 +380,7 @@
                                 <td class="negative">(18.1)</td>
                                 <td class="negative">(60.5)</td>
                             </tr>
-                            <tr class="subtotal">
-                                <td>Total OPEX</td>
-                                <td class="negative">(22.6)</td>
-                                <td class="negative">(28.9)</td>
-                                <td class="negative">(33.3)</td>
-                                <td class="negative">(38.6)</td>
-                                <td class="negative">(45.5)</td>
-                                <td class="negative">(168.9)</td>
-                            </tr>
                             
-                            <tr>
-                                <td>Loan loss provisions</td>
-                                <td class="negative">(15.2)</td>
-                                <td class="negative">(23.9)</td>
-                                <td class="negative">(23.1)</td>
-                                <td class="negative">(25.3)</td>
-                                <td class="negative">(27.3)</td>
-                                <td class="negative">(113.9)</td>
-                            </tr>
                             <tr>
                                 <td>Depreciation & amortization (D&A)</td>
                                 <td class="negative">(1.4)</td>
@@ -381,151 +390,172 @@
                                 <td class="negative">(5.4)</td>
                                 <td class="negative">(20.4)</td>
                             </tr>
-                            
+                            <tr>
+                                <td>Loan loss provisions</td>
+                                <td class="negative">(15.2)</td>
+                                <td class="negative">(23.0)</td>
+                                <td class="negative">(23.1)</td>
+                                <td class="negative">(25.3)</td>
+                                <td class="negative">(27.3)</td>
+                                <td class="negative">(113.9)</td>
+                            </tr>
                             <tr class="subtotal">
+                                <td>Total Costs & Provisions</td>
+                                <td class="negative">(39.2)</td>
+                                <td class="negative">(55.5)</td>
+                                <td class="negative">(61.2)</td>
+                                <td class="negative">(69.1)</td>
+                                <td class="negative">(78.2)</td>
+                                <td class="negative">(303.2)</td>
+                            </tr>
+                            
+                            <tr class="section-header">
+                                <td colspan="7">RESULT</td>
+                            </tr>
+                            <tr>
                                 <td>Pre-tax profit</td>
                                 <td class="negative">(17.9)</td>
                                 <td class="negative">(1.4)</td>
-                                <td>22.6</td>
-                                <td>42.8</td>
+                                <td>22.9</td>
+                                <td>42.9</td>
                                 <td>60.3</td>
-                                <td>106.5</td>
+                                <td>106.9</td>
                             </tr>
                             
                             <tr class="total">
                                 <td>Net Income</td>
                                 <td class="negative">(17.9)</td>
                                 <td class="negative">(1.7)</td>
-                                <td>18.9</td>
-                                <td>30.0</td>
+                                <td>19.1</td>
+                                <td>30.1</td>
                                 <td>41.7</td>
-                                <td>71.0</td>
+                                <td>71.3</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <div class="pnl-highlights">
-                    <!-- Grafico Ricavi vs Costi -->
-                    <div class="chart-container" style="height: 250px; margin-bottom: 15px;">
-                        <div style="font-size: 14px; font-weight: 600; color: #003A70; margin-bottom: 15px; text-align: center;">
-                            Ricavi vs OPEX (€M)
+                    <!-- Grafico Operating Income vs Total Costs -->
+                    <div class="chart-container">
+                        <div style="font-size: 14px; font-weight: 600; color: #003A70; margin-bottom: 12px; text-align: center;">
+                            Operating Income vs Total Costs (€M)
                         </div>
-                        <svg viewBox="0 0 320 220" style="width: 100%; height: calc(100% - 30px);">
+                        <svg viewBox="0 0 320 200" style="width: 100%; height: calc(100% - 30px);">
                             <!-- Grid lines -->
-                            <line x1="40" y1="180" x2="280" y2="180" stroke="#e0e0e0" stroke-width="1"/>
-                            <line x1="40" y1="140" x2="280" y2="140" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
-                            <line x1="40" y1="100" x2="280" y2="100" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
-                            <line x1="40" y1="60" x2="280" y2="60" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
-                            <line x1="40" y1="20" x2="40" y2="180" stroke="#e0e0e0" stroke-width="1"/>
+                            <line x1="40" y1="170" x2="280" y2="170" stroke="#e0e0e0" stroke-width="1"/>
+                            <line x1="40" y1="130" x2="280" y2="130" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
+                            <line x1="40" y1="90" x2="280" y2="90" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
+                            <line x1="40" y1="50" x2="280" y2="50" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
+                            <line x1="40" y1="20" x2="40" y2="170" stroke="#e0e0e0" stroke-width="1"/>
                             
-                            <!-- Revenue line (scaled: 140 max -> 20px, 20 min -> 180px) -->
-                            <polyline points="40,175 88,155 136,120 184,80 232,40" 
+                            <!-- Revenue line (scaled for new viewBox) -->
+                            <polyline points="40,165 88,145 136,110 184,70 232,35" 
                                 fill="none" stroke="#003A70" stroke-width="3"/>
                             
-                            <!-- Costs line (OPEX values with updated values) -->
-                            <polyline points="40,175 88,170 136,165 184,155 232,145" 
+                            <!-- Costs line (Total Costs & Provisions values scaled for new viewBox) -->
+                            <polyline points="40,165 88,155 136,145 184,130 232,115" 
                                 fill="none" stroke="#dc2626" stroke-width="3"/>
                             
                             <!-- Data points -->
-                            <circle cx="40" cy="175" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
-                            <circle cx="88" cy="155" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
-                            <circle cx="136" cy="120" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
-                            <circle cx="184" cy="80" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
-                            <circle cx="232" cy="40" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
+                            <circle cx="40" cy="165" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
+                            <circle cx="88" cy="145" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
+                            <circle cx="136" cy="110" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
+                            <circle cx="184" cy="70" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
+                            <circle cx="232" cy="35" r="4" fill="white" stroke="#003A70" stroke-width="2"/>
                             
-                            <circle cx="40" cy="175" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
-                            <circle cx="88" cy="170" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
-                            <circle cx="136" cy="165" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
-                            <circle cx="184" cy="155" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
-                            <circle cx="232" cy="145" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
+                            <circle cx="40" cy="165" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
+                            <circle cx="88" cy="155" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
+                            <circle cx="136" cy="145" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
+                            <circle cx="184" cy="130" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
+                            <circle cx="232" cy="115" r="4" fill="white" stroke="#dc2626" stroke-width="2"/>
                             
                             <!-- Values on lines -->
-                            <text x="40" y="170" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">21</text>
-                            <text x="88" y="150" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">54</text>
-                            <text x="136" y="115" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">84</text>
-                            <text x="184" y="75" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">112</text>
-                            <text x="232" y="35" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">139</text>
+                            <text x="40" y="160" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">21</text>
+                            <text x="88" y="140" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">54</text>
+                            <text x="136" y="105" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">84</text>
+                            <text x="184" y="65" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">112</text>
+                            <text x="232" y="30" font-size="10" text-anchor="middle" fill="#003A70" font-weight="600">139</text>
                             
-                            <text x="40" y="190" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">23</text>
-                            <text x="88" y="185" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">29</text>
-                            <text x="136" y="180" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">33</text>
-                            <text x="184" y="170" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">39</text>
-                            <text x="232" y="160" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">46</text>
+                            <text x="40" y="180" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">39</text>
+                            <text x="88" y="170" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">56</text>
+                            <text x="136" y="160" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">61</text>
+                            <text x="184" y="145" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">69</text>
+                            <text x="232" y="130" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">78</text>
                             
                             <!-- X-axis labels -->
-                            <text x="40" y="195" font-size="11" text-anchor="middle" fill="#666">Y1</text>
-                            <text x="88" y="195" font-size="11" text-anchor="middle" fill="#666">Y2</text>
-                            <text x="136" y="195" font-size="11" text-anchor="middle" fill="#666">Y3</text>
-                            <text x="184" y="195" font-size="11" text-anchor="middle" fill="#666">Y4</text>
-                            <text x="232" y="195" font-size="11" text-anchor="middle" fill="#666">Y5</text>
+                            <text x="40" y="185" font-size="11" text-anchor="middle" fill="#666">Y1</text>
+                            <text x="88" y="185" font-size="11" text-anchor="middle" fill="#666">Y2</text>
+                            <text x="136" y="185" font-size="11" text-anchor="middle" fill="#666">Y3</text>
+                            <text x="184" y="185" font-size="11" text-anchor="middle" fill="#666">Y4</text>
+                            <text x="232" y="185" font-size="11" text-anchor="middle" fill="#666">Y5</text>
                             
                             <!-- Y-axis labels -->
-                            <text x="30" y="185" font-size="10" text-anchor="end" fill="#666">0</text>
-                            <text x="30" y="145" font-size="10" text-anchor="end" fill="#666">50</text>
-                            <text x="30" y="105" font-size="10" text-anchor="end" fill="#666">100</text>
+                            <text x="30" y="175" font-size="10" text-anchor="end" fill="#666">0</text>
+                            <text x="30" y="135" font-size="10" text-anchor="end" fill="#666">50</text>
+                            <text x="30" y="95" font-size="10" text-anchor="end" fill="#666">100</text>
                             <text x="30" y="25" font-size="10" text-anchor="end" fill="#666">150</text>
                             
                             <!-- Legend -->
-                            <rect x="250" y="10" width="12" height="3" fill="#003A70"/>
-                            <text x="265" y="14" font-size="10" fill="#666">Ricavi</text>
-                            <rect x="250" y="20" width="12" height="3" fill="#dc2626"/>
-                            <text x="265" y="24" font-size="10" fill="#666">OPEX</text>
+                            <rect x="200" y="190" width="12" height="3" fill="#003A70"/>
+                            <text x="215" y="194" font-size="10" fill="#666">Op. Income</text>
+                            <rect x="200" y="198" width="12" height="3" fill="#dc2626"/>
+                            <text x="215" y="202" font-size="10" fill="#666">Tot. Costs</text>
                         </svg>
                     </div>
 
                     <!-- Grafico Utile Netto -->
-                    <div class="chart-container" style="height: 250px;">
-                        <div style="font-size: 14px; font-weight: 600; color: #003A70; margin-bottom: 15px; text-align: center;">
-                            Evoluzione Utile Netto (€M)
+                    <div class="chart-container">
+                        <div style="font-size: 14px; font-weight: 600; color: #003A70; margin-bottom: 12px; text-align: center;">
+                            Net Income Evolution (€M)
                         </div>
-                        <svg viewBox="0 0 320 220" style="width: 100%; height: calc(100% - 30px);">
+                        <svg viewBox="0 0 320 200" style="width: 100%; height: calc(100% - 30px);">
                             <!-- Grid lines -->
-                            <line x1="40" y1="180" x2="280" y2="180" stroke="#e0e0e0" stroke-width="1"/>
-                            <line x1="40" y1="140" x2="280" y2="140" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
-                            <line x1="40" y1="100" x2="280" y2="100" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
-                            <line x1="40" y1="60" x2="280" y2="60" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
-                            <line x1="40" y1="20" x2="40" y2="180" stroke="#e0e0e0" stroke-width="1"/>
+                            <line x1="40" y1="170" x2="280" y2="170" stroke="#e0e0e0" stroke-width="1"/>
+                            <line x1="40" y1="130" x2="280" y2="130" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
+                            <line x1="40" y1="90" x2="280" y2="90" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
+                            <line x1="40" y1="50" x2="280" y2="50" stroke="#e0e0e0" stroke-width="1" opacity="0.5"/>
+                            <line x1="40" y1="20" x2="40" y2="170" stroke="#e0e0e0" stroke-width="1"/>
                             
                             <!-- Zero line (breakeven) -->
-                            <line x1="40" y1="110" x2="280" y2="110" stroke="#666" stroke-width="2" stroke-dasharray="5,3"/>
-                            <text x="285" y="113" font-size="10" fill="#666">0</text>
+                            <line x1="40" y1="100" x2="280" y2="100" stroke="#666" stroke-width="2" stroke-dasharray="5,3"/>
+                            <text x="285" y="103" font-size="10" fill="#666">0</text>
                             
                             <!-- Net Income bars -->
                             <!-- Year 1: -17.9 -->
-                            <rect x="30" y="110" width="20" height="32" fill="#dc2626" opacity="0.8"/>
-                            <text x="40" y="105" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">-17.9</text>
+                            <rect x="30" y="100" width="20" height="30" fill="#dc2626" opacity="0.8"/>
+                            <text x="40" y="95" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">-17.9</text>
                             
                             <!-- Year 2: -1.7 -->
-                            <rect x="78" y="110" width="20" height="3" fill="#dc2626" opacity="0.8"/>
-                            <text x="88" y="105" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">-1.7</text>
+                            <rect x="78" y="100" width="20" height="3" fill="#dc2626" opacity="0.8"/>
+                            <text x="88" y="95" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="600">-1.7</text>
                             
                             <!-- Year 3: 18.9 -->
-                            <rect x="126" y="80" width="20" height="30" fill="#10b981" opacity="0.8"/>
-                            <text x="136" y="75" font-size="10" text-anchor="middle" fill="#10b981" font-weight="600">18.9</text>
+                            <rect x="126" y="72" width="20" height="28" fill="#10b981" opacity="0.8"/>
+                            <text x="136" y="67" font-size="10" text-anchor="middle" fill="#10b981" font-weight="600">18.9</text>
                             
                             <!-- Year 4: 30.0 -->
-                            <rect x="174" y="60" width="20" height="50" fill="#10b981" opacity="0.8"/>
-                            <text x="184" y="55" font-size="10" text-anchor="middle" fill="#10b981" font-weight="600">30.0</text>
+                            <rect x="174" y="54" width="20" height="46" fill="#10b981" opacity="0.8"/>
+                            <text x="184" y="49" font-size="10" text-anchor="middle" fill="#10b981" font-weight="600">30.0</text>
                             
                             <!-- Year 5: 41.7 (71.0 cumulative but showing single year) -->
-                            <rect x="222" y="40" width="20" height="70" fill="#10b981" opacity="0.8"/>
-                            <text x="232" y="35" font-size="10" text-anchor="middle" fill="#10b981" font-weight="600">41.7</text>
+                            <rect x="222" y="37" width="20" height="63" fill="#10b981" opacity="0.8"/>
+                            <text x="232" y="32" font-size="10" text-anchor="middle" fill="#10b981" font-weight="600">41.7</text>
                             
                             <!-- Breakeven annotation -->
-                            <circle cx="136" cy="110" r="8" fill="none" stroke="#003A70" stroke-width="2"/>
-                            <text x="136" y="130" font-size="11" text-anchor="middle" fill="#003A70" font-weight="600">Breakeven</text>
+                            <circle cx="136" cy="100" r="8" fill="none" stroke="#003A70" stroke-width="2"/>
+                            <text x="136" y="120" font-size="11" text-anchor="middle" fill="#003A70" font-weight="600">Breakeven</text>
                             
                             <!-- X-axis labels -->
-                            <text x="40" y="195" font-size="11" text-anchor="middle" fill="#666">Y1</text>
-                            <text x="88" y="195" font-size="11" text-anchor="middle" fill="#666">Y2</text>
-                            <text x="136" y="195" font-size="11" text-anchor="middle" fill="#666">Y3</text>
-                            <text x="184" y="195" font-size="11" text-anchor="middle" fill="#666">Y4</text>
-                            <text x="232" y="195" font-size="11" text-anchor="middle" fill="#666">Y5</text>
+                            <text x="40" y="185" font-size="11" text-anchor="middle" fill="#666">Y1</text>
+                            <text x="88" y="185" font-size="11" text-anchor="middle" fill="#666">Y2</text>
+                            <text x="136" y="185" font-size="11" text-anchor="middle" fill="#666">Y3</text>
+                            <text x="184" y="185" font-size="11" text-anchor="middle" fill="#666">Y4</text>
+                            <text x="232" y="185" font-size="11" text-anchor="middle" fill="#666">Y5</text>
                             
                             <!-- Y-axis labels -->
-                            <text x="30" y="145" font-size="10" text-anchor="end" fill="#666">-20</text>
-                            <text x="30" y="65" font-size="10" text-anchor="end" fill="#666">40</text>
+                            <text x="30" y="135" font-size="10" text-anchor="end" fill="#666">-20</text>
+                            <text x="30" y="55" font-size="10" text-anchor="end" fill="#666">40</text>
                             <text x="30" y="25" font-size="10" text-anchor="end" fill="#666">60</text>
                         </svg>
                     </div>

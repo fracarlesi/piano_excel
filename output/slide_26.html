@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assunzioni Capital - Piano Industriale 2024-2027</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+        
+        :root {
+            /* Colori McKinsey */
+            --mckinsey-blue: #003A70;
+            --secondary-blue: #0051a5;
+            --accent-blue: #0076BD;
+            --light-blue: #E6F2FF;
+            --charcoal: #1a1a1a;
+            --dark-gray: #333333;
+            --medium-gray: #666666;
+            --light-gray: #999999;
+            --lighter-gray: #CCCCCC;
+            --very-light-gray: #F0F0F0;
+            --background-gray: #FAFAFA;
+            --white: #FFFFFF;
+            --success-green: #059669;
+            --warning-amber: #F59E0B;
+            --danger-red: #DC2626;
+            
+            /* Spacing System */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+            --space-3xl: 64px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background-color: var(--white);
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+        
+        .slide-container {
+            width: 1122px;
+            height: 793px;
+            margin: 0 auto;
+            padding: var(--space-2xl);
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+        }
+        
+        /* Header Section */
+        .slide-header {
+            margin-bottom: var(--space-xl);
+        }
+        
+        .breadcrumb {
+            font-size: 14px;
+            color: var(--medium-gray);
+            margin-bottom: var(--space-md);
+            letter-spacing: 0.3px;
+        }
+        
+        .slide-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--charcoal);
+            line-height: 1.3;
+            margin-bottom: var(--space-sm);
+            letter-spacing: -0.5px;
+        }
+        
+        .title-divider {
+            width: 100%;
+            height: 3px;
+            background: var(--secondary-blue);
+            margin-bottom: var(--space-xl);
+        }
+        
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+        
+        /* Capital Requirements Section */
+        .requirements-section {
+            grid-column: span 4;
+            background: var(--background-gray);
+            padding: var(--space-lg);
+            border-radius: 4px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--mckinsey-blue);
+            margin-bottom: var(--space-md);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .ratio-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-sm);
+        }
+        
+        .ratio-name {
+            font-size: 13px;
+            color: var(--dark-gray);
+        }
+        
+        .ratio-values {
+            display: flex;
+            gap: var(--space-sm);
+        }
+        
+        .ratio-value {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 6px;
+            background: var(--white);
+            border-radius: 2px;
+            color: var(--mckinsey-blue);
+        }
+        
+        /* RWA Section */
+        .rwa-section {
+            grid-column: span 4;
+            background: var(--background-gray);
+            padding: var(--space-lg);
+            border-radius: 4px;
+        }
+        
+        .rwa-chart {
+            margin-top: var(--space-md);
+        }
+        
+        /* Buffer Requirements */
+        .buffer-section {
+            grid-column: span 4;
+            background: var(--background-gray);
+            padding: var(--space-lg);
+            border-radius: 4px;
+        }
+        
+        .buffer-waterfall {
+            margin-top: var(--space-md);
+        }
+        
+        /* Capital Composition */
+        .capital-section {
+            grid-column: span 6;
+            background: var(--white);
+            border: 1px solid var(--lighter-gray);
+            padding: var(--space-lg);
+            border-radius: 4px;
+        }
+        
+        /* Dividend Policy */
+        .dividend-section {
+            grid-column: span 3;
+            background: var(--white);
+            border: 1px solid var(--lighter-gray);
+            padding: var(--space-lg);
+            border-radius: 4px;
+        }
+        
+        /* Stress Test */
+        .stress-section {
+            grid-column: span 3;
+            background: var(--white);
+            border: 1px solid var(--lighter-gray);
+            padding: var(--space-lg);
+            border-radius: 4px;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--space-xs) 0;
+            font-size: 13px;
+        }
+        
+        .metric-label {
+            color: var(--medium-gray);
+        }
+        
+        .metric-value {
+            font-weight: 600;
+            color: var(--charcoal);
+        }
+        
+        .stress-impact {
+            color: var(--danger-red);
+        }
+        
+        .stress-minimum {
+            color: var(--success-green);
+        }
+        
+        /* Footer */
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--lighter-gray);
+        }
+        
+        .source {
+            font-size: 11px;
+            color: var(--light-gray);
+        }
+        
+        .slide-number {
+            font-size: 14px;
+            color: var(--medium-gray);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Header -->
+        <div class="slide-header">
+            <div class="breadcrumb">Piano Industriale 2024-2027 | Appendice | Assunzioni Capital</div>
+            <h1 class="slide-title">Le assunzioni di capitale garantiscono solidità patrimoniale e crescita sostenibile</h1>
+            <div class="title-divider"></div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Capital Requirements -->
+            <div class="requirements-section">
+                <div class="section-title">Requisiti Patrimoniali</div>
+                <div class="ratio-item">
+                    <span class="ratio-name">CET1 Ratio Target</span>
+                    <div class="ratio-values">
+                        <span class="ratio-value">15.0%</span>
+                    </div>
+                </div>
+                <div class="ratio-item">
+                    <span class="ratio-name">Tier 1 Ratio</span>
+                    <div class="ratio-values">
+                        <span class="ratio-value">16.5%</span>
+                    </div>
+                </div>
+                <div class="ratio-item">
+                    <span class="ratio-name">Total Capital Ratio</span>
+                    <div class="ratio-values">
+                        <span class="ratio-value">19.0%</span>
+                    </div>
+                </div>
+                <div class="ratio-item">
+                    <span class="ratio-name">Leverage Ratio</span>
+                    <div class="ratio-values">
+                        <span class="ratio-value">6.0%</span>
+                    </div>
+                </div>
+                <div class="ratio-item">
+                    <span class="ratio-name">MREL Requirement</span>
+                    <div class="ratio-values">
+                        <span class="ratio-value">25%</span>
+                    </div>
+                </div>
+                
+                <!-- Progress visualization -->
+                <svg class="ratio-chart" viewBox="0 0 280 120" style="width: 100%; margin-top: 16px;">
+                    <!-- CET1 Progress -->
+                    <text x="0" y="15" font-size="11" fill="#666">CET1</text>
+                    <rect x="40" y="5" width="200" height="12" fill="#F0F0F0" rx="2"/>
+                    <rect x="40" y="5" width="180" height="12" fill="#0051a5" rx="2"/>
+                    <text x="245" y="15" font-size="11" fill="#333" font-weight="600">2027: 15%</text>
+                    
+                    <!-- Tier 1 Progress -->
+                    <text x="0" y="40" font-size="11" fill="#666">Tier 1</text>
+                    <rect x="40" y="30" width="200" height="12" fill="#F0F0F0" rx="2"/>
+                    <rect x="40" y="30" width="195" height="12" fill="#0076BD" rx="2"/>
+                    <text x="245" y="40" font-size="11" fill="#333" font-weight="600">2027: 16.5%</text>
+                    
+                    <!-- Total Capital Progress -->
+                    <text x="0" y="65" font-size="11" fill="#666">Total</text>
+                    <rect x="40" y="55" width="200" height="12" fill="#F0F0F0" rx="2"/>
+                    <rect x="40" y="55" width="190" height="12" fill="#059669" rx="2"/>
+                    <text x="245" y="65" font-size="11" fill="#333" font-weight="600">2027: 19%</text>
+                    
+                    <!-- MREL Progress -->
+                    <text x="0" y="90" font-size="11" fill="#666">MREL</text>
+                    <rect x="40" y="80" width="200" height="12" fill="#F0F0F0" rx="2"/>
+                    <rect x="40" y="80" width="200" height="12" fill="#333" rx="2"/>
+                    <text x="245" y="90" font-size="11" fill="#333" font-weight="600">2027: 25%</text>
+                </svg>
+            </div>
+            
+            <!-- RWA Section -->
+            <div class="rwa-section">
+                <div class="section-title">Risk Weighted Assets (€Mln)</div>
+                <div class="metric-row">
+                    <span class="metric-label">RWA Totali</span>
+                    <span class="metric-value">9,840</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">RWA Credito</span>
+                    <span class="metric-value">8,364</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">RWA Mercato</span>
+                    <span class="metric-value">492</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">RWA Operativo</span>
+                    <span class="metric-value">984</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">RWA Density</span>
+                    <span class="metric-value">52%</span>
+                </div>
+                
+                <!-- RWA Composition Chart -->
+                <svg class="rwa-chart" viewBox="0 0 280 100" style="width: 100%; margin-top: 16px;">
+                    <!-- Stacked bar for RWA composition -->
+                    <rect x="0" y="20" width="238" height="40" fill="#0051a5" rx="2"/>
+                    <rect x="238" y="20" width="14" height="40" fill="#0076BD" rx="2"/>
+                    <rect x="252" y="20" width="28" height="40" fill="#059669" rx="2"/>
+                    
+                    <!-- Labels -->
+                    <text x="119" y="45" font-size="12" fill="white" text-anchor="middle" font-weight="600">Credito 85%</text>
+                    <text x="245" y="75" font-size="10" fill="#666" text-anchor="middle">Mercato 5%</text>
+                    <text x="266" y="75" font-size="10" fill="#666" text-anchor="middle">Op. 10%</text>
+                </svg>
+            </div>
+            
+            <!-- Buffer Requirements -->
+            <div class="buffer-section">
+                <div class="section-title">Buffer Regolamentari</div>
+                
+                <!-- Waterfall chart for buffers -->
+                <svg viewBox="0 0 280 180" style="width: 100%;">
+                    <!-- Base requirement -->
+                    <rect x="10" y="140" width="40" height="30" fill="#003A70"/>
+                    <text x="30" y="135" font-size="10" fill="#666" text-anchor="middle">SREP</text>
+                    <text x="30" y="160" font-size="11" fill="white" text-anchor="middle" font-weight="600">9.5%</text>
+                    
+                    <!-- Conservation buffer -->
+                    <rect x="60" y="110" width="40" height="60" fill="#0051a5"/>
+                    <line x1="50" y1="140" x2="60" y2="140" stroke="#999" stroke-dasharray="2,2"/>
+                    <line x1="50" y1="140" x2="60" y2="110" stroke="#999" stroke-dasharray="2,2"/>
+                    <text x="80" y="105" font-size="10" fill="#666" text-anchor="middle">CCB</text>
+                    <text x="80" y="145" font-size="11" fill="white" text-anchor="middle" font-weight="600">2.5%</text>
+                    
+                    <!-- Countercyclical -->
+                    <rect x="110" y="100" width="40" height="70" fill="#0076BD"/>
+                    <line x1="100" y1="110" x2="110" y2="110" stroke="#999" stroke-dasharray="2,2"/>
+                    <line x1="100" y1="110" x2="110" y2="100" stroke="#999" stroke-dasharray="2,2"/>
+                    <text x="130" y="95" font-size="10" fill="#666" text-anchor="middle">CCyB</text>
+                    <text x="130" y="140" font-size="11" fill="white" text-anchor="middle" font-weight="600">0.5%</text>
+                    
+                    <!-- O-SII -->
+                    <rect x="160" y="95" width="40" height="75" fill="#059669"/>
+                    <line x1="150" y1="100" x2="160" y2="100" stroke="#999" stroke-dasharray="2,2"/>
+                    <line x1="150" y1="100" x2="160" y2="95" stroke="#999" stroke-dasharray="2,2"/>
+                    <text x="180" y="90" font-size="10" fill="#666" text-anchor="middle">O-SII</text>
+                    <text x="180" y="135" font-size="11" fill="white" text-anchor="middle" font-weight="600">0.25%</text>
+                    
+                    <!-- Management -->
+                    <rect x="210" y="70" width="40" height="100" fill="#333"/>
+                    <line x1="200" y1="95" x2="210" y2="95" stroke="#999" stroke-dasharray="2,2"/>
+                    <line x1="200" y1="95" x2="210" y2="70" stroke="#999" stroke-dasharray="2,2"/>
+                    <text x="230" y="65" font-size="10" fill="#666" text-anchor="middle">Mgmt</text>
+                    <text x="230" y="125" font-size="11" fill="white" text-anchor="middle" font-weight="600">2.25%</text>
+                    
+                    <!-- Total line -->
+                    <line x1="250" y1="70" x2="270" y2="70" stroke="#DC2626" stroke-width="2"/>
+                    <text x="260" y="55" font-size="12" fill="#DC2626" text-anchor="middle" font-weight="700">15%</text>
+                    <text x="260" y="40" font-size="10" fill="#666" text-anchor="middle">Total CET1</text>
+                </svg>
+            </div>
+            
+            <!-- Capital & Reserves -->
+            <div class="capital-section">
+                <div class="section-title">Capitale e Riserve (€Mln)</div>
+                
+                <!-- Stacked bar chart for capital evolution -->
+                <svg viewBox="0 0 520 150" style="width: 100%; margin-top: 16px;">
+                    <!-- 2024 -->
+                    <rect x="40" y="80" width="80" height="40" fill="#003A70"/>
+                    <rect x="40" y="50" width="80" height="30" fill="#0051a5"/>
+                    <rect x="40" y="40" width="80" height="10" fill="#0076BD"/>
+                    <text x="80" y="135" font-size="11" fill="#666" text-anchor="middle">2024</text>
+                    <text x="80" y="35" font-size="12" fill="#333" text-anchor="middle" font-weight="600">1,248</text>
+                    
+                    <!-- 2025 -->
+                    <rect x="160" y="75" width="80" height="45" fill="#003A70"/>
+                    <rect x="160" y="40" width="80" height="35" fill="#0051a5"/>
+                    <rect x="160" y="28" width="80" height="12" fill="#0076BD"/>
+                    <text x="200" y="135" font-size="11" fill="#666" text-anchor="middle">2025</text>
+                    <text x="200" y="23" font-size="12" fill="#333" text-anchor="middle" font-weight="600">1,374</text>
+                    
+                    <!-- 2026 -->
+                    <rect x="280" y="65" width="80" height="55" fill="#003A70"/>
+                    <rect x="280" y="25" width="80" height="40" fill="#0051a5"/>
+                    <rect x="280" y="10" width="80" height="15" fill="#0076BD"/>
+                    <text x="320" y="135" font-size="11" fill="#666" text-anchor="middle">2026</text>
+                    <text x="320" y="5" font-size="12" fill="#333" text-anchor="middle" font-weight="600">1,560</text>
+                    
+                    <!-- 2027 -->
+                    <rect x="400" y="55" width="80" height="65" fill="#003A70"/>
+                    <rect x="400" y="10" width="80" height="45" fill="#0051a5"/>
+                    <rect x="400" y="-8" width="80" height="18" fill="#0076BD"/>
+                    <text x="440" y="135" font-size="11" fill="#666" text-anchor="middle">2027</text>
+                    <text x="440" y="-13" font-size="12" fill="#333" text-anchor="middle" font-weight="600">1,756</text>
+                    
+                    <!-- Legend -->
+                    <rect x="20" y="5" width="10" height="10" fill="#003A70"/>
+                    <text x="35" y="13" font-size="10" fill="#666">Capitale</text>
+                    <rect x="20" y="20" width="10" height="10" fill="#0051a5"/>
+                    <text x="35" y="28" font-size="10" fill="#666">Riserve</text>
+                    <rect x="90" y="5" width="10" height="10" fill="#0076BD"/>
+                    <text x="105" y="13" font-size="10" fill="#666">Utili non dist.</text>
+                </svg>
+            </div>
+            
+            <!-- Dividend Policy -->
+            <div class="dividend-section">
+                <div class="section-title">Politica Dividendi</div>
+                <div class="metric-row">
+                    <span class="metric-label">Payout 2024</span>
+                    <span class="metric-value">0%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Payout 2025</span>
+                    <span class="metric-value">20%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Payout 2026</span>
+                    <span class="metric-value">30%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Payout 2027</span>
+                    <span class="metric-value">40%</span>
+                </div>
+                <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #E0E0E0;">
+                    <div class="metric-row">
+                        <span class="metric-label">Target Yield 2027</span>
+                        <span class="metric-value" style="color: #059669;">4%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stress Test -->
+            <div class="stress-section">
+                <div class="section-title">Stress Test</div>
+                <div class="metric-row">
+                    <span class="metric-label">GDP Shock</span>
+                    <span class="metric-value stress-impact">-3%</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">NPL Increase</span>
+                    <span class="metric-value stress-impact">+200bps</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">CET1 Impact</span>
+                    <span class="metric-value stress-impact">-250bps</span>
+                </div>
+                <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #E0E0E0;">
+                    <div class="metric-row">
+                        <span class="metric-label">Post-stress CET1</span>
+                        <span class="metric-value stress-minimum">12.5%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="slide-footer">
+            <div class="source">Fonte: Analisi interna, BCE Guidelines, EBA Stress Test Methodology</div>
+            <div class="slide-number">26</div>
+        </div>
+    </div>
+</body>
+</html>

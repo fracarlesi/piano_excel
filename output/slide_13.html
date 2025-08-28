@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slide 13 - Banking as a Service</title>
+    <title>Slide 13 - AI-Driven Architecture</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -22,6 +22,7 @@
             --light-grey: #E0E0E0;
             --background-grey: #F8F9FA;
             --white: #FFFFFF;
+            --digital: #00B4D8;
             --success: #10B981;
         }
 
@@ -43,7 +44,7 @@
             background: white;
             border: 1px solid #d0d0d0;
             box-shadow: 0 2px 8px rgba(0, 58, 112, 0.1);
-            padding: 60px;
+            padding: 40px;
             box-sizing: border-box;
             overflow: hidden;
             position: relative;
@@ -52,17 +53,18 @@
 
         .slide-number {
             position: absolute;
-            bottom: 30px;
-            right: 40px;
+            bottom: 40px !important;
+            right: 40px !important;
             font-size: 14px;
             color: #666;
             font-weight: 500;
+            z-index: 100;
         }
 
         .breadcrumb {
-            font-size: 14px;
-            color: var(--medium-grey);
-            margin-bottom: 20px;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 16px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -74,7 +76,7 @@
             margin-bottom: 40px;
             line-height: 1.3;
             letter-spacing: -0.02em;
-            border-bottom: 2px solid #0051a5;
+            border-bottom: 2px solid var(--secondary-blue);
             padding-bottom: 16px;
         }
 
@@ -94,239 +96,330 @@
             }
         }
 
-        /* Layout principale */
-        .content-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            height: 500px !important;
-            max-height: 500px !important;
-            overflow: visible;
-        }
-
-        /* Opportunity Context Box */
-        .opportunity-context {
-            background: linear-gradient(135deg, #f8fafc 0%, #e6f2ff 100%);
-            border-left: 4px solid var(--primary-blue);
-            border-radius: 8px;
-            padding: 18px 24px;
-            margin-top: 15px;
-            margin-bottom: 10px;
-        }
-
-        .opportunity-text {
-            font-size: 14px;
-            color: var(--dark-grey);
-            line-height: 1.6;
-            margin-bottom: 12px;
-        }
-
-        .opportunity-text strong {
-            color: var(--primary-blue);
-            font-weight: 600;
-        }
-
-        .market-opportunity {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 12px 16px;
-            margin-top: 10px;
-        }
-
-        .market-stat {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-        }
-
-        .market-stat-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary-blue);
-        }
-
-        .market-stat-label {
-            color: var(--medium-grey);
-            line-height: 1.3;
-        }
-
-        /* Corporate Structure */
-        .structure-section {
-            display: flex;
-            gap: 20px;
-            height: 140px;
-            margin-bottom: 15px;
-        }
-
-        .phase-container {
+        /* Content area */
+        .slide-content {
             flex: 1;
-            background: var(--background-grey);
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 15px;
             display: flex;
             flex-direction: column;
-        }
-
-        .phase-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--primary-blue);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .ownership-diagram {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             gap: 15px;
-            flex: 1;
-        }
-
-        .entity-box {
-            background: white;
-            border: 2px solid var(--primary-blue);
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-            min-width: 120px;
             position: relative;
         }
 
-        .entity-box.primary {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
-            color: white;
+        /* Architecture flow container */
+        .architecture-flow {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            padding: 5px 0;
         }
 
-        .entity-box.secondary {
-            background: #f8fafc;
+        /* Data flow sections */
+        .flow-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
         }
 
-        .entity-name {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 3px;
+        .flow-section.sources {
+            width: 240px;
         }
 
-        .entity-detail {
-            font-size: 11px;
-            opacity: 0.8;
+        .flow-section.engine {
+            width: 280px;
         }
 
-        .ownership-arrow {
+        .flow-section.agents {
+            width: 380px;
+        }
+
+        /* Section headers */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #003A70;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0 0 20px 0;
+            text-align: center;
+            width: 100%;
+            height: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            gap: 2px;
         }
 
-        .arrow-line {
-            width: 25px;
-            height: 0;
-            border-top: 2px solid var(--primary-blue);
-            position: relative;
-        }
-
-        .arrow-line::after {
-            content: "▶";
-            position: absolute;
-            right: -8px;
-            top: -9px;
-            font-size: 14px;
-            color: var(--primary-blue);
-        }
-
-        .ownership-percentage {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--primary-blue);
-            background: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid var(--primary-blue);
-        }
-
-        /* Business Model */
-        .business-model {
-            background: white;
-            border: 2px solid var(--light-grey);
+        /* Data sources box */
+        .data-sources {
+            background: linear-gradient(135deg, #E8F1F8 0%, #F0F7FB 100%);
+            border: 2px solid #003A70;
             border-radius: 12px;
-            padding: 18px;
-            margin-top: 10px;
+            padding: 25px;
+            width: 100%;
         }
 
-        .model-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--primary-blue);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .model-items {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .model-item {
+        .source-item {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 13px;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,58,112,0.08);
+            transition: all 0.2s ease;
         }
 
-        .model-item::before {
-            content: "✓";
-            color: var(--success);
-            font-weight: 600;
+        .source-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .source-item:hover {
+            transform: translateX(3px);
+            box-shadow: 0 3px 8px rgba(0,58,112,0.15);
+        }
+
+        .source-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 14px;
         }
 
+        .source-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a1a1a;
+            flex: 1;
+        }
 
-        /* Revenue Projections */
-        .revenue-projection {
+        /* AI Engine box */
+        .ai-engine {
+            background: linear-gradient(135deg, #003A70 0%, #0051a5 100%);
+            border-radius: 16px;
+            padding: 25px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 8px 24px rgba(0,58,112,0.25);
+        }
+
+        .engine-capability {
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #003A70;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .engine-capability:last-child {
+            margin-bottom: 0;
+        }
+
+        .engine-capability:hover {
+            background: white;
+            transform: scale(1.02);
+        }
+
+        /* AI Agents section */
+        .ai-agents {
+            width: 100%;
+            position: static;
+            height: auto;
+        }
+
+        .agent-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #003A70 0%, #0076A8 100%);
+        }
+
+        .agent-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,58,112,0.12);
+            border-color: #003A70;
+        }
+
+        .agent-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #E8F1F8 0%, #D0E4F2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #003A70;
+            margin-bottom: 2px;
+        }
+
+        .agent-benefit {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .agent-impact {
+            background: #00A76F;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        /* Chevron Arrow Design - McKinsey Style */
+        .flow-chevron {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .flow-chevron.chevron-1 {
+            left: 250px;
+            width: 70px;
+            height: 80px;
+        }
+
+        .flow-chevron.chevron-2 {
+            left: 600px;
+            width: 70px;
+            height: 80px;
+        }
+
+        /* Triangle/Chevron SVG styles */
+        .chevron-shape {
+            fill: var(--primary-blue);
+            opacity: 0.12;
+            transition: all 0.3s ease;
+        }
+
+        .chevron-border {
+            fill: none;
+            stroke: var(--primary-blue);
+            stroke-width: 2;
+            opacity: 0.3;
+            stroke-linejoin: miter;
+            transition: all 0.3s ease;
+        }
+
+        .chevron-gradient-light {
+            stop-color: var(--primary-blue);
+            stop-opacity: 0.05;
+        }
+
+        .chevron-gradient-mid {
+            stop-color: var(--primary-blue);
+            stop-opacity: 0.15;
+        }
+
+        .chevron-gradient-dark {
+            stop-color: var(--primary-blue);
+            stop-opacity: 0.25;
+        }
+
+        /* Static flow dots - no animation for PDF */
+        .flow-dots {
+            fill: var(--primary-blue);
+            opacity: 0.25;
+        }
+
+        .flow-dots.delay-1 {
+            opacity: 0.35;
+        }
+
+        .flow-dots.delay-2 {
+            opacity: 0.25;
+        }
+
+        /* Hover effects */
+        .architecture-flow:hover .chevron-shape {
+            opacity: 0.2;
+        }
+
+        .architecture-flow:hover .chevron-border {
+            opacity: 0.5;
+            stroke-width: 2.5;
+        }
+
+        /* Impact section - nuovo stile come slide 14 */
+        .impact-section {
             background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
             border-radius: 10px;
-            padding: 12px 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px;
+            padding: 15px 25px;
+            margin-top: 8px;
             margin-bottom: 0;
             position: relative;
             max-width: 100%;
-            max-height: 70px;
         }
 
-        .projection-metrics {
-            display: flex;
-            gap: 60px;
-            align-items: center;
-        }
-
-        .metric-box {
+        .impact-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
             text-align: center;
         }
 
-        .metric-value {
+        .impact-metrics {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .impact-metric {
+            text-align: center;
+        }
+
+        .impact-value {
             font-size: 20px;
             font-weight: 700;
             color: white;
             line-height: 1;
         }
 
-        .metric-label {
+        .impact-label {
             font-size: 11px;
             color: rgba(255, 255, 255, 0.9);
             text-transform: uppercase;
@@ -335,200 +428,249 @@
             text-align: center;
         }
 
-        .revenue-range {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .range-item {
-            text-align: center;
-        }
-
-        .range-separator {
-            font-size: 20px;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 300;
-        }
-
-        /* Timeline */
-        .timeline-visual {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .timeline-steps {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .timeline-step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        .timeline-dot {
-            width: 10px;
-            height: 10px;
-            background: white;
-            border-radius: 50%;
-            margin-bottom: 5px;
-        }
-
-        .timeline-label {
+        .impact-sublabel {
             font-size: 10px;
-            color: rgba(255, 255, 255, 0.9);
-            white-space: nowrap;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 2px;
         }
 
-        .timeline-line {
-            width: 35px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.4);
+        /* Gradient overlay per depth */
+        .architecture-flow::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -60px;
+            right: -60px;
+            bottom: -20px;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,58,112,0.02) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Static hover effect - no animation for PDF */
+        .architecture-flow:hover .source-item,
+        .architecture-flow:hover .engine-capability,
+        .architecture-flow:hover .agent-card {
+            opacity: 1;
         }
 
         /* Footer note */
         .footer-note {
-            display: none;
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 100px;
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+            text-align: left;
         }
     </style>
 </head>
 <body>
 
     <div class="slide">
-        <div class="breadcrumb">STRATEGIA DI CRESCITA / BANKING AS A SERVICE</div>
-        <h1 class="action-title">La societarizzazione della divisione IT genera €30-50M di ricavi addizionali attraverso il modello Banking as a Service</h1>
+        <div class="slide-header">
+            <div class="breadcrumb">AI-NATIVE TECHNOLOGY PLATFORM</div>
+            <h1 class="action-title">AI-Driven Architecture - Productivity Multiplier</h1>
+        </div>
 
-        <div class="content-container">
-            <!-- Opportunity Context -->
-            <div class="opportunity-context">
-                <div class="opportunity-text">
-                    <strong>Opportunità strategica:</strong> Nel corso del piano industriale si valuterà la cessione del <strong>51% della TechCompany IT</strong> ad investitori esterni, 
-                    creando un modello di <strong>revenue sharing</strong> che permetterà di aggredire il mercato delle banche piccole e medie italiane.
+        <!-- Content -->
+        <div class="slide-content">
+            <!-- Architecture Flow -->
+            <div class="architecture-flow">
+                <!-- Data Sources -->
+                <div class="flow-section sources">
+                    <h3 class="section-title">Data Sources</h3>
+                    <div class="data-sources">
+                        <div class="source-item">
+                            <div class="source-icon">💳</div>
+                            <div class="source-name">Transactional Data</div>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-icon">📊</div>
+                            <div class="source-name">Market Data</div>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-icon">🏛️</div>
+                            <div class="source-name">External Data</div>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-icon">👥</div>
+                            <div class="source-name">Behavioral Data</div>
+                        </div>
+                        <div class="source-item">
+                            <div class="source-icon">🔗</div>
+                            <div class="source-name">Open Banking APIs</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="market-opportunity">
-                    <div class="market-stat">
-                        <div class="market-stat-value">55%</div>
-                        <div class="market-stat-label">Banche italiane con<br>infrastrutture legacy anni '80</div>
+
+                <!-- Chevron Arrow 1 -->
+                <svg class="flow-chevron chevron-1" viewBox="0 0 70 80" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Gradient for depth -->
+                        <linearGradient id="chevronGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" class="chevron-gradient-light"/>
+                            <stop offset="50%" class="chevron-gradient-mid"/>
+                            <stop offset="100%" class="chevron-gradient-dark"/>
+                        </linearGradient>
+                        
+                        <!-- Shadow filter -->
+                        <filter id="chevronShadow1" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                            <feOffset dx="1" dy="2" result="offsetblur"/>
+                            <feFlood flood-color="#003A70" flood-opacity="0.1"/>
+                            <feComposite in2="offsetblur" operator="in"/>
+                            <feMerge>
+                                <feMergeNode/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <!-- Main chevron shape (triangle pointing right) -->
+                    <path d="M 10,15 L 50,40 L 10,65 L 20,40 Z" 
+                          class="chevron-shape" 
+                          fill="url(#chevronGrad1)"
+                          filter="url(#chevronShadow1)"/>
+                    
+                    <!-- Chevron border -->
+                    <path d="M 10,15 L 50,40 L 10,65" 
+                          class="chevron-border"/>
+                    
+                    <!-- Static flow dots -->
+                    <circle cx="20" cy="40" r="2" class="flow-dots"/>
+                    <circle cx="30" cy="40" r="2" class="flow-dots delay-1"/>
+                    <circle cx="40" cy="40" r="2" class="flow-dots delay-2"/>
+                </svg>
+
+                <!-- AI Engine -->
+                <div class="flow-section engine">
+                    <h3 class="section-title">AI Engine</h3>
+                    <div class="ai-engine">
+                        <div class="engine-capability">Centralized Data Lake</div>
+                        <div class="engine-capability">Machine Learning Models</div>
+                        <div class="engine-capability">Natural Language Processing</div>
+                        <div class="engine-capability">Predictive Analytics</div>
+                        <div class="engine-capability">Real-time Processing</div>
                     </div>
-                    <div class="market-stat">
-                        <div class="market-stat-value">€2.5B</div>
-                        <div class="market-stat-label">Spesa IT annua<br>sistema bancario italiano</div>
-                    </div>
-                    <div class="market-stat">
-                        <div class="market-stat-value">Banking as a Service</div>
-                        <div class="market-stat-label">Modello per superare<br>il gap tecnologico del settore</div>
+                </div>
+
+                <!-- Chevron Arrow 2 -->
+                <svg class="flow-chevron chevron-2" viewBox="0 0 70 80" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Gradient for depth -->
+                        <linearGradient id="chevronGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" class="chevron-gradient-light"/>
+                            <stop offset="50%" class="chevron-gradient-mid"/>
+                            <stop offset="100%" class="chevron-gradient-dark"/>
+                        </linearGradient>
+                        
+                        <!-- Shadow filter -->
+                        <filter id="chevronShadow2" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+                            <feOffset dx="1" dy="2" result="offsetblur"/>
+                            <feFlood flood-color="#003A70" flood-opacity="0.1"/>
+                            <feComposite in2="offsetblur" operator="in"/>
+                            <feMerge>
+                                <feMergeNode/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <!-- Main chevron shape (triangle pointing right) -->
+                    <path d="M 10,15 L 50,40 L 10,65 L 20,40 Z" 
+                          class="chevron-shape" 
+                          fill="url(#chevronGrad2)"
+                          filter="url(#chevronShadow2)"/>
+                    
+                    <!-- Chevron border -->
+                    <path d="M 10,15 L 50,40 L 10,65" 
+                          class="chevron-border"/>
+                    
+                    <!-- Static flow dots -->
+                    <circle cx="20" cy="40" r="2" class="flow-dots"/>
+                    <circle cx="30" cy="40" r="2" class="flow-dots delay-1"/>
+                    <circle cx="40" cy="40" r="2" class="flow-dots delay-2"/>
+                </svg>
+
+                <!-- AI Agents -->
+                <div class="flow-section agents">
+                    <h3 class="section-title">AI Agents Supporting Employees</h3>
+                    <div class="ai-agents">
+                        <div class="agent-card">
+                            <div class="agent-icon">📊</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Credit Risk Agent</div>
+                                <div class="agent-benefit">Supports credit analysts</div>
+                            </div>
+                            <div class="agent-impact">-40% time</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-icon">🎧</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Customer Service Agent</div>
+                                <div class="agent-benefit">Supports contact center</div>
+                            </div>
+                            <div class="agent-impact">-60% calls</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-icon">🛡️</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Compliance Agent</div>
+                                <div class="agent-benefit">Automates AML/KYC</div>
+                            </div>
+                            <div class="agent-impact">-50% effort</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-icon">💼</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Sales Agent</div>
+                                <div class="agent-benefit">Suggests next best action</div>
+                            </div>
+                            <div class="agent-impact">+30% conversion</div>
+                        </div>
+                        <div class="agent-card">
+                            <div class="agent-icon">⚙️</div>
+                            <div class="agent-info">
+                                <div class="agent-name">Operations Agent</div>
+                                <div class="agent-benefit">Automates back-office</div>
+                            </div>
+                            <div class="agent-impact">-70% manual tasks</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Corporate Structure - Two Phases -->
-            <div class="structure-section">
-                <!-- Prima Fase -->
-                <div class="phase-container">
-                    <div class="phase-title">Prima Fase</div>
-                    <div class="ownership-diagram">
-                        <div class="entity-box primary">
-                            <div class="entity-name">New Bank</div>
-                            <div class="entity-detail">Capogruppo</div>
-                        </div>
-                        <div class="ownership-arrow">
-                            <span class="ownership-percentage">100%</span>
-                            <div class="arrow-line"></div>
-                        </div>
-                        <div class="entity-box secondary">
-                            <div class="entity-name">TechCompany</div>
-                            <div class="entity-detail">Divisione IT</div>
-                        </div>
+            <!-- Impact Section -->
+            <div class="impact-section">
+                <h3 class="impact-title">BUSINESS IMPACT - PRODUCTIVITY TRANSFORMATION</h3>
+                <div class="impact-metrics">
+                    <div class="impact-metric">
+                        <div class="impact-value">-35%</div>
+                        <div class="impact-label">FTE Reduction</div>
+                        <div class="impact-sublabel">not factored into plan</div>
                     </div>
-                </div>
-                
-                <!-- Fase Successiva -->
-                <div class="phase-container">
-                    <div class="phase-title">Fase Successiva</div>
-                    <div class="ownership-diagram" style="justify-content: space-between; position: relative;">
-                        <!-- Investitori a sinistra -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="entity-box secondary">
-                                <div class="entity-name">Investitori</div>
-                                <div class="entity-detail">Esterni</div>
-                            </div>
-                            <div class="ownership-arrow">
-                                <span class="ownership-percentage">51%</span>
-                                <div class="arrow-line"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- TechCompany al centro -->
-                        <div class="entity-box secondary" style="margin: 0 10px;">
-                            <div class="entity-name">TechCompany</div>
-                            <div class="entity-detail">Divisione IT</div>
-                        </div>
-                        
-                        <!-- New Bank a destra con freccia verso sinistra -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div class="ownership-arrow" style="transform: scaleX(-1);">
-                                <span class="ownership-percentage" style="transform: scaleX(-1);">49%</span>
-                                <div class="arrow-line"></div>
-                            </div>
-                            <div class="entity-box primary">
-                                <div class="entity-name">New Bank</div>
-                                <div class="entity-detail">Socio minoritario</div>
-                            </div>
-                        </div>
+                    <div class="impact-metric">
+                        <div class="impact-value">&lt;30%</div>
+                        <div class="impact-label">Cost/Income Ratio</div>
+                        <div class="impact-sublabel">potential with FTE reduction</div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Business Model Revenue Sharing -->
-            <div class="business-model">
-                <div class="model-title">Modello di Revenue Sharing</div>
-                <div class="model-items">
-                    <div class="model-item">Licenze core banking system</div>
-                    <div class="model-item">Fee per transazione processata</div>
-                    <div class="model-item">Monetizzazione API e servizi</div>
-                    <div class="model-item">Consulenza e supporto tecnico</div>
-                </div>
-            </div>
-            
-            <!-- Revenue Projections -->
-            <div class="revenue-projection">
-                <div class="projection-metrics">
-                    <div class="metric-box">
-                        <div class="metric-value">15-20</div>
-                        <div class="metric-label">Banche Target</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-value">€2-3M</div>
-                        <div class="metric-label">Contratto per Banca</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">Stima Ricavi Totali</div>
-                        <div class="revenue-range">
-                            <div class="range-item">
-                                <div class="metric-value">€30M</div>
-                                <div style="font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 2px;">con 15 banche</div>
-                            </div>
-                            <div class="range-separator">-</div>
-                            <div class="range-item">
-                                <div class="metric-value">€60M</div>
-                                <div style="font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 2px;">con 20 banche</div>
-                            </div>
-                        </div>
+                    <div class="impact-metric">
+                        <div class="impact-value">+2.5x</div>
+                        <div class="impact-label">Productivity</div>
+                        <div class="impact-sublabel">per employee</div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="footer-note">
-            *Ricavi non inclusi nel piano industriale base - potenziale upside attraverso vendita tecnologia core banking ad altre banche
-        </div>
 
-        <div class="slide-number">13</div>
+        <!-- Footer Note -->
+        <div class="footer-note">Source: Technology Architecture 2025 | Cloud AI Platform</div>
+
+        <span class="slide-number">13</span>
     </div>
 
 </body>

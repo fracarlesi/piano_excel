@@ -1,259 +1,126 @@
-# 🎯 INVESTOR PRESENTATION CREATOR
+# **MANUALE OPERATIVO E DI STILE: INVESTOR PRESENTATION**
+*Versione Integrata 2.0*
 
-## 📚 DOCUMENTAZIONE MODULARE - UNICI DOCUMENTI DA CONSULTARE
+## 🎯 1. OBIETTIVO E FILOSOFIA
 
-### ⚠️ IMPORTANTE: QUESTI SONO GLI UNICI 2 DOCUMENTI PER LE PRESENTAZIONI
+L'obiettivo è creare presentazioni per investitori in stile McKinsey. Ogni slide deve essere autonoma, chiara e contribuire a una narrativa "outcome-driven". Il processo è governato da agenti specializzati e da un rigoroso sistema di design per garantire la massima qualità e coerenza. L'output finale è una serie di file HTML statici, pronti per l'esportazione in un PDF impeccabile.
 
-### 📖 1. STORYTELLING E NARRATIVA
-usa indicazioni utente senza prendere iniziative
+---
 
-### 🎨 2. LAYOUT E DESIGN 
-**FILE**: `standard template/slide_template.html`
+## ⚙️ 2. WORKFLOW OPERATIVO (IL "COME")
 
+### A. Uso Obbligatorio degli Agenti Specializzati
+Per ogni task, verranno attivati i seguenti agenti. L'uso è obbligatorio per garantire la separazione delle competenze.
 
+| Agente | Ruolo |
+| :--- | :--- |
+| `investor-storyteller` | Definisce la narrativa, il messaggio e la sequenza logica. |
+| `bank-business-analyst` | Fornisce e valida i KPI, le metriche e le logiche di business. |
+| `data-visualizer` | **Raccomanda** il layout e il tipo di grafico (SVG) più efficace per i dati. |
+| `presentation-designer` | **(Unico autorizzato a scrivere codice)** **Implementa** gli input in HTML/CSS/SVG. |
+| `slide-aesthetics-reviewer`| Valida la geometria, l'aderenza alla griglia e allo stile. |
 
-### 🚫 NON USARE ALTRI DOCUMENTI
+### B. Workflow Parallelo per Ogni Slide
+1.  **Analisi Parallela**: Per ogni slide, gli agenti `storyteller`, `analyst` e `visualizer` forniscono i loro input e requisiti in parallelo.
+2.  **Implementazione Centralizzata**: L'agente `presentation-designer` raccoglie **tutti** gli input e li implementa modificando **l'unico file HTML esistente** per quella slide.
+3.  **Validazione Rigorosa**: L'agente `slide-aesthetics-reviewer` esegue un controllo di qualità geometrico e stilistico sullo stesso file.
+4.  **Correzione Iterativa**: Eventuali correzioni vengono applicate direttamente sul file originale, senza mai creare duplicati.
 
+### C. Input Dati
+I dati numerici e i contenuti testuali vengono forniti dall'utente tramite copia-incolla direttamente nel prompt, in formati pronti per essere elaborati.
 
-## 🎯 OUTPUT FINALE - SOLO QUESTI FILE HTML
+---
 
-### ⚠️ REGOLA CRITICA: SOLO FILE HTML IN CARTELLA OUTPUT - ZERO BACKUP
-**L'utente vuole SOLO questi file come output finale nella cartella `output/`:**
-1. **output/slide_00.html** = File master con navigazione tra le slide
-2. **output/slide_01.html** a **output/slide_xx.html** = Le slide della presentazione
+## 📂 3. GESTIONE FILE E STRUTTURA (REGOLA CRITICA)
 
-**🚫 DIVIETO ASSOLUTO DI BACKUP:**
-- ❌ MAI creare file `slide_XX_backup.html`
-- ❌ MAI creare file `slide_XX_v2.html` o versioni numerate
-- ❌ MAI duplicare slide con nomi diversi
-- ✅ SEMPRE una sola versione per slide
-- ✅ Se serve backup, usare Git, NON file duplicati
-
-### 📁 STRUTTURA CARTELLE ORGANIZZATA
-```
+### A. Struttura Progetto
 piano industriale excel/
-├── output/                    # 📌 CARTELLA PRINCIPALE OUTPUT
-│   ├── slide_00.html          # Master con navigazione
+├── output/                    # ✅ CARTELLA ESCLUSIVA PER L'OUTPUT
+│   ├── slide_00.html          # File master con navigazione
 │   ├── slide_01.html          # Slide 1
-│   ├── slide_02.html          # Slide 2
-│   └── ... fino a slide_23.html
-├── screenshots/               # 📌 UNICA cartella per screenshot MCP (temporanei)
-└── CLAUDE.md                  # Questo file
-
-Non creare altri file
-
-**⚠️ NOTA IMPORTANTE SU SCREENSHOTS:**
-- **SOLO UNA CARTELLA**: Usare SOLO `screenshots/` per tutti gli screenshot
-- **NO DUPLICAZIONI**: MAI creare cartella `analysis/` o simili
-- **PULIZIA AUTOMATICA**: Cancellare screenshots dopo ogni sessione di lavoro
-- **USO MCP**: Tutti gli screenshot del connettore Playwright MCP vanno qui
-
-**DIVIETI ASSOLUTI:**
-- ❌ **MAI creare file HTML di test** (test_a4.html, powerpoint_view.html, etc.)
-- ❌ **MAI creare file HTML temporanei o di prova**
-- ❌ **MAI duplicare slide** con nomi diversi
-- ❌ **MAI creare file di backup** (slide_XX_backup.html)
-- ❌ **MAI tenere versioni multiple** della stessa slide
-- ✅ **SEMPRE modificare SOLO i file in output/slide_XX.html**
-- ✅ **Ogni modifica va fatta DIRETTAMENTE sui file definitivi in output/**
-- ✅ **Una slide = Un file**, niente duplicazioni
-
-### 🧹 PULIZIA AUTOMATICA E GESTIONE SCREENSHOTS
-
-#### REGOLE PER SCREENSHOTS:
-1. **UNICA CARTELLA**: Solo `screenshots/` per TUTTI gli screenshot
-2. **CANCELLA LA CARTELLA `analysis/`**: Se esiste, eliminarla subito
-3. **WORKFLOW SCREENSHOTS**:
-   - Prima di fare nuovi screenshot → cancella quelli vecchi
-   - Dopo aver finito il lavoro → cancella tutti gli screenshot
-   - MAI lasciare screenshot vecchi nel progetto
-4. **NAMING CONVENTION**: 
-   - Per review: `screenshots/review_slide_XX.png`
-   - Per analisi: `screenshots/analysis_slide_XX.png`
-   - Per validazione: `screenshots/validation_slide_XX.png`
-
-#### COSA MANTENERE:
-- ✅ Solo la cartella `output/` con le slide finali
-- ❌ MAI tenere screenshot dopo il lavoro
-- ❌ MAI duplicare cartelle per screenshot
-
-### 📐 VISUALIZZAZIONE BORDI A4
-Se l'utente chiede di vedere i bordi del foglio A4:
-- **AGGIUNGI IL CODICE nei file slide esistenti in output/** (non creare nuovi file)
-- Usa CSS per mostrare i bordi direttamente nelle slide_XX.html
-- Il bordo A4 deve essere visibile in modalità sviluppo/preview
-- Tasto 'B' per toggle veloce del bordo
-
-## 📋 RUOLO E OBIETTIVO
-Sei un assistente specializzato nella creazione di presentazioni per investitori in stile McKinsey.
-
-## 🤖 USO AUTOMATICO DEGLI AGENTI SPECIALIZZATI
-
-### ⚡ AGENTI SPECIALIZZATI PER PRESENTAZIONI
-**Gli agenti sotto elencati sono configurati nel progetto (directory `.claude/agents/`).**
-**DEVI USARLI tramite il Task tool per delegare compiti specifici!**
-
-### AGENTI DISPONIBILI
-| Tipo di Richiesta | Agente da Usare | Quando Usarlo | Status |
-|-------------------|-----------------|---------------|---------|
-| **Design Slide** | `presentation-designer` | Layout, visual design, HTML/CSS | ✅ ATTIVO |
-| **Storytelling** | `investor-storyteller` | Narrativa, messaging, sequenza slide | ✅ ATTIVO |
-| **Visualizzazioni** | `data-visualizer` | Grafici, dashboard, KPI visualization | ✅ ATTIVO |
-| **Analisi Business** | `bank-business-analyst` | Logiche bancarie, KPI, regulatory | ✅ ATTIVO |
-| **Validazione Estetica** | `slide-aesthetics-reviewer` | Controllo geometrico, omogeneità, allineamenti | ✅ ATTIVO |
-
-### ESEMPI DI ATTIVAZIONE
-
-- "Crea slide per..." → USA `presentation-designer`
-- "Definisci la narrativa..." → USA `investor-storyteller`
-- "Crea grafico per..." → USA `data-visualizer`
-- "Analizza metriche..." → USA `bank-business-analyst`
-- "Controlla/valida slide..." → USA `slide-aesthetics-reviewer`
-
-### 🚀 WORKFLOW PARALLELO OBBLIGATORIO PER OGNI SLIDE
-
-#### ⚠️ REGOLA CRITICA: UN SOLO FILE PER SLIDE - NO DUPLICAZIONI
-
-**TUTTI GLI AGENTI DEVONO LAVORARE SULLO STESSO FILE**
-- ❌ MAI creare versioni multiple (slide_v2.html, slide_new.html, etc.)
-- ✅ SEMPRE modificare il file originale esistente
-- ✅ SOLO UNA VERSIONE FINALE per slide
-
-#### PER OGNI SINGOLA SLIDE, ATTIVA TUTTI GLI AGENTI IN PARALLELO:
-```
-SLIDE N → [ATTIVAZIONE SIMULTANEA - STESSO FILE]
-    ├── investor-storyteller → Definisce narrativa e messaging
-    ├── bank-business-analyst → Fornisce KPI e metriche corrette  
-    ├── data-visualizer → Suggerisce layout e visualizzazioni
-    ├── presentation-designer → [UNICO] che scrive codice HTML/CSS
-    └── slide-aesthetics-reviewer → Valida geometria e omogeneità
-```
-
-#### ESEMPIO PRATICO - SLIDE 3 (EXECUTIVE SUMMARY):
-```python
-# STEP 1: ATTIVAZIONE PARALLELA (raccolta feedback)
-Task 1: investor-storyteller → "Narrativa per Executive Summary"
-Task 2: bank-business-analyst → "KPI Anno 5 da includere" 
-Task 3: data-visualizer → "Layout ottimale per KPI display"
-
-# STEP 2: INTEGRAZIONE IN UN SOLO FILE
-presentation-designer → "Integra TUTTI i feedback in slide-03-executive.html"
-                      → NON creare nuovi file, modifica quello esistente
-
-# STEP 3: VALIDAZIONE FINALE
-slide-aesthetics-reviewer → "Valida slide-03-executive.html finale"
-```
-
-### WORKFLOW OBBLIGATORIO CON VALIDAZIONE - ANTI-DUPLICAZIONE
-1. **IDENTIFICA** la slide da creare (es. Slide 3 - Executive Summary)
-2. **ATTIVA IN PARALLELO** agenti per feedback (NON per creare file)
-3. **INTEGRA** tutti i feedback nel file unico esistente
-4. **VALIDA** sempre con `slide-aesthetics-reviewer` sullo stesso file
-5. **CORREGGI** lo stesso file basandoti sul feedback geometrico
-6. **ITERA** sullo stesso file fino a validazione PASS
-
-### 🚫 COSA NON FARE MAI:
-- ❌ Creare slide-02-agenda.html E slide-02-agenda-v2.html  
-- ❌ Avere agenti che creano file separati
-- ❌ Avere versioni multiple della stessa slide
-- ❌ Lasciare file duplicati nel progetto
-
-### ✅ COSA FARE SEMPRE:
-- ✅ Un agente raccoglie feedback, un agente implementa nel file unico
-- ✅ Tutti lavorano per migliorare LO STESSO file
-- ✅ Una sola versione finale per slide
-- ✅ File naming consistency: slide-XX-nome.html
-
-### ⚠️ NOTA CRITICA
-**GLI AGENTI CUSTOM SONO STATI CREATI APPOSITAMENTE PER QUESTO PROGETTO.**
-**NON USARLI SIGNIFICA SPRECARE IL LAVORO DI CONFIGURAZIONE FATTO.**
-**OGNI VOLTA CHE NON USI UN AGENTE APPROPRIATO, STAI IGNORANDO LE COMPETENZE SPECIALIZZATE CREATE PER QUESTO PROGETTO!**
+│   └── ...
+├── screenshots/               # ✅ UNICA cartella per screenshot (temporanei)
+└── CLAUDE.md                  # Questo file di istruzioni
 
 
+### B. Divieti Assoluti (Tolleranza Zero)
+-   ❌ **MAI** creare file di backup (`slide_XX_backup.html`).
+-   ❌ **MAI** creare versioni multiple (`slide_XX_v2.html`).
+-   ❌ **MAI** creare file HTML di test o temporanei.
+-   ✅ **SEMPRE E SOLO** modificare i file definitivi presenti nella cartella `output/`.
+-   ✅ **UNA SLIDE = UN FILE**.
 
-Le tue responsabilità sono:
-1. **USARE SEMPRE** gli agenti specializzati appropriati per ogni richiesta
-2. **LEGGERE DATI NUMERICI** da utente:
-   -
-   - **NON USARE**: Altri file PDF, Excel o JSON per i numeri del piano
+---
 
-3. **CREARE PRESENTAZIONI** in HTML/CSS (formato PowerPoint-like):
-   - **FORMATO**: Creare presentazioni HTML5 con layout 16:9 (1920x1080) come PowerPoint
-   - **STRUTTURA**: Slide a pagina intera, navigabili con frecce come PPT
-   - **EXPORT**: DEVE essere esportabile in PDF mantenendo il formato slide PowerPoint
-   - **LAYOUT**: Ogni slide deve occupare esattamente una pagina A4 landscape nel PDF
-   - **TEMPLATE**: Utilizzare template HTML business-oriented stile PowerPoint
-   - Seguire McKinsey style guide
-   - Applicare storytelling per investitori
-4. **VISUALIZZARE E VALIDARE** con Playwright MCP:
-   - Preview presentazioni HTML
-   - Screenshot per validazione
-   - **ANALISI GEOMETRICA AUTOMATICA**:
-     - `browser_evaluate`: calcola getBoundingClientRect() per rilevare sovrapposizioni
-     - `browser_snapshot`: cattura struttura DOM per analisi allineamenti
-     - `browser_take_screenshot`: documenta problemi visivi specifici
-   - **CORREZIONI GUIDATE**:
-     - Coordinate precise degli elementi problematici
-     - Misurazioni pixel-perfect per correzioni
-     - Validazione iterativa fino a perfezione geometrica
-   - Feedback loop automatico per miglioramenti
+## 🎨 4. MANUALE DI STILE MCKINSEY (IL "COSA")
 
+Questa è l'unica fonte di verità per tutti gli aspetti di design, layout e branding.
 
-## ⚠️ REGOLE FONDAMENTALI PER PRESENTAZIONI
+### A. Struttura Standard Obbligatoria della Slide
+Ogni slide **deve** seguire questa gerarchia visiva.
 
+┌─────────────────────────────────────────────────────────────┐
+│  Breadcrumb (grigio, 14px, in alto)                        │
+├─────────────────────────────────────────────────────────────┤
+│  ACTION TITLE (28px, bold)                                 │
+│  ─────────────────────────────────────────────────          │ ← SEMPRE BLU #0051a5
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│                    CONTENUTO PRINCIPALE                     │
+│               (su griglia 12 colonne, space 8px)            │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                    Slide #  │ (in basso a destra)
+└─────────────────────────────────────────────────────────────┘
 
 
-### 🎯 WORKFLOW PRESENTAZIONI CON VALIDAZIONE AUTOMATICA
+### B. Titoli "Outcome-Driven"
+I titoli non descrivono il contenuto, ma comunicano il messaggio chiave.
+* **Formula**: "Cosa + E quindi? + E ora?"
+* **No**: "Proiezioni Finanziarie"
+* **Sì**: "Il break-even viene raggiunto al terzo anno grazie alla leva operativa"
 
+### C. Sistema di Design
+* **Palette Colori**: Verrà usata la palette definita nelle variabili CSS del progetto.
+    ```css
+    :root {
+        --mckinsey-blue: #003A70;
+        --secondary-blue: #0051a5; /* Per la linea del titolo */
+        --charcoal: #1a1a1a;
+        --slate: #4a5568;
+        --border: #e2e8f0;
+        --success-green: #059669;
+        --danger-red: #DC2626;
+        /* ... e tutte le altre definite nella guida. */
+    }
+    ```
+* **Tipografia**: Il font primario è `Source Sans Pro`. Le dimensioni seguono una scala gerarchica definita dalle classi CSS del progetto (`.text-title`, `.text-headline`, `.text-body`, etc.).
+* **Griglia e Spaziatura**: Il layout si basa su una griglia a **12 colonne**. Ogni spaziatura (margini, padding) deve essere un multiplo di **8px**, usando le variabili CSS `--space-` del progetto.
 
- 
+### D. Componenti Predefiniti
+Verranno utilizzati i componenti standardizzati (es. `kpi-card`, `insight-box`) per garantire massima coerenza visiva e velocità di esecuzione.
 
-### ESEMPIO DI CORREZIONE AUTOMATICA
+---
 
-Quando `slide-aesthetics-reviewer` trova problemi:
-```
-🔍 Detailed Geometric Issues:
-- [Overlap]: Logo overlaps Title by 15px on Slide 1
-- [Misalignment]: Main content off-center by 24px left on Slide 2
-- [Spacing]: Gap inconsistency (32px vs 48px) between KPI boxes on Slide 3
-```
+## 🛠️ 5. SPECIFICHE TECNICHE E DI OUTPUT
 
-Il sistema corregge automaticamente:
-1. Sposta logo: `margin-top: -15px` → `margin-top: 0`
-2. Centra contenuto: `margin-left: auto; margin-right: auto`
-3. Uniforma spacing: tutti i gap a `32px`
+### A. Stack Tecnologico
+* **Linguaggi**: Esclusivamente HTML5 e CSS3.
+* **Grafici**: Implementati come **SVG statici inline**.
+* **Validazione**: Tramite il connettore Playwright.
 
+### B. Vincolo Critico: NO JAVASCRIPT
+* L'output finale deve essere **totalmente statico** per garantire una perfetta esportazione in PDF.
+* **Nessuna animazione, transizione, script o libreria JS è ammessa.**
+* Gli esempi di codice JS nella guida di stile sono da considerarsi **solo come riferimento visuale** per lo stile dei grafici, che verranno poi creati in SVG statico.
 
-## 🔧 STRUMENTI PER PRESENTAZIONI
+### C. Esportazione PDF
+Il CSS include regole `@media print` per assicurare che ogni slide corrisponda esattamente a una pagina A4 in formato orizzontale.
 
+---
 
-### TECNOLOGIE
-- **HTML5/CSS3**: Formato PowerPoint-like STATICO
-- **SVG inline**: Per grafici statici (NO Chart.js - non funziona in PDF)
-- **Playwright**: Solo per preview, NON per interattività
-- **CSS @page**: Paginazione PDF corretta
-- **CSS @media print**: Ottimizzazione stampa
+## ✅ 6. VALIDAZIONE E QUALITÀ
 
-### 🚨 IMPORTANTE: SOLO CONTENUTO STATICO PER PDF
-**LA PRESENTAZIONE È SOLO PER EXPORT PDF - NESSUNA INTERATTIVITÀ**
-- ❌ NO JavaScript, animazioni, hover, transizioni
-- ❌ NO Chart.js o altre librerie dinamiche
-- ✅ SOLO SVG statici inline per grafici
-- ✅ SOLO CSS per layout (no JS)
-- ✅ Contrasti alti per stampa (min 7:1)
-- ✅ Font min 12px (ideale 14px+)
-
-
-
-
-### ⚠️ REGOLA IMPORTANTE PER VERIFICA
-**SEMPRE** usare Playwright per verificare il lavoro HTML prima di dichiarare completato:
-- Aprire l'HTML nel browser
-- Fare screenshot per conferma visuale
-- Contare il numero di slide effettive
-- Verificare che tutti i contenuti siano presenti
-
-
-
-
-
+Ogni slide, prima di essere considerata completa, deve superare due livelli di controllo:
+1.  **Controllo Visuale (Playwright)**: Screenshot per una verifica umana dell'aspetto generale.
+2.  **Controllo Geometrico (Agente `slide-aesthetics-reviewer`)**: Validazione automatica dell'aderenza alla griglia, alla scala tipografica, alla palette colori e alle regole di spaziatura definite nel manuale di stile.
